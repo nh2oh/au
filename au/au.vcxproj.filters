@@ -1,0 +1,105 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="scale.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rand_rp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scale_12tet.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="util\au_algs_math.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="util\au_error.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="util\au_util.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="util\au_util_all.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="util\au_algs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="types\frq_t.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="types\ntl_t.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="types\rp_t.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="types\scd_t.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scale_diatonic12tet.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="line_t.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="au.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="scale.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rand_rp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="scale_12tet.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="util\au_algs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="util\au_algs_math.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="util\au_error.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="util\au_util.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="types\frq_t.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="types\ntl_t.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="types\rp_t.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="types\scd_t.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="scale_diatonic12tet.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="line_t.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
