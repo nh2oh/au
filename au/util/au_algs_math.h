@@ -59,6 +59,18 @@ std::vector<T> fuzzset(std::vector<T> const& v, double const& fuzz_frac) {
 	return v_fuzzed;
 };
 
+// add two vectors
+template<typename T> std::vector<T> vadd(std::vector<T> const&, std::vector<T> const&);
+
+// vector of values to fuzz, random-fraction-of-value to add to each element
+template<typename T>
+std::vector<T> vadd(std::vector<T> const& lhs, std::vector<T> const& rhs) {
+	std::vector<T> result(lhs.size(),T{0});
+	for (int i=0; i<result.size(); ++i) {
+		result[i] = lhs[i] + rhs[i];
+	}
+	return result;
+};
 
 // subject-to-round, step
 template<typename T> T roundquant(T const&, T const&);
@@ -76,9 +88,9 @@ template<typename T> std::vector<T> diffadj(std::vector<T> const&);
 // difference of adjacent values
 template<typename T>
 std::vector<T> diffadj(std::vector<T> const& v) {
-	std::vector<T> dv {};
+	std::vector<T> dv(v.size(),T{0});
 	for (auto i=1; i<v.size(); ++i) {
-		dv.push_back(v[i]-v[i-1]);
+		dv[i] = (v[i]-v[i-1]);
 	}
 	return dv;
 };

@@ -98,6 +98,7 @@ public:
 	note_value& operator-=(note_value const&);
 private:
 	double m_nv {0.0};
+	bool validate(void);
 };
 
 note_value operator+(note_value const&, note_value const&);

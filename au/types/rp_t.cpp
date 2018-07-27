@@ -145,15 +145,24 @@ bool operator<=(bar_t const& lhs, bar_t const& rhs) {
 
 note_value::note_value(double nv_in) {
 	m_nv = nv_in;
+	if (!validate()) {
+		au_error("note_value::note_value(double nv_in):  m_nv must be > 0");
+	}
 }
 
 note_value::note_value(double base_value_in, int num_dots_in) {
 	// nv = rv*(2-1/(2^n))
 	m_nv = base_value_in*(2.0 - 1.0/std::pow(2,num_dots_in));
+	if (!validate()) {
+		au_error("note_value::note_value(double base_value_in, int num_dots_in):  m_nv must be > 0");
+	}
 }
 
 note_value::note_value(ts_t ts_in, beat_t nbeats) {
 	m_nv = (ts_in.beat_unit().to_double())*(nbeats.to_double());
+	if (!validate()) {
+		au_error("note_value::note_value(ts_t ts_in, beat_t nbeats):  m_nv must be > 0");
+	}
 }
 
 std::optional<nv_base_dots> note_value::exact() const {
@@ -222,6 +231,10 @@ std::optional<double> note_value::undot_value() const {
 		return (*o_base_dots).base_value;
 	}
 	return {};
+}
+
+bool note_value::validate() {
+	return (m_nv >= 0.0);
 }
 
 std::string note_value::print() const {
@@ -674,6 +687,9 @@ std::vector<note_value> tonset2rp(std::vector<double> const& sec_onset,
 	std::vector<note_value> best_nv(sec_onset.size()-1,note_value{0.0});
 	for (auto i=1; i<sec_onset.size(); ++i) { // NOTE:  Begins with _second_ element
 		auto delta_t = roundquant((sec_onset[i]-sec_onset[i-1]),s_resolution);
+		if (delta_t <= 0) {
+			wait();
+		}
 		best_nv[i-1] = note_value{ts_in,beat_t{delta_t*bps}};
 	}
 	return best_nv;
