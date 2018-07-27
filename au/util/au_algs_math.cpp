@@ -1,7 +1,33 @@
 #include <cmath>
 #include <numeric>
+#include <random>
+#include <chrono>
 #include "au_algs_math.h"
 
+
+// Random double
+std::vector<double> urandd(int n, double min, double max) {
+	std::default_random_engine randeng {};
+	randeng.seed(std::chrono::system_clock::now().time_since_epoch().count());
+	std::uniform_real_distribution<double> rn {min,max};
+	std::vector<double> rv(n,0.0);
+	for (auto i=0; i<n; ++i) {
+		rv[i] = rn(randeng);
+	}
+	return rv;
+}
+
+// Random int
+std::vector<int> urandi(int n, int min, int max) {
+	std::default_random_engine randeng {};
+	randeng.seed(std::chrono::system_clock::now().time_since_epoch().count());
+	std::uniform_int_distribution<int> rn {min,max};
+	std::vector<int> rv(n,0.0);
+	for (auto i=0; i<n; ++i) {
+		rv[i] = rn(randeng);
+	}
+	return rv;
+}
 
 // is approximately integer
 // true if d is approximately an integer value

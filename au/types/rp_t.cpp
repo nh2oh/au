@@ -149,7 +149,7 @@ note_value::note_value(double base_value_in, int num_dots_in) {
 }
 
 note_value::note_value(ts_t ts_in, beat_t nbeats) {
-	m_nv = ts_in.beat_unit().to_double();
+	m_nv = (ts_in.beat_unit().to_double())*(nbeats.to_double());
 }
 
 std::optional<nv_base_dots> note_value::exact() const {
@@ -660,7 +660,7 @@ std::string rp_t_info() {
 
 
 // Convert a sequence of note on-times to a sequence of note-values
-std::vector<note_value> tonset2rp(std::vector<double> const& seconset, 
+std::vector<note_value> tonset2rp(std::vector<double> const& sec_onset, 
 	ts_t const& ts_in, double const& bpm, double const& s_resolution) {
 	
 	auto bps = bpm/60.0;
@@ -681,16 +681,60 @@ std::vector<note_value> tonset2rp(std::vector<double> const& seconset,
 	std::sort(bt_pool.begin(), bt_pool.end());
 
 	
-	std::vector<beat_t> nbeats_quantized(seconset.size()-1,beat_t{0.0});
-	std::vector<note_value> best_nv(seconset.size()-1,note_value{0.0});
+	std::vector<beat_t> nbeats_quantized(sec_onset.size()-1,beat_t{0.0});
+	std::vector<note_value> best_nv(sec_onset.size()-1,note_value{0.0});
 	for (auto i=0; i<nbeats_quantized.size(); ++i) {
-		auto delta = (seconset[i+1] - seconset[i]);
-		auto n_res_interval = std::round(delta/s_resolution);
-		nbeats_quantized[i] = beat_t{n_res_interval*s_resolution};
-
-
-		best_nv[i] = note_value{ts_in,roundquant(nbeats_quantized[i],bt_pool)};
+		auto delta = (sec_onset[i+1] - sec_onset[i]);
+		//auto n_res_interval = std::round(delta/s_resolution);
+		//nbeats_quantized[i] = beat_t{n_res_interval*s_resolution};
+		auto curr_nbeats = beat_t{delta*bps};
+		nbeats_quantized[i] = roundquant(curr_nbeats,bt_pool);
+		best_nv[i] = note_value{ts_in,nbeats_quantized[i]};
+		wait();
 	}
 
+	return best_nv;
+}
 
+
+
+
+
+std::vector<note_value> tonset2rp_demo() {
+
+	//std::vector<double> t {-3.0,-2.0,-1.0,0,1.0,2.0,3.0};
+	//auto rq = roundquant(-5.0,t);
+
+	std::vector<note_value> nts {note_value{1.0/1.0},note_value{1.0/2.0},
+		note_value{1.0/4.0},note_value{1.0/8.0}};
+	auto nv_resolution = note_value{1.0/8.0};
+	auto ts = "4/4"_ts;
+	double bpm = 60; auto bps = bpm/60;
+	double sec_resolution = nbeat(ts,nv_resolution).to_double()/bps;
+	int n = 12;
+
+	auto ridx_nts = urandi(n,0,nts.size()-1);
+	auto rand_frac_delta_t = urandd(n,-0.05,0.05);
+
+	std::vector<note_value> note_seq {};
+	std::vector<beat_t> beat_seq {};  // Exact
+	std::vector<double> delta_sec {};  // Exact
+	std::vector<double> sec_onset {0.0};  // +/- some random offset
+	double t_total {0};
+	for (auto i=0; i<n; ++i) {
+		//auto ridx = std::round(urand(0,nts.size()-1));
+		auto curr_nt = nts[ridx_nts[i]];
+
+		note_seq.push_back(curr_nt);
+		beat_seq.push_back(nbeat(ts,curr_nt));
+		delta_sec.push_back(nbeat(ts,curr_nt).to_double()/bps);
+
+		t_total += delta_sec.back() + delta_sec.back()*rand_frac_delta_t[i];
+		sec_onset.push_back(t_total);
+	}
+
+	auto x = tonset2rp(sec_onset,ts,bpm,sec_resolution);
+
+	wait();
+	return x;
 }

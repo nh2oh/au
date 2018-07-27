@@ -218,4 +218,8 @@ std::vector<std::vector<int>> tmetg(ts_t, std::vector<note_value>, std::vector<b
 std::vector<note_value> tonset2rp(std::vector<double> const&, ts_t const&, 
 	double const&, double const&);
 
+std::vector<note_value> tonset2rp_demo();
+
+
+
 
