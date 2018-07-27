@@ -54,7 +54,7 @@ std::vector<T> fuzzset(std::vector<T> const& v, double const& fuzz_frac) {
 	std::vector<double> rns = urandd(v.size()+1,-fuzz_frac,fuzz_frac);
 	auto v_fuzzed = v;
 	for (int i=0; i<v.size(); ++i) {
-		v_fuzzed[i] + v_fuzzed[i] + (v_fuzzed[i])*(rns[i]);
+		v_fuzzed[i] = v_fuzzed[i] + (v_fuzzed[i])*(rns[i]);
 	}
 	return v_fuzzed;
 };
@@ -68,6 +68,19 @@ template<typename T>
 T roundquant(T const& subject, T const& step) {
 	auto n = std::round((subject/step));
 	return std::abs(n)*step;
+};
+
+// difference of adjacent values
+template<typename T> std::vector<T> diffadj(std::vector<T> const&);
+
+// difference of adjacent values
+template<typename T>
+std::vector<T> diffadj(std::vector<T> const& v) {
+	std::vector<T> dv {};
+	for (auto i=1; i<v.size(); ++i) {
+		dv.push_back(v[i]-v[i-1]);
+	}
+	return dv;
 };
 
 //-----------------------------------------------------------------------------

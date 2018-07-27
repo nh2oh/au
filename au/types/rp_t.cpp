@@ -663,17 +663,46 @@ std::string rp_t_info() {
 }
 
 
-// Convert a sequence of note on-times (in seconds) to a sequence of note-values
+// Convert a sequence of note on-times (in seconds) to a sequence of 
+// note-values.  The off-time of note i is the on-time of note i+1.  
+// If you have a vector of ontimes _and_ a vector of offtimes (say, 
+// from a "notefile," there is an overload below.  
+// 
 std::vector<note_value> tonset2rp(std::vector<double> const& sec_onset, 
 	ts_t const& ts_in, double const& bpm, double const& s_resolution) {
 	auto bps = bpm/60.0;
 	std::vector<note_value> best_nv(sec_onset.size()-1,note_value{0.0});
-	for (auto i=1; i<sec_onset.size(); ++i) {
+	for (auto i=1; i<sec_onset.size(); ++i) { // NOTE:  Begins with _second_ element
 		auto delta_t = roundquant((sec_onset[i]-sec_onset[i-1]),s_resolution);
 		best_nv[i-1] = note_value{ts_in,beat_t{delta_t*bps}};
-		wait();
 	}
 	return best_nv;
+}
+
+// Overload for a vector of ontimes and a vector of offtimes
+std::vector<note_value> tonset2rp(std::vector<double> const& sec_on, 
+	std::vector<double> const& sec_off, ts_t const& ts_in, double const& bpm, 
+	double const& s_resolution) {
+
+	auto bps = bpm/60.0;
+	std::vector<note_value> best_nv(sec_on.size()-1,note_value{0.0});
+	for (auto i=0; i<sec_on.size(); ++i) {
+		auto delta_t = roundquant((sec_off[i]-sec_on[i]),s_resolution);
+		best_nv[i-1] = note_value{ts_in,beat_t{delta_t*bps}};
+	}
+	return best_nv;
+}
+
+//  rp, ts, bpm
+std::vector<double> rp2tonset(std::vector<note_value> const& rp_in, 
+	ts_t const& ts_in, double const& bpm) {
+	std::vector<double> t_on(rp_in.size()+1, 0.0);
+
+	auto bps = bpm/60;
+	for (auto i=0; i<rp_in.size(); ++i) {
+		t_on[i+1] = t_on[i] + (nbeat(ts_in,rp_in[i]).to_double())/bps;
+	}
+	return t_on;
 }
 
 std::string tonset2rp_demo() {

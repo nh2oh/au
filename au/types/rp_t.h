@@ -216,9 +216,20 @@ std::string rp_t_info();
 std::vector<std::vector<int>> tmetg(ts_t, std::vector<note_value>, std::vector<beat_t>);  // ts, dp, phase
 //std::string print_tg(std::vector<std::vector<int>> tg);
 
-//  t_start, ts, bpm
+//  t_on, ts, bpm, resolution-in-seconds
 std::vector<note_value> tonset2rp(std::vector<double> const&, ts_t const&, 
 	double const&, double const&);
+
+//  Overload for a vector of ontimes and a vector of offtimes
+//  t_on, t_off, ts, bpm, resolution-in-seconds
+std::vector<note_value> tonset2rp(std::vector<double> const&, 
+	std::vector<double> const&, ts_t const&, double const&, double const&);
+
+//  rp, ts, bpm
+std::vector<double> rp2tonset(std::vector<note_value> const&, ts_t const&, 
+	double const&);
+
+
 
 std::string tonset2rp_demo();
 
