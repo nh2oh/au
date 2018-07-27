@@ -1,6 +1,6 @@
 #pragma once
 #include <vector>
-
+#include <cstdlib> // std::abs for template roundstep(), std::round for template roundquant()
 
 std::vector<double> urandd(int,double,double);
 std::vector<int> urandi(int,int,int);
@@ -21,12 +21,12 @@ frac rapprox(double,int);  // number-to-approximate, max-denominator
 
 // subject-to-round, allowed-round-targets
 // allowed_round_targets _must_ be sorted smallest -> largest
-template<typename T> T roundquant(T const&, std::vector<T> const&);
+template<typename T> T roundset(T const&, std::vector<T> const&);
 
 // subject-to-round, allowed-round-targets
 // allowed_round_targets _must_ be sorted smallest -> largest
 template<typename T>
-T roundquant(T const& subject, std::vector<T> const& targets) {
+T roundset(T const& subject, std::vector<T> const& targets) {
 	for (auto i=1; i<targets.size(); ++i) {
 		auto s_t = (subject-targets[i]);
 		if (s_t < (subject-subject)) {
@@ -42,6 +42,32 @@ T roundquant(T const& subject, std::vector<T> const& targets) {
 		}
 	}
 	return targets.back();
+};
+
+
+// vector of values to fuzz, random-fraction-of-value to add to each element
+template<typename T> std::vector<T> fuzzset(std::vector<T> const&, double const&);
+
+// vector of values to fuzz, random-fraction-of-value to add to each element
+template<typename T>
+std::vector<T> fuzzset(std::vector<T> const& v, double const& fuzz_frac) {
+	std::vector<double> rns = urandd(v.size()+1,-fuzz_frac,fuzz_frac);
+	auto v_fuzzed = v;
+	for (int i=0; i<v.size(); ++i) {
+		v_fuzzed[i] + v_fuzzed[i] + (v_fuzzed[i])*(rns[i]);
+	}
+	return v_fuzzed;
+};
+
+
+// subject-to-round, step
+template<typename T> T roundquant(T const&, T const&);
+
+// subject-to-round, step
+template<typename T>
+T roundquant(T const& subject, T const& step) {
+	auto n = std::round((subject/step));
+	return std::abs(n)*step;
 };
 
 //-----------------------------------------------------------------------------

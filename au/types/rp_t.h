@@ -17,12 +17,14 @@ public:
 
 	beat_t& operator+=(beat_t const&);
 	beat_t& operator-=(beat_t const&);
+	
 private:
 	double m_beats {0.0};
 };
 
 beat_t operator+(beat_t const&, beat_t const&);
 beat_t operator-(beat_t const&, beat_t const&);
+beat_t operator-(beat_t const&);
 double operator/(beat_t const&, beat_t const&);
 double operator/(double const&, beat_t const&);
 beat_t operator/(beat_t const&, double const&);
@@ -218,7 +220,7 @@ std::vector<std::vector<int>> tmetg(ts_t, std::vector<note_value>, std::vector<b
 std::vector<note_value> tonset2rp(std::vector<double> const&, ts_t const&, 
 	double const&, double const&);
 
-std::vector<note_value> tonset2rp_demo();
+std::string tonset2rp_demo();
 
 
 
