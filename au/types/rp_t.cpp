@@ -40,8 +40,14 @@ beat_t operator-(beat_t const& lhs, beat_t const& rhs) {
 double operator/(beat_t const& lhs, beat_t const& rhs) {
 	return (lhs.to_double())/(rhs.to_double());
 }
+double operator/(double const& lhs, beat_t const& rhs) {
+	return (lhs/rhs.to_double());
+}
 beat_t operator*(double const& lhs, beat_t const& rhs) {
 	return beat_t{lhs*rhs.to_double()};
+}
+beat_t operator/(beat_t const& lhs, double const& rhs) {
+	return beat_t{lhs.to_double()/rhs};
 }
 beat_t operator*(beat_t const& lhs, double const& rhs) {
 	return beat_t{rhs*lhs.to_double()};
@@ -96,6 +102,12 @@ bar_t operator-(bar_t const& lhs, bar_t const& rhs) {
 double operator/(bar_t const& lhs, bar_t const& rhs) {
 	return ((lhs.to_double())/(rhs.to_double()));
 }
+bar_t operator/(bar_t const& lhs, double const& rhs) {
+	return bar_t{lhs.to_double()/rhs};
+}
+double operator/(double const& lhs, bar_t const& rhs) {
+	return (lhs/rhs.to_double());
+}
 bar_t operator*(bar_t const& lhs, double const& rhs) {
 	return(bar_t{lhs.to_double()*rhs});
 }
@@ -135,6 +147,11 @@ note_value::note_value(double base_value_in, int num_dots_in) {
 	// nv = rv*(2-1/(2^n))
 	m_nv = base_value_in*(2.0 - 1.0/std::pow(2,num_dots_in));
 }
+
+note_value::note_value(ts_t ts_in, beat_t nbeats) {
+	m_nv = ts_in.beat_unit().to_double();
+}
+
 std::optional<nv_base_dots> note_value::exact() const {
 	// nv = bv*(2-1/(2^n))
 	double bv {0}; int num_dots {0};  // relative-value, number-of-dots
@@ -642,5 +659,38 @@ std::string rp_t_info() {
 }
 
 
+// Convert a sequence of note on-times to a sequence of note-values
+std::vector<note_value> tonset2rp(std::vector<double> const& seconset, 
+	ts_t const& ts_in, double const& bpm, double const& s_resolution) {
+	
+	auto bps = bpm/60.0;
+
+	// Set of note values to consider
+	int max_ndot = 3;
+	std::vector<note_value> nv_pool {};
+	std::vector<beat_t> bt_pool {};
+	for (auto i=0; i <= max_ndot; ++i) {
+		for (auto j=-3; j<8; ++j) {
+			note_value curr_note {1.0/std::pow(2,j),i};
+			beat_t curr_nbeats = nbeat(ts_in,curr_note);
+			if (curr_nbeats.to_double()/bps < s_resolution) { break; }
+			nv_pool.push_back(curr_note);
+			bt_pool.push_back(curr_nbeats);
+		}
+	}
+	std::sort(bt_pool.begin(), bt_pool.end());
+
+	
+	std::vector<beat_t> nbeats_quantized(seconset.size()-1,beat_t{0.0});
+	std::vector<note_value> best_nv(seconset.size()-1,note_value{0.0});
+	for (auto i=0; i<nbeats_quantized.size(); ++i) {
+		auto delta = (seconset[i+1] - seconset[i]);
+		auto n_res_interval = std::round(delta/s_resolution);
+		nbeats_quantized[i] = beat_t{n_res_interval*s_resolution};
 
 
+		best_nv[i] = note_value{ts_in,roundquant(nbeats_quantized[i],bt_pool)};
+	}
+
+
+}
