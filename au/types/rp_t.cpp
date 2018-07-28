@@ -37,6 +37,10 @@ beat_t operator-(beat_t const& lhs, beat_t const& rhs) {
 	beat_t result {lhs};
 	return (result-=rhs);
 }
+beat_t operator-(beat_t const& rhs) {
+	return beat_t{-1.0*(rhs.to_double())};
+}
+
 double operator/(beat_t const& lhs, beat_t const& rhs) {
 	return (lhs.to_double())/(rhs.to_double());
 }
@@ -141,15 +145,24 @@ bool operator<=(bar_t const& lhs, bar_t const& rhs) {
 
 note_value::note_value(double nv_in) {
 	m_nv = nv_in;
+	if (!validate()) {
+		au_error("note_value::note_value(double nv_in):  m_nv must be > 0");
+	}
 }
 
 note_value::note_value(double base_value_in, int num_dots_in) {
 	// nv = rv*(2-1/(2^n))
 	m_nv = base_value_in*(2.0 - 1.0/std::pow(2,num_dots_in));
+	if (!validate()) {
+		au_error("note_value::note_value(double base_value_in, int num_dots_in):  m_nv must be > 0");
+	}
 }
 
 note_value::note_value(ts_t ts_in, beat_t nbeats) {
 	m_nv = (ts_in.beat_unit().to_double())*(nbeats.to_double());
+	if (!validate()) {
+		au_error("note_value::note_value(ts_t ts_in, beat_t nbeats):  m_nv must be > 0");
+	}
 }
 
 std::optional<nv_base_dots> note_value::exact() const {
@@ -218,6 +231,10 @@ std::optional<double> note_value::undot_value() const {
 		return (*o_base_dots).base_value;
 	}
 	return {};
+}
+
+bool note_value::validate() {
+	return (m_nv >= 0.0);
 }
 
 std::string note_value::print() const {
@@ -659,82 +676,80 @@ std::string rp_t_info() {
 }
 
 
-// Convert a sequence of note on-times to a sequence of note-values
+// Convert a sequence of note on-times (in seconds) to a sequence of 
+// note-values.  The off-time of note i is the on-time of note i+1.  
+// If you have a vector of ontimes _and_ a vector of offtimes (say, 
+// from a "notefile," there is an overload below.  
+// 
 std::vector<note_value> tonset2rp(std::vector<double> const& sec_onset, 
 	ts_t const& ts_in, double const& bpm, double const& s_resolution) {
-	
 	auto bps = bpm/60.0;
-
-	// Set of note values to consider
-	int max_ndot = 3;
-	std::vector<note_value> nv_pool {};
-	std::vector<beat_t> bt_pool {};
-	for (auto i=0; i <= max_ndot; ++i) {
-		for (auto j=-3; j<8; ++j) {
-			note_value curr_note {1.0/std::pow(2,j),i};
-			beat_t curr_nbeats = nbeat(ts_in,curr_note);
-			if (curr_nbeats.to_double()/bps < s_resolution) { break; }
-			nv_pool.push_back(curr_note);
-			bt_pool.push_back(curr_nbeats);
-		}
-	}
-	std::sort(bt_pool.begin(), bt_pool.end());
-
-	
-	std::vector<beat_t> nbeats_quantized(sec_onset.size()-1,beat_t{0.0});
 	std::vector<note_value> best_nv(sec_onset.size()-1,note_value{0.0});
-	for (auto i=0; i<nbeats_quantized.size(); ++i) {
-		auto delta = (sec_onset[i+1] - sec_onset[i]);
-		//auto n_res_interval = std::round(delta/s_resolution);
-		//nbeats_quantized[i] = beat_t{n_res_interval*s_resolution};
-		auto curr_nbeats = beat_t{delta*bps};
-		nbeats_quantized[i] = roundquant(curr_nbeats,bt_pool);
-		best_nv[i] = note_value{ts_in,nbeats_quantized[i]};
-		wait();
+	for (auto i=1; i<sec_onset.size(); ++i) { // NOTE:  Begins with _second_ element
+		auto delta_t = roundquant((sec_onset[i]-sec_onset[i-1]),s_resolution);
+		if (delta_t <= 0) {
+			wait();
+		}
+		best_nv[i-1] = note_value{ts_in,beat_t{delta_t*bps}};
 	}
-
 	return best_nv;
 }
 
+// Overload for a vector of ontimes and a vector of offtimes
+std::vector<note_value> tonset2rp(std::vector<double> const& sec_on, 
+	std::vector<double> const& sec_off, ts_t const& ts_in, double const& bpm, 
+	double const& s_resolution) {
 
+	auto bps = bpm/60.0;
+	std::vector<note_value> best_nv(sec_on.size()-1,note_value{0.0});
+	for (auto i=0; i<sec_on.size(); ++i) {
+		auto delta_t = roundquant((sec_off[i]-sec_on[i]),s_resolution);
+		best_nv[i-1] = note_value{ts_in,beat_t{delta_t*bps}};
+	}
+	return best_nv;
+}
 
+//  rp, ts, bpm
+std::vector<double> rp2tonset(std::vector<note_value> const& rp_in, 
+	ts_t const& ts_in, double const& bpm) {
+	std::vector<double> t_on(rp_in.size()+1, 0.0);
 
+	auto bps = bpm/60;
+	for (auto i=0; i<rp_in.size(); ++i) {
+		t_on[i+1] = t_on[i] + (nbeat(ts_in,rp_in[i]).to_double())/bps;
+	}
+	return t_on;
+}
 
-std::vector<note_value> tonset2rp_demo() {
-
-	//std::vector<double> t {-3.0,-2.0,-1.0,0,1.0,2.0,3.0};
-	//auto rq = roundquant(-5.0,t);
-
+std::string tonset2rp_demo() {
 	std::vector<note_value> nts {note_value{1.0/1.0},note_value{1.0/2.0},
 		note_value{1.0/4.0},note_value{1.0/8.0}};
 	auto nv_resolution = note_value{1.0/8.0};
 	auto ts = "4/4"_ts;
 	double bpm = 60; auto bps = bpm/60;
 	double sec_resolution = nbeat(ts,nv_resolution).to_double()/bps;
-	int n = 12;
+	int n = 15;
 
 	auto ridx_nts = urandi(n,0,nts.size()-1);
-	auto rand_frac_delta_t = urandd(n,-0.05,0.05);
+	auto rand_frac_delta_t = urandd(n,-0.075,0.075);
 
 	std::vector<note_value> note_seq {};
-	std::vector<beat_t> beat_seq {};  // Exact
-	std::vector<double> delta_sec {};  // Exact
 	std::vector<double> sec_onset {0.0};  // +/- some random offset
-	double t_total {0};
+	double t_total {0.0};
 	for (auto i=0; i<n; ++i) {
-		//auto ridx = std::round(urand(0,nts.size()-1));
 		auto curr_nt = nts[ridx_nts[i]];
-
 		note_seq.push_back(curr_nt);
-		beat_seq.push_back(nbeat(ts,curr_nt));
-		delta_sec.push_back(nbeat(ts,curr_nt).to_double()/bps);
-
-		t_total += delta_sec.back() + delta_sec.back()*rand_frac_delta_t[i];
+		
+		auto delta_s = nbeat(ts,curr_nt).to_double()/bps;
+		t_total += delta_s + delta_s*rand_frac_delta_t[i];
 		sec_onset.push_back(t_total);
 	}
 
-	auto x = tonset2rp(sec_onset,ts,bpm,sec_resolution);
+	auto best_nvs = tonset2rp(sec_onset,ts,bpm,sec_resolution);
 
-	wait();
-	return x;
+	std::string s {};
+	s += "Input seq: \n" + printrp(ts,note_seq) + "\n\n" + 
+		"tonset2rp(): \n" + printrp(ts,best_nvs) + "\n\n";
+
+	return s;
 }
