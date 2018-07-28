@@ -24,6 +24,8 @@ private:
 beat_t operator+(beat_t const&, beat_t const&);
 beat_t operator-(beat_t const&, beat_t const&);
 double operator/(beat_t const&, beat_t const&);
+double operator/(double const&, beat_t const&);
+beat_t operator/(beat_t const&, double const&);
 beat_t operator*(double const&, beat_t const&);
 beat_t operator*(beat_t const&, double const&);
 bool operator==(beat_t const&, beat_t const&);
@@ -52,6 +54,8 @@ private:
 bar_t operator+(bar_t const&, bar_t const&);
 bar_t operator-(bar_t const&, bar_t const&);
 double operator/(bar_t const&, bar_t const&);
+double operator/(double const&, bar_t const&);
+bar_t operator/(bar_t const&, double const&);
 bar_t operator*(bar_t const&, double const&);
 bar_t operator*(double const&, bar_t const&);
 bool operator==(bar_t const&, bar_t const&);
@@ -71,11 +75,14 @@ struct nv_base_dots {
 	int ndot;
 };
 
+class ts_t;
+
 class note_value {
 public:
 	explicit note_value() = default;
 	explicit note_value(double);
 	explicit note_value(double,int);  // base_value, ndots
+	explicit note_value(ts_t,beat_t);
 
 	std::optional<nv_base_dots> exact() const;
 	std::optional<nv_base_dots> exact2() const;
@@ -206,6 +213,12 @@ std::string rp_t_info();
 
 std::vector<std::vector<int>> tmetg(ts_t, std::vector<note_value>, std::vector<beat_t>);  // ts, dp, phase
 //std::string print_tg(std::vector<std::vector<int>> tg);
+
+//  t_start, ts, bpm
+std::vector<note_value> tonset2rp(std::vector<double> const&, ts_t const&, 
+	double const&, double const&);
+
+std::vector<note_value> tonset2rp_demo();
 
 
 
