@@ -24,7 +24,7 @@ note_value::note_value(double base_value_in, int num_dots_in) {
 
 note_value::note_value(ts_t ts_in, beat_t nbeats) {
 	m_nv = (ts_in.beat_unit().to_double())*(nbeats.to_double());
-	au_assert(m_nv>0.0);
+	au_assert(m_nv>0.0,"Note-value's must be >0");
 }
 
 
