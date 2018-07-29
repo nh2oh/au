@@ -57,6 +57,18 @@
     <ClInclude Include="line_t.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="types\beat_bar_t.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="types\ts_t.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="types\metg_t.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="types\note_value_t.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="au.cpp">
@@ -99,6 +111,18 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="line_t.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="types\beat_bar_t.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="types\ts_t.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="types\metg_t.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="types\note_value_t.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
