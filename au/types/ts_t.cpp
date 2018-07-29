@@ -27,31 +27,18 @@ ts_t::ts_t(beat_t bt_per_br_in, note_value nv_per_bt, bool is_compound_in) {
 }
 
 ts_t operator""_ts(const char *literal_in, size_t length) {
-	ts_t default_ts {beat_t {4.0}, note_value {1.0/4.0}, false};
-
 	auto o_matches = rx_match_captures("(\\d+)/(\\d+)(c)?",std::string{literal_in});
-	if (!o_matches) {
+	if (!o_matches || (*o_matches).size() != 4) {
 		au_error("Could not parse ts string literal");
-		return default_ts;
 	}
-
 	auto matches = *o_matches;
-	if (matches.size() != 3 && matches.size() != 4) {
-		au_error("Could not parse ts string literal");
-		return default_ts;
-	}
 
 	double bt_per_bar {std::stod(*(matches[1]))};
 	double inv_nv_per_bt {std::stod(*(matches[2]))};
-	if (bt_per_bar <= 0 || inv_nv_per_bt <= 0) {
-		au_error("Could not parse ts string literal");
-		return default_ts;
-	}
+	au_assert((bt_per_bar > 0 && inv_nv_per_bt > 0), "No (-) values in a ts");
 	
 	bool is_compound {false};
-	if (matches.size() == 4 && *(matches[3]) == "c") {
-		is_compound = true;
-	}
+	if (matches[3]) { is_compound = true; }
 
 	return ts_t {beat_t {bt_per_bar}, note_value {1.0/inv_nv_per_bt}, is_compound};
 }

@@ -27,8 +27,7 @@ public:
 	explicit note_value(double,int);  // base_value, ndots
 	explicit note_value(ts_t,beat_t);
 
-	std::optional<nv_base_dots> exact() const;
-	std::optional<nv_base_dots> exact2() const;
+	//std::optional<nv_base_dots> exact2() const;
 	std::optional<int> ndot() const;
 	std::optional<double> undot_value() const;
 	
@@ -39,7 +38,11 @@ public:
 	note_value& operator-=(note_value const&);
 private:
 	double m_nv {1.0};
+
+	std::optional<nv_base_dots> exact() const;
 };
+
+note_value operator""_nv(const char *literal_in, size_t length);
 
 note_value operator+(note_value const&, note_value const&);
 note_value operator-(note_value const&, note_value const&);
