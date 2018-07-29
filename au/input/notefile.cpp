@@ -17,7 +17,7 @@
 //
 //
 
-std::vector<notefile> read_notefile(std::string const& filename) {
+std::vector<notefile> read_notefile(std::string const& filename, int flags) {
 	auto f = std::ifstream(filename);
 	au_assert(f.is_open(),"Could not open file");
 
@@ -31,6 +31,10 @@ std::vector<notefile> read_notefile(std::string const& filename) {
 
 		result.push_back({std::stod(*(matches[1])),std::stod(*(matches[2])),
 			std::stoi(*(matches[3]))});
+
+		if (flags & notefileopts::pitchnum2spn) {
+			result.back().pitch -= 12;
+		}
 	}
 	f.close();
 	au_assert(result.size() > 0, "Didn't get any lines!");

@@ -92,8 +92,8 @@ bool operator>=(octn_t const& lhs, octn_t const& rhs) {
 
 
 rscdoctn_t::rscdoctn_t(int rscd_in, octn_t octn_in, int n_in) {
-	if (n_in <= 0 || std::abs(rscd_in) >= m_n) {
-		au_error("rscdoctn_t::rscdoctn_t(...):  n_in <= 0 || std::abs(rscd_in) >= m_n");
+	if (n_in <= 0 || std::abs(rscd_in) >= n_in) {
+		au_error("rscdoctn_t::rscdoctn_t(...):  n_in <= 0 || std::abs(rscd_in) >= n_in");
 	}
 	m_rscd = rscd_in;
 	m_octn = octn_in;
@@ -101,8 +101,8 @@ rscdoctn_t::rscdoctn_t(int rscd_in, octn_t octn_in, int n_in) {
 }
 
 rscdoctn_t::rscdoctn_t(scd_t rscd_in, octn_t octn_in, int n_in) {
-	if (n_in <= 0 || std::abs(int{rscd_in}) >= m_n) {
-		au_error("rscdoctn_t::rscdoctn_t(...):  n_in <= 0 || std::abs(int{rscd_in}) >= m_n");
+	if (n_in <= 0 || std::abs(int{rscd_in}) >= n_in) {
+		au_error("rscdoctn_t::rscdoctn_t(...):  n_in <= 0 || std::abs(int{rscd_in}) >= n_in");
 	}
 	m_rscd = rscd_in;
 	m_octn = octn_in;

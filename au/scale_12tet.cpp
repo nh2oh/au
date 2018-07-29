@@ -103,7 +103,9 @@ std::optional<scd_t> scale_12tet::to_scd(ntstr_t ntstr_in) {  // Reads m_default
 		return {};
 	}
 	auto ntl_idx = bool2idx(boolidx);
-	return scd_t{ntl_idx[0]};
+	auto rscdoct = rscdoctn_t{scd_t{ntl_idx[0]},octn_t{ntstr_in},m_n};
+	return scd_t{rscdoct}; // a cast operator of rscdoctn_t... barf
+	//return scd_t{ntl_idx[0]};
 }
 
 octn_t scale_12tet::to_octn(scd_t scd_in) {
