@@ -27,7 +27,6 @@ note_value::note_value(ts_t ts_in, beat_t nbeats) {
 	au_assert(m_nv>0.0,"Note-value's must be >0");
 }
 
-
 note_value operator""_nv(const char *literal_in, size_t length) {
 	auto o_matches = rx_match_captures("(\\d+)(?:/(\\d+))?(\\.+)?",
 		std::string{literal_in});
@@ -49,24 +48,6 @@ note_value operator""_nv(const char *literal_in, size_t length) {
 	return note_value {numerator/denominator,ndots};
 }
 
-
-
-
-
-//
-// Old implementation of exact()
-//
-//std::optional<nv_base_dots> note_value::exact2() const {
-//	// nv = bv*(2-1/(2^n))
-//	double bv {0}; int num_dots {0};  // relative-value, number-of-dots
-//	for (true; num_dots<=5; ++num_dots) {
-//		bv = m_nv/(2-1/std::pow(2,num_dots));
-//		if (isapproxint(1.0/bv,6) || isapproxint(bv,6)) {
-//			return nv_base_dots {bv,num_dots};
-//		}
-//	}
-//	return {};
-//}
 
 std::optional<nv_base_dots> note_value::exact() const {
 	// For "note-value" nv, "base-value" bv
@@ -188,15 +169,6 @@ bool operator>=(note_value const& lhs, note_value const& rhs) {
 bool operator<=(note_value const& lhs, note_value const& rhs) {
 	return (lhs.to_double() <= rhs.to_double());
 }
-
-
-
-
-
-
-
-
-
 
 
 
