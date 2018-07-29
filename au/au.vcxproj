@@ -161,6 +161,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="input\notefile.h" />
     <ClInclude Include="types\note_value_t.h" />
     <ClInclude Include="types\metg_t.h" />
     <ClInclude Include="types\beat_bar_t.h" />
@@ -182,6 +183,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="au.cpp" />
+    <ClCompile Include="input\notefile.cpp" />
     <ClCompile Include="types\note_value_t.cpp" />
     <ClCompile Include="types\metg_t.cpp" />
     <ClCompile Include="types\beat_bar_t.cpp" />

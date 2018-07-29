@@ -69,6 +69,9 @@
     <ClInclude Include="types\note_value_t.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="input\notefile.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="au.cpp">
@@ -123,6 +126,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="types\note_value_t.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="input\notefile.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

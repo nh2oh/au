@@ -10,9 +10,7 @@
 // The frq_t class
 
 frq_t::frq_t(double frq_in) {
-	if (frq_in <= 0 /*|| static_cast<int>(frq_in*std::pow(10,6)) <= 0*/) {
-		au_error("frq_t::frq_t(double frq_in):  (frq_in < 0 || static_cast<int>(frq_in*std::pow(10,6)) <= 0)");
-	}
+	au_assert(frq_in > 0);
 	m_frq = frq_in;
 }
 
@@ -48,19 +46,17 @@ frq_t operator+(frq_t const& lhs, frq_t const& rhs) {
 }
 // frq_t constructor checks for <= 0
 frq_t operator-(frq_t const& lhs, frq_t const& rhs) {
-	return frq_t {lhs.to_double()-rhs.to_double()};
+	return frq_t {lhs.to_double()-rhs.to_double()}; // Constructor ensures > 0
 }
 // Result is a frq_t^2, so dropping the units
 double operator*(frq_t const& lhs, frq_t const& rhs) {  
 	return (lhs.to_double()*rhs.to_double());
 }
-// Multiplication of a double and a frq_t => a frq_t, but the double
-// must be >= 0.  This check is performed in the frq_t() constructor
 frq_t operator*(double const& lhs, frq_t const& rhs) {
-	return frq_t {lhs*rhs.to_double()};
+	return frq_t {lhs*rhs.to_double()}; // Constructor ensures > 0
 }
 frq_t operator*(frq_t const& lhs, double const& rhs) {
-	return frq_t {rhs*lhs.to_double()};
+	return frq_t {rhs*lhs.to_double()}; // Constructor ensures > 0
 }
 // Division yields a dimensionless parameter
 double operator/(frq_t const& lhs, frq_t const& rhs) {
@@ -68,11 +64,11 @@ double operator/(frq_t const& lhs, frq_t const& rhs) {
 }
 // units are time, no longer frq_t
 double operator/(double const& lhs, frq_t const& rhs) {  
-	return lhs/(rhs.to_double());
+	return lhs/(rhs.to_double()); 
 }
-// frq_t constructor checks for <= 0
+
 frq_t operator/(frq_t const& lhs, double const& rhs) {
-	return frq_t {(lhs.to_double())/rhs};
+	return frq_t {(lhs.to_double())/rhs}; // Constructor ensures > 0
 }
 
 std::ostream& operator<<(std::ostream& os, frq_t const& frq_in) {
@@ -249,9 +245,6 @@ std::string cent_t::print(int prefer_name) const {
 
 
 bool operator==(cent_t const& lhs, cent_t const& rhs) {
-	//double scf = std::pow(10,6); // "scale factor" ...note the hardcoded precision 6
-	//double delta = std::abs(lhs.to_double() - rhs.to_double());
-	//return(static_cast<int>(scf*delta) == 0);
 	return(isapproxeq(lhs.to_double(),rhs.to_double(),6));
 }
 bool operator<(cent_t const& lhs, cent_t const& rhs) {
