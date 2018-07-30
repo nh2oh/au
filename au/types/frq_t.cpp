@@ -294,6 +294,7 @@ cent_t operator""_cent(unsigned long long literal_in) {
 oct_t::oct_t(double num_octs) {
 	m_oct = num_octs;
 }
+
 oct_t::oct_t(cent_t cents_in) {
 	m_oct = (cents_in.to_double())/1200;
 }

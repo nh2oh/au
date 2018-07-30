@@ -58,7 +58,7 @@ std::string scale_diatonic12tet::description() const {
 // is not applicable to the completely general case of an arbitrary scale
 ntstr_t scale_diatonic12tet::to_ntstr(scd_t scd_in) {  // Reads m_default_valid_ntls directly
 	rscdoctn_t rscdoctn_in {scd_in, m_n};
-	return ntstr_t {m_ntls[rscdoctn_in.rscd_to_int()], octn_t{rscdoctn_in}};
+	return ntstr_t {m_ntls[rscdoctn_in.to_rscd().to_int()], rscdoctn_in.to_octn().to_int()};
 }
 
 std::optional<ntstr_t> scale_diatonic12tet::to_ntstr(frq_t frq_in) {  // wrapper
@@ -71,11 +71,11 @@ std::optional<ntstr_t> scale_diatonic12tet::to_ntstr(frq_t frq_in) {  // wrapper
 
 frq_t scale_diatonic12tet::to_frq(scd_t scd_in) {  // Calls frq_eqt() directly
 	rscdoctn_t rscdoct_in {scd_in,m_n};
-	int rscd = rscdoct_in.rscd_to_int();
-	int oct = int{octn_t{rscdoct_in}};
+	int rscd = rscdoct_in.to_rscd().to_int();
+	double oct = static_cast<double>(rscdoct_in.to_octn().to_int());
 
 	//frq_t frq {m_frqs[rscd].to_double() + std::pow(2,oct)};
-	frq_t frq {m_frqs[rscd] + oct_t{static_cast<double>(oct)}};
+	frq_t frq {m_frqs[rscd] + oct_t{oct}};
 	return frq;
 }
 std::optional<frq_t> scale_diatonic12tet::to_frq(ntstr_t ntstr_in) {  // wrapper
@@ -112,7 +112,7 @@ std::optional<scd_t> scale_diatonic12tet::to_scd(ntstr_t ntstr_in) {  // Reads m
 
 octn_t scale_diatonic12tet::to_octn(scd_t scd_in) {
 	rscdoctn_t rscdoctn_in {scd_in,m_n};
-	return octn_t{rscdoctn_in};
+	return octn_t{rscdoctn_in.to_octn().to_int()};
 }
 
 std::optional<octn_t> scale_diatonic12tet::to_octn(frq_t frq_in) {
