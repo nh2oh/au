@@ -9,10 +9,6 @@
 scd_t::scd_t(int int_in) {
 	m_scd = int_in;
 }
-scd_t::scd_t(rscdoctn_t rscd_in) {
-	m_scd = rscd_in.to_scd().to_int();
-}
-
 int scd_t::to_int() const {
 	return m_scd;
 }
@@ -42,7 +38,7 @@ scd_t& scd_t::operator++() { // prefix
 	return *this;
 }
 scd_t scd_t::operator++ (int dummy_int) { // postfix
-	scd_t newscd = m_scd+1;
+	scd_t newscd {m_scd+1};
 	return newscd;
 }
 scd_t operator*(int const& lhs, scd_t const& rhs) {
@@ -83,6 +79,9 @@ bool operator<=(scd_t const& lhs, scd_t const& rhs) {
 octn_t::octn_t(int octn_in) {
 	m_octn = octn_in;
 }
+octn_t::octn_t(scd_t scd_in, int num_scds) {
+	m_octn = static_cast<int>(std::floor(scd_in/scd_t{num_scds}));
+}
 int octn_t::to_int() const {
 	return m_octn;
 }
@@ -110,45 +109,37 @@ bool operator>=(octn_t const& lhs, octn_t const& rhs) {
 //-----------------------------------------------------------------------------
 // The rscdoctn_t class
 
-rscdoctn_t::rscdoctn_t(scd_t rscd_in, octn_t octn_in, int n_in) {
-	au_assert(n_in > 0 && rscd_in.to_int() < n_in);
-	m_scd = n_in*octn_in.to_int() + rscd_in;
-	m_n = n_in;
-}
+
 rscdoctn_t::rscdoctn_t(scd_t scd_in, int n_in) {  // arg2 is num scds in octave
 	au_assert(n_in > 0,"rscdoctn_t(scd_t scd_in, int n_in):  n_in <= 0");
-	m_scd = scd_in;
+	m_rscd = fold(scd_in.to_int(),n_in);
 	m_n = n_in;
 }
-
-scd_t rscdoctn_t::to_rscd() const {
-	// scd_t division operator upcasts both args to double and returns a double
-	return scd_t{m_scd - m_n*static_cast<int>(std::floor(m_scd/m_n))};
+scd_t rscdoctn_t::to_scd(octn_t o) const {
+	return scd_t{o.to_int()*m_n + m_rscd};
 }
-scd_t rscdoctn_t::to_scd() const {
-	return m_scd;
+int rscdoctn_t::to_int() const {
+	return m_rscd;
 }
-octn_t rscdoctn_t::to_octn() const {
-	return octn_t {static_cast<int>(std::floor(m_scd/m_n))};   // operator scd_t/double
-}
-
 std::string rscdoctn_t::print() const {
 	std::string s {};
-	s += m_scd.to_int() + " => {" + this->to_rscd().to_int();
-	s += ", " + this->to_octn().to_int();
+	s += m_rscd + " => {" + m_n;
 	s += "}";
 	return s;
 }
 
+int rscdoctn_t::fold(int scd, int pivot) {
+	double r = static_cast<double>(scd)/static_cast<double>(pivot);
+	return scd - pivot*static_cast<int>(std::floor(r));
+}
 rscdoctn_t& rscdoctn_t::operator+=(rscdoctn_t const& rhs) {
 	au_assert(m_n == rhs.m_n);
-	m_scd += rhs.m_scd;
+	m_rscd = fold(m_rscd+rhs.m_rscd,m_n);
 	return *this;
 }
-
 rscdoctn_t& rscdoctn_t::operator-=(rscdoctn_t const& rhs) {
 	au_assert(m_n == rhs.m_n);
-	m_scd -= rhs.m_scd;
+	m_rscd = fold(m_rscd-rhs.m_rscd,m_n);
 	return *this;
 }
 
@@ -162,14 +153,14 @@ rscdoctn_t operator-(rscdoctn_t const& lhs, rscdoctn_t const& rhs) {
 }
 
 bool operator==(rscdoctn_t const& lhs, rscdoctn_t const& rhs) {
-	return ((lhs.m_n == rhs.m_n) && (lhs.m_scd == rhs.m_scd));
+	return ((lhs.m_n == rhs.m_n) && (lhs.m_rscd == rhs.m_rscd));
 }
 bool operator<(rscdoctn_t const& lhs, rscdoctn_t const& rhs) {
 	au_assert(lhs.m_n == rhs.m_n);
-	return(lhs.m_scd < rhs.m_scd);
+	return(lhs.m_rscd < rhs.m_rscd);
 }
 bool operator>(rscdoctn_t const& lhs, rscdoctn_t const& rhs) {
 	au_assert(lhs.m_n == rhs.m_n);
-	return(lhs.m_scd > rhs.m_scd);
+	return(lhs.m_rscd > rhs.m_rscd);
 }
 

@@ -61,8 +61,8 @@ const octn_t scale_12tet::m_default_ref_octave {4};
 // is not applicable to the completely general case of an arbitrary scale
 ntstr_t scale_12tet::to_ntstr(scd_t scd_in) {  // Reads m_default_valid_ntls directly
 	rscdoctn_t rscdoctn_in {scd_in, m_n};
-	return ntstr_t {m_default_valid_ntls[rscdoctn_in.to_rscd().to_int()], 
-		rscdoctn_in.to_octn()};
+	return ntstr_t {m_default_valid_ntls[rscdoctn_in.to_int()], 
+		octn_t{scd_in,m_n}};
 }
 
 std::optional<ntstr_t> scale_12tet::to_ntstr(frq_t frq_in) {  // wrapper
@@ -104,14 +104,15 @@ std::optional<scd_t> scale_12tet::to_scd(ntstr_t ntstr_in) {  // Reads m_default
 		return {};
 	}
 	auto ntl_idx = bool2idx(boolidx);
-	auto rscdoct = rscdoctn_t{scd_t{ntl_idx[0]},octn_t{ntstr_in},m_n};
-	return scd_t{rscdoct}; // a cast operator of rscdoctn_t... barf
+	auto rscdoct = rscdoctn_t{scd_t{ntl_idx[0]},m_n};
+	return rscdoct.to_scd(octn_t{ntstr_in}); // barf the conversion operator
 	//return scd_t{ntl_idx[0]};
 }
 
 octn_t scale_12tet::to_octn(scd_t scd_in) {
-	rscdoctn_t rscdoctn_in {scd_in,m_n};
-	return octn_t{rscdoctn_in.to_octn().to_int()};
+	//rscdoctn_t rscdoctn_in {scd_in,m_n};
+	//return octn_t{rscdoctn_in.to_octn().to_int()};
+	return octn_t{scd_in,m_n};
 }
 
 std::optional<octn_t> scale_12tet::to_octn(frq_t frq_in) {

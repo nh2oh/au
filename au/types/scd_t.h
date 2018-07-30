@@ -16,12 +16,10 @@
 // scd_t.  
 //
 
-class rscdoctn_t;
 class scd_t {
 public:
 	explicit scd_t() = default;
-	scd_t(int);
-	explicit scd_t(rscdoctn_t);
+	explicit scd_t(int);
 
 	int to_int() const;
 	double to_double() const;
@@ -62,6 +60,7 @@ bool operator<=(scd_t const&, scd_t const&);
 class octn_t {
 public:
 	explicit octn_t() = default;
+	explicit octn_t(scd_t,int);
 	explicit octn_t(int);
 
 	int to_int() const;
@@ -80,34 +79,14 @@ private:
 //-----------------------------------------------------------------------------
 // The rscdoctn_t class
 //
-// An rscdoctn_t tags an scd_t with a number (m_n) indicating the number of
-// scds per octave on the scale to which the scd belongs.  This way, an 
-// rscdoctn_t can be converted to a reduced scd and an octave number.  
-//
-// Although a general scale is so unconstrained that "number of scale degrees
-// per octave" may not be a useful concept, it is useful for most normal
-// scales.  Hence the concept of the "reduced scd" exists external to and 
-// independently of a scale.  
-//
-// + and - produce the same result as + and - on the corresponding pair of
-// scd_t's.  Two rscdoctn_t's are == if they convert to the same scd_t.  
-//
-// Internal conversions from the rscd,octn,n representation to the scd 
-// representation require a lot of explicit casts and depend on subtle and 
-// probably nonsense behavior of some of the scd_t operators.  It is tempting
-// to just store the "scd" m_scd as a double and downcast to int in the 
-// rare case the value needs to come out.  
-//
 
 class rscdoctn_t {
 public:
 	explicit rscdoctn_t() = default;
-	explicit rscdoctn_t(scd_t, octn_t, int); // arg3 is num scds/octave
 	explicit rscdoctn_t(scd_t, int);  // arg2 is num scds/octave
 
-	scd_t to_rscd() const;
-	scd_t to_scd() const;
-	octn_t to_octn() const;
+	scd_t to_scd(octn_t) const;
+	int to_int() const;
 	std::string print() const;
 
 	rscdoctn_t& operator+=(rscdoctn_t const&);
@@ -118,8 +97,9 @@ public:
 	friend bool operator<(rscdoctn_t const&, rscdoctn_t const&);
 	friend bool operator>(rscdoctn_t const&, rscdoctn_t const&);
 private:
+	int fold(int,int);
 	int m_n {1};
-	scd_t m_scd {0};
+	int m_rscd {0};
 };
 
 rscdoctn_t operator+(rscdoctn_t const&, rscdoctn_t const&);
