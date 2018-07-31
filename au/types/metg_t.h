@@ -18,10 +18,11 @@ public:
 	std::vector<double> nt_prob(beat_t);
 
 	// list of allowed note_values @ given beat
-	std::vector<note_value> which_allowed(beat_t, std::vector<note_value>, int=1) const;
+	//std::vector<note_value> which_allowed(beat_t, std::vector<note_value>, int=1) const;
+	std::vector<int> levels_allowed(beat_t) const;
 	// Is the input note_value allowed @ the input beat?
 	bool allowed_at(beat_t) const;
-	std::vector<note_value> which_allowed2(beat_t) const;
+	std::vector<note_value> draw() const;
 	// If I put note_value @ beat, is any note value allowed at the next beat?
 	bool allowed_next(beat_t,note_value) const;
 	std::string print() const;

@@ -1,9 +1,12 @@
 #pragma once
 #include <vector>
 #include <cstdlib> // std::abs for template roundstep(), std::round for template roundquant()
+#include <random>
 
+std::mt19937 randeng(bool randseed=true);
 std::vector<double> urandd(int,double,double);
 std::vector<int> urandi(int,int,int);
+std::vector<int> randset(int const&, std::vector<double> const&, std::mt19937&);
 
 bool isapproxint(double,int); // is approximately integer
 bool isapproxeq(double, double, int);

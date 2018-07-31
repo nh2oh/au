@@ -18,10 +18,6 @@ std::string printrp(ts_t const&, std::vector<note_value> const&);
 
 std::string rp_t_info();
 
-std::vector<std::vector<int>> tmetg(ts_t, std::vector<note_value>, 
-	std::vector<beat_t>);  // ts, dp, phase
-//std::string print_tg(std::vector<std::vector<int>> tg);
-
 // Convert a vector of durations (units ~ time) to an rp
 //  delta_t, ts, bpm, resolution-in-seconds
 std::vector<note_value> deltat2rp(std::vector<double> const&, ts_t const&, 

@@ -4,30 +4,53 @@
 #include <chrono>
 #include "au_algs_math.h"
 
+// Random number generator, randomly seeded if randseed == true
+std::mt19937 randeng(bool randseed) {
+	std::default_random_engine randeng {};
+	auto t = std::chrono::system_clock::now().time_since_epoch().count();
+	if (randseed) {
+		randeng.seed(t);
+	}
+	return randeng;
+}
 
 // Random double
 std::vector<double> urandd(int n, double min, double max) {
-	std::default_random_engine randeng {};
-	auto t = std::chrono::system_clock::now().time_since_epoch().count();
-	randeng.seed(t);
+	auto re = randeng(true);
 	std::uniform_real_distribution<double> rn {min,max};
 	std::vector<double> rv(n,0.0);
 	for (auto i=0; i<n; ++i) {
-		rv[i] = rn(randeng);
+		rv[i] = rn(re);
 	}
 	return rv;
 }
 
 // Random int
 std::vector<int> urandi(int n, int min, int max) {
-	std::default_random_engine randeng {};
-	randeng.seed(std::chrono::system_clock::now().time_since_epoch().count());
+	auto re = randeng(true);
 	std::uniform_int_distribution<int> rn {min,max};
 	std::vector<int> rv(n,0);
 	for (auto i=0; i<n; ++i) {
-		rv[i] = rn(randeng);
+		rv[i] = rn(re);
 	}
 	return rv;
+}
+
+// Random indices of >= p.size()
+std::vector<int> randset(int const& n, std::vector<double> const& p, std::mt19937& re) {
+	std::uniform_real_distribution<double> rn {0,1};
+	std::vector<int> ridx {}; ridx.reserve(n);
+
+	for (int i=0; i<n; ++i) {
+		auto rd = rn(re);
+		int j=0;
+		for (double cump=0; j<p.size(); ++j) {
+			cump += p[j];  // cumulative probability
+			if (cump >= rd) { break; }
+		}
+		ridx.push_back(j);
+	}
+	return ridx;
 }
 
 // is approximately integer

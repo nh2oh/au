@@ -7,6 +7,7 @@
 #include <numeric> // lcm
 #include <string>
 #include <algorithm>
+#include <random>
 
 //-----------------------------------------------------------------------------
 // The tmetg_t class
@@ -70,48 +71,40 @@ tmetg_t::tmetg_t(ts_t ts_in, std::vector<note_value> note_values_in, std::vector
 void tmetg_t::set_rand_pg() {
 	au_assert(isapproxint(m_period/m_btres,6));
 	auto N_cols_period = static_cast<int>(m_period/m_btres);
-	std::vector<double> pg_unit(m_note_values.size(),0.0);
-	std::vector<std::vector<double>> m_pg(N_cols_period,pg_unit);
+	m_pg = std::vector<std::vector<double>>(N_cols_period,
+		std::vector<double>(m_note_values.size(),0.0));
 
 	for (auto i=0; i < m_pg.size(); ++i) {
 		auto curr_bt = i*m_btres;
-		auto curr_nts_allowed = which_allowed2(curr_bt);
-		auto idx = ismember(m_note_values, curr_nts_allowed);  // Need sum
-		for (auto j=0; j<idx.size(); ++j) {
-			if (!idx[j]) {continue; }
-			m_pg[i][j] = 1.0/idx.size();  // wrong... idx.size() too big
+		auto curr_allowed = levels_allowed(curr_bt);
+		for (auto idx : curr_allowed) {
+			m_pg[i][idx] = 1.0/curr_allowed.size();
 		}
 	}
-	//wait();
+	wait();
+}
+
+std::vector<note_value> tmetg_t::draw() const {
+	std::vector<note_value> rnts {};
+	auto re = randeng(true);
+
+	beat_t curr_bt {0};
+	while (curr_bt < m_period) {// (auto i=0; i<m_pg.size(); ++i) {
+		auto pg_col_idx = static_cast<int>(curr_bt/m_btres);
+		auto pg_col = m_pg[pg_col_idx];
+		auto ridx = randset(1,pg_col,re);
+		rnts.push_back(m_note_values[ridx[0]]);
+		curr_bt += m_beat_values[ridx[0]];
+	}
+
+	return rnts;
 }
 
 std::vector<double> tmetg_t::nt_prob(beat_t) {
 	return std::vector<double>(5,0.0);
 }
 
-std::vector<note_value> tmetg_t::which_allowed(beat_t beat, 
-	std::vector<note_value> nvs, int mode) const {
-	// mode == 1 => at && next (default)
-	// mode == 2 => at only
-	// mode == 3 => next only
-	std::vector<note_value> allowed_nvs {};
 
-	if (mode == 1 || mode == 2) {
-		if (!allowed_at(beat)) {
-			return allowed_nvs; // Empty vector
-		}
-	}
-
-	if (mode == 1 || mode == 3) {
-		for (auto const& cnv : nvs) {
-			if (allowed_next(beat,cnv)) {
-				allowed_nvs.push_back(cnv);
-			}
-		}
-	}
-
-	return allowed_nvs;
-}
 
 // True if _any_ note of m_note_values occurs at beat one nv past beat
 bool tmetg_t::allowed_next(beat_t beat, note_value nv) const {
@@ -130,15 +123,43 @@ bool tmetg_t::allowed_at(beat_t beat) const {
 }
 
 // True if _any_ note of m_note_values occurs at beat
-std::vector<note_value> tmetg_t::which_allowed2(beat_t beat) const {
-	std::vector<note_value> allowed_notes {};
+std::vector<int> tmetg_t::levels_allowed(beat_t beat) const {
+	std::vector<int> allowed {}; allowed.reserve(m_beat_values.size());
 	for (auto i=0; i<m_beat_values.size(); ++i) {
-		if (beat == (std::round(beat/m_beat_values[i])*m_beat_values[i] + m_ph[i])) {
-			allowed_notes.push_back(m_note_values[i]);
+		if (beat==(std::round(beat/m_beat_values[i])*m_beat_values[i] + m_ph[i])) {
+			allowed.push_back(i);
 		}
 	}
-	return allowed_notes;
+	return allowed;
 }
+
+//std::vector<note_value> tmetg_t::which_allowed(beat_t beat, 
+//	std::vector<note_value> nvs, int mode) const {
+//	// mode == 1 => at && next (default)
+//	// mode == 2 => at only
+//	// mode == 3 => next only
+//	std::vector<note_value> allowed_nvs {};
+//
+//	if (mode == 1 || mode == 2) {
+//		if (!allowed_at(beat)) {
+//			return allowed_nvs; // Empty vector
+//		}
+//	}
+//
+//	if (mode == 1 || mode == 3) {
+//		for (auto const& cnv : nvs) {
+//			if (allowed_next(beat,cnv)) {
+//				allowed_nvs.push_back(cnv);
+//			}
+//		}
+//	}
+//
+//	return allowed_nvs;
+//}
+
+
+
+
 
 std::string tmetg_t::print() const {
 
