@@ -72,6 +72,9 @@
     <ClInclude Include="input\notefile.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="types\types_all.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="au.cpp">

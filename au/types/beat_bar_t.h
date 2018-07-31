@@ -1,9 +1,5 @@
 #pragma once
 
-
-
-
-
 //-----------------------------------------------------------------------------
 // Class beat_t
 // Represents some number of beats
@@ -11,6 +7,7 @@
 class beat_t {
 public:
 	explicit beat_t() = default;
+	explicit beat_t(int);
 	explicit beat_t(double);
 
 	double to_double() const;

@@ -6,8 +6,7 @@
 #include <vector>
 #include <numeric> // lcm
 #include <string>
-
-
+#include <algorithm>
 
 //-----------------------------------------------------------------------------
 // The tmetg_t class
@@ -55,7 +54,39 @@ tmetg_t::tmetg_t(ts_t ts_in, std::vector<note_value> note_values_in, std::vector
 		Nbar = std::lcm((curr_ph_quant/bt_br).reduce().denom,Nbar);
 	}
 	m_btres = beat_t{(bt_br/Nbar).to_double()};
-	m_period = *std::max_element(m_beat_values.begin(),m_beat_values.end());
+
+	// What is the smallest number of m_btres steps containing an integer number 
+	// of all of Nbar, m_beat_values?  
+	frac btres_br = rapprox(bt_br.to_double()/m_btres.to_double(),m_bt_quantization).reduce();
+	int N_btres_period = std::lcm(btres_br.num,1);
+	for (auto curr_bt : m_beat_values) {
+		auto curr_bt_quant = rapprox(curr_bt.to_double(),m_bt_quantization);
+		N_btres_period = std::lcm((curr_bt_quant/btres_br).reduce().num,N_btres_period);
+	}
+	m_period = N_btres_period*m_btres;
+	//wait();
+}
+
+void tmetg_t::set_rand_pg() {
+	au_assert(isapproxint(m_period/m_btres,6));
+	auto N_cols_period = static_cast<int>(m_period/m_btres);
+	std::vector<double> pg_unit(m_note_values.size(),0.0);
+	std::vector<std::vector<double>> m_pg(N_cols_period,pg_unit);
+
+	for (auto i=0; i < m_pg.size(); ++i) {
+		auto curr_bt = i*m_btres;
+		auto curr_nts_allowed = which_allowed2(curr_bt);
+		auto idx = ismember(m_note_values, curr_nts_allowed);  // Need sum
+		for (auto j=0; j<idx.size(); ++j) {
+			if (!idx[j]) {continue; }
+			m_pg[i][j] = 1.0/idx.size();  // wrong... idx.size() too big
+		}
+	}
+	//wait();
+}
+
+std::vector<double> tmetg_t::nt_prob(beat_t) {
+	return std::vector<double>(5,0.0);
 }
 
 std::vector<note_value> tmetg_t::which_allowed(beat_t beat, 
@@ -82,11 +113,13 @@ std::vector<note_value> tmetg_t::which_allowed(beat_t beat,
 	return allowed_nvs;
 }
 
+// True if _any_ note of m_note_values occurs at beat one nv past beat
 bool tmetg_t::allowed_next(beat_t beat, note_value nv) const {
 	auto nxt_bt = beat+nbeat(m_ts,nv); // Beat-number of the next beat
 	return allowed_at(nxt_bt);
 }
 
+// True if _any_ note of m_note_values occurs at beat
 bool tmetg_t::allowed_at(beat_t beat) const {
 	for (auto i=0; i<m_beat_values.size(); ++i) {
 		if (beat == (std::round(beat/m_beat_values[i])*m_beat_values[i] + m_ph[i])) {
@@ -94,6 +127,17 @@ bool tmetg_t::allowed_at(beat_t beat) const {
 		}
 	}
 	return false;
+}
+
+// True if _any_ note of m_note_values occurs at beat
+std::vector<note_value> tmetg_t::which_allowed2(beat_t beat) const {
+	std::vector<note_value> allowed_notes {};
+	for (auto i=0; i<m_beat_values.size(); ++i) {
+		if (beat == (std::round(beat/m_beat_values[i])*m_beat_values[i] + m_ph[i])) {
+			allowed_notes.push_back(m_note_values[i]);
+		}
+	}
+	return allowed_notes;
 }
 
 std::string tmetg_t::print() const {

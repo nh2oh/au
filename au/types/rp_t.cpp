@@ -164,35 +164,3 @@ std::string deltat2rp_demo() {
 	return s;
 }
 
-
-
-//
-//The off-time of note i is the on-time of note i+1.  
-// Intervals between successive notes are rounded to the nearest multiple
-// of s_resolution.  For an n-element vector of onset times, the note_value
-// vector returned will be n-1 -element.  The input time-onset vector must
-// be sorted and may not contain any simultanious events.  
-// 
-// This algorithm takes the difference of each pair of timepoints in 
-// the input then rounds each difference to the closest value of
-// n*s_resolution, for integer n.  This is different from a method of first
-// rounding the values in sec_onset to the nearest n*s_resolution before 
-// taking the differences.  Consider:
-// s_resolution = 0.1
-// sec_onset =    {...,0.10,0.24,0.36,...}
-// Round-first:   {...,0.10,0.20,0.40,...} => {...,0.10,0.20,...}     
-// Diff-first:    {...,..., 0.14,0.12,...} => {...,0.10,0.10,...}
-//
-//tonset2rp()
-//for (auto i=0; i<best_nv.size(); ++i) {
-//	// NOTE:  best_nv is 1 smaller than sec_onset, so sec_onset[i+1] does
-//	// not overshoot.  
-//	auto delta_t = roundquant((sec[i+1]-sec[i]),s_resolution);
-//	if (isapproxeq(delta_t,0.0,1)) {
-//		au_error("No simultaneous events in a t_onset vector.");
-//	}
-//	best_nv[i] = note_value{ts_in,beat_t{delta_t*bps}};
-//}
-
-
-

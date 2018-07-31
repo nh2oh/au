@@ -11,7 +11,9 @@
 beat_t::beat_t(double beats_in) {
 	m_beats = beats_in;
 }
-
+beat_t::beat_t(int beats_in) {
+	m_beats = static_cast<double>(beats_in);
+}
 double beat_t::to_double() const {
 	return m_beats;
 }

@@ -83,7 +83,7 @@ frac rapprox(double x, int N) {  // number-to-approximate, max-denominator
 		sign = -1;
 	}
 	if (x > 1.0) {
-		integral = std::round(x);
+		integral = std::floor(x);
 		x = x-integral;
 	}
 	
