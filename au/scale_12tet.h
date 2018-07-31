@@ -5,6 +5,13 @@
 #include "types\ntl_t.h"
 #include "types\scd_t.h"
 
+
+//
+// The scale begins on the note 'C', hence octave increments occur between
+// B and C.  
+//
+//
+
 class scale_12tet {
 public:
 	// Constructors

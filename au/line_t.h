@@ -1,8 +1,8 @@
 #pragma once
 #include <vector>
 #include <initializer_list>
-#include "util/au_util_all.h";
 #include<variant>
+#include "util/au_util_all.h"
 #include "types\scd_t.h"
 #include "types\frq_t.h"
 #include "types\ntl_t.h"

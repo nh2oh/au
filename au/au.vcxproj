@@ -76,6 +76,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -85,7 +87,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
@@ -110,6 +112,8 @@
       <AdditionalIncludeDirectories>C:\Users\ben\Desktop\cpp\system_include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalUsingDirectories>%(AdditionalUsingDirectories)</AdditionalUsingDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <EnablePREfast>false</EnablePREfast>
+      <PrecompiledHeaderFile />
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -118,7 +122,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -137,7 +141,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -157,6 +161,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="input\notefile.h" />
+    <ClInclude Include="types\note_value_t.h" />
+    <ClInclude Include="types\metg_t.h" />
+    <ClInclude Include="types\beat_bar_t.h" />
     <ClInclude Include="line_t.h" />
     <ClInclude Include="rand_rp.h" />
     <ClInclude Include="scale.h" />
@@ -166,14 +174,20 @@
     <ClInclude Include="types\ntl_t.h" />
     <ClInclude Include="types\rp_t.h" />
     <ClInclude Include="types\scd_t.h" />
+    <ClInclude Include="types\types_all.h" />
     <ClInclude Include="util\au_algs.h" />
     <ClInclude Include="util\au_algs_math.h" />
     <ClInclude Include="util\au_error.h" />
     <ClInclude Include="util\au_util.h" />
     <ClInclude Include="util\au_util_all.h" />
+    <ClInclude Include="types\ts_t.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="au.cpp" />
+    <ClCompile Include="input\notefile.cpp" />
+    <ClCompile Include="types\note_value_t.cpp" />
+    <ClCompile Include="types\metg_t.cpp" />
+    <ClCompile Include="types\beat_bar_t.cpp" />
     <ClCompile Include="line_t.cpp" />
     <ClCompile Include="rand_rp.cpp" />
     <ClCompile Include="scale.cpp" />
@@ -187,6 +201,7 @@
     <ClCompile Include="util\au_algs_math.cpp" />
     <ClCompile Include="util\au_error.cpp" />
     <ClCompile Include="util\au_util.cpp" />
+    <ClCompile Include="types\ts_t.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -79,7 +79,7 @@ ntstr_t::ntstr_t(ntl_t ntl_in, octn_t octn_in) {
 }
 
 std::string ntstr_t::print() const {
-	return std::string(m_ntl.print() + "(" + std::to_string(int{m_octn}) + ")");
+	return std::string(m_ntl.print() + "(" + m_octn.print() + ")");
 }
 
 ntstr_t::operator ntl_t() const {

@@ -30,7 +30,7 @@ class ntstr_t {
 public:
 	ntstr_t() = delete;
 	explicit ntstr_t(std::string);
-	explicit ntstr_t(ntl_t, int);
+	explicit ntstr_t(ntl_t, int);  // arg2 ~ octave number
 	explicit ntstr_t(ntl_t, octn_t);
 
 	std::string print() const;

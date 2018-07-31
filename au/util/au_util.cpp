@@ -54,8 +54,7 @@ std::string int_suffix(int const& int_in) {
 
 
 std::optional<std::vector<std::optional<std::string>>> rx_match_captures(
-	std::string const& rx_exp, std::string const& subj) {
-	std::regex rx(rx_exp);
+	std::regex const& rx, std::string const& subj) {
 	std::smatch rx_matches;
 
 	if (!std::regex_match(subj, rx_matches, rx)) {
@@ -73,6 +72,12 @@ std::optional<std::vector<std::optional<std::string>>> rx_match_captures(
 	}
 
 	return captures;
+}
+
+std::optional<std::vector<std::optional<std::string>>> rx_match_captures(
+	std::string const& rx_exp, std::string const& subj) {
+	std::regex rx(rx_exp);
+	return rx_match_captures(rx,subj);
 }
 
 int wait() {

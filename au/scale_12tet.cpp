@@ -61,7 +61,8 @@ const octn_t scale_12tet::m_default_ref_octave {4};
 // is not applicable to the completely general case of an arbitrary scale
 ntstr_t scale_12tet::to_ntstr(scd_t scd_in) {  // Reads m_default_valid_ntls directly
 	rscdoctn_t rscdoctn_in {scd_in, m_n};
-	return ntstr_t {m_default_valid_ntls[rscdoctn_in.rscd_to_int()], octn_t{rscdoctn_in}};
+	return ntstr_t {m_default_valid_ntls[rscdoctn_in.to_int()], 
+		octn_t{scd_in,m_n}};
 }
 
 std::optional<ntstr_t> scale_12tet::to_ntstr(frq_t frq_in) {  // wrapper
@@ -73,7 +74,7 @@ std::optional<ntstr_t> scale_12tet::to_ntstr(frq_t frq_in) {  // wrapper
 }
 
 frq_t scale_12tet::to_frq(scd_t scd_in) {  // Calls frq_eqt() directly
-	auto dn = static_cast<int>(scd_in)-(m_ref_ntl_idx + int{m_ref_octn}*m_n);
+	auto dn = scd_in.to_int()-(m_ref_ntl_idx + m_n*m_ref_octn.to_int());
 	frq_t frq = frq_eqt(dn, m_ref_frq, m_n, m_gint);
 	return frq;
 }
@@ -92,7 +93,7 @@ std::optional<scd_t> scale_12tet::to_scd(frq_t frq_in) {  //  Calls n_eqt() dire
 	}
 	auto dn = static_cast<int>(std::round(dn_approx));
 	
-	return scd_t {dn - static_cast<int>(m_ref_octn)*m_n + m_ref_ntl_idx};
+	return scd_t {dn - m_ref_octn.to_int()*m_n + m_ref_ntl_idx};
 }
 
 // This function assumes none of the ntls in the scale are duplicates, so it
@@ -103,12 +104,15 @@ std::optional<scd_t> scale_12tet::to_scd(ntstr_t ntstr_in) {  // Reads m_default
 		return {};
 	}
 	auto ntl_idx = bool2idx(boolidx);
-	return scd_t{ntl_idx[0]};
+	auto rscdoct = rscdoctn_t{scd_t{ntl_idx[0]},m_n};
+	return rscdoct.to_scd(octn_t{ntstr_in}); // barf the conversion operator
+	//return scd_t{ntl_idx[0]};
 }
 
 octn_t scale_12tet::to_octn(scd_t scd_in) {
-	rscdoctn_t rscdoctn_in {scd_in,m_n};
-	return octn_t{rscdoctn_in};
+	//rscdoctn_t rscdoctn_in {scd_in,m_n};
+	//return octn_t{rscdoctn_in.to_octn().to_int()};
+	return octn_t{scd_in,m_n};
 }
 
 std::optional<octn_t> scale_12tet::to_octn(frq_t frq_in) {

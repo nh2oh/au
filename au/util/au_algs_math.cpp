@@ -8,7 +8,8 @@
 // Random double
 std::vector<double> urandd(int n, double min, double max) {
 	std::default_random_engine randeng {};
-	randeng.seed(std::chrono::system_clock::now().time_since_epoch().count());
+	auto t = std::chrono::system_clock::now().time_since_epoch().count();
+	randeng.seed(t);
 	std::uniform_real_distribution<double> rn {min,max};
 	std::vector<double> rv(n,0.0);
 	for (auto i=0; i<n; ++i) {
@@ -22,7 +23,7 @@ std::vector<int> urandi(int n, int min, int max) {
 	std::default_random_engine randeng {};
 	randeng.seed(std::chrono::system_clock::now().time_since_epoch().count());
 	std::uniform_int_distribution<int> rn {min,max};
-	std::vector<int> rv(n,0.0);
+	std::vector<int> rv(n,0);
 	for (auto i=0; i<n; ++i) {
 		rv[i] = rn(randeng);
 	}
@@ -82,7 +83,7 @@ frac rapprox(double x, int N) {  // number-to-approximate, max-denominator
 		sign = -1;
 	}
 	if (x > 1.0) {
-		integral = std::round(x);
+		integral = std::floor(x);
 		x = x-integral;
 	}
 	
