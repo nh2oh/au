@@ -17,6 +17,8 @@ public:
 	void set_rand_pg();
 	std::vector<double> nt_prob(beat_t);
 
+	void enumerate() const;
+
 	// list of allowed note_values @ given beat
 	//std::vector<note_value> which_allowed(beat_t, std::vector<note_value>, int=1) const;
 	std::vector<int> levels_allowed(beat_t) const;
@@ -48,6 +50,8 @@ private:
 
 	// The maximum number of subdivisions of the beat used in calculating btres
 	static const int m_bt_quantization; 
+
+	void m_enumerator(std::vector<std::vector<int>>&, std::vector<std::vector<int>> const&, int&,int&) const;
 };
 
 

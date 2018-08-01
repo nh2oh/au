@@ -2,16 +2,28 @@
 #include <vector>
 #include <cstdlib> // std::abs for template roundstep(), std::round for template roundquant()
 #include <random>
+#include <optional>
 
+// Regression
+struct linreg_result {
+	double slope {0.0};
+	double intercept {0.0};
+	double regcoef {0.0}; // r-squared
+};
+std::optional<linreg_result> linreg(std::vector<double> const&, std::vector<double> const&);
+
+// Random numbers
 std::mt19937 randeng(bool randseed=true);
 std::vector<double> urandd(int,double,double);
 std::vector<int> urandi(int,int,int);
 std::vector<int> randset(int const&, std::vector<double> const&, std::mt19937&);
 
+// Floating point equality
 bool isapproxint(double,int); // is approximately integer
 bool isapproxeq(double, double, int);
 bool ismultiple(double, double, int); // true if arg1/arg2 == integer
 
+// Vectorized lcm, gcd
 int lcm(std::vector<int> const&);
 int gcd(std::vector<int> const&);
 

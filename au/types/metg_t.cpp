@@ -8,6 +8,7 @@
 #include <string>
 #include <algorithm>
 #include <random>
+#include <iostream>
 
 //-----------------------------------------------------------------------------
 // The tmetg_t class
@@ -103,6 +104,73 @@ std::vector<note_value> tmetg_t::draw() const {
 std::vector<double> tmetg_t::nt_prob(beat_t) {
 	return std::vector<double>(5,0.0);
 }
+
+
+
+// Enumerate all variations over a single period
+void tmetg_t::enumerate() const {
+
+	std::vector<std::vector<int>> g((m_period/m_btres),std::vector<int>{});
+	for (int i=0; i<(m_period/m_btres); ++i) {
+		g[i]=levels_allowed(i*m_btres);
+	}
+
+	int N_max = 10000;
+	std::vector<std::vector<int>> rps(N_max,std::vector<int>{});
+
+	int N = 0;
+	int x = 0;
+	m_enumerator(rps,g,N,x);
+
+	wait();
+}
+
+void tmetg_t::m_enumerator(std::vector<std::vector<int>>& rps, 
+	std::vector<std::vector<int>> const& g, int& N, int& x) const {
+	//...
+
+	bool f_gspan_fatal {false};
+	bool f_gspan_complete {false};
+	bool f_gspan_continue {false};
+
+	std::vector<int> rp_init = rps[N];
+
+	for (int i=0; i<g[x].size(); ++i) {
+		rps[N].push_back(g[x][i]);
+		int nx = x + (m_beat_values[g[x][i]]/m_btres);
+
+		if (nx < g.size()) {
+			f_gspan_fatal = false; f_gspan_complete = false; f_gspan_continue = true;
+		} else if (nx > g.size()) { // overshot the grid
+			// For a "well behaved" g this should never happen.  I could implement checks in the
+			// initial-call section to check for and drop g elements that will cause this
+			// condition.
+			f_gspan_fatal = true; f_gspan_complete = false; f_gspan_continue = false;
+		} else { // rps[N] spans the grid exactly
+			f_gspan_fatal = false; f_gspan_complete = true; f_gspan_continue = false;
+		}
+
+		if (f_gspan_continue) {
+			// No fatal errors, append next
+			m_enumerator(rps,g,N,nx);
+		} else if (f_gspan_complete) {
+			++N;
+		} else if (f_gspan_fatal) {
+			rps[N].pop_back();
+		}
+
+		// If f_gspan_fatal, N is not incremented
+		rps[N] = rp_init;
+	}
+
+
+}
+
+
+
+
+
+
 
 
 
