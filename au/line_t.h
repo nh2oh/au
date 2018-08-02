@@ -2,10 +2,10 @@
 #include <vector>
 #include <initializer_list>
 #include<variant>
-#include "util/au_util_all.h"
-#include "types\scd_t.h"
-#include "types\frq_t.h"
-#include "types\ntl_t.h"
+//#include "aulib\util\au_util_all.h"
+#include "aulib\types\scd_t.h"
+#include "aulib\types\frq_t.h"
+#include "aulib\types\ntl_t.h"
 
 //-----------------------------------------------------------------------------
 // Template class element_t

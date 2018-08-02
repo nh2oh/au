@@ -1,8 +1,8 @@
 #include "line_t.h"
-#include "types\scd_t.h"
-#include "types\frq_t.h"
-#include "types\ntl_t.h"
-#include "types\rp_t.h"
+#include "aulib\types\scd_t.h"
+#include "aulib\types\frq_t.h"
+#include "aulib\types\ntl_t.h"
+#include "aulib\types\rp_t.h"
 #include<variant>
 
 apt_t::apt_t(scd_t scd_in) {
