@@ -22,6 +22,7 @@ class ts_t {
 public:
 	ts_t() = delete;
 	explicit ts_t(beat_t,note_value,bool=false); // num, denom, is-compound
+	explicit ts_t(std::string);  // Calls ts_t.from_string()
 
 	note_value beat_unit() const;  // Denominator=>note_value==1 beat
 	note_value bar_unit() const;  // The note value that would span 1 bar
@@ -30,6 +31,7 @@ public:
 
 	bool operator==(ts_t const&) const;
 private:
+	void from_string(std::string);  // Delegated constructor
 	// Simple:
 	// The note-value representing one beat (denominator); the length of time 
 	// spanned by a single beat in the relative-time units of the note_value 

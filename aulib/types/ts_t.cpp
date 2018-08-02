@@ -26,8 +26,12 @@ ts_t::ts_t(beat_t bt_per_br_in, note_value nv_per_bt, bool is_compound_in) {
 	}
 }
 
-ts_t operator""_ts(const char *literal_in, size_t length) {
-	auto o_matches = rx_match_captures("(\\d+)/(\\d+)(c)?",std::string{literal_in});
+ts_t::ts_t(std::string str_in) {
+	from_string(str_in);
+}
+
+void ts_t::from_string(std::string str_in) {  // Delegated constructor
+	auto o_matches = rx_match_captures("(\\d+)/(\\d+)(c)?",str_in);  // std::string{literal_in}
 	if (!o_matches || (*o_matches).size() != 4) {
 		au_error("Could not parse ts string literal");
 	}
@@ -40,7 +44,27 @@ ts_t operator""_ts(const char *literal_in, size_t length) {
 	bool is_compound {false};
 	if (matches[3]) { is_compound = true; }
 
-	return ts_t {beat_t {bt_per_bar}, note_value {1.0/inv_nv_per_bt}, is_compound};
+	m_beat_unit = note_value {1.0/inv_nv_per_bt};
+	m_bpb = beat_t {bt_per_bar};
+	m_compound = is_compound;
+}
+
+ts_t operator""_ts(const char *literal_in, size_t length) {
+	/*auto o_matches = rx_match_captures("(\\d+)/(\\d+)(c)?",std::string{literal_in});
+	if (!o_matches || (*o_matches).size() != 4) {
+		au_error("Could not parse ts string literal");
+	}
+	auto matches = *o_matches;
+
+	double bt_per_bar {std::stod(*(matches[1]))};
+	double inv_nv_per_bt {std::stod(*(matches[2]))};
+	au_assert((bt_per_bar > 0 && inv_nv_per_bt > 0), "No (-) values in a ts");
+	
+	bool is_compound {false};
+	if (matches[3]) { is_compound = true; }
+
+	return ts_t {beat_t {bt_per_bar}, note_value {1.0/inv_nv_per_bt}, is_compound};*/
+	return ts_t {std::string {literal_in}};
 }
 
 note_value ts_t::beat_unit() const {
