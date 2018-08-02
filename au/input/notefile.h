@@ -19,9 +19,11 @@ struct notefile {
 
 std::vector<notefile> read_notefile(std::string const&, int=0);
 
+std::vector<double> notefile2dt(std::vector<notefile>, int=0);
+
 namespace notefileopts {
 enum {
-	someopt = 1,
+	seconds = 1,
 	someotheropt = 2,
 };
 };

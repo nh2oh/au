@@ -2,32 +2,90 @@
 #include <numeric>
 #include <random>
 #include <chrono>
+#include <optional>
+#include <limits>
 #include "au_algs_math.h"
 
 
-// Random double
-std::vector<double> urandd(int n, double min, double max) {
+std::optional<linreg_result> linreg(std::vector<double> const& x, std::vector<double> const& y) {
+	if (x.size() != y.size() || x.size() == 0) {
+		return {};
+	}
+	if (x.size() > std::numeric_limits<int>::max()) {
+		return {};
+	}
+	int n {static_cast<int>(x.size())};
+
+	double sx = 0.0; double sx2 = 0.0;
+	double sxy = 0.0;
+	double sy = 0.0; double sy2 = 0.0;
+	for (int i=0; i<n; ++i) {
+		sx += x[i]; sx2 += (x[i])*(x[i]);
+		sxy += (x[i])*(y[i]);
+		sy += y[i]; sy2 += (y[i])*(y[i]);
+	}
+
+	double denom = n*sx2 - sx*sx;
+	if (denom <= 0) { return {}; }
+
+	struct linreg_result res {0.0,0.0,0.0};
+
+	res.slope = (n*sxy - sx*sy)/denom;
+	res.intercept = (sy*sx2 - sx*sxy)/denom;
+	res.regcoef = (sxy-sx*sy/n) / std::sqrt((sx2 - (sx*sx)/n)*(sy2 - (sy*sy)/n));
+
+	return res; 
+}
+
+
+
+// Random number generator, randomly seeded if randseed == true
+std::mt19937 randeng(bool randseed) {
 	std::default_random_engine randeng {};
 	auto t = std::chrono::system_clock::now().time_since_epoch().count();
-	randeng.seed(t);
+	if (randseed) {
+		randeng.seed(t);
+	}
+	return randeng;
+}
+
+// Random double
+std::vector<double> urandd(int n, double min, double max) {
+	auto re = randeng(true);
 	std::uniform_real_distribution<double> rn {min,max};
 	std::vector<double> rv(n,0.0);
 	for (auto i=0; i<n; ++i) {
-		rv[i] = rn(randeng);
+		rv[i] = rn(re);
 	}
 	return rv;
 }
 
 // Random int
 std::vector<int> urandi(int n, int min, int max) {
-	std::default_random_engine randeng {};
-	randeng.seed(std::chrono::system_clock::now().time_since_epoch().count());
+	auto re = randeng(true);
 	std::uniform_int_distribution<int> rn {min,max};
 	std::vector<int> rv(n,0);
 	for (auto i=0; i<n; ++i) {
-		rv[i] = rn(randeng);
+		rv[i] = rn(re);
 	}
 	return rv;
+}
+
+// Random indices of >= p.size()
+std::vector<int> randset(int const& n, std::vector<double> const& p, std::mt19937& re) {
+	std::uniform_real_distribution<double> rn {0,1};
+	std::vector<int> ridx {}; ridx.reserve(n);
+
+	for (int i=0; i<n; ++i) {
+		auto rd = rn(re);
+		int j=0;
+		for (double cump=0; j<p.size(); ++j) {
+			cump += p[j];  // cumulative probability
+			if (cump >= rd) { break; }
+		}
+		ridx.push_back(j);
+	}
+	return ridx;
 }
 
 // is approximately integer
