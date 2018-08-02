@@ -10,9 +10,11 @@
 #define UI_GUI_H
 
 #include <QtCore/QVariant>
+#include <QtWidgets/QAction>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QMainWindow>
+#include <QtWidgets/QMenu>
 #include <QtWidgets/QMenuBar>
 #include <QtWidgets/QPlainTextEdit>
 #include <QtWidgets/QPushButton>
@@ -25,6 +27,7 @@ QT_BEGIN_NAMESPACE
 class Ui_guiClass
 {
 public:
+    QAction *actionFonts_and_colors;
     QWidget *centralWidget;
     QPushButton *btn_make;
     QPlainTextEdit *output;
@@ -32,6 +35,10 @@ public:
     QPushButton *btn_clear;
     QPushButton *btn_list;
     QMenuBar *menuBar;
+    QMenu *menuFile;
+    QMenu *menuView;
+    QMenu *menuTools;
+    QMenu *menuHelp;
     QToolBar *mainToolBar;
     QStatusBar *statusBar;
 
@@ -40,6 +47,8 @@ public:
         if (guiClass->objectName().isEmpty())
             guiClass->setObjectName(QStringLiteral("guiClass"));
         guiClass->resize(1054, 718);
+        actionFonts_and_colors = new QAction(guiClass);
+        actionFonts_and_colors->setObjectName(QStringLiteral("actionFonts_and_colors"));
         centralWidget = new QWidget(guiClass);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         btn_make = new QPushButton(centralWidget);
@@ -60,7 +69,15 @@ public:
         guiClass->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(guiClass);
         menuBar->setObjectName(QStringLiteral("menuBar"));
-        menuBar->setGeometry(QRect(0, 0, 1054, 18));
+        menuBar->setGeometry(QRect(0, 0, 1054, 22));
+        menuFile = new QMenu(menuBar);
+        menuFile->setObjectName(QStringLiteral("menuFile"));
+        menuView = new QMenu(menuBar);
+        menuView->setObjectName(QStringLiteral("menuView"));
+        menuTools = new QMenu(menuBar);
+        menuTools->setObjectName(QStringLiteral("menuTools"));
+        menuHelp = new QMenu(menuBar);
+        menuHelp->setObjectName(QStringLiteral("menuHelp"));
         guiClass->setMenuBar(menuBar);
         mainToolBar = new QToolBar(guiClass);
         mainToolBar->setObjectName(QStringLiteral("mainToolBar"));
@@ -68,6 +85,12 @@ public:
         statusBar = new QStatusBar(guiClass);
         statusBar->setObjectName(QStringLiteral("statusBar"));
         guiClass->setStatusBar(statusBar);
+
+        menuBar->addAction(menuFile->menuAction());
+        menuBar->addAction(menuView->menuAction());
+        menuBar->addAction(menuTools->menuAction());
+        menuBar->addAction(menuHelp->menuAction());
+        menuView->addAction(actionFonts_and_colors);
 
         retranslateUi(guiClass);
         QObject::connect(btn_clear, SIGNAL(clicked()), output, SLOT(clear()));
@@ -78,9 +101,14 @@ public:
     void retranslateUi(QMainWindow *guiClass)
     {
         guiClass->setWindowTitle(QApplication::translate("guiClass", "gui", nullptr));
+        actionFonts_and_colors->setText(QApplication::translate("guiClass", "Fonts and colors", nullptr));
         btn_make->setText(QApplication::translate("guiClass", "make", nullptr));
         btn_clear->setText(QApplication::translate("guiClass", "clear", nullptr));
         btn_list->setText(QApplication::translate("guiClass", "list existing", nullptr));
+        menuFile->setTitle(QApplication::translate("guiClass", "File", nullptr));
+        menuView->setTitle(QApplication::translate("guiClass", "View", nullptr));
+        menuTools->setTitle(QApplication::translate("guiClass", "Tools", nullptr));
+        menuHelp->setTitle(QApplication::translate("guiClass", "Help", nullptr));
     } // retranslateUi
 
 };
