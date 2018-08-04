@@ -19,7 +19,8 @@ struct notefile {
 
 std::vector<notefile> read_notefile(std::string const&, int=0);
 
-std::vector<double> notefile2dt(std::vector<notefile>, int=0);
+double notefileelement2dt(notefile const&, int const& = 0);
+std::vector<double> notefile2dt(std::vector<notefile> const&, int const& = 0);
 
 namespace notefileopts {
 enum {

@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 #include <algorithm> // for is_sorted()
-
+#include <cmath> // pow()
 
 
 
@@ -95,6 +95,14 @@ std::vector<note_value> deltat2rp(std::vector<double> const& delta_t,
 	au_assert(s_resolution>0,"s_resolution>0");
 	auto bps = bpm/60.0;
 
+	std::vector<note_value> ntset {};
+	// TODO:  n,m should somehow relate to s_resolution
+	for (int m = -2; m<5; ++m) {
+		for (int n = 0; n <4; ++n) {
+			ntset.push_back(note_value{std::pow(2,-m),n});
+		}
+	}
+
 	std::vector<note_value> nts {}; nts.reserve(delta_t.size());
 	for (auto curr_dt: delta_t) {
 		// NOTE:  best_nv is 1 smaller than sec_onset, so sec_onset[i+1] does
@@ -105,7 +113,16 @@ std::vector<note_value> deltat2rp(std::vector<double> const& delta_t,
 			// round them up to s_resolution, since note_values == 0 are impossible.
 			curr_dt_round = s_resolution;
 		}
-		nts.push_back(note_value{ts_in,beat_t{curr_dt_round*bps}});
+
+		auto curr_nv = note_value{ts_in,beat_t{curr_dt*bps}};
+		auto curr_nearest_dist = curr_nv-nearest(curr_nv,ntset);
+		if (nbeat(ts_in,curr_nearest_dist).to_double()/bps <= s_resolution) {
+			nts.push_back(curr_nv);
+		} else {
+			nts.push_back(note_value{ts_in,beat_t{curr_dt_round*bps}});
+		}
+
+		//nts.push_back(note_value{ts_in,beat_t{curr_dt_round*bps}});
 		wait();
 	}
 	return nts;

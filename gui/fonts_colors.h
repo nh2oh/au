@@ -3,8 +3,7 @@
 #include <QWidget>
 #include "ui_fonts_colors.h"
 
-class fonts_colors : public QWidget
-{
+class fonts_colors : public QWidget {
 	Q_OBJECT
 
 public:

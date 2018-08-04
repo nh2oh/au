@@ -80,13 +80,15 @@
      <x>0</x>
      <y>0</y>
      <width>1054</width>
-     <height>22</height>
+     <height>18</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
     <property name="title">
      <string>File</string>
     </property>
+    <addaction name="actionOpen"/>
+    <addaction name="actionImport"/>
    </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
@@ -98,6 +100,7 @@
     <property name="title">
      <string>Tools</string>
     </property>
+    <addaction name="actionScale_Builder"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -121,6 +124,21 @@
   <action name="actionFonts_and_colors">
    <property name="text">
     <string>Fonts and colors</string>
+   </property>
+  </action>
+  <action name="actionScale_Builder">
+   <property name="text">
+    <string>Scale Builder</string>
+   </property>
+  </action>
+  <action name="actionOpen">
+   <property name="text">
+    <string>Open</string>
+   </property>
+  </action>
+  <action name="actionImport">
+   <property name="text">
+    <string>Import</string>
    </property>
   </action>
  </widget>

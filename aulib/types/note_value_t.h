@@ -31,7 +31,7 @@ public:
 	std::optional<int> ndot() const;
 	std::optional<double> undot_value() const;
 	
-	std::string print() const;
+	std::string print(int=0) const;
 	double to_double() const;
 
 	note_value& operator+=(note_value const&);
@@ -40,6 +40,13 @@ private:
 	double m_nv {1.0};
 
 	std::optional<nv_base_dots> exact() const;
+};
+
+namespace notevalueopts {
+enum {
+	printapproxifnotexact = 1,
+	someotheropt = 2,
+};
 };
 
 note_value operator""_nv(const char *literal_in, size_t length);

@@ -39,12 +39,18 @@
     <ClCompile Include="fonts_colors.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="nf_import_window.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="gui.h">
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="fonts_colors.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="nf_import_window.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>
@@ -55,15 +61,16 @@
     <QtUic Include="fonts_colors.ui">
       <Filter>Form Files</Filter>
     </QtUic>
+    <QtUic Include="scale_builder.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
+    <QtUic Include="nf_import_window.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="gui.qrc">
       <Filter>Resource Files</Filter>
     </QtRcc>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="au_slots.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
 </Project>

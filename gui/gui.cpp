@@ -1,4 +1,5 @@
 #include "gui.h"
+#include "nf_import_window.h"
 #include "aulib\rpgen\rand_rp.h"
 #include "aulib\types\types_all.h"
 #include "aulib\util\au_util_all.h"
@@ -6,9 +7,7 @@
 #include <optional>
 #include <vector>
 
-gui::gui(QWidget *parent)
-	: QMainWindow(parent)
-{
+gui::gui(QWidget *parent) : QMainWindow(parent) {
 	ui.setupUi(this);
 }
 
@@ -28,3 +27,13 @@ void gui::on_btn_make_clicked() {
 	wait();
 }
 
+void gui::on_actionImport_triggered() {
+	std::string s {"actionImport clicked"};
+	ui.output->appendPlainText(QString::fromStdString(s));
+
+	nf_import_window *nfimport_w = new nf_import_window(this);
+	nfimport_w->setAttribute(Qt::WA_DeleteOnClose);
+	nfimport_w->show();
+
+	wait();
+}

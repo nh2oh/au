@@ -38,18 +38,22 @@ std::vector<notefile> read_notefile(std::string const& filename, int flags) {
 	return result;
 }
 
-std::vector<double> notefile2dt(std::vector<notefile> nf, int flags) {
-	std::vector<double> dt {}; dt.reserve(nf.size());
-	for (auto const& e : nf) {
-		dt.push_back(e.offtime-e.ontime);
-
-		if (flags & notefileopts::seconds) {
-			dt.back() /= 1000;
-		}
+double notefileelement2dt(notefile const& nf, int const& flags) {
+	double dt {nf.offtime-nf.ontime};
+	if (flags & notefileopts::seconds) {
+		dt /= 1000;
 	}
 	return dt;
 }
 
+
+std::vector<double> notefile2dt(std::vector<notefile> const& nf, int const& flags) {
+	std::vector<double> dt {}; dt.reserve(nf.size());
+	for (auto const& e : nf) {
+		dt.push_back(notefileelement2dt(e,flags));
+	}
+	return dt;
+}
 
 
 

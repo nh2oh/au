@@ -28,6 +28,9 @@ class Ui_guiClass
 {
 public:
     QAction *actionFonts_and_colors;
+    QAction *actionScale_Builder;
+    QAction *actionOpen;
+    QAction *actionImport;
     QWidget *centralWidget;
     QPushButton *btn_make;
     QPlainTextEdit *output;
@@ -49,6 +52,12 @@ public:
         guiClass->resize(1054, 718);
         actionFonts_and_colors = new QAction(guiClass);
         actionFonts_and_colors->setObjectName(QStringLiteral("actionFonts_and_colors"));
+        actionScale_Builder = new QAction(guiClass);
+        actionScale_Builder->setObjectName(QStringLiteral("actionScale_Builder"));
+        actionOpen = new QAction(guiClass);
+        actionOpen->setObjectName(QStringLiteral("actionOpen"));
+        actionImport = new QAction(guiClass);
+        actionImport->setObjectName(QStringLiteral("actionImport"));
         centralWidget = new QWidget(guiClass);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         btn_make = new QPushButton(centralWidget);
@@ -69,7 +78,7 @@ public:
         guiClass->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(guiClass);
         menuBar->setObjectName(QStringLiteral("menuBar"));
-        menuBar->setGeometry(QRect(0, 0, 1054, 22));
+        menuBar->setGeometry(QRect(0, 0, 1054, 18));
         menuFile = new QMenu(menuBar);
         menuFile->setObjectName(QStringLiteral("menuFile"));
         menuView = new QMenu(menuBar);
@@ -90,7 +99,10 @@ public:
         menuBar->addAction(menuView->menuAction());
         menuBar->addAction(menuTools->menuAction());
         menuBar->addAction(menuHelp->menuAction());
+        menuFile->addAction(actionOpen);
+        menuFile->addAction(actionImport);
         menuView->addAction(actionFonts_and_colors);
+        menuTools->addAction(actionScale_Builder);
 
         retranslateUi(guiClass);
         QObject::connect(btn_clear, SIGNAL(clicked()), output, SLOT(clear()));
@@ -102,6 +114,9 @@ public:
     {
         guiClass->setWindowTitle(QApplication::translate("guiClass", "gui", nullptr));
         actionFonts_and_colors->setText(QApplication::translate("guiClass", "Fonts and colors", nullptr));
+        actionScale_Builder->setText(QApplication::translate("guiClass", "Scale Builder", nullptr));
+        actionOpen->setText(QApplication::translate("guiClass", "Open", nullptr));
+        actionImport->setText(QApplication::translate("guiClass", "Import", nullptr));
         btn_make->setText(QApplication::translate("guiClass", "make", nullptr));
         btn_clear->setText(QApplication::translate("guiClass", "clear", nullptr));
         btn_list->setText(QApplication::translate("guiClass", "list existing", nullptr));

@@ -97,6 +97,34 @@ T roundquant(T const& subject, T const& step) {
 	return std::abs(n)*step;
 };
 
+
+// subject, set
+template<typename T> T nearest(T const&, std::vector<T> const&);
+
+// subject, set
+template<typename T>
+T nearest(T const& subject, std::vector<T> const& set) {
+	T nearest_elem = set[0];
+	T d_nearest;
+	if (subject <= set[0]) {
+		d_nearest = set[0]-subject;
+	} else {
+		d_nearest = subject - set[0];
+	}
+
+	for (int i=0; i<set.size(); ++i) {
+		if (subject <= set[i] && (set[i]-subject)<d_nearest) {
+			nearest_elem = set[i];
+			d_nearest = set[i]-subject;
+		} else if (subject > set[i] && (subject-set[i])<d_nearest) {
+			nearest_elem = set[i];
+			d_nearest = subject-set[i];
+		}
+	}
+
+	return nearest_elem;
+};
+
 // difference of adjacent values
 template<typename T> std::vector<T> diffadj(std::vector<T> const&);
 

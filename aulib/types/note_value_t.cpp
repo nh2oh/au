@@ -96,7 +96,7 @@ std::optional<double> note_value::undot_value() const {
 	return {};
 }
 
-std::string note_value::print() const {
+std::string note_value::print(int flags) const {
 	auto o_base_dots = exact();
 	std::string s {};
 	if (o_base_dots) {
@@ -110,7 +110,11 @@ std::string note_value::print() const {
 		}
 		s += ")" + std::string(num_dots,'.');
 	} else {
-		s = "(?)";
+		if (flags & notevalueopts::printapproxifnotexact) {
+			s = "(? ~" + std::to_string(m_nv);
+		} else {
+			s = "(?)";
+		}
 		//frac rat_approx = rapprox((1.0/m_nv),256);
 		//s = "(" + std::to_string(rat_approx.denom) + "/" + std::to_string(rat_approx.num) + ")";
 	}

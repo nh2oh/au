@@ -17,4 +17,5 @@ private:
 
 private slots:
 	void on_btn_make_clicked();
+	void on_actionImport_triggered();
 };

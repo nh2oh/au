@@ -26,141 +26,118 @@ QT_BEGIN_NAMESPACE
 class Ui_fonts_colors
 {
 public:
-    QWidget *verticalLayoutWidget_2;
-    QVBoxLayout *verticalLayout_2;
-    QHBoxLayout *horizontalLayout_5;
-    QListView *listView;
     QVBoxLayout *verticalLayout;
     QHBoxLayout *horizontalLayout;
-    QLabel *label_2;
-    QLineEdit *lineEdit_2;
-    QHBoxLayout *horizontalLayout_2;
-    QLabel *label_5;
-    QCheckBox *checkBox_2;
-    QHBoxLayout *horizontalLayout_3;
-    QLabel *label_3;
-    QCheckBox *checkBox;
+    QListView *listView;
+    QVBoxLayout *verticalLayout_2;
     QHBoxLayout *horizontalLayout_4;
-    QLabel *label_4;
-    QCheckBox *checkBox_3;
-    QHBoxLayout *horizontalLayout_8;
+    QLabel *label_3;
+    QCheckBox *checkBox_2;
+    QHBoxLayout *horizontalLayout_2;
+    QLabel *label;
+    QLineEdit *lineEdit;
+    QHBoxLayout *horizontalLayout_3;
+    QLabel *label_2;
+    QCheckBox *checkBox;
+    QHBoxLayout *horizontalLayout_5;
     QSpacerItem *horizontalSpacer;
-    QPushButton *okButton;
-    QPushButton *cancelButton;
+    QPushButton *pushButton_2;
+    QPushButton *pushButton;
 
     void setupUi(QWidget *fonts_colors)
     {
         if (fonts_colors->objectName().isEmpty())
             fonts_colors->setObjectName(QStringLiteral("fonts_colors"));
-        fonts_colors->resize(764, 525);
-        verticalLayoutWidget_2 = new QWidget(fonts_colors);
-        verticalLayoutWidget_2->setObjectName(QStringLiteral("verticalLayoutWidget_2"));
-        verticalLayoutWidget_2->setGeometry(QRect(70, 0, 501, 351));
-        verticalLayout_2 = new QVBoxLayout(verticalLayoutWidget_2);
-        verticalLayout_2->setSpacing(6);
-        verticalLayout_2->setContentsMargins(11, 11, 11, 11);
-        verticalLayout_2->setObjectName(QStringLiteral("verticalLayout_2"));
-        verticalLayout_2->setContentsMargins(0, 0, 0, 0);
-        horizontalLayout_5 = new QHBoxLayout();
-        horizontalLayout_5->setSpacing(6);
-        horizontalLayout_5->setObjectName(QStringLiteral("horizontalLayout_5"));
-        listView = new QListView(verticalLayoutWidget_2);
-        listView->setObjectName(QStringLiteral("listView"));
-
-        horizontalLayout_5->addWidget(listView);
-
-        verticalLayout = new QVBoxLayout();
+        fonts_colors->resize(832, 578);
+        fonts_colors->setAutoFillBackground(true);
+        verticalLayout = new QVBoxLayout(fonts_colors);
         verticalLayout->setSpacing(6);
+        verticalLayout->setContentsMargins(9, 9, 9, 9);
         verticalLayout->setObjectName(QStringLiteral("verticalLayout"));
         horizontalLayout = new QHBoxLayout();
         horizontalLayout->setSpacing(6);
         horizontalLayout->setObjectName(QStringLiteral("horizontalLayout"));
-        label_2 = new QLabel(verticalLayoutWidget_2);
-        label_2->setObjectName(QStringLiteral("label_2"));
+        listView = new QListView(fonts_colors);
+        listView->setObjectName(QStringLiteral("listView"));
 
-        horizontalLayout->addWidget(label_2);
+        horizontalLayout->addWidget(listView);
 
-        lineEdit_2 = new QLineEdit(verticalLayoutWidget_2);
-        lineEdit_2->setObjectName(QStringLiteral("lineEdit_2"));
+        verticalLayout_2 = new QVBoxLayout();
+        verticalLayout_2->setSpacing(6);
+        verticalLayout_2->setObjectName(QStringLiteral("verticalLayout_2"));
+        horizontalLayout_4 = new QHBoxLayout();
+        horizontalLayout_4->setSpacing(6);
+        horizontalLayout_4->setObjectName(QStringLiteral("horizontalLayout_4"));
+        label_3 = new QLabel(fonts_colors);
+        label_3->setObjectName(QStringLiteral("label_3"));
 
-        horizontalLayout->addWidget(lineEdit_2);
+        horizontalLayout_4->addWidget(label_3);
+
+        checkBox_2 = new QCheckBox(fonts_colors);
+        checkBox_2->setObjectName(QStringLiteral("checkBox_2"));
+
+        horizontalLayout_4->addWidget(checkBox_2);
 
 
-        verticalLayout->addLayout(horizontalLayout);
+        verticalLayout_2->addLayout(horizontalLayout_4);
 
         horizontalLayout_2 = new QHBoxLayout();
         horizontalLayout_2->setSpacing(6);
         horizontalLayout_2->setObjectName(QStringLiteral("horizontalLayout_2"));
-        label_5 = new QLabel(verticalLayoutWidget_2);
-        label_5->setObjectName(QStringLiteral("label_5"));
+        label = new QLabel(fonts_colors);
+        label->setObjectName(QStringLiteral("label"));
 
-        horizontalLayout_2->addWidget(label_5);
+        horizontalLayout_2->addWidget(label);
 
-        checkBox_2 = new QCheckBox(verticalLayoutWidget_2);
-        checkBox_2->setObjectName(QStringLiteral("checkBox_2"));
+        lineEdit = new QLineEdit(fonts_colors);
+        lineEdit->setObjectName(QStringLiteral("lineEdit"));
 
-        horizontalLayout_2->addWidget(checkBox_2);
+        horizontalLayout_2->addWidget(lineEdit);
 
 
-        verticalLayout->addLayout(horizontalLayout_2);
+        verticalLayout_2->addLayout(horizontalLayout_2);
 
         horizontalLayout_3 = new QHBoxLayout();
         horizontalLayout_3->setSpacing(6);
         horizontalLayout_3->setObjectName(QStringLiteral("horizontalLayout_3"));
-        label_3 = new QLabel(verticalLayoutWidget_2);
-        label_3->setObjectName(QStringLiteral("label_3"));
+        label_2 = new QLabel(fonts_colors);
+        label_2->setObjectName(QStringLiteral("label_2"));
 
-        horizontalLayout_3->addWidget(label_3);
+        horizontalLayout_3->addWidget(label_2);
 
-        checkBox = new QCheckBox(verticalLayoutWidget_2);
+        checkBox = new QCheckBox(fonts_colors);
         checkBox->setObjectName(QStringLiteral("checkBox"));
 
         horizontalLayout_3->addWidget(checkBox);
 
 
-        verticalLayout->addLayout(horizontalLayout_3);
-
-        horizontalLayout_4 = new QHBoxLayout();
-        horizontalLayout_4->setSpacing(6);
-        horizontalLayout_4->setObjectName(QStringLiteral("horizontalLayout_4"));
-        label_4 = new QLabel(verticalLayoutWidget_2);
-        label_4->setObjectName(QStringLiteral("label_4"));
-
-        horizontalLayout_4->addWidget(label_4);
-
-        checkBox_3 = new QCheckBox(verticalLayoutWidget_2);
-        checkBox_3->setObjectName(QStringLiteral("checkBox_3"));
-
-        horizontalLayout_4->addWidget(checkBox_3);
+        verticalLayout_2->addLayout(horizontalLayout_3);
 
 
-        verticalLayout->addLayout(horizontalLayout_4);
+        horizontalLayout->addLayout(verticalLayout_2);
 
 
-        horizontalLayout_5->addLayout(verticalLayout);
+        verticalLayout->addLayout(horizontalLayout);
 
-
-        verticalLayout_2->addLayout(horizontalLayout_5);
-
-        horizontalLayout_8 = new QHBoxLayout();
-        horizontalLayout_8->setSpacing(6);
-        horizontalLayout_8->setObjectName(QStringLiteral("horizontalLayout_8"));
+        horizontalLayout_5 = new QHBoxLayout();
+        horizontalLayout_5->setSpacing(6);
+        horizontalLayout_5->setObjectName(QStringLiteral("horizontalLayout_5"));
         horizontalSpacer = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
 
-        horizontalLayout_8->addItem(horizontalSpacer);
+        horizontalLayout_5->addItem(horizontalSpacer);
 
-        okButton = new QPushButton(verticalLayoutWidget_2);
-        okButton->setObjectName(QStringLiteral("okButton"));
+        pushButton_2 = new QPushButton(fonts_colors);
+        pushButton_2->setObjectName(QStringLiteral("pushButton_2"));
 
-        horizontalLayout_8->addWidget(okButton);
+        horizontalLayout_5->addWidget(pushButton_2);
 
-        cancelButton = new QPushButton(verticalLayoutWidget_2);
-        cancelButton->setObjectName(QStringLiteral("cancelButton"));
+        pushButton = new QPushButton(fonts_colors);
+        pushButton->setObjectName(QStringLiteral("pushButton"));
 
-        horizontalLayout_8->addWidget(cancelButton);
+        horizontalLayout_5->addWidget(pushButton);
 
 
-        verticalLayout_2->addLayout(horizontalLayout_8);
+        verticalLayout->addLayout(horizontalLayout_5);
 
 
         retranslateUi(fonts_colors);
@@ -171,15 +148,13 @@ public:
     void retranslateUi(QWidget *fonts_colors)
     {
         fonts_colors->setWindowTitle(QApplication::translate("fonts_colors", "fonts_colors", nullptr));
-        label_2->setText(QApplication::translate("fonts_colors", "Size:", nullptr));
-        label_5->setText(QApplication::translate("fonts_colors", "TextLabel", nullptr));
-        checkBox_2->setText(QApplication::translate("fonts_colors", "CheckBox", nullptr));
         label_3->setText(QApplication::translate("fonts_colors", "TextLabel", nullptr));
+        checkBox_2->setText(QApplication::translate("fonts_colors", "CheckBox", nullptr));
+        label->setText(QApplication::translate("fonts_colors", "TextLabel", nullptr));
+        label_2->setText(QApplication::translate("fonts_colors", "TextLabel", nullptr));
         checkBox->setText(QApplication::translate("fonts_colors", "CheckBox", nullptr));
-        label_4->setText(QApplication::translate("fonts_colors", "TextLabel", nullptr));
-        checkBox_3->setText(QApplication::translate("fonts_colors", "CheckBox", nullptr));
-        okButton->setText(QApplication::translate("fonts_colors", "OK", nullptr));
-        cancelButton->setText(QApplication::translate("fonts_colors", "Cancel", nullptr));
+        pushButton_2->setText(QApplication::translate("fonts_colors", "PushButton", nullptr));
+        pushButton->setText(QApplication::translate("fonts_colors", "PushButton", nullptr));
     } // retranslateUi
 
 };
