@@ -48,6 +48,46 @@ std::vector<bool> ismember(std::vector<T> const& va, T const& b) {
 //-----------------------------------------------------------------------------
 // unique()-like functions
 
+// unique():  Returns the unique elements in v
+template<typename T> std::vector<T> unique(std::vector<T>);
+
+template<typename T>
+std::vector<T> unique(std::vector<T> v) {
+	std::sort(v.begin(),v.end());  // std::includes() requires v be sorted
+
+	std::vector<T> uq_v {};
+	for (int i=0; i<v.size(); ++i) {
+		if (!std::includes(uq_v.begin(),uq_v.end(),v.begin()+i,v.begin()+i+1)) {
+			uq_v.push_back(v[i]);
+		}
+	}
+	return uq_v;
+}
+
+// unique_n():  Returns the unique elements in v and their counts
+template<typename T> struct unique_n_result {
+	std::vector<T> values;
+	std::vector<int> counts;
+};
+
+template<typename T> unique_n_result<T>unique_n(std::vector<T>);
+
+template<typename T>
+unique_n_result<T> unique_n(std::vector<T> v) {
+	std::sort(v.begin(),v.end());  // std::includes() requires v be sorted
+
+	unique_n_result<T> uq_v {};
+	for (int i=0; i<v.size(); ++i) {
+		auto uq_it = std::find(uq_v.values.begin(),uq_v.values.end(),v[i]);
+		if (uq_it == uq_v.values.end()) {
+			uq_v.values.push_back(v[i]);
+			uq_v.counts.push_back(std::count(v.begin(),v.end(),v[i]));
+		}
+	}
+	
+	return uq_v;
+}
+
 // n_unique():  Counts the # of unique elements in v
 template<typename T> size_t n_unique(std::vector<T>);
 

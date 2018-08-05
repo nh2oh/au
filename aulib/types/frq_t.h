@@ -3,6 +3,7 @@
 #include <string>
 #include <optional>
 #include <map>
+#include <vector>
 
 //-----------------------------------------------------------------------------
 // In here are types that are able to represent notes (pitch, not duration)

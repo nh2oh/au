@@ -9,9 +9,6 @@ class gui : public QMainWindow {
 
 public:
 	gui(QWidget *parent = Q_NULLPTR);
-	gui(std::string, QWidget *parent = Q_NULLPTR);
-
-	std::string m_str {"default"};
 private:
 	Ui::guiClass ui;
 

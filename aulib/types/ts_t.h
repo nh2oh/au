@@ -3,9 +3,6 @@
 #include "note_value_t.h"
 #include <string>
 
-
-
-
 //-----------------------------------------------------------------------------
 // Class ts_t
 // Simple:
@@ -57,7 +54,7 @@ private:
 
 ts_t operator""_ts(const char*, size_t);
 
-
+bool operator!=(ts_t const&, ts_t const&);
 
 
 

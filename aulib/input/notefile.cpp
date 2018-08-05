@@ -17,27 +17,47 @@
 //
 //
 
-std::vector<notefile> read_notefile(std::string const& filename, int flags) {
+notefile read_notefile(std::string const& filename, int const& flags) {
 	auto f = std::ifstream(filename);
 	au_assert(f.is_open(),"Could not open file");
 
-	std::vector<notefile> result; result.reserve(100);
+	int scale_fctr = 1;
+	if (flags & notefileopts::seconds) {
+		scale_fctr = 1000;
+	}
+
+	std::vector<notefileline> nf_lines; nf_lines.reserve(100);
+	std::vector<int> error_lines {};
 	std::regex rx("Note\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)");
 	std::string line {}; line.reserve(100);  // Expect ~25 chars/line
+	int fline_num = 0; int n = 0;
 	while (getline(f,line)) {
+		++fline_num;
 		auto o_matches = rx_match_captures(rx,line);
 		if (!o_matches) { continue; }
 		auto matches = *o_matches;
 
-		result.push_back({std::stod(*(matches[1])),std::stod(*(matches[2])),
-			std::stoi(*(matches[3]))});
+		++n;
+		notefileline curr_nf_line;
+		curr_nf_line.file_line_num = fline_num/scale_fctr;
+		curr_nf_line.ontime = std::stod(*(matches[1]))/scale_fctr;
+		curr_nf_line.offtime = std::stod(*(matches[2]))/scale_fctr;
+		curr_nf_line.dt = curr_nf_line.offtime - curr_nf_line.ontime;
+		curr_nf_line.pitch = std::stoi(*(matches[3]));
+
+		if (curr_nf_line.dt <= 0) {  // Add checks for other suspicious conditions...
+			error_lines.push_back(n);
+		}
+
+		nf_lines.push_back(curr_nf_line);
 	}
 	f.close();
-	au_assert(result.size() > 0, "Didn't get any lines!");
+	au_assert(nf_lines.size() > 0, "Didn't get any lines!");
 
-	return result;
+	return notefile {filename, nf_lines, flags, error_lines};
 }
 
+/*
 double notefileelement2dt(notefile const& nf, int const& flags) {
 	double dt {nf.offtime-nf.ontime};
 	if (flags & notefileopts::seconds) {
@@ -45,12 +65,12 @@ double notefileelement2dt(notefile const& nf, int const& flags) {
 	}
 	return dt;
 }
+*/
 
-
-std::vector<double> notefile2dt(std::vector<notefile> const& nf, int const& flags) {
-	std::vector<double> dt {}; dt.reserve(nf.size());
-	for (auto const& e : nf) {
-		dt.push_back(notefileelement2dt(e,flags));
+std::vector<double> notefile2dt(notefile const& nf) {
+	std::vector<double> dt {}; dt.reserve(nf.lines.size());
+	for (auto const& e : nf.lines) {
+		dt.push_back(e.dt);
 	}
 	return dt;
 }

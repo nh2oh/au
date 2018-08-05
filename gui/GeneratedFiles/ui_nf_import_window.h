@@ -30,7 +30,7 @@ public:
     QWidget *centralwidget;
     QTableWidget *nf_data;
     QPushButton *cancel;
-    QPushButton *import_2;
+    QPushButton *import;
     QLineEdit *ts;
     QLineEdit *bpm;
     QLabel *label;
@@ -60,9 +60,9 @@ public:
         cancel = new QPushButton(centralwidget);
         cancel->setObjectName(QStringLiteral("cancel"));
         cancel->setGeometry(QRect(700, 480, 75, 23));
-        import_2 = new QPushButton(centralwidget);
-        import_2->setObjectName(QStringLiteral("import_2"));
-        import_2->setGeometry(QRect(610, 480, 75, 23));
+        import = new QPushButton(centralwidget);
+        import->setObjectName(QStringLiteral("import"));
+        import->setGeometry(QRect(610, 480, 75, 23));
         ts = new QLineEdit(centralwidget);
         ts->setObjectName(QStringLiteral("ts"));
         ts->setGeometry(QRect(670, 40, 113, 20));
@@ -102,7 +102,7 @@ public:
     {
         nf_import_window->setWindowTitle(QApplication::translate("nf_import_window", "MainWindow", nullptr));
         cancel->setText(QApplication::translate("nf_import_window", "Cancel", nullptr));
-        import_2->setText(QApplication::translate("nf_import_window", "Import", nullptr));
+        import->setText(QApplication::translate("nf_import_window", "Import", nullptr));
         label->setText(QApplication::translate("nf_import_window", "TS", nullptr));
         label_2->setText(QApplication::translate("nf_import_window", "BPM", nullptr));
         label_3->setText(QApplication::translate("nf_import_window", "Err", nullptr));

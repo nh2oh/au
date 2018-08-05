@@ -105,7 +105,9 @@ bool ts_t::operator==(ts_t const& rhs) const {
 		(m_compound == rhs.m_compound));
 }
 
-
+bool operator!=(ts_t const& lhs, ts_t const& rhs) {
+	return !(lhs == rhs);
+}
 
 
 
