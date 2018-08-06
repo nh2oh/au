@@ -17,6 +17,17 @@ class nf_import_window : public QMainWindow {
 	private:
 		//---------------------------------------------------------------------------
 		// Data
+		struct status_flags {
+			bool curr_fname {false};
+			bool nf {false};
+			bool nf_table {false};
+			bool ts {false};
+			bool bpm {false};
+			bool err {false};
+		};
+
+		status_flags status {};
+
 		struct qt_nf_table_data {
 			QTableWidgetItem ontime {0.0};
 			QTableWidgetItem offtime {0.0};
@@ -38,11 +49,14 @@ class nf_import_window : public QMainWindow {
 		// Functions
 		void load_nftable();
 		void update_note_value_count();
+		bool validate_window();
 
 		Ui::nf_import_window ui;
 	private slots:
 		void on_ts_returnPressed();
+		void on_ts_textEdited();
 		void on_bpm_returnPressed();
+		void on_bpm_textEdited();
 		void on_err_returnPressed();
 
 		// "Cancel" and "import" buttons

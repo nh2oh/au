@@ -4,9 +4,6 @@
 #include "..\util\au_util_all.h"
 #include <string>
 
-
-
-
 //-----------------------------------------------------------------------------
 // The ts_t class
 
@@ -31,7 +28,7 @@ ts_t::ts_t(std::string str_in) {
 }
 
 void ts_t::from_string(std::string str_in) {  // Delegated constructor
-	auto o_matches = rx_match_captures("(\\d+)/(\\d+)(c)?",str_in);  // std::string{literal_in}
+	/*auto o_matches = rx_match_captures("(\\d+)/(\\d+)(c)?",str_in);  // std::string{literal_in}
 	if (!o_matches || (*o_matches).size() != 4) {
 		au_error("Could not parse ts string literal");
 	}
@@ -46,24 +43,16 @@ void ts_t::from_string(std::string str_in) {  // Delegated constructor
 
 	m_beat_unit = note_value {1.0/inv_nv_per_bt};
 	m_bpb = beat_t {bt_per_bar};
-	m_compound = is_compound;
+	m_compound = is_compound;*/
+
+	ts_str_helper result = validate_ts_str(str_in);
+	au_assert(result.is_valid, result.msg);
+	m_beat_unit = note_value {1.0/result.inv_nv_per_bt};
+	m_bpb = beat_t {result.bt_per_bar};
+	m_compound = result.is_compound;
 }
 
 ts_t operator""_ts(const char *literal_in, size_t length) {
-	/*auto o_matches = rx_match_captures("(\\d+)/(\\d+)(c)?",std::string{literal_in});
-	if (!o_matches || (*o_matches).size() != 4) {
-		au_error("Could not parse ts string literal");
-	}
-	auto matches = *o_matches;
-
-	double bt_per_bar {std::stod(*(matches[1]))};
-	double inv_nv_per_bt {std::stod(*(matches[2]))};
-	au_assert((bt_per_bar > 0 && inv_nv_per_bt > 0), "No (-) values in a ts");
-	
-	bool is_compound {false};
-	if (matches[3]) { is_compound = true; }
-
-	return ts_t {beat_t {bt_per_bar}, note_value {1.0/inv_nv_per_bt}, is_compound};*/
 	return ts_t {std::string {literal_in}};
 }
 
@@ -109,6 +98,33 @@ bool operator!=(ts_t const& lhs, ts_t const& rhs) {
 	return !(lhs == rhs);
 }
 
+
+//-----------------------------------------------------------------------------
+// Non-class helper functions
+
+ts_str_helper validate_ts_str(std::string const& str_in) {
+	ts_str_helper result { };
+
+	auto o_matches = rx_match_captures("^\\s*([1-9]+)/([1-9]+)(c)?\\s*$",str_in);
+	if (!o_matches || (*o_matches).size() != 4) {
+		result.is_valid = false;
+		result.msg += "A ts must conform to n/d or n/dc where n, d are integers ";
+		result.msg += " and \"c\" is the ASCII character c.  ";
+		return result;
+	}
+	auto matches = *o_matches;
+
+	result.is_valid = true;
+	result.str_clean = *(matches[1]) + "/" + *(matches[2]);
+	result.bt_per_bar = std::stod(*(matches[1]));
+	result.inv_nv_per_bt = std::stod(*(matches[2]));
+	if (matches[3]) {
+		result.is_compound = true;
+		result.str_clean += "c";
+	}
+
+	return result;
+}
 
 
 

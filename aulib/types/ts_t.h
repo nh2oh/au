@@ -56,7 +56,30 @@ ts_t operator""_ts(const char*, size_t);
 
 bool operator!=(ts_t const&, ts_t const&);
 
+struct ts_str_helper {
+	bool is_valid {false};
 
+	// Some kind of helpful error message (if is_valid == false) or possibly
+	// some other helper message if the user has entered something crazy or
+	// unusual that parses as a valid ts.  
+	std::string msg {};
+
+	// Use to indicate some sort of unusual condition where is_valid==true but
+	// we nonetheless want to alert the user about something.  
+	int flags {0};
+
+	// Created from the components of the parsed input string.  Things like
+	// leading and trailing spaces are stripped.  
+	std::string str_clean {};
+
+	// If the ts is valid, these are set from the input string.  The ts_t
+	// constructor that accepts a std::string uses these values.  
+	double bt_per_bar {0.0};
+	double inv_nv_per_bt {0.0};
+	bool is_compound {false};
+};
+
+ts_str_helper validate_ts_str(std::string const&);
 
 
 

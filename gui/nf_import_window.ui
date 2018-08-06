@@ -300,7 +300,7 @@
      <string>Name</string>
     </property>
    </widget>
-   <widget class="QLineEdit" name="lineEdit_2">
+   <widget class="QLineEdit" name="curr_fname">
     <property name="geometry">
      <rect>
       <x>80</x>

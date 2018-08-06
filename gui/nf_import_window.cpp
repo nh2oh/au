@@ -2,6 +2,7 @@
 #include "aulib\input\notefile.h"
 #include "aulib\util\au_util_all.h"
 #include "aulib\types\rp_t.h"
+#include "aulib\types\beat_bar_t.h" // for validate_bpm_str()
 #include "data_pool.h"
 #include "g_data_pool.h"
 #include <string>
@@ -12,10 +13,12 @@
 nf_import_window::nf_import_window(QWidget *parent) : QMainWindow(parent) {
 	ui.setupUi(this);
 
-	auto fname = QFileDialog::getOpenFileName(this);
+	QFileDialog fd(this);
+	fd.setDirectory(QString().fromStdString("..\\stuff\\"));
+	auto fname = fd.getOpenFileName().toStdString();
 
-	m_fname = fname.toStdString();
-	auto x = m_ts.print();
+	m_fname = fname;
+	ui.curr_fname->setText(QString().fromStdString(m_fname));
 	ui.ts->setText(QString().fromStdString(m_ts.print()));
 	ui.bpm->setText(QString().setNum(m_bpm,'f',2));
 	ui.err->setText(QString().setNum(m_err,'f',3));
@@ -24,6 +27,11 @@ nf_import_window::nf_import_window(QWidget *parent) : QMainWindow(parent) {
 	m_dt = notefile2dt(m_nf);
 	load_nftable();
 	update_note_value_count();
+}
+
+bool nf_import_window::validate_window() {
+	
+	return false;
 }
 
 // Computes m_nf_table from m_nf and populates ui->nf_data with pointers to
@@ -46,6 +54,12 @@ void nf_import_window::load_nftable() {
 }
 
 void nf_import_window::update_note_value_count() {
+	bool window_is_valid = status.curr_fname && status.bpm && status.nf_table
+		&& status.err && status.nf && status.ts;
+	if (!window_is_valid) {
+		return;
+	}
+
 	auto nvs = deltat2rp(m_dt,m_ts,m_bpm,m_err);
 	auto uq_nvs = unique_n(nvs);
 
@@ -60,9 +74,23 @@ void nf_import_window::update_note_value_count() {
 	}
 }
 
+void nf_import_window::on_ts_textEdited() {
+	auto usrinput_ts = validate_ts_str(ui.ts->text().toStdString());
+	if (!usrinput_ts.is_valid) {
+		ui.ts->setStyleSheet("QLineEdit { background: rgb(255,153,153); }");
+	} else {
+		ui.ts->setStyleSheet("QLineEdit { background: rgb(255,255,255); }");
+	}
+}
+
 void nf_import_window::on_ts_returnPressed() {
-	auto userinputts = ui.ts->text().toStdString();
-	auto new_ts = ts_t {userinputts};
+	auto usrinput_ts = validate_ts_str(ui.ts->text().toStdString());
+	if (!usrinput_ts.is_valid) {
+		ui.ts->setStyleSheet("QLineEdit { background: rgb(255,153,153); }");
+		return;
+	}
+
+	auto new_ts = ts_t {usrinput_ts.str_clean};
 	if (new_ts != m_ts) {
 		m_ts = new_ts;
 		update_note_value_count();
@@ -70,11 +98,24 @@ void nf_import_window::on_ts_returnPressed() {
 }
 
 void nf_import_window::on_bpm_returnPressed() {
-	auto userinputbpm = ui.bpm->text().toStdString();
-	double new_bpm = std::stod(userinputbpm);
-	if (new_bpm != m_bpm) {
-		m_bpm = new_bpm;
+	auto usrinput_bpm = validate_bpm_str(ui.bpm->text().toStdString());
+	if (!usrinput_bpm.is_valid || isapproxeq(usrinput_bpm.bpm,0.0,1)) {
+		ui.bpm->setStyleSheet("QLineEdit { background: rgb(255,153,153); }");
+		return;
+	}
+
+	if (usrinput_bpm.bpm != m_bpm) {
+		m_bpm = usrinput_bpm.bpm;
 		update_note_value_count();
+	}
+}
+
+void nf_import_window::on_bpm_textEdited() {
+	auto usrinput_bpm = validate_bpm_str(ui.bpm->text().toStdString());
+	if (!usrinput_bpm.is_valid || isapproxeq(usrinput_bpm.bpm,0.0,1)) {
+		ui.bpm->setStyleSheet("QLineEdit { background: rgb(255,153,153); }");
+	} else {
+		ui.bpm->setStyleSheet("QLineEdit { background: rgb(255,255,255); }");
 	}
 }
 
