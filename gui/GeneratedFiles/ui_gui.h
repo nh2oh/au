@@ -78,7 +78,7 @@ public:
         guiClass->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(guiClass);
         menuBar->setObjectName(QStringLiteral("menuBar"));
-        menuBar->setGeometry(QRect(0, 0, 1054, 18));
+        menuBar->setGeometry(QRect(0, 0, 1054, 22));
         menuFile = new QMenu(menuBar);
         menuFile->setObjectName(QStringLiteral("menuFile"));
         menuView = new QMenu(menuBar);

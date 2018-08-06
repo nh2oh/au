@@ -11,5 +11,5 @@ class gui2 : public QMainWindow {
 	private:
 		Ui::gui2 ui;
 	private slots:
-		//...
+		void on_actionImport_triggered();
 };
