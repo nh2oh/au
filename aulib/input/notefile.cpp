@@ -19,7 +19,10 @@
 
 notefile read_notefile(std::string const& filename, int const& flags) {
 	auto f = std::ifstream(filename);
-	au_assert(f.is_open(),"Could not open file");
+	if (!f.is_open()) {
+		notefile nf {};  nf.file_error = true;
+		return nf;
+	}
 
 	int scale_fctr = 1;
 	if (flags & notefileopts::seconds) {
@@ -52,20 +55,9 @@ notefile read_notefile(std::string const& filename, int const& flags) {
 		nf_lines.push_back(curr_nf_line);
 	}
 	f.close();
-	au_assert(nf_lines.size() > 0, "Didn't get any lines!");
 
-	return notefile {filename, nf_lines, flags, error_lines};
+	return notefile {false, filename, nf_lines, flags, error_lines};
 }
-
-/*
-double notefileelement2dt(notefile const& nf, int const& flags) {
-	double dt {nf.offtime-nf.ontime};
-	if (flags & notefileopts::seconds) {
-		dt /= 1000;
-	}
-	return dt;
-}
-*/
 
 std::vector<double> notefile2dt(notefile const& nf) {
 	std::vector<double> dt {}; dt.reserve(nf.lines.size());

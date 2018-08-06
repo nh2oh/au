@@ -27,6 +27,7 @@ struct notefileline {
 };
 
 struct notefile {
+	bool file_error {true};
 	std::string fname {};
 	std::vector<notefileline> lines {};
 	int opts {0};

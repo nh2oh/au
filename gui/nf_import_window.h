@@ -47,9 +47,13 @@ class nf_import_window : public QMainWindow {
 
 		//---------------------------------------------------------------------------
 		// Functions
-		void load_nftable();
+		void set_nftable();
 		void update_note_value_count();
 		bool validate_window();
+		void set_ts();
+		void set_bpm();
+		void set_err();
+		void set_nf();
 
 		Ui::nf_import_window ui;
 	private slots:

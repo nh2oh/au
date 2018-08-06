@@ -1,6 +1,6 @@
 #pragma once
 
-#include <QWidget>
+#include <QtWidgets/QWidget>
 #include "ui_fonts_colors.h"
 
 class fonts_colors : public QWidget {

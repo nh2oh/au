@@ -7,7 +7,7 @@
 #include <string>
 #include <optional>
 #include <vector>
-#include <QFileDialog>
+#include <QtWidgets/QFileDialog>
 
 gui::gui(QWidget *parent) : QMainWindow(parent) {
 	ui.setupUi(this);

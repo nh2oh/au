@@ -154,7 +154,7 @@ bpm_str_helper validate_bpm_str(std::string const& str_in) {
 	}
 	auto matches = *o_matches;
 
-	if (!(matches[1]) && !(matches[3])) {
+	if (!(matches[1]) && !(matches[2])) {
 		// Both the numbers before and after the decimal are missing
 		result.is_valid = false;
 		result.msg += "Enter a decimal value >= 0.  ";
@@ -168,7 +168,7 @@ bpm_str_helper validate_bpm_str(std::string const& str_in) {
 	} else {
 		result.str_clean += "0";
 	}
-	if (matches[3]) {
+	if (matches[2]) {
 		result.str_clean += *(matches[2]);
 	}
 	result.bpm = std::stod(result.str_clean);
