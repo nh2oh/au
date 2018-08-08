@@ -77,6 +77,8 @@ struct ts_str_helper {
 	double bt_per_bar {0.0};
 	double inv_nv_per_bt {0.0};
 	bool is_compound {false};
+
+	ts_t ts = "4/4"_ts;
 };
 
 ts_str_helper validate_ts_str(std::string const&);

@@ -129,6 +129,23 @@ T nearest(T const& subject, std::vector<T> const& set) {
 	return nearest_elem;
 };
 
+// subject, set
+template<typename T> int nearest_idx(T const&, std::vector<T> const&);
+
+// subject, set
+template<typename T>
+int nearest_idx(T const& subject, std::vector<T> const& set) {
+	int nearest_elem_idx = 0;
+	T d_nearest = dist(subject,set[nearest_elem_idx]);
+	for (int i=0; i<set.size(); ++i) {
+		auto d = dist(subject,set[i]);
+		if (d < d_nearest) {
+			nearest_elem_idx = i;
+			d_nearest = d;
+		}
+	}
+	return nearest_elem_idx;
+};
 
 // difference of adjacent values
 template<typename T> std::vector<T> diffadj(std::vector<T> const&);

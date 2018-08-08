@@ -13,7 +13,7 @@
 #include <QtWidgets/QAction>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QHBoxLayout>
-#include <QtWidgets/QListView>
+#include <QtWidgets/QListWidget>
 #include <QtWidgets/QMainWindow>
 #include <QtWidgets/QMdiArea>
 #include <QtWidgets/QMenu>
@@ -45,7 +45,7 @@ public:
     QPushButton *dump;
     QWidget *subwindow_2;
     QVBoxLayout *verticalLayout_2;
-    QListView *listView;
+    QListWidget *gdata_list;
     QHBoxLayout *horizontalLayout;
     QPushButton *update;
     QPushButton *pushButton_2;
@@ -106,10 +106,10 @@ public:
         subwindow_2->setObjectName(QStringLiteral("subwindow_2"));
         verticalLayout_2 = new QVBoxLayout(subwindow_2);
         verticalLayout_2->setObjectName(QStringLiteral("verticalLayout_2"));
-        listView = new QListView(subwindow_2);
-        listView->setObjectName(QStringLiteral("listView"));
+        gdata_list = new QListWidget(subwindow_2);
+        gdata_list->setObjectName(QStringLiteral("gdata_list"));
 
-        verticalLayout_2->addWidget(listView);
+        verticalLayout_2->addWidget(gdata_list);
 
         horizontalLayout = new QHBoxLayout();
         horizontalLayout->setObjectName(QStringLiteral("horizontalLayout"));

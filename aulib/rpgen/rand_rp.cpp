@@ -121,3 +121,38 @@ std::optional<std::vector<note_value>> rand_rp(ts_t ts_in, std::vector<note_valu
 	return rand_rp(ts_in, dp_in, pd_in, nnts_in, nbr_in, opts);
 }
 
+
+rand_rp_input_helper validate_rand_rp_input(ts_t const& ts_in, 
+	std::vector<note_value> const& nvset_in, std::vector<double> const& pd_in, 
+	int const& nnts_in, bar_t const& nbars_in) {
+	//-------------------------------------------
+	rand_rp_input_helper result {};
+
+
+	if (nbars_in < bar_t{0}) {
+		result.msg += "nbars must be >= 0.\n";
+		result.is_valid = false;
+	}
+	if (nnts_in < 0) {
+		result.msg += "nnts_in must be >= 0.\n";
+		result.is_valid = false;
+	}
+	if (nbars_in == bar_t{0.0} && nnts_in == 0) {
+		result.msg += "One or both of nbars_in, nnts_in must be > 0.\n";
+		result.is_valid = false;
+	}
+	if (nvset_in.size() != pd_in.size()) {
+		result.msg += "The nvset and pd vectors must be the same size.\n";
+		result.is_valid = false;
+	}
+	// check for any pd < 0...
+
+	result.n_bars = nbars_in;
+	result.nnts = nnts_in;
+	result.pd = pd_in;
+	result.ts = ts_in;
+	result.nvset = nvset_in;
+
+	return result;
+}
+

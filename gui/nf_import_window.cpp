@@ -37,11 +37,6 @@ void nf_import_window::set_nf() {
 	status.nf = !m_nf.file_error;
 }
 
-bool nf_import_window::validate_window() {
-	
-	return false;
-}
-
 // Computes m_nf_table from m_nf and populates ui->nf_data with pointers to
 // m_nf_table
 void nf_import_window::set_nftable() {
@@ -128,7 +123,7 @@ void nf_import_window::on_bpm_textEdited() {
 
 void nf_import_window::set_bpm() {
 	auto usrinput_bpm = validate_bpm_str(ui.bpm->text().toStdString());
-	if (!usrinput_bpm.is_valid) {
+	if (!usrinput_bpm.is_valid || usrinput_bpm.bpm <= 0) {
 		status.bpm = false;
 		ui.bpm->setStyleSheet("QLineEdit { background: rgb(255,153,153); }");
 	} else {
@@ -160,7 +155,7 @@ void nf_import_window::on_cancel_clicked() {
 }
 
 void nf_import_window::on_import_clicked() {
-	gdp.create(&m_nf,m_fname);
+	gdp.create(m_nf,m_fname);
 	this->close();
 }
 

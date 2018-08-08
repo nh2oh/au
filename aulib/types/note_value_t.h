@@ -1,14 +1,10 @@
 #pragma once
-//#include "ts_t.h"
-//#include "beat_bar_t.h"
 #include <string>
 #include <optional>
+#include <vector>
 class ts_t;
 class beat_t;
 class bar_t;
-
-
-
 
 //-----------------------------------------------------------------------------
 // Class note_value
@@ -49,6 +45,48 @@ enum {
 };
 };
 
+struct nv_str_helper {
+	bool is_valid {false};
+
+	// Some kind of helpful error message (if is_valid == false) or possibly
+	// some other helper message if the user has entered something crazy or
+	// unusual that parses as a valid nv.  
+	std::string msg {};
+
+	// Use to indicate some sort of unusual condition where is_valid==true but
+	// we nonetheless want to alert the user about something.  
+	int flags {0};
+
+	// Created from the components of the parsed input string.  Things like
+	// leading and trailing spaces are stripped.  
+	std::string str_clean {};
+	
+	note_value nv {};
+};
+
+struct nvset_str_helper {
+	bool is_valid {false};
+
+	// Some kind of helpful error message (if is_valid == false) or possibly
+	// some other helper message if the user has entered something crazy or
+	// unusual that parses as a valid nv.  
+	std::string msg {};
+
+	// Use to indicate some sort of unusual condition where is_valid==true but
+	// we nonetheless want to alert the user about something.  
+	int flags {0};
+
+	// Created from the components of the parsed input string.  Things like
+	// leading and trailing spaces are stripped.  
+	std::string str_clean {};
+
+	std::vector<note_value> nvset {};
+};
+
+nv_str_helper validate_nv_str(std::string const&);
+nvset_str_helper validate_nvset_str(std::string const&);
+nvset_str_helper validate_nvset(std::vector<note_value> const&);
+
 note_value operator""_nv(const char *literal_in, size_t length);
 
 note_value operator+(note_value const&, note_value const&);
@@ -64,15 +102,6 @@ bool operator>(note_value const&, note_value const&);
 bool operator<(note_value const&, note_value const&);
 bool operator>=(note_value const&, note_value const&);
 bool operator<=(note_value const&, note_value const&);
-
-
-
-
-
-
-
-
-
 
 
 

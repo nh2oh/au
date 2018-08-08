@@ -1,7 +1,7 @@
 #pragma once
 #include <QtWidgets/QMainWindow>
+//#include <QAbstractItemView>
 #include "ui_gui2.h"
-#include "g_data_pool.h"
 
 class gui2 : public QMainWindow {
 	Q_OBJECT
@@ -12,4 +12,5 @@ class gui2 : public QMainWindow {
 		Ui::gui2 ui;
 	private slots:
 		void on_actionImport_triggered();
+		void on_update_clicked();
 };

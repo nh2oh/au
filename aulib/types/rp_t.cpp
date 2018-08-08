@@ -97,21 +97,21 @@ std::vector<note_value> deltat2rp(std::vector<double> const& delta_t,
 	auto bt_resolution = beat_t{bps*s_resolution};
 
 	std::vector<note_value> ntset {};
-	//std::vector<beat_t> ntset_beats {};
+	std::vector<double> dtset {};
 	for (int m = 0; m<5; ++m) { // 5 => 1/32
 		for (int n = 0; n<2; ++n) {
 			auto curr_nv = note_value{std::pow(2,-m),n};
 			if (nbeat(ts_in,curr_nv) >= bt_resolution) {
 				ntset.push_back(curr_nv);
-				//ntset_beats.push_back(nbeat(ts_in,curr_nv));
+				dtset.push_back(nv2dt(curr_nv,ts_in,bpm));
 			}
 		}
 	}
 
 	std::vector<note_value> nts {}; nts.reserve(delta_t.size());
 	for (auto curr_dt: delta_t) {
-		auto curr_nv = note_value{ts_in,beat_t{curr_dt*bps}};
-		nts.push_back(nearest(curr_nv,ntset));
+		auto i = nearest_idx(curr_dt,dtset);
+		nts.push_back(ntset[i]);
 	}
 	return nts;
 }
@@ -134,6 +134,17 @@ std::vector<double> rp2deltat(std::vector<note_value> const& rp_in,
 	return delta_t;
 }
 
+//
+// Units of dt is seconds.  
+//  
+double nv2dt(note_value const& nv_in, 
+	ts_t const& ts_in, double const& bpm) {
+	au_assert(bpm>0);
+
+	auto bps = bpm/60;
+	auto delta_t = (nbeat(ts_in,nv_in).to_double())/bps;
+	return delta_t;
+}
 
 std::string deltat2rp_demo() {
 	std::vector<note_value> nts {note_value{1.0/1.0},note_value{1.0/2.0},

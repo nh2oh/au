@@ -49,7 +49,6 @@ class nf_import_window : public QMainWindow {
 		// Functions
 		void set_nftable();
 		void update_note_value_count();
-		bool validate_window();
 		void set_ts();
 		void set_bpm();
 		void set_err();

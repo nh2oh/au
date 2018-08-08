@@ -1,11 +1,12 @@
 #include "gui2.h"
+#include "aulib\util\au_util_all.h"
 #include "nf_import_window.h"
 #include "g_data_pool.h"
+#include <string>
 
 gui2::gui2(QWidget *parent) : QMainWindow(parent) {
 	ui.setupUi(this);
-
-
+	
 }
 
 void gui2::on_actionImport_triggered() {
@@ -13,3 +14,14 @@ void gui2::on_actionImport_triggered() {
 	nfimport_w->setAttribute(Qt::WA_DeleteOnClose);
 	nfimport_w->show();
 }
+
+void gui2::on_update_clicked() {
+	auto all_nfs = gdp.list_all();
+	ui.gdata_list->clear();
+	for (auto e : all_nfs) {
+		new QListWidgetItem(QString().fromStdString(e), ui.gdata_list);
+	}
+
+	wait();
+}
+

@@ -14,19 +14,25 @@ class data_pool {
 public:
 	data_pool();
 
-	bool create(notefile*, std::string);
+	bool create(notefile, std::string);
 	bool create(std::vector<note_value>*, std::string);
 	bool destroy(std::shared_ptr<std::vector<notefile>>);
+	std::string print_nfs();
+	std::vector<std::string> list_all();
 
 private:
-	std::map<std::string,int> m_idx;
 	template<typename T> struct dp_item {
-		std::string name;
+		std::string name;  // A unique name identifying the dataset
+		std::string description;  // Optional user-created description
 		T data;
 	};
 	template<typename T> struct dp_type_pool {
-		std::vector<std::shared_ptr<dp_item<T>>> item;
+		std::vector<dp_item<T>> items;
 	};
+
+	std::map<std::string,int> m_idx;  
+		// Global index for all the data in the pool.  Associates names with the
+		// data type.  
 
 	dp_type_pool<std::vector<note_value>> m_rps {};
 	dp_type_pool<std::vector<scd_t>> m_scds {};

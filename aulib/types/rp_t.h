@@ -27,6 +27,8 @@ std::vector<note_value> deltat2rp(std::vector<double> const&, ts_t const&,
 std::vector<double> rp2deltat(std::vector<note_value> const&, ts_t const&, 
 	double const&);
 
+double nv2dt(note_value const&, ts_t const&, double const&);
+
 std::string deltat2rp_demo();
 
 
