@@ -12,5 +12,6 @@ class gui2 : public QMainWindow {
 		Ui::gui2 ui;
 	private slots:
 		void on_actionImport_triggered();
+		void on_actionrandRp_triggered();
 		void on_update_clicked();
 };

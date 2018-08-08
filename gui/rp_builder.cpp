@@ -3,7 +3,7 @@
 #include "aulib\rpgen\rand_rp.h"
 #include "aulib\types\types_all.h"
 
-rp_builder::rp_builder() {
+rp_builder::rp_builder(QWidget *parent) : QMainWindow(parent) {
 	ui.setupUi(this);
 
 	m_pd = {1,1,1,1,1};  // no setter or ui component yet
@@ -94,12 +94,6 @@ void rp_builder::set_nvpool() {
 	} else {
 		ui.nv_pool->setStyleSheet("QLineEdit { background: rgb(255,255,255); }");
 	}
-}
-void rp_builder::on_nv_in_returnPressed() {
-	void set_curr_nv();
-}
-void rp_builder::on_nv_in_textEdited() {
-	void set_curr_nv();
 }
 
 void rp_builder::on_add_nv_click() {

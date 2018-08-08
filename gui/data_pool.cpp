@@ -10,7 +10,7 @@ data_pool::data_pool() {
 }
 
 bool data_pool::create(notefile nf_in, std::string name) {
-	dp_item<notefile> item {name, nf_in};
+	dp_item<notefile> item {name, std::string {""}, nf_in};
 
 	m_nfs.items.push_back(item);
 	return true;

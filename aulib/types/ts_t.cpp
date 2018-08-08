@@ -27,6 +27,10 @@ ts_t::ts_t(std::string str_in) {
 	from_string(str_in);
 }
 
+
+// This shouldn't call validate_ts_str() and go through all the "helper"
+// bullshit:  It should simply parse the string in the most unforgiving
+// way and crash on failure.  No leading/trailing spaces, etc.  
 void ts_t::from_string(std::string str_in) {  // Delegated constructor
 	/*auto o_matches = rx_match_captures("(\\d+)/(\\d+)(c)?",str_in);  // std::string{literal_in}
 	if (!o_matches || (*o_matches).size() != 4) {

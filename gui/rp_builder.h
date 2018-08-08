@@ -1,5 +1,6 @@
 #pragma once
 #include <QtWidgets/QMainWindow>
+#include "aulib\rpgen\rand_rp.h"
 #include "ui_rp_builder.h"
 #include "aulib\types\types_all.h"
 #include <vector>
@@ -7,7 +8,7 @@
 class rp_builder : public QMainWindow {
 	Q_OBJECT
 public:
-	rp_builder();
+	rp_builder(QWidget *parent = Q_NULLPTR);
 private:
 	ts_str_helper m_ts {};
 	nvset_str_helper m_nvpool {};
