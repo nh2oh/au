@@ -213,7 +213,7 @@ void nv_uih::update(std::string const& str_in) {
 	// Addnl tests... weird magnitudes, large number of dots...
 
 	is_valid_ = true;
-	nv_ = note_value{(nv_parts.n)/(nv_parts.d), nv_parts.ndots};
+	nv_ = note_value{(nv_parts.num)/(nv_parts.denom), nv_parts.ndots};
 }
 
 bool nv_uih::is_valid() const {
@@ -248,73 +248,9 @@ std::optional<nv_uih::nv_str_parts> nv_uih::parse_nv_str_() const {
 }
 
 
-
-
-//
-//nv_str_helper validate_nv_str(std::string const& str_in) {
-//	nv_str_helper result { };
-//
-//	auto o_matches = rx_match_captures("^\\s*([1-9]+)/([1-9]+)(\\.*)\\s*$",str_in);
-//	if (!o_matches || (*o_matches).size() != 4) {
-//		result.is_valid = false;
-//		result.msg += "An nv must conform to n/d[.] where n, d are integers and ";
-//		result.msg += "[.] is 0 or more dots.  ";
-//		return result;
-//	}
-//	auto matches = *o_matches;
-//
-//	result.str_clean = *(matches[1]) + "/" + *(matches[2]) + *(matches[3]);
-//	double n = std::stod(*matches[1]); double d = std::stod(*matches[2]);
-//	int ndots = static_cast<int>((*matches[3]).size());
-//
-//	if (ndots < 0) {
-//		result.is_valid = false;
-//		result.msg = "what ndots";
-//		return result;
-//	} else if (ndots > 3) {
-//		result.flags = 1;
-//		result.msg = "how come u got so many dots???";
-//	}
-//	
-//	result.is_valid = true;
-//	result.nv = note_value {n/d,ndots};
-//	return result;
-//}
-//
-//nvset_str_helper validate_nvset_str(std::string const& str_in) {
-//	// Takes a string in the form nv_str1; nv_str2; ... nv_strn and parses it into
-//	// a std::vector<note_value> and inserts into an nv_str_helper
-//	nvset_str_helper result { };
-//	result.is_valid = false;
-//	return result;
-//}
-//
-//nvset_str_helper validate_nvset(std::vector<note_value> const& nvset_in) {
-//	nvset_str_helper result { };
-//	if (nvset_in.size() == 0) {
-//		result.is_valid = false;
-//		result.msg = "nvset is empty";
-//		return result;
-//	}
-//	int nuq = n_unique(nvset_in);
-//	if (nuq != nvset_in.size()) {
-//		result.is_valid = false;
-//		result.msg = "Duplicate entries in nvset";
-//		return result;
-//	}
-//
-//	result.is_valid = true;
-//	result.nvset = nvset_in;
-//	return result;
-//
-//}
-
-
-
-
-
-
-
+bool nv_uih::operator==(nv_uih const& rhs) const {
+	return (str_last_ == rhs.str_last_);
+}
 
 
 

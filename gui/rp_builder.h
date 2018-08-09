@@ -24,24 +24,27 @@ private:
 			"1/4.", "1/8", "1/8.","1/16", "1/16.","1/32"};
 
 		std::vector<std::string> nv_pool {"1/4", "1/8", "1/16"};
+		std::vector<double> pd {1,1,1};
 	};
 	defaults defaults_ {};
 
 	ts_uih ts_;
 	nv_uih curr_nv_;
-	//std::vector<nv_uih> nvpool_;
-	//std::vector<nv_uih> common_nvs_;
-	//-------------------------------------------
-	//nvset_str_helper m_nvpool {};
-	//nv_str_helper m_curr_nv {};
-	rand_rp_input_helper m_rand_rp_inputs {};
-	std::vector<note_value> m_rp_result;
-	std::vector<double> m_pd;
+	std::vector<nv_uih> nv_pool_;
+	randrp_uih randrp_input_;
+	std::vector<double> pd_;  // Convert to helper
+	int n_nts_;  // Convert to helper
+	bar_t n_bars_;  // Convert to helper
+	std::vector<note_value> rp_result_;
+
 
 	void set_ts();
 	void set_curr_nv();
 	void set_nvpool();
 	void set_rand_rp_inputs();
+	void set_n_nts();
+	void set_n_bars();
+	//void set_pd();
 
 	Ui::rp_builder ui;
 private slots:
@@ -51,11 +54,11 @@ private slots:
 	void on_nv_in_returnPressed();
 	void on_nv_in_textEdited();
 
-	void on_add_nv_click();
-	void on_remove_nv_click();
+	void on_add_nv_clicked();
+	void on_remove_nv_clicked();
 
-	void on_generate_click();
-	void on_import_2_click();
-	void on_cancel_click();
+	void on_generate_clicked();
+	void on_import_2_clicked();
+	void on_cancel_clicked();
 };
 

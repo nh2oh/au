@@ -66,6 +66,16 @@ bool operator>=(bar_t const&, bar_t const&);
 bool operator<=(bar_t const&, bar_t const&);
 
 
+
+
+
+
+
+
+
+
+
+
 struct bpm_str_helper {
 	bool is_valid {false};
 

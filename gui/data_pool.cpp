@@ -16,12 +16,10 @@ bool data_pool::create(notefile nf_in, std::string name) {
 	return true;
 }
 
-bool data_pool::create(std::vector<note_value> *prp, std::string name) {
-	/*auto item = new dp_item<std::vector<note_value>>;
-	(*item).data = *prp;
-	(*item).name = name;
+bool data_pool::create(std::vector<note_value> rp_in, std::string name) {
+	dp_item<std::vector<note_value>> item {name, std::string {""}, rp_in};
 
-	m_rps.item.push_back(std::make_shared<dp_item<std::vector<note_value>>>(*item));*/
+	m_rps.items.push_back(item);
 	return true;
 }
 
@@ -42,9 +40,17 @@ std::string data_pool::print_nfs() {
 
 std::vector<std::string> data_pool::list_all() {
 	std::vector<std::string> vs {};
+
+	std::string nf_suffix = "NF:  ";
 	for (auto e : m_nfs.items) {
-		vs.push_back(e.name);
+		vs.push_back(nf_suffix + e.name);
 	}
+
+	std::string rp_suffix = "RP:  ";
+	for (auto e : m_rps.items) {
+		vs.push_back(rp_suffix + e.name);
+	}
+
 	return vs;
 }
 

@@ -33,7 +33,6 @@ class nf_import_window : public QMainWindow {
 			bool curr_fname {false};
 			bool nf {false};
 			bool nf_table {false};
-			//bool ts {false};
 			bool bpm {false};
 			bool err {false};
 		};

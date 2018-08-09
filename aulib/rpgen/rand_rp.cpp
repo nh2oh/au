@@ -1,8 +1,5 @@
 #include "rand_rp.h"
-#include "..\types\ts_t.h"
-#include "..\types\beat_bar_t.h"
-#include "..\types\note_value_t.h"
-#include "..\types\rp_t.h"
+#include "..\types\types_all.h"
 #include "..\util\au_util_all.h"
 #include <vector>
 #include <chrono>
@@ -122,37 +119,72 @@ std::optional<std::vector<note_value>> rand_rp(ts_t ts_in, std::vector<note_valu
 }
 
 
-rand_rp_input_helper validate_rand_rp_input(ts_t const& ts_in, 
-	std::vector<note_value> const& nvset_in, std::vector<double> const& pd_in, 
-	int const& nnts_in, bar_t const& nbars_in) {
-	//-------------------------------------------
-	rand_rp_input_helper result {};
-
-
-	if (nbars_in < bar_t{0}) {
-		result.msg += "nbars must be >= 0.\n";
-		result.is_valid = false;
-	}
-	if (nnts_in < 0) {
-		result.msg += "nnts_in must be >= 0.\n";
-		result.is_valid = false;
-	}
-	if (nbars_in == bar_t{0.0} && nnts_in == 0) {
-		result.msg += "One or both of nbars_in, nnts_in must be > 0.\n";
-		result.is_valid = false;
-	}
-	if (nvset_in.size() != pd_in.size()) {
-		result.msg += "The nvset and pd vectors must be the same size.\n";
-		result.is_valid = false;
-	}
-	// check for any pd < 0...
-
-	result.n_bars = nbars_in;
-	result.nnts = nnts_in;
-	result.pd = pd_in;
-	result.ts = ts_in;
-	result.nvset = nvset_in;
-
-	return result;
+randrp_uih::randrp_uih() {
+	//...
 }
+randrp_uih::randrp_uih(randrp_input_uih const&) {
+	//...
+}
+
+void randrp_uih::update(randrp_input_uih const& rrp_uih_in) {
+	if (last_.ts == rrp_uih_in.ts && last_.nvset == rrp_uih_in.nvset && 
+		last_.n_bars == rrp_uih_in.n_bars && last_.n_nts == rrp_uih_in.n_nts &&
+		last_.pd == rrp_uih_in.pd) {
+		return;
+	}
+	last_ = rrp_uih_in;
+
+	// Validity of the indivdual components...
+	bool parts_valid = rrp_uih_in.ts.is_valid();
+	for (auto e : rrp_uih_in.nvset) {
+		parts_valid = parts_valid && e.is_valid();
+	}
+	// Add tests on the rest of the components as soon as the helper classes
+	// are implemented...
+	if (!parts_valid) {
+		msg_ += "rand_rp() requires a valid ts, nv-pd set, and a specification of ";
+		msg_ += "one or	both of n_nts, n_bars";
+		is_valid_ = false;
+		return;
+		// Any invalid members invalidate the object.  An empty value => invalid 
+		// and should not be confused with 0.  Empty == 0 is a convention that 
+		// should be established in the helper for the indivdual component.  
+	}
+	
+	// get() on all members of rrp_uih_in is safe
+
+	// Interaction rules
+	if (rrp_uih_in.n_bars == bar_t{0} && rrp_uih_in.n_nts == 0) {
+		msg_ += "One or both of n_bars, n_nts must != 0";
+		is_valid_ = false;
+		flags_ = 1;
+		return;
+	}
+
+	is_valid_ = true;
+	msg_ = "";
+	flags_ = 0;
+
+	std::vector<note_value> nvset {};
+	for (auto e : rrp_uih_in.nvset) {
+		nvset.push_back(e.get());
+	}
+	randrp_input_ = randrp_input {rrp_uih_in.ts.get(), nvset, rrp_uih_in.pd, 
+		rrp_uih_in.n_nts, rrp_uih_in.n_bars};
+}
+
+bool randrp_uih::is_valid() const {
+	return is_valid_;
+}
+
+int randrp_uih::flags() const {
+	return flags_;
+}
+
+randrp_input randrp_uih::get() const {
+	au_assert(is_valid_,"Called randrp_uih::get() on a randrp_uih object with is_valid_==false");
+	return *randrp_input_;
+}
+
+
 

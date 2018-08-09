@@ -8,6 +8,10 @@
 //-----------------------------------------------------------------------------
 // The ts_t class
 
+ts_t::ts_t() {
+	//...
+}
+
 ts_t::ts_t(beat_t bt_per_br_in, note_value nv_per_bt, bool is_compound_in) {
 	au_assert(bt_per_br_in.to_double()>0.0); // nv_per_bt is always > 0
 	m_compound = is_compound_in;
@@ -203,4 +207,7 @@ std::optional<ts_uih::ts_str_parts> ts_uih::parse_ts_str_() const {
 	return ts_str_parts {bt_per_bar, nv_per_bt, is_compound};
 }
 
+bool ts_uih::operator==(ts_uih const& rhs) const {
+	return (str_last_ == rhs.str_last_);
+}
 

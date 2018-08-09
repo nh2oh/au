@@ -77,7 +77,6 @@ void nf_import_window::update_note_value_count() {
 		return;
 	}
 
-	//auto nvs = deltat2rp(m_dt,m_ts,m_bpm,m_err);
 	auto nvs = deltat2rp(m_dt,ts_.get(),m_bpm,m_err);
 	auto uq_nvs = unique_n(nvs);
 
@@ -104,15 +103,10 @@ void nf_import_window::on_ts_returnPressed() {
 
 void nf_import_window::set_ts() {
 	ts_.update(ui.ts->text().toStdString());
-	//auto usrinput_ts = validate_ts_str(ui.ts->text().toStdString());
 	if (!ts_.is_valid()) {
-	//if (!usrinput_ts.is_valid) {
-		//status.ts = false;
 		ui.ts->setStyleSheet("QLineEdit { background: rgb(255,153,153); }");
 	} else {
-		//status.ts = true;
 		ui.ts->setStyleSheet("QLineEdit { background: rgb(255,255,255); }");
-		//m_ts = ts_t {usrinput_ts.str_clean};
 	}
 }
 

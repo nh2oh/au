@@ -15,7 +15,7 @@ public:
 	data_pool();
 
 	bool create(notefile, std::string);
-	bool create(std::vector<note_value>*, std::string);
+	bool create(std::vector<note_value>, std::string);
 	bool destroy(std::shared_ptr<std::vector<notefile>>);
 	std::string print_nfs();
 	std::vector<std::string> list_all();

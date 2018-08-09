@@ -87,11 +87,13 @@ public:
 	bool is_valid() const;
 	int flags() const;
 	note_value get() const;
+
+	bool operator==(nv_uih const&) const;
 private:
 	struct nv_str_parts {
 		double num {0.0};
 		double denom {0.0};
-		int ndots {0.0};
+		int ndots {0};
 	};
 	std::optional<nv_str_parts> parse_nv_str_() const;
 		// Parses str_last_; does not set any internal variables (note the const
@@ -115,48 +117,4 @@ private:
 		// the constructor comes from a user.  
 };
 
-
-
-
-//struct nv_str_helper {
-//	bool is_valid {false};
-//
-//	// Some kind of helpful error message (if is_valid == false) or possibly
-//	// some other helper message if the user has entered something crazy or
-//	// unusual that parses as a valid nv.  
-//	std::string msg {};
-//
-//	// Use to indicate some sort of unusual condition where is_valid==true but
-//	// we nonetheless want to alert the user about something.  
-//	int flags {0};
-//
-//	// Created from the components of the parsed input string.  Things like
-//	// leading and trailing spaces are stripped.  
-//	std::string str_clean {};
-//	
-//	note_value nv {};
-//};
-//
-//struct nvset_str_helper {
-//	bool is_valid {false};
-//
-//	// Some kind of helpful error message (if is_valid == false) or possibly
-//	// some other helper message if the user has entered something crazy or
-//	// unusual that parses as a valid nv.  
-//	std::string msg {};
-//
-//	// Use to indicate some sort of unusual condition where is_valid==true but
-//	// we nonetheless want to alert the user about something.  
-//	int flags {0};
-//
-//	// Created from the components of the parsed input string.  Things like
-//	// leading and trailing spaces are stripped.  
-//	std::string str_clean {};
-//
-//	std::vector<note_value> nvset {};
-//};
-//
-//nv_str_helper validate_nv_str(std::string const&);
-//nvset_str_helper validate_nvset_str(std::string const&);
-//nvset_str_helper validate_nvset(std::vector<note_value> const&);
 
