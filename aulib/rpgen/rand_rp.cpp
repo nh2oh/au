@@ -122,21 +122,23 @@ std::optional<std::vector<note_value>> rand_rp(ts_t ts_in, std::vector<note_valu
 randrp_uih::randrp_uih() {
 	//...
 }
-randrp_uih::randrp_uih(randrp_input_uih const&) {
+randrp_uih::randrp_uih(ts_uih const& ts_uih_in, std::vector<nv_uih> const& nv_uih_set_in, 
+	std::vector<double> const& pd_in, int const& n_nts_in, bar_t const& nbars_in) {
 	//...
 }
 
-void randrp_uih::update(randrp_input_uih const& rrp_uih_in) {
-	if (last_.ts == rrp_uih_in.ts && last_.nvset == rrp_uih_in.nvset && 
-		last_.n_bars == rrp_uih_in.n_bars && last_.n_nts == rrp_uih_in.n_nts &&
-		last_.pd == rrp_uih_in.pd) {
+void randrp_uih::update(ts_uih const& ts_uih_in, std::vector<nv_uih> const& nv_uih_set_in, 
+	std::vector<double> const& pd_in, int const& n_nts_in, bar_t const& nbars_in) {
+	if (last_.ts == ts_uih_in && last_.nvset == nv_uih_set_in && 
+		last_.n_bars == nbars_in && last_.n_nts == n_nts_in &&
+		last_.pd == pd_in) {
 		return;
 	}
-	last_ = rrp_uih_in;
+	last_ = {ts_uih_in,nv_uih_set_in, pd_in, n_nts_in, nbars_in};
 
 	// Validity of the indivdual components...
-	bool parts_valid = rrp_uih_in.ts.is_valid();
-	for (auto e : rrp_uih_in.nvset) {
+	bool parts_valid = ts_uih_in.is_valid();
+	for (auto e : nv_uih_set_in) {
 		parts_valid = parts_valid && e.is_valid();
 	}
 	// Add tests on the rest of the components as soon as the helper classes
@@ -154,7 +156,7 @@ void randrp_uih::update(randrp_input_uih const& rrp_uih_in) {
 	// get() on all members of rrp_uih_in is safe
 
 	// Interaction rules
-	if (rrp_uih_in.n_bars == bar_t{0} && rrp_uih_in.n_nts == 0) {
+	if (nbars_in == bar_t{0} && n_nts_in == 0) {
 		msg_ += "One or both of n_bars, n_nts must != 0";
 		is_valid_ = false;
 		flags_ = 1;
@@ -165,12 +167,12 @@ void randrp_uih::update(randrp_input_uih const& rrp_uih_in) {
 	msg_ = "";
 	flags_ = 0;
 
-	std::vector<note_value> nvset {};
-	for (auto e : rrp_uih_in.nvset) {
-		nvset.push_back(e.get());
+	std::vector<note_value> nvset_in {};
+	for (auto e : nv_uih_set_in) {
+		nvset_in.push_back(e.get());
 	}
-	randrp_input_ = randrp_input {rrp_uih_in.ts.get(), nvset, rrp_uih_in.pd, 
-		rrp_uih_in.n_nts, rrp_uih_in.n_bars};
+	randrp_input_ = randrp_input {ts_uih_in.get(), nvset_in, pd_in, 
+		n_nts_in, nbars_in};
 }
 
 bool randrp_uih::is_valid() const {

@@ -21,13 +21,6 @@ std::optional<std::vector<note_value>> rand_rp(ts_t,std::vector<note_value>,
 	std::vector<double>,int,bar_t,rand_rp_opts);
 
 
-struct randrp_input_uih {
-	ts_uih ts {};
-	std::vector<nv_uih> nvset {};
-	std::vector<double> pd {};
-	int n_nts {0};
-	bar_t n_bars {0};
-};
 
 struct randrp_input {
 	ts_t ts {};
@@ -47,13 +40,24 @@ struct randrp_input {
 class randrp_uih {
 public:
 	randrp_uih();
-	randrp_uih(randrp_input_uih const&);
+	//randrp_uih(randrp_input_uih const&);
+	randrp_uih(ts_uih const&, std::vector<nv_uih> const&, 
+		std::vector<double> const&, int const&, bar_t const&);
 
-	void update(randrp_input_uih const&);
+	void update(ts_uih const&, std::vector<nv_uih> const&, 
+		std::vector<double> const&, int const&, bar_t const&);
 	bool is_valid() const;
 	int flags() const;
 	randrp_input get() const;
 private:
+	struct randrp_input_uih {
+		ts_uih ts {};
+		std::vector<nv_uih> nvset {};
+		std::vector<double> pd {};
+		int n_nts {0};
+		bar_t n_bars {0};
+	};
+
 	bool is_valid_ {false};
 	std::string msg_ {""};
 	int flags_ {0};

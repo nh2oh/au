@@ -52,7 +52,7 @@ void rp_builder::on_generate_clicked() {
 }
 
 void rp_builder::set_rand_rp_inputs() {
-	randrp_input_.update({ts_, nv_pool_, pd_, n_nts_, n_bars_});
+	randrp_input_.update(ts_, nv_pool_, pd_, n_nts_, n_bars_);
 }
 
 void rp_builder::set_n_nts() {

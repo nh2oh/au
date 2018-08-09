@@ -17,9 +17,6 @@ private:
 		std::string n_nts {"0"};
 		std::string n_bars {"2"};
 
-		/*std::vector<std::string> common_nvs {nv_uih("2/1"), nv_uih("1/1"), nv_uih("1/2"),
-			nv_uih("1/2."), nv_uih("1/4"), nv_uih("1/4."), nv_uih("1/8"),
-			nv_uih("1/8."), nv_uih("1/16"), nv_uih("1/16."), nv_uih("1/32")};*/
 		std::vector<std::string> common_nvs {"2/1", "1/1", "1/2", "1/2.", "1/4",
 			"1/4.", "1/8", "1/8.","1/16", "1/16.","1/32"};
 

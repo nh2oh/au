@@ -163,7 +163,6 @@
   <ItemGroup>
     <ClCompile Include="data_pool.cpp" />
     <ClCompile Include="fonts_colors.cpp" />
-    <ClCompile Include="gui.cpp" />
     <ClCompile Include="gui2.cpp" />
     <ClCompile Include="g_data_pool.cpp" />
     <ClCompile Include="main.cpp" />
@@ -171,11 +170,7 @@
     <ClCompile Include="rp_builder.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <QtMoc Include="gui.h" />
-  </ItemGroup>
-  <ItemGroup>
     <QtUic Include="fonts_colors.ui" />
-    <QtUic Include="gui.ui" />
     <QtUic Include="gui2.ui" />
     <QtUic Include="nf_import_window.ui" />
     <QtUic Include="rp_builder.ui" />
@@ -201,6 +196,7 @@
   <ItemGroup>
     <ClInclude Include="data_pool.h" />
     <ClInclude Include="g_data_pool.h" />
+    <ClInclude Include="qt_helpers.h" />
     <QtMoc Include="rp_builder.h">
       <IncludePath Condition="'$(Configuration)|$(Platform)'=='dll|x64'">.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName)\.;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtUiTools;$(QTDIR)\include\QtWidgets</IncludePath>
       <Define Condition="'$(Configuration)|$(Platform)'=='dll|x64'">UNICODE;_UNICODE;WIN32;WIN64;QT_CORE_LIB;QT_GUI_LIB;QT_UITOOLS_LIB;QT_WIDGETS_LIB</Define>

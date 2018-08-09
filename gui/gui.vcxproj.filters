@@ -33,9 +33,6 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="gui.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="fonts_colors.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -56,9 +53,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <QtMoc Include="gui.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
     <QtMoc Include="fonts_colors.h">
       <Filter>Header Files</Filter>
     </QtMoc>
@@ -73,9 +67,6 @@
     </QtMoc>
   </ItemGroup>
   <ItemGroup>
-    <QtUic Include="gui.ui">
-      <Filter>Form Files</Filter>
-    </QtUic>
     <QtUic Include="fonts_colors.ui">
       <Filter>Form Files</Filter>
     </QtUic>
@@ -102,6 +93,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="g_data_pool.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="qt_helpers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

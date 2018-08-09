@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="input\notefile.cpp" />
+    <ClCompile Include="number_uih.cpp" />
     <ClCompile Include="rpgen\rand_rp.cpp" />
     <ClCompile Include="scale\scale.cpp" />
     <ClCompile Include="scale\scale_12tet.cpp" />
@@ -39,6 +40,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="input\notefile.h" />
+    <ClInclude Include="number_uih.h" />
     <ClInclude Include="rpgen\rand_rp.h" />
     <ClInclude Include="scale\scale.h" />
     <ClInclude Include="scale\scale_12tet.h" />

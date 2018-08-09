@@ -66,6 +66,9 @@
     <ClCompile Include="rpgen\rand_rp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="number_uih.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="util\au_algs.h">
@@ -123,6 +126,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="rpgen\rand_rp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="number_uih.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
