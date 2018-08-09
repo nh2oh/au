@@ -2,6 +2,7 @@
 #include "beat_bar_t.h"
 #include "note_value_t.h"
 #include <string>
+#include <optional>
 
 //-----------------------------------------------------------------------------
 // Class ts_t
@@ -56,6 +57,7 @@ ts_t operator""_ts(const char*, size_t);
 
 bool operator!=(ts_t const&, ts_t const&);
 
+/*
 struct ts_str_helper {
 	bool is_valid {false};
 
@@ -81,9 +83,54 @@ struct ts_str_helper {
 	ts_t ts = "4/4"_ts;
 };
 
-ts_str_helper validate_ts_str(std::string const&);
+ts_str_helper validate_ts_str(std::string const&);*/
 
 
 
 
+// Time signature user input helper
+//
+// The purpose of this class is to provide a container to hold std::string
+// input entered by a user, say, on a gui form, and to make decisions about
+// whether or not it is valid and can be parsed to a ts_t.  
+//
+//
+class ts_uih {
+public:
+	ts_uih();
+	ts_uih(std::string const&);
+	// ts_uih(std::string const&, predicates...);  Future...
+	// Also possibly some way to set custom messages, flags dfns...
+
+	void update(std::string const&);
+	bool is_valid() const;
+	int flags() const;
+	ts_t get() const;
+private:
+	struct ts_str_parts {
+		double bt_per_bar {0.0};
+		double nv_per_bt {0.0};
+		bool is_compound {false};
+	};
+	std::optional<ts_str_parts> parse_ts_str_() const;
+		// Parses str_last_; does not set any internal variables (note the const
+		// declaration).  Called by the constructor and by update().  
+
+	bool is_valid_ {false};
+	std::string msg_ {""};
+	int flags_ {0};
+	std::string str_last_ {""};
+		// The std::string passed to the most recent call to update(), or that
+		// passed to the constructor if update() has not yet been called.
+		// Allows the object to decide if any change has been made and make a
+		// decision if further processing is needed.  
+
+	std::optional<ts_t> ts_ {};
+		// If str_last_ can be parsed to create a ts_t, ts_ is that ts_t.  
+		// std::optional is used to prevent imposing some sort of "default" ts
+		// on a user of the ts_uih class.  Since the constructor takes a 
+		// string, not a ts_t object, there's a chance that the ts_uih is
+		// created with an "invalid" input.  This is ok where the argument to
+		// the constructor comes from a user.  
+};
 

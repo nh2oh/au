@@ -4,15 +4,36 @@
 #include "ui_rp_builder.h"
 #include "aulib\types\types_all.h"
 #include <vector>
+#include <string>
 
 class rp_builder : public QMainWindow {
 	Q_OBJECT
 public:
 	rp_builder(QWidget *parent = Q_NULLPTR);
 private:
-	ts_str_helper m_ts {};
-	nvset_str_helper m_nvpool {};
-	nv_str_helper m_curr_nv {};
+	struct defaults {
+		std::string ts {"4/4"};
+		std::string curr_nv {""};
+		std::string n_nts {"0"};
+		std::string n_bars {"2"};
+
+		/*std::vector<std::string> common_nvs {nv_uih("2/1"), nv_uih("1/1"), nv_uih("1/2"),
+			nv_uih("1/2."), nv_uih("1/4"), nv_uih("1/4."), nv_uih("1/8"),
+			nv_uih("1/8."), nv_uih("1/16"), nv_uih("1/16."), nv_uih("1/32")};*/
+		std::vector<std::string> common_nvs {"2/1", "1/1", "1/2", "1/2.", "1/4",
+			"1/4.", "1/8", "1/8.","1/16", "1/16.","1/32"};
+
+		std::vector<std::string> nv_pool {"1/4", "1/8", "1/16"};
+	};
+	defaults defaults_ {};
+
+	ts_uih ts_;
+	nv_uih curr_nv_;
+	//std::vector<nv_uih> nvpool_;
+	//std::vector<nv_uih> common_nvs_;
+	//-------------------------------------------
+	//nvset_str_helper m_nvpool {};
+	//nv_str_helper m_curr_nv {};
 	rand_rp_input_helper m_rand_rp_inputs {};
 	std::vector<note_value> m_rp_result;
 	std::vector<double> m_pd;

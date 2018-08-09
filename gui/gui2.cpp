@@ -16,7 +16,7 @@ void gui2::on_actionImport_triggered() {
 	nfimport_w->show();
 }
 
-void gui2::on_actionrandRp_triggered() {
+void gui2::on_actionRandrp_triggered() {
 	rp_builder *rp_builder_w = new rp_builder(this);
 	rp_builder_w->setAttribute(Qt::WA_DeleteOnClose);
 	rp_builder_w->show();

@@ -42,7 +42,7 @@ note_value operator""_nv(const char *literal_in, size_t length) {
 
 	int ndots {0};
 	if (matches[3]) { 
-		ndots = (*(matches[3])).size();
+		ndots = static_cast<int>((*(matches[3])).size());
 	}
 
 	return note_value {numerator/denominator,ndots};
@@ -126,64 +126,6 @@ double note_value::to_double() const {
 }
 
 
-nv_str_helper validate_nv_str(std::string const& str_in) {
-	nv_str_helper result { };
-
-	auto o_matches = rx_match_captures("^\\s*([1-9]+)/([1-9]+)(\\.*)\\s*$",str_in);
-	if (!o_matches || (*o_matches).size() != 4) {
-		result.is_valid = false;
-		result.msg += "An nv must conform to n/d[.] where n, d are integers and ";
-		result.msg += "[.] is 0 or more dots.  ";
-		return result;
-	}
-	auto matches = *o_matches;
-
-	result.str_clean = *(matches[1]) + "/" + *(matches[2]) + *(matches[3]);
-	double n = std::stod(*matches[1]); double d = std::stod(*matches[2]);
-	int ndots = (*matches[3]).size();
-
-	if (ndots < 0) {
-		result.is_valid = false;
-		result.msg = "what ndots";
-		return result;
-	} else if (ndots > 3) {
-		result.flags = 1;
-		result.msg = "how come u got so many dots???";
-	}
-	
-	result.is_valid = true;
-	result.nv = note_value {n/d,ndots};
-	return result;
-}
-
-nvset_str_helper validate_nvset_str(std::string const& str_in) {
-	// Takes a string in the form nv_str1; nv_str2; ... nv_strn and parses it into
-	// a std::vector<note_value> and inserts into an nv_str_helper
-	nvset_str_helper result { };
-	result.is_valid = false;
-	return result;
-}
-
-nvset_str_helper validate_nvset(std::vector<note_value> const& nvset_in) {
-	nvset_str_helper result { };
-	if (nvset_in.size() == 0) {
-		result.is_valid = false;
-		result.msg = "nvset is empty";
-		return result;
-	}
-	int nuq = n_unique(nvset_in);
-	if (nuq != nvset_in.size()) {
-		result.is_valid = false;
-		result.msg = "Duplicate entries in nvset";
-		return result;
-	}
-
-	result.is_valid = true;
-	result.nvset = nvset_in;
-	return result;
-
-}
-
 
 note_value& note_value::operator+=(note_value const& rhs) {
 	m_nv += rhs.m_nv;
@@ -233,6 +175,140 @@ bool operator>=(note_value const& lhs, note_value const& rhs) {
 bool operator<=(note_value const& lhs, note_value const& rhs) {
 	return (lhs.to_double() <= rhs.to_double());
 }
+
+
+
+
+
+
+//-----------------------------------------------------------------------------
+// The nv_uih class
+
+nv_uih::nv_uih() {
+	//...
+}
+
+nv_uih::nv_uih(std::string const& str_in) {
+	// Do not set str_last_ before calling update()... update() checkes 
+	// str_last_ before doing anything and will not proceed if 
+	// str_in == str_last_.  
+	update(str_in);
+}
+
+void nv_uih::update(std::string const& str_in) {
+	if (str_in == str_last_) {
+		return;
+	}
+	str_last_ = str_in;
+
+	auto str_in_parts = parse_nv_str_();
+	if (!str_in_parts) {
+		is_valid_ = false;
+		msg_ += "An nv is of the form n/d[.] where n and d are integers and [.]";
+		msg_ += " is 0 or more \".\" characters; Ex: \"1/4\", \"1/4..\".  ";
+		return;
+	}
+
+	auto nv_parts = *str_in_parts;
+	// Addnl tests... weird magnitudes, large number of dots...
+
+	is_valid_ = true;
+	nv_ = note_value{(nv_parts.n)/(nv_parts.d), nv_parts.ndots};
+}
+
+bool nv_uih::is_valid() const {
+	return is_valid_;
+}
+
+int nv_uih::flags() const {
+	return flags_;
+}
+
+note_value nv_uih::get() const {
+	au_assert(is_valid_,"Called nv_uih::get() on a nv_uih object with is_valid_==false");
+	return *nv_;
+}
+
+// Parses str_last_; does not read any other internal state, does not alter
+// any internal state.  
+// Called by the constructor.  
+std::optional<nv_uih::nv_str_parts> nv_uih::parse_nv_str_() const {
+	auto o_matches = rx_match_captures("^\\s*([1-9]+)/([1-9]+)(\\.*)\\s*$",str_last_);
+	if (!o_matches || (*o_matches).size() != 4) {
+		return {};
+	}
+
+	auto matches = *o_matches;
+
+	double n = std::stod(*(matches[1]));
+	double d = std::stod(*(matches[2]));
+	int ndots = static_cast<int>((*matches[3]).size());
+	
+	return nv_str_parts {n, d, ndots};
+}
+
+
+
+
+//
+//nv_str_helper validate_nv_str(std::string const& str_in) {
+//	nv_str_helper result { };
+//
+//	auto o_matches = rx_match_captures("^\\s*([1-9]+)/([1-9]+)(\\.*)\\s*$",str_in);
+//	if (!o_matches || (*o_matches).size() != 4) {
+//		result.is_valid = false;
+//		result.msg += "An nv must conform to n/d[.] where n, d are integers and ";
+//		result.msg += "[.] is 0 or more dots.  ";
+//		return result;
+//	}
+//	auto matches = *o_matches;
+//
+//	result.str_clean = *(matches[1]) + "/" + *(matches[2]) + *(matches[3]);
+//	double n = std::stod(*matches[1]); double d = std::stod(*matches[2]);
+//	int ndots = static_cast<int>((*matches[3]).size());
+//
+//	if (ndots < 0) {
+//		result.is_valid = false;
+//		result.msg = "what ndots";
+//		return result;
+//	} else if (ndots > 3) {
+//		result.flags = 1;
+//		result.msg = "how come u got so many dots???";
+//	}
+//	
+//	result.is_valid = true;
+//	result.nv = note_value {n/d,ndots};
+//	return result;
+//}
+//
+//nvset_str_helper validate_nvset_str(std::string const& str_in) {
+//	// Takes a string in the form nv_str1; nv_str2; ... nv_strn and parses it into
+//	// a std::vector<note_value> and inserts into an nv_str_helper
+//	nvset_str_helper result { };
+//	result.is_valid = false;
+//	return result;
+//}
+//
+//nvset_str_helper validate_nvset(std::vector<note_value> const& nvset_in) {
+//	nvset_str_helper result { };
+//	if (nvset_in.size() == 0) {
+//		result.is_valid = false;
+//		result.msg = "nvset is empty";
+//		return result;
+//	}
+//	int nuq = n_unique(nvset_in);
+//	if (nuq != nvset_in.size()) {
+//		result.is_valid = false;
+//		result.msg = "Duplicate entries in nvset";
+//		return result;
+//	}
+//
+//	result.is_valid = true;
+//	result.nvset = nvset_in;
+//	return result;
+//
+//}
+
 
 
 

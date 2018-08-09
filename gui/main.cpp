@@ -12,6 +12,7 @@
 
 
 int main(int argc, char *argv[]) {
+	//yay
 	QApplication a(argc, argv);
 	gui2 w;
 	w.show();

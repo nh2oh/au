@@ -14,18 +14,18 @@ nf_import_window::nf_import_window(QWidget *parent) : QMainWindow(parent) {
 	ui.setupUi(this);
 
 	QFileDialog fd(this);
-	fd.setDirectory(QString().fromStdString("..\\stuff\\"));
+	fd.setDirectory(QString().fromStdString(defaults_.init_dir));
 	auto fname = fd.getOpenFileName().toStdString();
 	m_fname = fname;
 	set_nf();
 	set_nftable();
 
 	ui.curr_fname->setText(QString().fromStdString(m_fname));
-	ui.ts->setText(QString().fromStdString(m_ts.print()));
+	ui.ts->setText(QString().fromStdString(defaults_.ts));
 	set_ts();
-	ui.bpm->setText(QString().setNum(m_bpm,'f',2));
+	ui.bpm->setText(QString().fromStdString(defaults_.bpm));
 	set_bpm();
-	ui.err->setText(QString().setNum(m_err,'f',3));
+	ui.err->setText(QString().fromStdString(defaults_.err));
 	set_err();
 
 	update_note_value_count();
@@ -69,13 +69,16 @@ void nf_import_window::set_nftable() {
 }
 
 void nf_import_window::update_note_value_count() {
+	//bool window_is_valid = status.bpm && status.nf_table && status.err 
+	//	&& status.nf && status.ts;
 	bool window_is_valid = status.bpm && status.nf_table && status.err 
-		&& status.nf && status.ts;
+		&& status.nf && ts_.is_valid();
 	if (!window_is_valid) {
 		return;
 	}
 
-	auto nvs = deltat2rp(m_dt,m_ts,m_bpm,m_err);
+	//auto nvs = deltat2rp(m_dt,m_ts,m_bpm,m_err);
+	auto nvs = deltat2rp(m_dt,ts_.get(),m_bpm,m_err);
 	auto uq_nvs = unique_n(nvs);
 
 	ui.note_value_counts->clear();
@@ -91,23 +94,25 @@ void nf_import_window::update_note_value_count() {
 
 void nf_import_window::on_ts_textEdited() {
 	set_ts();
-	if (status.ts) { update_note_value_count();	}
+	if (ts_.is_valid()) { update_note_value_count();	}
 }
 
 void nf_import_window::on_ts_returnPressed() {
 	set_ts();
-	if (status.ts) { update_note_value_count();	}
+	if (ts_.is_valid()) { update_note_value_count();	}
 }
 
 void nf_import_window::set_ts() {
-	auto usrinput_ts = validate_ts_str(ui.ts->text().toStdString());
-	if (!usrinput_ts.is_valid) {
-		status.ts = false;
+	ts_.update(ui.ts->text().toStdString());
+	//auto usrinput_ts = validate_ts_str(ui.ts->text().toStdString());
+	if (!ts_.is_valid()) {
+	//if (!usrinput_ts.is_valid) {
+		//status.ts = false;
 		ui.ts->setStyleSheet("QLineEdit { background: rgb(255,153,153); }");
 	} else {
-		status.ts = true;
+		//status.ts = true;
 		ui.ts->setStyleSheet("QLineEdit { background: rgb(255,255,255); }");
-		m_ts = ts_t {usrinput_ts.str_clean};
+		//m_ts = ts_t {usrinput_ts.str_clean};
 	}
 }
 

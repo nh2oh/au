@@ -17,11 +17,23 @@ class nf_import_window : public QMainWindow {
 	private:
 		//---------------------------------------------------------------------------
 		// Data
+		ts_uih ts_;
+
+		struct defaults {
+			std::string ts {"4/4"};
+			std::string err {"0.250"};
+			std::string bpm {"90"};
+			std::string curr_fname {""};
+
+			std::string init_dir {"..\\stuff\\"};
+		};
+		defaults defaults_ {};
+		//-------------------------------
 		struct status_flags {
 			bool curr_fname {false};
 			bool nf {false};
 			bool nf_table {false};
-			bool ts {false};
+			//bool ts {false};
 			bool bpm {false};
 			bool err {false};
 		};
@@ -38,7 +50,7 @@ class nf_import_window : public QMainWindow {
 			// ui->nf_table holds pointers to this
 		std::string m_fname {};
 		notefile m_nf {};
-		ts_t m_ts {beat_t{4.0},note_value{1.0/4.0},false};
+		//ts_t m_ts {beat_t{4.0},note_value{1.0/4.0},false};
 		double m_bpm {90.0};
 		double m_err {0.25};  // fudge-factor (seconds)
 		std::vector<double> m_dt {}; 
