@@ -30,6 +30,7 @@
     <ClCompile Include="types\metg_t.cpp" />
     <ClCompile Include="types\note_value_t.cpp" />
     <ClCompile Include="types\ntl_t.cpp" />
+    <ClCompile Include="types\nv_t.cpp" />
     <ClCompile Include="types\rp_t.cpp" />
     <ClCompile Include="types\scd_t.cpp" />
     <ClCompile Include="types\ts_t.cpp" />
@@ -50,6 +51,7 @@
     <ClInclude Include="types\metg_t.h" />
     <ClInclude Include="types\note_value_t.h" />
     <ClInclude Include="types\ntl_t.h" />
+    <ClInclude Include="types\nv_t.h" />
     <ClInclude Include="types\rp_t.h" />
     <ClInclude Include="types\scd_t.h" />
     <ClInclude Include="types\ts_t.h" />

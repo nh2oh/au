@@ -80,6 +80,9 @@ bool operator<=(beat_t const& lhs, beat_t const& rhs) {
 bar_t::bar_t(double bars_in) {
 	m_bars = bars_in;
 }
+bar_t::bar_t(int bars_in) {
+	m_bars = bars_in;
+}
 
 double bar_t::to_double() const {
 	return m_bars;

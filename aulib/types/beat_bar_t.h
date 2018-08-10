@@ -41,6 +41,7 @@ bool operator<=(beat_t const&, beat_t const&);
 class bar_t {
 public:
 	explicit bar_t() = default;
+	explicit bar_t(int);
 	explicit bar_t(double);
 
 	double to_double() const;
@@ -64,15 +65,6 @@ bool operator>(bar_t const&, bar_t const&);
 bool operator<(bar_t const&, bar_t const&);
 bool operator>=(bar_t const&, bar_t const&);
 bool operator<=(bar_t const&, bar_t const&);
-
-
-
-
-
-
-
-
-
 
 
 

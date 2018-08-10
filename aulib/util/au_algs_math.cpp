@@ -43,9 +43,9 @@ std::optional<linreg_result> linreg(std::vector<double> const& x, std::vector<do
 std::mt19937 randeng(bool randseed) {
 	std::default_random_engine randeng {};
 	auto t = std::chrono::system_clock::now().time_since_epoch().count();
-	//auto tt = std::chrono::system_clock::now();
+	auto least_sig = static_cast<int>(t % std::numeric_limits<int>::max());
 	if (randseed) {
-		randeng.seed(t);
+		randeng.seed(least_sig);
 	}
 	return randeng;
 }
