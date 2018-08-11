@@ -4,6 +4,8 @@
 #include <string>
 #include <cmath>
 
+// Calling the constructor with no arguments is the same as calling w/
+// {1,0}.  
 TEST(nv_t_tests, constructor_zero_args) {
 	nv_t nv_zeroargs {};
 	nv_t nv_unity_nv {1,0};

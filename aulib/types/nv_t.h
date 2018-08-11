@@ -36,8 +36,6 @@
 // bv and the max exponent => the min bv).  
 //
 
-
-
 class nv_t {
 public:
 	explicit nv_t();
@@ -100,18 +98,23 @@ private:
 };
 
 
-// TODO:  Make static
-/*namespace nv {
+namespace nv {
 	// Common note values.  
-	// TODO:  Make static
-	nv_t dw {2,0}; nv_t dwd {2,1}; nv_t dwdd {2,2};
-	nv_t w {1,0}; nv_t wd {1,1}; nv_t wdd {1,2};
-	nv_t h {0.5,0}; nv_t hd {0.5,1}; nv_t hdd {0.5,2};
-	nv_t q {0.25,0}; nv_t qd {0.25,1}; nv_t qdd {0.25,2};
-	nv_t e {0.125,0}; nv_t ed {0.125,1}; nv_t edd {0.125,2};
-	nv_t s {0.0625,0}; nv_t sd {0.0625,1}; nv_t sdd {0.0625,2};
-	nv_t t {0.03125,0}; nv_t td {0.03125,1}; nv_t tdd {0.03125,2};
-};*/
+	inline const nv_t dw {2.0,0};
+	/*inline const nv_t dwd {2,1}; inline const nv_t dwdd {2,2};
+	inline const nv_t w {1,0};
+	inline const nv_t wd {1,1}; inline const nv_t wdd {1,2};
+	inline const nv_t h {0.5,0};
+	inline const nv_t hd {0.5,1}; inline const nv_t hdd {0.5,2};
+	inline const nv_t q {0.25,0};
+	inline const nv_t qd {0.25,1}; inline const nv_t qdd {0.25,2};
+	inline const nv_t e {0.125,0};
+	inline const nv_t ed {0.125,1}; inline const nv_t edd {0.125,2};
+	inline const nv_t s {0.0625,0};
+	inline const nv_t sd {0.0625,1}; inline const nv_t sdd {0.0625,2};
+	inline const nv_t t {0.03125,0};
+	inline const nv_t td {0.03125,1}; inline const nv_t tdd {0.03125,2};*/
+};
 
 // Adding and subtracting nv's does not make sense:  There is no nv
 // that can represent the span of, say, (q + q.).  Although /some/ 
