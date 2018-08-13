@@ -5,7 +5,7 @@
 class ts_t;
 class beat_t;
 class bar_t;
-
+/*
 //-----------------------------------------------------------------------------
 // Class note_value
 // Represents a relative amount of time spanned by a single note.  Storage is
@@ -74,7 +74,7 @@ bool operator<=(note_value const&, note_value const&);
 // The purpose of this class is to provide a container to hold std::string
 // input entered by a user, say, on a gui form, and to make decisions about
 // whether or not it is valid and can be parsed to a note_value.  
-//`
+//
 //
 class nv_uih {
 public:
@@ -117,4 +117,4 @@ private:
 		// the constructor comes from a user.  
 };
 
-
+*/

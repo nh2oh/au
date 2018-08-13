@@ -1,6 +1,7 @@
 #include "nv_t.h"
-#include "../util/au_error.h"
+#include "../util/au_util_all.h"
 #include <string>
+#include <vector>
 #include <cmath>  // std::pow(), std::log2, std::round
 
 //-----------------------------------------------------------------------------
@@ -59,6 +60,22 @@ nv_t nv_t::base() const {
 	return nv_t {bv(),0};
 }
 
+/*
+nv_t nv_t::split(int n) const {
+	au_assert(false,"nv_t.split() is not yet implemented");
+	return nv_t();
+};
+
+// Returns a vector of zero-dotted nv_t's which, if their nv()'s were summed
+// would == the nv() of the input.  Each element (i+1) == 1/2 element i
+std::vector<nv_t> nv_t::explode() const {
+	std::vector<nv_t> result {};
+	for (int i=0; i<m_n; ++i) {
+		result.push_back(nv_t{bv()/std::pow(2,i),0});
+	}
+	return result;
+};
+*/
 //-----------------------------------------------------------------------------
 // Setters; public, non-static
 nv_t& nv_t::set_base(double const& bv) {
@@ -124,7 +141,28 @@ bool operator>=(nv_t const& lhs, nv_t const& rhs) {
 }
 
 
+/*
+std::vector<nv_t> nvsum(std::vector<nv_t> nvs) {
+	if (n_unique(nvs) < nvs.size()) {
+		auto smallest = nvs[0].explode().back();
+		for (int i=0; i<nvs.size(); ++i) {
+			if (nvs[i].explode().back() < smallest) {
+				smallest = nvs[i].explode().back();
+			}
+		}
+	
+		int n = 0;
+		for (int i=0; i<nvs.size(); ++i) {
+			n += static_cast<int>(nvs[i]/smallest);
+		}
+		auto Nx = std::vector<nv_t>(n,smallest);
+		nvsum(Nx);
+	}
+	// Nx...
+}
 
 
-
+std::vector<nv_t> nvsum(std::vector<nv_t>,std::vector<nv_t>);
+std::vector<nv_t> nvsum_finalize(std::vector<nv_t>);
+*/
 

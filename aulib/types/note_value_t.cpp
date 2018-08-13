@@ -6,7 +6,7 @@
 #include <cmath> // floor(), log2()
 #include <optional>
 #include <string>
-
+/*
 //-----------------------------------------------------------------------------
 // Class note_value
 // Represents a relative timespan
@@ -253,7 +253,7 @@ bool nv_uih::operator==(nv_uih const& rhs) const {
 }
 
 
-
+*/
 
 
 

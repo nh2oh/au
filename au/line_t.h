@@ -11,7 +11,7 @@
 // Template class element_t
 // An element_t is the simplest form of music event; it is an association of 
 // some object representing pitch (frq_t, ntl_t, ntstr_t, scd_t, 
-// chord_t, ...) and some object representing duration (note_value, beat_t,
+// chord_t, ...) and some object representing duration (nv_t, beat_t,
 // ...).  It need not be possible to synthesize, hence it does not associate
 // a ts_t or scale.  It is merely a simple union of a pair of abstract 
 // representations or pitch and duration.  

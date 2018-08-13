@@ -10,8 +10,8 @@
 // rand_rp() ~ rdur()
 // The rp returned will always span an integer number of bars (if requested) since the
 // algorithm appends random 1-bar "segments" to a growing rp.  
-std::optional<std::vector<note_value>> rand_rp(ts_t ts_in, 
-	std::vector<note_value> dp_in, std::vector<double> pd_in, int nnts_in, 
+std::optional<std::vector<nv_t>> rand_rp(ts_t ts_in, 
+	std::vector<nv_t> dp_in, std::vector<double> pd_in, int nnts_in, 
 	bar_t nbr_in, rand_rp_opts opts) {
 
 	au_assert(nbr_in >= bar_t{0});
@@ -35,8 +35,8 @@ std::optional<std::vector<note_value>> rand_rp(ts_t ts_in,
 		mode = 3;
 	}
 
-	std::vector<note_value> rpseg {};  // "rp segment" always == 1 bar exactly
-	std::vector<note_value> rp {};
+	std::vector<nv_t> rpseg {};  // "rp segment" always == 1 bar exactly
+	std::vector<nv_t> rp {};
 
 	std::default_random_engine randeng {};
 	randeng.seed(std::chrono::system_clock::now().time_since_epoch().count());
@@ -62,7 +62,7 @@ std::optional<std::vector<note_value>> rand_rp(ts_t ts_in,
 			// than a bar_t.  
 			//
 			auto ridx {rdist(randeng)};
-			note_value rp_e {dp_in[ridx]};  // "rp element"
+			nv_t rp_e {dp_in[ridx]};  // "rp element"
 			rpseg.push_back(rp_e);
 			rpseg_nbar += nbar(ts_in,rp_e);
 
@@ -84,13 +84,13 @@ std::optional<std::vector<note_value>> rand_rp(ts_t ts_in,
 
 		if (mode == 1) { // Fixed nbars, floating nnotes
 			if (nbar_rp == nbr_in) { // Success
-				return std::optional<std::vector<note_value>> {rp};
+				return std::optional<std::vector<nv_t>> {rp};
 			}
 			// There is no overshooting in mode 1, since in mode 1 the inner loop
 			// always adds exactly 1 bar
 		} else if (mode == 2) {  // Fixed nnts, floating nbars
 			if (rp.size() == nnts_in) { // Success
-				return std::optional<std::vector<note_value>> {rp};
+				return std::optional<std::vector<nv_t>> {rp};
 			} else if (rp.size() > nnts_in) { // Overshot
 				rp.clear();	nbar_rp = bar_t{0};
 			} else if (rp.size() < nnts_in) {
@@ -98,7 +98,7 @@ std::optional<std::vector<note_value>> rand_rp(ts_t ts_in,
 			}
 		} else if (mode == 3) { // Fixed nbars, fixed nnotes
 			if (nbar_rp == nbr_in && rp.size() == nnts_in) { // Success
-				return std::optional<std::vector<note_value>> {rp};
+				return std::optional<std::vector<nv_t>> {rp};
 			} else if (nbar_rp > nbr_in || rp.size() > nnts_in) { // Overshot
 				rp.clear();	nbar_rp = bar_t{0};
 			} else {
@@ -112,7 +112,7 @@ std::optional<std::vector<note_value>> rand_rp(ts_t ts_in,
 	return {};
 }
 
-std::optional<std::vector<note_value>> rand_rp(ts_t ts_in, std::vector<note_value> dp_in,
+std::optional<std::vector<nv_t>> rand_rp(ts_t ts_in, std::vector<nv_t> dp_in,
 	std::vector<double> pd_in, int nnts_in, bar_t nbr_in) {
 	rand_rp_opts opts {std::chrono::seconds {3}};
 	return rand_rp(ts_in, dp_in, pd_in, nnts_in, nbr_in, opts);
@@ -167,9 +167,9 @@ void randrp_uih::update(ts_uih const& ts_uih_in, std::vector<nv_uih> const& nv_u
 	msg_ = "";
 	flags_ = 0;
 
-	std::vector<note_value> nvset_in {};
+	std::vector<nv_t> nvset_in {};
 	for (auto e : nv_uih_set_in) {
-		nvset_in.push_back(e.get());
+		nvset_in.push_back(*(e.get()));
 	}
 	randrp_input_ = randrp_input {ts_uih_in.get(), nvset_in, pd_in, 
 		n_nts_in, nbars_in};

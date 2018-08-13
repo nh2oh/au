@@ -1,34 +1,41 @@
 #include "ts_t.h"
 #include "beat_bar_t.h"
-#include "note_value_t.h"
+#include "nv_t.h"
 #include "..\util\au_util_all.h"
 #include <string>
 #include <optional>
 
-//-----------------------------------------------------------------------------
-// The ts_t class
 
 ts_t::ts_t() {
 	//...
 }
 
-ts_t::ts_t(beat_t bt_per_br_in, note_value nv_per_bt, bool is_compound_in) {
-	au_assert(bt_per_br_in.to_double()>0.0); // nv_per_bt is always > 0
+ts_t::ts_t(beat_t const& bt_in, nv_t const& nv_in, bool const& is_compound_in) {
+	au_assert(bt_in > beat_t{0.0}); // nv_per_bt is always > 0
+
 	m_compound = is_compound_in;
-	if (!is_compound_in) {
-		// Simple meter
-		m_bpb = bt_per_br_in;
-		m_beat_unit = nv_per_bt;
-	} else {
-		// Compound meter
-		// bt_per_br_in is really the "number of 3-part divisions of the beat" per bar
-		m_bpb = beat_t {bt_per_br_in.to_double()/3.0};
-		// nv_per_bt is really the "note-value per 3-part beat subdivision"
-		m_beat_unit = note_value{(nv_per_bt+nv_per_bt).to_double(),1};
+	if (!is_compound_in) { // "Simple" time signature
+		m_bpb = bt_in;
+		m_beat_unit = nv_in;
+	} else { // Compound time signature
+		// bt_in is really the "number of subdivisions of the beat"-per bar.  
+		// Since each beat is divided into 3, dividing by 3 yields the number of
+		// beats-per bar.  
+		// Ex, if the number is 6, there are 2 beats per bar.  Each beat is divided
+		// into 3 subdivisions, hence 6 subdivisions-per-bar.  
+		m_bpb = bt_in/3.0;
+
+		// nv_per_bt is really the "note-value per 3-part beat subdivision," so
+		// 3 such note-value's span a single beat.  We need the note value 3x 
+		// larger than what was passed in:
+		// A group of three identical note-values x is equivalent a single nv
+		// having twice the duration of x, 2x, dotted once: (2x).
+		auto unitnv = nv_t();
+		m_beat_unit = nv_t{2.0*(nv_in/unitnv),1};
 	}
 }
 
-ts_t::ts_t(std::string str_in) {
+ts_t::ts_t(std::string const& str_in) {
 	from_string(str_in);
 }
 
@@ -36,8 +43,8 @@ ts_t::ts_t(std::string str_in) {
 // This shouldn't call validate_ts_str() and go through all the "helper"
 // bullshit:  It should simply parse the string in the most unforgiving
 // way and crash on failure.  No leading/trailing spaces, etc.  
-void ts_t::from_string(std::string str_in) {  // Delegated constructor
-	auto o_matches = rx_match_captures("(\\d+)/(\\d+)(c)?",str_in);  // std::string{literal_in}
+void ts_t::from_string(std::string const& str_in) {  // Delegated constructor
+	auto o_matches = rx_match_captures("(\\d+)/(\\d+)(c)?",str_in);
 	if (!o_matches || (*o_matches).size() != 4) {
 		au_error("Could not parse ts string literal");
 	}
@@ -50,50 +57,34 @@ void ts_t::from_string(std::string str_in) {  // Delegated constructor
 	bool is_compound {false};
 	if (matches[3]) { is_compound = true; }
 
-	m_beat_unit = note_value {1.0/inv_nv_per_bt};
+	m_beat_unit = nv_t {1.0/inv_nv_per_bt};
 	m_bpb = beat_t {bt_per_bar};
 	m_compound = is_compound;
-
-	/*ts_str_helper result = validate_ts_str(str_in);
-	au_assert(result.is_valid, result.msg);
-	m_beat_unit = note_value {1.0/result.inv_nv_per_bt};
-	m_bpb = beat_t {result.bt_per_bar};
-	m_compound = result.is_compound;*/
 }
 
 ts_t operator""_ts(const char *literal_in, size_t length) {
 	return ts_t {std::string {literal_in}};
 }
 
-note_value ts_t::beat_unit() const {
+nv_t ts_t::beat_unit() const {
 	return m_beat_unit;
 }
-note_value ts_t::bar_unit() const {
-	return note_value{(m_beat_unit.to_double())*(m_bpb.to_double())};
+
+nv_t ts_t::bar_unit() const {
+	auto unitnv = nv_t{1,0};
+	return nv_t{(m_beat_unit/unitnv)*(m_bpb/beat_t{1}),0};
 }
+
 beat_t ts_t::beats_per_bar() const {
 	return m_bpb;
 }
+
 std::string ts_t::print() const {
-	int numerator {0};
-	int denominator {0};
 	std::string compound_indicator {""};
-	if (!m_compound) {
-		numerator = static_cast<int>(m_bpb.to_double());
-		denominator = static_cast<int>(1/(m_beat_unit.to_double()));
-	} else {
-		auto o_denominator = m_beat_unit.undot_value();
-		if (o_denominator) {
-			numerator = 3*static_cast<int>(m_bpb.to_double());
-			denominator = static_cast<int>(2.0/(*o_denominator));
-			compound_indicator = "c";
-		} else {
-			return ("?/?");
-		}
+	if (m_compound) {
+		compound_indicator = "c";
 	}
-	std::string s = std::to_string(numerator) + "/" 
-		+ std::to_string(denominator) + 
-		compound_indicator;
+	std::string s = m_bpb.print() + "/" + m_beat_unit.print() + compound_indicator;
 	return s;
 }
 
@@ -168,7 +159,7 @@ void ts_uih::update(std::string const& str_in) {
 	// Addnl tests... bt_per_bar, inv_nv_per_bt should not have weird magnitudes...
 
 	is_valid_ = true;
-	ts_ = ts_t{beat_t{ts_parts.bt_per_bar},note_value{ts_parts.nv_per_bt},
+	ts_ = ts_t{beat_t{ts_parts.bt_per_bar},nv_t{ts_parts.nv_per_bt},
 		ts_parts.is_compound};
 
 }

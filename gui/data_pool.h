@@ -15,7 +15,7 @@ public:
 	data_pool();
 
 	bool create(notefile, std::string);
-	bool create(std::vector<note_value>, std::string);
+	bool create(std::vector<nv_t>, std::string);
 	bool destroy(std::shared_ptr<std::vector<notefile>>);
 	std::string print_nfs();
 	std::vector<std::string> list_all();
@@ -34,7 +34,7 @@ private:
 		// Global index for all the data in the pool.  Associates names with the
 		// data type.  
 
-	dp_type_pool<std::vector<note_value>> m_rps {};
+	dp_type_pool<std::vector<nv_t>> m_rps {};
 	dp_type_pool<std::vector<scd_t>> m_scds {};
 	dp_type_pool<std::vector<frq_t>> m_frqs {};
 	dp_type_pool<std::vector<ntstr_t>> m_ntstrs {};

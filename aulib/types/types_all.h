@@ -6,6 +6,6 @@
 #include "beat_bar_t.h"
 #include "rp_t.h"
 #include "ts_t.h"
-#include "note_value_t.h"
+#include "nv_t.h"
 #include "metg_t.h"
 

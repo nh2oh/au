@@ -3,6 +3,7 @@
 #include <vector>
 #include <optional>
 #include <regex>
+#include <chrono>
 #include "au_util.h"
 
 int str2int(std::string s) {
@@ -81,5 +82,14 @@ std::optional<std::vector<std::optional<std::string>>> rx_match_captures(
 }
 
 int wait() {
+	std::chrono::microseconds wait_time {1};
+	auto finish_time {std::chrono::system_clock::now()+wait_time};
+
+	double keep_busy = 153625.2354;
+	while (std::chrono::system_clock::now() < finish_time) {
+		keep_busy += 1.0;
+		keep_busy /= 3.0;
+	}
+
 	return 1;
 }

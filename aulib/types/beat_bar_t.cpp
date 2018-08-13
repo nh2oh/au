@@ -17,7 +17,12 @@ beat_t::beat_t(int beats_in) {
 double beat_t::to_double() const {
 	return m_beats;
 }
-
+std::string beat_t::print() const {
+	if (isapproxint(m_beats,6)) {
+		return std::to_string(static_cast<int>(m_beats));
+	}
+	return std::to_string(m_beats);
+}
 beat_t& beat_t::operator+=(beat_t const& rhs) {
 	m_beats += rhs.m_beats;
 	return *this;
@@ -86,6 +91,12 @@ bar_t::bar_t(int bars_in) {
 
 double bar_t::to_double() const {
 	return m_bars;
+}
+std::string bar_t::print() const {
+	if (isapproxint(m_bars,6)) {
+		return std::to_string(static_cast<int>(m_bars));
+	}
+	return std::to_string(m_bars);
 }
 
 bar_t& bar_t::operator+=(bar_t const& rhs) {

@@ -28,7 +28,7 @@ nf_import_window::nf_import_window(QWidget *parent) : QMainWindow(parent) {
 	ui.err->setText(QString().fromStdString(defaults_.err));
 	set_err();
 
-	update_note_value_count();
+	update_nv_t_count();
 }
 
 void nf_import_window::set_nf() {
@@ -68,7 +68,7 @@ void nf_import_window::set_nftable() {
 	status.nf_table = !negative_dt;
 }
 
-void nf_import_window::update_note_value_count() {
+void nf_import_window::update_nv_t_count() {
 	//bool window_is_valid = status.bpm && status.nf_table && status.err 
 	//	&& status.nf && status.ts;
 	bool window_is_valid = status.bpm && status.nf_table && status.err 
@@ -80,25 +80,25 @@ void nf_import_window::update_note_value_count() {
 	auto nvs = deltat2rp(m_dt,ts_.get(),m_bpm,m_err);
 	auto uq_nvs = unique_n(nvs);
 
-	ui.note_value_counts->clear();
+	ui.nv_t_counts->clear();
 	for (int i=0; i<uq_nvs.values.size(); ++i) {
 		std::string cline {};
 		cline += uq_nvs.values[i].print(notevalueopts::printapproxifnotexact);
 		cline += " : ";
 		cline += std::to_string(uq_nvs.counts[i]);
 		
-		ui.note_value_counts->appendPlainText(QString().fromStdString(cline));
+		ui.nv_t_counts->appendPlainText(QString().fromStdString(cline));
 	}
 }
 
 void nf_import_window::on_ts_textEdited() {
 	set_ts();
-	if (ts_.is_valid()) { update_note_value_count();	}
+	if (ts_.is_valid()) { update_nv_t_count();	}
 }
 
 void nf_import_window::on_ts_returnPressed() {
 	set_ts();
-	if (ts_.is_valid()) { update_note_value_count();	}
+	if (ts_.is_valid()) { update_nv_t_count();	}
 }
 
 void nf_import_window::set_ts() {
@@ -112,12 +112,12 @@ void nf_import_window::set_ts() {
 
 void nf_import_window::on_bpm_returnPressed() {
 	set_bpm();
-	if (status.bpm) { update_note_value_count(); }
+	if (status.bpm) { update_nv_t_count(); }
 }
 
 void nf_import_window::on_bpm_textEdited() {
 	set_bpm();
-	if (status.bpm) { update_note_value_count(); }
+	if (status.bpm) { update_nv_t_count(); }
 }
 
 void nf_import_window::set_bpm() {
@@ -134,7 +134,7 @@ void nf_import_window::set_bpm() {
 
 void nf_import_window::on_err_returnPressed() {
 	set_err();
-	if (status.err) { update_note_value_count(); }
+	if (status.err) { update_nv_t_count(); }
 }
 
 void nf_import_window::set_err() {

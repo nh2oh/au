@@ -12,6 +12,7 @@ public:
 	explicit beat_t(double);
 
 	double to_double() const;
+	std::string print() const;
 
 	beat_t& operator+=(beat_t const&);
 	beat_t& operator-=(beat_t const&);
@@ -45,6 +46,7 @@ public:
 	explicit bar_t(double);
 
 	double to_double() const;
+	std::string print() const;
 
 	bar_t& operator+=(bar_t const&);
 	bar_t& operator-=(bar_t const&);

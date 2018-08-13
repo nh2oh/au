@@ -229,7 +229,7 @@
      </rect>
     </property>
    </widget>
-   <widget class="QPlainTextEdit" name="note_value_counts">
+   <widget class="QPlainTextEdit" name="nv_t_counts">
     <property name="geometry">
      <rect>
       <x>610</x>

@@ -32,7 +32,7 @@ private:
 	std::vector<double> pd_;  // Convert to helper
 	int n_nts_;  // Convert to helper
 	bar_t n_bars_;  // Convert to helper
-	std::vector<note_value> rp_result_;
+	std::vector<nv_t> rp_result_;
 
 
 	void set_ts();

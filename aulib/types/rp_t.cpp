@@ -1,5 +1,5 @@
 #include "rp_t.h"
-#include "note_value_t.h"
+#include "nv_t.h"
 #include "beat_bar_t.h"
 #include "ts_t.h"
 #include "..\util\au_util_all.h"
@@ -15,17 +15,17 @@
 //-----------------------------------------------------------------------------
 // Support functions
 
-beat_t nbeat(ts_t const& ts_in, note_value const& nv_in) {
+beat_t nbeat(ts_t const& ts_in, nv_t const& nv_in) {
 	return beat_t{nv_in/(ts_in.beat_unit())};
 }
 
-bar_t nbar(ts_t const& ts_in, note_value const& nv_in) {
+bar_t nbar(ts_t const& ts_in, nv_t const& nv_in) {
 	beat_t nbeats = nbeat(ts_in, nv_in);
 	auto nbars_exact = nbeats/(ts_in.beats_per_bar());
 	return bar_t {nbars_exact};
 }
 
-std::string printrp(ts_t const& ts_in, std::vector<note_value> const& nv_in) {
+std::string printrp(ts_t const& ts_in, std::vector<nv_t> const& nv_in) {
 	std::string s {};
 	std::string sep {", "};
 	std::string sep_bar {" | "};
@@ -88,7 +88,7 @@ std::string rp_t_info() {
 // Convert a sequence of note durations (in seconds) to a sequence of 
 // note-values.  
 //
-std::vector<note_value> deltat2rp(std::vector<double> const& delta_t, 
+std::vector<nv_t> deltat2rp(std::vector<double> const& delta_t, 
 	ts_t const& ts_in, double const& bpm, double const& s_resolution) {
 	au_assert(delta_t.size()>=2,"A delta-t vector must contain >= 2 events.");
 	au_assert(bpm>0,"bpm>0");
@@ -96,11 +96,11 @@ std::vector<note_value> deltat2rp(std::vector<double> const& delta_t,
 	auto bps = bpm/60.0;
 	auto bt_resolution = beat_t{bps*s_resolution};
 
-	std::vector<note_value> ntset {};
+	std::vector<nv_t> ntset {};
 	std::vector<double> dtset {};
 	for (int m = 0; m<5; ++m) { // 5 => 1/32
 		for (int n = 0; n<2; ++n) {
-			auto curr_nv = note_value{std::pow(2,-m),n};
+			auto curr_nv = nv_t{std::pow(2,-m),n};
 			if (nbeat(ts_in,curr_nv) >= bt_resolution) {
 				ntset.push_back(curr_nv);
 				dtset.push_back(nv2dt(curr_nv,ts_in,bpm));
@@ -108,7 +108,7 @@ std::vector<note_value> deltat2rp(std::vector<double> const& delta_t,
 		}
 	}
 
-	std::vector<note_value> nts {}; nts.reserve(delta_t.size());
+	std::vector<nv_t> nts {}; nts.reserve(delta_t.size());
 	for (auto curr_dt: delta_t) {
 		auto i = nearest_idx(curr_dt,dtset);
 		nts.push_back(ntset[i]);
@@ -121,7 +121,7 @@ std::vector<note_value> deltat2rp(std::vector<double> const& delta_t,
 // Does the reverse of deltat2rp().
 // Units of the delta_t vector is seconds.  
 //  
-std::vector<double> rp2deltat(std::vector<note_value> const& rp_in, 
+std::vector<double> rp2deltat(std::vector<nv_t> const& rp_in, 
 	ts_t const& ts_in, double const& bpm) {
 	au_assert(rp_in.size()>=1);
 	au_assert(bpm>0);
@@ -137,7 +137,7 @@ std::vector<double> rp2deltat(std::vector<note_value> const& rp_in,
 //
 // Units of dt is seconds.  
 //  
-double nv2dt(note_value const& nv_in, 
+double nv2dt(nv_t const& nv_in, 
 	ts_t const& ts_in, double const& bpm) {
 	au_assert(bpm>0);
 
@@ -147,8 +147,8 @@ double nv2dt(note_value const& nv_in,
 }
 
 std::string deltat2rp_demo() {
-	std::vector<note_value> nts {note_value{1.0/1.0},note_value{1.0/2.0},
-		note_value{1.0/4.0},note_value{1.0/8.0}};
+	std::vector<nv_t> nts {nv_t{1.0/1.0},nv_t{1.0/2.0},
+		nv_t{1.0/4.0},nv_t{1.0/8.0}};
 	auto ts = "4/4"_ts;
 	double bpm = 60; auto bps = bpm/60;
 	int n = 15;
@@ -156,7 +156,7 @@ std::string deltat2rp_demo() {
 	auto ridx_nts = urandi(n,0,nts.size()-1);
 	auto rand_frac_delta_t = urandd(n,-0.075,0.075);
 
-	std::vector<note_value> note_seq {}; // Random seq of note_value's
+	std::vector<nv_t> note_seq {}; // Random seq of nv_t's
 	std::vector<double> delta_t {}; // dt for note_seq +/- some random offset
 	double t_total {0.0};
 	for (auto i=0; i<n; ++i) {
@@ -169,7 +169,7 @@ std::string deltat2rp_demo() {
 		delta_t.push_back(dt_fuzz);
 	}
 
-	auto nv_resolution = note_value{1.0/8.0};
+	auto nv_resolution = nv_t{1.0/8.0};
 	double sec_resolution = nbeat(ts,nv_resolution).to_double()/(bps+1);
 	auto rp_backcalc = deltat2rp(delta_t,ts,bpm,sec_resolution);
 

@@ -13,16 +13,18 @@
 //-----------------------------------------------------------------------------
 // The tmetg_t class
 
+// Statics
 const int tmetg_t::m_bt_quantization {1024};
 
-tmetg_t::tmetg_t(ts_t ts_in, std::vector<note_value> note_values_in, std::vector<beat_t> ph_in) {
-	if (ph_in.size() != note_values_in.size()) {
-		au_error("ph_in.size() != note_values_in.size()");
+// Constructors
+tmetg_t::tmetg_t(ts_t ts_in, std::vector<nv_t> nvs_in, std::vector<beat_t> ph_in) {
+	if (ph_in.size() != nvs_in.size()) {
+		au_error("ph_in.size() != nv_ts_in.size()");
 	}
 	m_ts = ts_in;
-	m_note_values = note_values_in;
+	m_nvs = nvs_in;
 	m_ph = ph_in;
-	for (auto curr_nv : note_values_in) {
+	for (auto curr_nv : nvs_in) {
 		m_beat_values.push_back(nbeat(ts_in,curr_nv));
 	}
 
@@ -66,14 +68,13 @@ tmetg_t::tmetg_t(ts_t ts_in, std::vector<note_value> note_values_in, std::vector
 		N_btres_period = std::lcm((curr_bt_quant/btres_br).reduce().num,N_btres_period);
 	}
 	m_period = N_btres_period*m_btres;
-	//wait();
 }
 
 void tmetg_t::set_rand_pg() {
 	au_assert(isapproxint(m_period/m_btres,6));
 	auto N_cols_period = static_cast<int>(m_period/m_btres);
 	m_pg = std::vector<std::vector<double>>(N_cols_period,
-		std::vector<double>(m_note_values.size(),0.0));
+		std::vector<double>(m_nvs.size(),0.0));
 
 	for (auto i=0; i < m_pg.size(); ++i) {
 		auto curr_bt = i*m_btres;
@@ -82,19 +83,18 @@ void tmetg_t::set_rand_pg() {
 			m_pg[i][idx] = 1.0/curr_allowed.size();
 		}
 	}
-	wait();
 }
 
-std::vector<note_value> tmetg_t::draw() const {
-	std::vector<note_value> rnts {};
+std::vector<nv_t> tmetg_t::draw() const {
+	std::vector<nv_t> rnts {};
 	auto re = randeng(true);
 
 	beat_t curr_bt {0};
-	while (curr_bt < m_period) {// (auto i=0; i<m_pg.size(); ++i) {
+	while (curr_bt < m_period) {
 		auto pg_col_idx = static_cast<int>(curr_bt/m_btres);
 		auto pg_col = m_pg[pg_col_idx];
 		auto ridx = randset(1,pg_col,re);
-		rnts.push_back(m_note_values[ridx[0]]);
+		rnts.push_back(m_nvs[ridx[0]]);
 		curr_bt += m_beat_values[ridx[0]];
 	}
 
@@ -104,8 +104,6 @@ std::vector<note_value> tmetg_t::draw() const {
 std::vector<double> tmetg_t::nt_prob(beat_t) {
 	return std::vector<double>(5,0.0);
 }
-
-
 
 // Enumerate all variations over a single period
 void tmetg_t::enumerate() const {
@@ -163,24 +161,16 @@ void tmetg_t::m_enumerator(std::vector<std::vector<int>>& rps,
 		rps[N] = rp_init;
 	}
 
-
 }
 
 
-
-
-
-
-
-
-
-// True if _any_ note of m_note_values occurs at beat one nv past beat
-bool tmetg_t::allowed_next(beat_t beat, note_value nv) const {
+// True if _any_ note of m_nv_ts occurs at beat one nv past beat
+bool tmetg_t::allowed_next(beat_t beat, nv_t nv) const {
 	auto nxt_bt = beat+nbeat(m_ts,nv); // Beat-number of the next beat
 	return allowed_at(nxt_bt);
 }
 
-// True if _any_ note of m_note_values occurs at beat
+// True if _any_ note of m_nv_ts occurs at beat
 bool tmetg_t::allowed_at(beat_t beat) const {
 	for (auto i=0; i<m_beat_values.size(); ++i) {
 		if (beat == (std::round(beat/m_beat_values[i])*m_beat_values[i] + m_ph[i])) {
@@ -190,7 +180,7 @@ bool tmetg_t::allowed_at(beat_t beat) const {
 	return false;
 }
 
-// True if _any_ note of m_note_values occurs at beat
+// True if _any_ note of m_nv_ts occurs at beat
 std::vector<int> tmetg_t::levels_allowed(beat_t beat) const {
 	std::vector<int> allowed {}; allowed.reserve(m_beat_values.size());
 	for (auto i=0; i<m_beat_values.size(); ++i) {
@@ -201,12 +191,12 @@ std::vector<int> tmetg_t::levels_allowed(beat_t beat) const {
 	return allowed;
 }
 
-//std::vector<note_value> tmetg_t::which_allowed(beat_t beat, 
-//	std::vector<note_value> nvs, int mode) const {
+//std::vector<nv_t> tmetg_t::which_allowed(beat_t beat, 
+//	std::vector<nv_t> nvs, int mode) const {
 //	// mode == 1 => at && next (default)
 //	// mode == 2 => at only
 //	// mode == 3 => next only
-//	std::vector<note_value> allowed_nvs {};
+//	std::vector<nv_t> allowed_nvs {};
 //
 //	if (mode == 1 || mode == 2) {
 //		if (!allowed_at(beat)) {
@@ -234,8 +224,8 @@ std::string tmetg_t::print() const {
 	std::string s {};
 	s += "tmetg.print():\n";
 	s += "ts == " + m_ts.print() + "\n";
-	for (auto i=0; i<m_note_values.size(); ++i) {
-		s += m_note_values[i].print();
+	for (auto i=0; i<m_nvs.size(); ++i) {
+		s += m_nvs[i].print();
 		s += " (=> " + std::to_string(m_beat_values[i].to_double()) + " beats);  ";
 		s += "+ " + std::to_string(m_ph[i].to_double()) + " beat shift\n";
 	}
@@ -273,7 +263,7 @@ std::string tmetg_t::print() const {
 //
 //
 //std::vector<std::vector<int>> tmetg(ts_t ts_in, 
-//	std::vector<note_value> dp_in, std::vector<beat_t> ph_in) {
+//	std::vector<nv_t> dp_in, std::vector<beat_t> ph_in) {
 //	//
 //	// Each duration element di in dp_in spans some number of grid spaces NGi.  
 //	// For all the di's, as well as the full bar, dbr (which  spans NGbr grid
@@ -330,9 +320,9 @@ std::string tmetg_t::print() const {
 //	// tg[0] => dp_all[0] = dp_in[0], ... tg[n] => dp_all[n] = db
 //	// dp_all is dp_in with db appended to the end, and "indexes" tg.  
 //	//
-//	std::vector<note_value> dp_all = dp_in;
-//	dp_all.push_back(note_value{dbr.to_double()});
-//	dp_all.push_back(note_value{dbt.to_double()});
+//	std::vector<nv_t> dp_all = dp_in;
+//	dp_all.push_back(nv_t{dbr.to_double()});
+//	dp_all.push_back(nv_t{dbt.to_double()});
 //
 //	std::vector<std::vector<int>> tg {};
 //	for (auto i=0; i<dp_all.size(); ++i) {

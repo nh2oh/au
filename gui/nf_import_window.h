@@ -3,7 +3,7 @@
 #include "ui_nf_import_window.h"
 #include "aulib\types\ts_t.h"
 #include "aulib\types\beat_bar_t.h"
-#include "aulib\types\note_value_t.h"
+#include "aulib\types\nv_t_t.h"
 #include "aulib\input\notefile.h"
 #include <string>
 #include <vector>
@@ -49,7 +49,7 @@ class nf_import_window : public QMainWindow {
 			// ui->nf_table holds pointers to this
 		std::string m_fname {};
 		notefile m_nf {};
-		//ts_t m_ts {beat_t{4.0},note_value{1.0/4.0},false};
+		//ts_t m_ts {beat_t{4.0},nv_t{1.0/4.0},false};
 		double m_bpm {90.0};
 		double m_err {0.25};  // fudge-factor (seconds)
 		std::vector<double> m_dt {}; 
@@ -59,7 +59,7 @@ class nf_import_window : public QMainWindow {
 		//---------------------------------------------------------------------------
 		// Functions
 		void set_nftable();
-		void update_note_value_count();
+		void update_nv_t_count();
 		void set_ts();
 		void set_bpm();
 		void set_err();

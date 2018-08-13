@@ -1,5 +1,6 @@
 #pragma once
 #include "..\types\types_all.h"
+#include "..\nv_uih.h"
 #include <vector>
 #include <optional>
 #include <chrono>
@@ -7,7 +8,7 @@
 
 
 // Fwd declarations from rp_t.h
-//class note_value;
+//class nv_t;
 //class ts_t;
 //class bar_t;
 
@@ -15,16 +16,16 @@ struct rand_rp_opts {
 	std::chrono::seconds maxt;
 };
 
-std::optional<std::vector<note_value>> rand_rp(ts_t,std::vector<note_value>,
+std::optional<std::vector<nv_t>> rand_rp(ts_t,std::vector<nv_t>,
 	std::vector<double>,int,bar_t);
-std::optional<std::vector<note_value>> rand_rp(ts_t,std::vector<note_value>,
+std::optional<std::vector<nv_t>> rand_rp(ts_t,std::vector<nv_t>,
 	std::vector<double>,int,bar_t,rand_rp_opts);
 
 
 
 struct randrp_input {
 	ts_t ts {};
-	std::vector<note_value> nvset {};
+	std::vector<nv_t> nvset {};
 	std::vector<double> pd {};
 	int n_nts {0};
 	bar_t n_bars {0};

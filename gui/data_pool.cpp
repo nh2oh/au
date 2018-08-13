@@ -16,8 +16,8 @@ bool data_pool::create(notefile nf_in, std::string name) {
 	return true;
 }
 
-bool data_pool::create(std::vector<note_value> rp_in, std::string name) {
-	dp_item<std::vector<note_value>> item {name, std::string {""}, rp_in};
+bool data_pool::create(std::vector<nv_t> rp_in, std::string name) {
+	dp_item<std::vector<nv_t>> item {name, std::string {""}, rp_in};
 
 	m_rps.items.push_back(item);
 	return true;
