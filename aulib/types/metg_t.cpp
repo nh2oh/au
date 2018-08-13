@@ -87,7 +87,7 @@ void tmetg_t::set_rand_pg() {
 
 std::vector<nv_t> tmetg_t::draw() const {
 	std::vector<nv_t> rnts {};
-	auto re = randeng(true);
+	auto re = new_randeng(true);
 
 	beat_t curr_bt {0};
 	while (curr_bt < m_period) {

@@ -40,7 +40,7 @@ public:
     QLabel *label_2;
     QLabel *label_3;
     QLineEdit *err;
-    QPlainTextEdit *note_value_counts;
+    QPlainTextEdit *nv_t_counts;
     QComboBox *comboBox;
     QLabel *label_4;
     QLineEdit *lineEdit;
@@ -91,9 +91,9 @@ public:
         err = new QLineEdit(centralwidget);
         err->setObjectName(QStringLiteral("err"));
         err->setGeometry(QRect(530, 70, 61, 20));
-        note_value_counts = new QPlainTextEdit(centralwidget);
-        note_value_counts->setObjectName(QStringLiteral("note_value_counts"));
-        note_value_counts->setGeometry(QRect(610, 10, 131, 81));
+        nv_t_counts = new QPlainTextEdit(centralwidget);
+        nv_t_counts->setObjectName(QStringLiteral("nv_t_counts"));
+        nv_t_counts->setGeometry(QRect(610, 10, 131, 81));
         comboBox = new QComboBox(centralwidget);
         comboBox->addItem(QString());
         comboBox->addItem(QString());

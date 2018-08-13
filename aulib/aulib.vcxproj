@@ -37,6 +37,7 @@
     <ClCompile Include="util\au_algs.cpp" />
     <ClCompile Include="util\au_algs_math.cpp" />
     <ClCompile Include="util\au_error.cpp" />
+    <ClCompile Include="util\au_random.cpp" />
     <ClCompile Include="util\au_util.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -59,6 +60,7 @@
     <ClInclude Include="util\au_algs.h" />
     <ClInclude Include="util\au_algs_math.h" />
     <ClInclude Include="util\au_error.h" />
+    <ClInclude Include="util\au_random.h" />
     <ClInclude Include="util\au_util.h" />
     <ClInclude Include="util\au_util_all.h" />
   </ItemGroup>

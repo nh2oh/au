@@ -1,11 +1,12 @@
+#include "au_algs_math.h"
+#include "au_error.h"
+#include "au_util.h"
 #include <cmath>
 #include <numeric>
 #include <random>
 #include <chrono>
 #include <optional>
 #include <limits>
-#include "au_algs_math.h"
-
 
 std::optional<linreg_result> linreg(std::vector<double> const& x, std::vector<double> const& y) {
 	if (x.size() != y.size() || x.size() == 0) {
@@ -37,58 +38,6 @@ std::optional<linreg_result> linreg(std::vector<double> const& x, std::vector<do
 	return res; 
 }
 
-
-
-// Random number generator, randomly seeded if randseed == true
-std::mt19937 randeng(bool randseed) {
-	std::default_random_engine randeng {};
-	auto t = std::chrono::system_clock::now().time_since_epoch().count();
-	auto least_sig = static_cast<int>(t % std::numeric_limits<int>::max());
-	if (randseed) {
-		randeng.seed(least_sig);
-	}
-	return randeng;
-}
-
-// Random double
-std::vector<double> urandd(int n, double min, double max) {
-	auto re = randeng(true);
-	std::uniform_real_distribution<double> rn {min,max};
-	std::vector<double> rv(n,0.0);
-	for (auto i=0; i<n; ++i) {
-		rv[i] = rn(re);
-	}
-	return rv;
-}
-
-// Random int
-std::vector<int> urandi(int n, int min, int max) {
-	auto re = randeng(true);
-	std::uniform_int_distribution<int> rn {min,max};
-	std::vector<int> rv(n,0);
-	for (auto i=0; i<n; ++i) {
-		rv[i] = rn(re);
-	}
-	return rv;
-}
-
-// Random indices of >= p.size()
-std::vector<int> randset(int const& n, std::vector<double> const& p, std::mt19937& re) {
-	std::uniform_real_distribution<double> rn {0,1};
-	std::vector<int> ridx {}; ridx.reserve(n);
-
-	for (int i=0; i<n; ++i) {
-		auto rd = rn(re);
-		int j=0;
-		for (double cump=0; j<p.size(); ++j) {
-			cump += p[j];  // cumulative probability
-			if (cump >= rd) { break; }
-		}
-		ridx.push_back(j);
-	}
-	return ridx;
-}
-
 // is approximately integer
 // true if d is approximately an integer value
 bool isapproxint(double d, int prec) {
@@ -105,7 +54,7 @@ bool isapproxeq(double lhs, double rhs, int prec) {
 
 // true if a/b == integer
 bool ismultiple(double a, double b, int prec) {
-	return (std::abs(a/b - std::round(a/b)) < 1/std::pow(10,6));
+	return (std::abs(a/b - std::round(a/b)) < 1/std::pow(10,prec));
 }
 
 int lcm(std::vector<int> const& v) {

@@ -130,7 +130,7 @@ void rp_builder::set_nvpool() {
 
 	ui.nv_pool->clear();
 	for (auto e : nv_pool_) {
-		new QListWidgetItem(QString().fromStdString(e.get().print()), ui.nv_pool);
+		new QListWidgetItem(QString().fromStdString((*(e.get())).print()), ui.nv_pool);
 	}
 }
 

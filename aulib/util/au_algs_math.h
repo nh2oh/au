@@ -12,11 +12,7 @@ struct linreg_result {
 };
 std::optional<linreg_result> linreg(std::vector<double> const&, std::vector<double> const&);
 
-// Random numbers
-std::mt19937 randeng(bool randseed=true);
-std::vector<double> urandd(int,double,double);
-std::vector<int> urandi(int,int,int);
-std::vector<int> randset(int const&, std::vector<double> const&, std::mt19937&);
+
 
 // Floating point equality
 bool isapproxint(double,int); // is approximately integer

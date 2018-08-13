@@ -3,7 +3,7 @@
 #include "ui_nf_import_window.h"
 #include "aulib\types\ts_t.h"
 #include "aulib\types\beat_bar_t.h"
-#include "aulib\types\nv_t_t.h"
+#include "aulib\types\nv_t.h"
 #include "aulib\input\notefile.h"
 #include <string>
 #include <vector>

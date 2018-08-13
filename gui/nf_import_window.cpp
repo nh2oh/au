@@ -83,7 +83,7 @@ void nf_import_window::update_nv_t_count() {
 	ui.nv_t_counts->clear();
 	for (int i=0; i<uq_nvs.values.size(); ++i) {
 		std::string cline {};
-		cline += uq_nvs.values[i].print(notevalueopts::printapproxifnotexact);
+		cline += uq_nvs.values[i].print();
 		cline += " : ";
 		cline += std::to_string(uq_nvs.counts[i]);
 		

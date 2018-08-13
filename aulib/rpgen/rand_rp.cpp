@@ -38,8 +38,9 @@ std::optional<std::vector<nv_t>> rand_rp(ts_t ts_in,
 	std::vector<nv_t> rpseg {};  // "rp segment" always == 1 bar exactly
 	std::vector<nv_t> rp {};
 
-	std::default_random_engine randeng {};
-	randeng.seed(std::chrono::system_clock::now().time_since_epoch().count());
+	//std::default_random_engine randeng {};
+	//randeng.seed(std::chrono::system_clock::now().time_since_epoch().count());
+	auto randeng = new_randeng(true);
 	std::uniform_int_distribution<int> rdist {0,static_cast<int>(dp_in.size()-1)};
 	bar_t nbar_rp {0};  // counter
 	while (std::chrono::system_clock::now() < tfail) {
