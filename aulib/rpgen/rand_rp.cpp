@@ -1,6 +1,11 @@
 #include "rand_rp.h"
-#include "..\types\types_all.h"
-#include "..\util\au_util_all.h"
+#include "..\types\nv_t.h"
+#include "..\types\ts_t.h"
+#include "..\types\beat_bar_t.h"
+#include "..\types\rp_t.h"
+#include "..\util\au_random.h"
+#include "..\util\au_util.h"
+#include "..\util\au_error.h"
 #include <vector>
 #include <chrono>
 #include <random>

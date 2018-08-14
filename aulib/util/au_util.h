@@ -4,8 +4,6 @@
 #include <vector>
 #include <regex>
 
-int str2int(std::string);
-
 std::string int_suffix(int const&);
 
 // Specify regex as string (arg 1); function calls the std::regex
@@ -17,11 +15,8 @@ std::optional<std::vector<std::optional<std::string>>>
 std::optional<std::vector<std::optional<std::string>>> 
 	rx_match_captures(std::regex const&, std::string const&);
 
+
+// Waits a v. short amount of time... sometimes useful for debugging
 int wait();
-
-
-
-
-
 
 

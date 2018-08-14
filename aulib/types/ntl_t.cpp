@@ -1,8 +1,9 @@
+#include "ntl_t.h"
+#include "scd_t.h"
+#include "..\util\au_error.h"
 #include <string>
 #include <regex>
-#include "scd_t.h"
-#include "ntl_t.h"
-#include "..\util\au_util_all.h"
+
 
 //-----------------------------------------------------------------------------
 // The ntl_t class
@@ -61,7 +62,7 @@ ntstr_t::ntstr_t(std::string str_in) {
 	}
 	else if (rx_matches.size() == 3) { // ntlo, not ntl
 		m_ntl = ntl_t(rx_matches[1].str());
-		m_octn = octn_t{str2int(rx_matches[2].str())};
+		m_octn = octn_t{std::stoi(rx_matches[2].str())};
 	}
 	else {
 		au_error("rx_matches.size() ???");

@@ -1,31 +1,10 @@
+#include "au_util.h"
 #include <string>
-#include <cmath>
+#include <cmath>  // floor() in int_suffix()
 #include <vector>
 #include <optional>
 #include <regex>
-#include <chrono>
-#include "au_util.h"
-
-int str2int(std::string s) {
-	if (s.size() == 0) { return 0; }
-	int sign = 1;
-	int num = 0;
-	size_t start_idx = 0;
-	if (s.substr(start_idx,1) == "-" && s.size() == 1) {
-		return 0;
-	} else if (s.substr(start_idx,1) == "-" && s.size() > 1) {
-		sign = -1;
-		++start_idx;
-	}
-
-	num = std::stoi(s.substr(start_idx,s.size()));
-	std::string str_from_num = std::to_string(num);
-	if (str_from_num != s.substr(start_idx, s.size())) {
-		return 0;
-	}
-
-	return (sign*num);
-}
+#include <chrono>  // for wait()
 
 
 std::string int_suffix(int const& int_in) {
@@ -93,3 +72,4 @@ int wait() {
 
 	return 1;
 }
+

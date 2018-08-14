@@ -1,10 +1,13 @@
+#include "frq_t.h"
+#include "ntl_t.h"
+#include "..\util\au_error.h"
+#include "..\util\au_algs_math.h"
+#include "..\util\au_util.h"  // int_suffix()
 #include <map>
 #include <vector>
 #include <string>
-#include <cmath>
-#include "frq_t.h"
-#include "ntl_t.h"
-#include "..\util\au_util_all.h"
+#include <cmath>  // pow(), log2()
+#include <cstdlib> // div()... not in <cmath>
 
 //-----------------------------------------------------------------------------
 // The frq_t class
@@ -205,7 +208,7 @@ std::optional<std::string> cent_t::to_fcname(int prefer_name) const {
 		}
 
 		if ((*rx_caps)[2]) { 
-			int int_num = str2int(*((*rx_caps)[2]));
+			int int_num = std::stoi(*((*rx_caps)[2]));
 			name_substr_number = *((*rx_caps)[2]) + "'" + int_suffix(int_num);
 		}
 	} else {

@@ -2,10 +2,11 @@
 #include "nv_t.h"
 #include "beat_bar_t.h"
 #include "ts_t.h"
-#include "..\util\au_util_all.h"
+#include "..\util\au_error.h"
+#include "..\util\au_algs_math.h"
+#include "..\util\au_random.h"
 #include <string>
 #include <vector>
-#include <algorithm> // for is_sorted()
 #include <cmath> // pow()
 
 

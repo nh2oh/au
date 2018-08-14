@@ -3,6 +3,7 @@
 #include "beat_bar_t.h"
 #include "rp_t.h"
 #include "..\util\au_util_all.h"
+#include "..\util\au_frac.h"
 #include <vector>
 #include <numeric> // lcm
 #include <string>

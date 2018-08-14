@@ -1,5 +1,6 @@
 #pragma once
-#include "..\types\types_all.h"
+#include "..\types\nv_t.h"
+#include "..\types\ts_t.h"
 #include "..\nv_uih.h"
 #include <vector>
 #include <optional>

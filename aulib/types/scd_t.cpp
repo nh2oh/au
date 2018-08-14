@@ -1,7 +1,8 @@
-#include <string>
-#include <cmath>
 #include "scd_t.h"
-#include "..\util\au_util_all.h"
+#include "..\util\au_error.h"
+#include <string>
+#include <cmath>  // floor()
+
 
 //-----------------------------------------------------------------------------
 // The scd_t class

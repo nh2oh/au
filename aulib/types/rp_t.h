@@ -1,11 +1,9 @@
 #pragma once
+#include "nv_t.h"
+#include "beat_bar_t.h"
+#include "ts_t.h"
 #include <string>
 #include <vector>
-
-class nv_t;
-class ts_t;
-class bar_t;
-class beat_t;
 
 // Number of beats spanned by a given nv_t for a given ts.  
 beat_t nbeat(ts_t const&, nv_t const&);
