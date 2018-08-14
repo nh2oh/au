@@ -2,6 +2,7 @@
 #include <vector>
 #include <optional>
 #include <cmath>
+#include <algorithm>
 #include "scale_12tet.h"
 #include "..\types\ntl_t.h"
 #include "..\types\frq_t.h"
@@ -16,13 +17,11 @@ scale_12tet::scale_12tet() {
 }
 
 scale_12tet::scale_12tet(ntl_t ref_ntl_in, octn_t ref_oct_in, frq_t ref_frq_in) {
-	auto boolidx = ismember(m_default_valid_ntls,ref_ntl_in);
-	if (!isany(boolidx)) {
-		au_error("Invalid ref ntl");
-	}
-	auto ref_ntl_idx = bool2idx(boolidx);
+	auto it = std::find(m_default_valid_ntls.begin(),
+		m_default_valid_ntls.end(),ref_ntl_in);
+	au_assert(it != m_default_valid_ntls.end(),"Invalid ref ntl");
 
-	int m_ref_ntl_idx {ref_ntl_idx[0]};
+	int m_ref_ntl_idx {static_cast<int>(it-m_default_valid_ntls.begin())};
 	ntl_t m_ref_ntl {ref_ntl_in};
 	frq_t m_ref_frq {ref_frq_in};
 	octn_t m_ref_octn {ref_oct_in};
@@ -99,19 +98,18 @@ std::optional<scd_t> scale_12tet::to_scd(frq_t frq_in) {  //  Calls n_eqt() dire
 // This function assumes none of the ntls in the scale are duplicates, so it
 // is not applicable to the completely general case of an arbitrary scale
 std::optional<scd_t> scale_12tet::to_scd(ntstr_t ntstr_in) {  // Reads m_default_valid_ntls directly
-	auto boolidx = ismember(m_default_valid_ntls,ntl_t{ntstr_in});
-	if (!isany(boolidx)) {
+	auto it = std::find(m_default_valid_ntls.begin(),
+		m_default_valid_ntls.end(),ntl_t{ntstr_in});
+	if (it == m_default_valid_ntls.end()) {
 		return {};
 	}
-	auto ntl_idx = bool2idx(boolidx);
-	auto rscdoct = rscdoctn_t{scd_t{ntl_idx[0]},m_n};
-	return rscdoct.to_scd(octn_t{ntstr_in}); // barf the conversion operator
-	//return scd_t{ntl_idx[0]};
+
+	int ntl_idx = it-m_default_valid_ntls.begin();
+	auto rscdoct = rscdoctn_t{scd_t{ntl_idx},m_n};
+	return rscdoct.to_scd(octn_t{ntstr_in}); // barf: using the conversion operator
 }
 
 octn_t scale_12tet::to_octn(scd_t scd_in) {
-	//rscdoctn_t rscdoctn_in {scd_in,m_n};
-	//return octn_t{rscdoctn_in.to_octn().to_int()};
 	return octn_t{scd_in,m_n};
 }
 
@@ -136,7 +134,7 @@ bool scale_12tet::isinsc(frq_t frq_in) {
 	return (isapproxint(dn_approx,6)); 
 }
 bool scale_12tet::isinsc(ntl_t ntl_in) {
-	return isany(ismember(m_default_valid_ntls,ntl_in));
+	return ismember(ntl_in,m_default_valid_ntls);
 }
 
 

@@ -102,19 +102,17 @@ std::optional<scd_t> scale_diatonic12tet::to_scd(frq_t frq_in) {  //  Calls n_eq
 
 // This function assumes none of the ntls in the scale are duplicates, so it
 // is not applicable to the completely general case of an arbitrary scale
-std::optional<scd_t> scale_diatonic12tet::to_scd(ntstr_t ntstr_in) {  // Reads m_default_valid_ntls directly
-	auto boolidx = ismember(m_ntls,ntl_t{ntstr_in});
-	if (!isany(boolidx)) {
+std::optional<scd_t> scale_diatonic12tet::to_scd(ntstr_t ntstr_in) {  // Reads m_ntls directly
+	auto it = std::find(m_ntls.begin(),m_ntls.end(),ntl_t{ntstr_in});
+	if (it == m_ntls.end()) {
 		return {};
 	}
-	scd_t rscd {bool2idx(boolidx)[0]};
-	//rscdoctn_t ro {rscd,octn_t{ntstr_in},m_n};
-	//return scd_t{ro};
+	scd_t rscd {static_cast<int>(it-m_ntls.begin())};
+
 	return rscdoctn_t{rscd,m_n}.to_scd(octn_t{ntstr_in});
 }
 
 octn_t scale_diatonic12tet::to_octn(scd_t scd_in) {
-	//rscdoctn_t rscdoctn_in {scd_in,m_n};
 	return octn_t{scd_in,m_n};
 }
 
@@ -143,8 +141,8 @@ bool scale_diatonic12tet::isinsc(frq_t frq_in) {
 	}
 	return false;
 }
+
 bool scale_diatonic12tet::isinsc(ntl_t ntl_in) {
-	auto boolidx = ismember(m_ntls,ntl_in);
-	return isany(boolidx);
+	return ismember(ntl_in,m_ntls);
 }
 
