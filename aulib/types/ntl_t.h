@@ -1,25 +1,23 @@
 #pragma once
+#include "scd_t.h"  // declares/defines octn_t
 #include <string>
-#include "scd_t.h"
 
-
-//-----------------------------------------------------------------------------
-// The ntl_t class
-//
 
 class ntl_t {
 public:
-	ntl_t() = delete;
+	explicit ntl_t();
 	explicit ntl_t(const char*);
-	explicit ntl_t(std::string);
+	explicit ntl_t(std::string const&);
 
 	std::string print() const;
 
 	friend bool operator==(ntl_t const&, ntl_t const&);
+	friend bool operator!=(ntl_t const&, ntl_t const&);
 private:
-	void set_ntl(std::string); // Delegated constructor
+	void set_ntl(std::string const&); // Delegated constructor
 
 	std::string m_ntl {"C"};
+	static const std::string m_illegal;  // Chars not allowed in an ntl_t
 };
 
 ntl_t operator""_ntl(const char *, size_t);

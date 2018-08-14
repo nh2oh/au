@@ -8,7 +8,11 @@
 //-----------------------------------------------------------------------------
 // The ntl_t class
 
-ntl_t::ntl_t(std::string str_in) {
+const std::string ntl_t::m_illegal = "()[] ;,";
+
+ntl_t::ntl_t() { }
+
+ntl_t::ntl_t(std::string const& str_in) {
 	set_ntl(str_in);
 }
 
@@ -16,13 +20,10 @@ ntl_t::ntl_t(const char* char_in) {
 	set_ntl(std::string(char_in));
 }
 
-void ntl_t::set_ntl(std::string str_in) {
-	if (str_in.size() == 0) {
-		au_error("ntl_t::set_ntl(std::string str_in): str_in.size() == 0");
-	}
-
-	std::string illegal{ "()[] ;," };
-	for (auto const& ci : illegal) { // ci ~ "current illegal"
+void ntl_t::set_ntl(std::string const& str_in) {
+	au_assert(str_in.size() > 0, "ntl_t::set_ntl(std::string str_in): str_in.size() > 0");
+	
+	for (auto const& ci : m_illegal) { // ci ~ "current illegal"
 		for (auto const& csin : str_in) { // csin ~ "current str_in"
 			if (ci == csin) {
 				au_error("ntl_t::set_ntl(std::string str_in):  ci == csin");
@@ -39,6 +40,9 @@ std::string ntl_t::print() const {
 
 bool operator==(ntl_t const& lhs, ntl_t const& rhs) {
 	return (lhs.m_ntl == rhs.m_ntl);
+}
+bool operator!=(ntl_t const& lhs, ntl_t const& rhs) {
+	return (lhs.m_ntl != rhs.m_ntl);
 }
 
 ntl_t operator""_ntl(const char *literal_in, size_t length) {
