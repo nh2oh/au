@@ -45,35 +45,7 @@
 //                          = (1/2).. + (1/4).
 //                          No valid bv...
 //
-// ALGORITHM:  
-// sum({},{a,b,c,...})
-// 1)  If the terms of the sum are not all identical, take each term
-//     and decompose it to a sum of n identical terms x, where x is 
-//     the same for each term in the overall sum.  The new sum has N 
-//     identical terms x.  
-//     call sum({x}_N)
-//
-//
-// 2)  Is N exactly a power of 2?  That is, is there some integer 
-//     e st N=2^e ?
-//
-// 2-yes)  log2(N) is the number of times consecutive terms of the
-//         sum (which are identical) can be grouped and added to form 
-//         an nv_t with a valid bv (and ndot() == x.ndot()).  
-//         a.base() = N*x.base()
-//         a.ndot() = x.ndot()
-//         NB:  _Only_ if N is exactly a power of 2 !!
-//         call sum({a},{x}_M)
-//
-// 2-no)   How many excess terms M are there?  What is the largest integer
-//         e* st 2^e* < N ? 
-//         e* = std::floor(log2(N))
-//         N* = 2^e*
-//         N = M + 2^e* => M = N - 2^e* => M = N - std::floor(log2(N))
-//
-//         result = {nv_t((N*)*x.base(),x.ndot), sum(x,M)}
-//
-//
+
 
 // Represents a note value as a function of two parameters m and n (m_m
 // and m_n).  
@@ -108,6 +80,9 @@
 // [max_bv_exponent, min_bv_exponent] (note that the min exponent => the max
 // bv and the max exponent => the min bv).  
 //
+
+
+
 
 class nv_t {
 public:
@@ -199,4 +174,64 @@ namespace nv {
 
 
 
+
+//
+// The nv() of nv_t can be represented as a/2^b, where:
+// a = sum(i=0,i=n,2^i) = 2^(n+1)-1
+// b = m+n
+// Ex:  (1/4).. = 7/(2^4)
+//
+// a will belong to {1,3,7,15,31,63,127,...+ = 2^(n+1) - 1
+// Thus, given an a, n can be calculated as:
+// auto n = static_cast<int>(std::log2(a-1)-1)
+// If the struct was created from a valid nv_t, std::log2(a-1) will be
+// an integer and there should be no need to check.  
+// Once n is found, m is m = b-n.  
+//
+// Adding nv_t's 
+// For any two nv_t's 1,2 w/ a1,b1, a2,b2 (chosen such that b2>=b1, ie, b2
+// is the note w/ the shorter duration) their sum, nv_t 3 with a3,b3 is:
+// a3 = a1*2^(b2-b1) + a2
+// b3 = 2^b2
+// Here, a will _not_ necessarily belong to {1,3,7,...,2^(n+1)-1}.  If this
+// is the case, the sum can not be represented as a single nv_t (ie, as a
+// function of positive integers m, n), and will have to be represented as 
+// a doublet or some sort of tuplet.  
+//
+//
+//
+
+
+
+class tuplet_t {
+public:
+	explicit tuplet_t();  // Default => single whole note
+	explicit tuplet_t(nv_t const&);
+	explicit tuplet_t(int const&, nv_t const&);
+	explicit tuplet_t(nv_t const&, nv_t const&);
+	explicit tuplet_t(nv_t const&, nv_t const&,  nv_t const&);
+	explicit tuplet_t(std::vector<nv_t> const&);
+
+	bool singlet_exists() const;
+private:
+	struct nvt_ab {
+		int a{0};
+		int b{0};
+	};
+	struct nvt_mn {
+		int m {0};
+		int n {0};
+	};
+
+	nvt_mn nvt_to_mn(nv_t const&) const;
+	nvt_ab mn2ab(nvt_mn const&) const;
+
+	// Equiv nv_t.nv() == a/2^b
+	// Defaults equate to a single whole note (n=0,m=0)
+	int m_a {1};  // 1 => 0 dots
+	int m_b {0};  // a==1,b==0 => m ==0
+	// T m_whatever
+	// Some other member recording how this should be displayed; possibly
+	// based on which constructor was called.  
+};
 

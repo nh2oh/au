@@ -1,8 +1,10 @@
 #include "nv_t.h"
-#include "../util/au_util_all.h"
+#include "../util/au_error.h"
+#include "../util/au_algs_math.h"
 #include <string>
 #include <vector>
 #include <cmath>  // std::pow(), std::log2, std::round
+#include <algorithm> // for swap()
 
 //-----------------------------------------------------------------------------
 // Public & private statics
@@ -61,20 +63,16 @@ nv_t nv_t::base() const {
 }
 
 /*
-nv_t nv_t::split(int n) const {
-	au_assert(false,"nv_t.split() is not yet implemented");
-	return nv_t();
-};
-
-// Returns a vector of zero-dotted nv_t's which, if their nv()'s were summed
-// would == the nv() of the input.  Each element (i+1) == 1/2 element i
+// Returns a vector of unique, zero-dotted nv_t's which, if their nv()'s 
+// were summed, would == the nv() of the input.  The nv() of each element
+// (i+1) == 1/2 element i.  
 std::vector<nv_t> nv_t::explode() const {
 	std::vector<nv_t> result {};
 	for (int i=0; i<m_n; ++i) {
 		result.push_back(nv_t{bv()/std::pow(2,i),0});
 	}
 	return result;
-};
+}
 */
 //-----------------------------------------------------------------------------
 // Setters; public, non-static
@@ -165,4 +163,63 @@ std::vector<nv_t> nvsum(std::vector<nv_t> nvs) {
 std::vector<nv_t> nvsum(std::vector<nv_t>,std::vector<nv_t>);
 std::vector<nv_t> nvsum_finalize(std::vector<nv_t>);
 */
+
+
+
+
+
+
+
+
+
+
+tuplet_t::tuplet_t() {};
+tuplet_t::tuplet_t(nv_t const& nv1) {
+	auto mn = nvt_to_mn(nv1);
+	auto ab = mn2ab(mn);
+	m_a = ab.a; m_b = ab.b;
+}
+tuplet_t::tuplet_t(int const& n_nv_in, nv_t const& nv_in) {
+	auto mn = nvt_to_mn(nv_in);
+	auto ab = mn2ab(mn);
+	m_a = n_nv_in*(ab.a); m_b = ab.b;
+}
+tuplet_t::tuplet_t(nv_t const& nv1, nv_t const& nv2) {
+	auto mn1 = nvt_to_mn(nv1); auto mn2 = nvt_to_mn(nv2);
+	auto ab1 = mn2ab(mn1); auto ab2 = mn2ab(mn2);
+	if (ab1.b > ab2.b) { std::swap(ab1,ab2); }
+
+	m_a = (ab1.a)*std::pow(2,(ab2.b-ab1.b)) + ab2.a;
+	m_b = std::pow(2,ab2.b);
+}
+
+tuplet_t::tuplet_t(nv_t const&, nv_t const&,  nv_t const&) {
+	//...
+}
+tuplet_t::tuplet_t(std::vector<nv_t> const&) {
+	//...
+}
+
+bool tuplet_t::singlet_exists() const {
+	return isapproxint(std::log2(m_a+1),6);
+}
+
+tuplet_t::nvt_ab tuplet_t::mn2ab(tuplet_t::nvt_mn const& mn) const {
+	// a = sum(i=0,i=n,2^i) = 2^(n+1)-1
+    // b = m+n
+	int a = static_cast<int>(std::pow(2,mn.n+1))-1;
+	int b = mn.m + mn.n;
+	return nvt_ab {a,b};
+}
+
+tuplet_t::nvt_mn tuplet_t::nvt_to_mn(nv_t const& nvt_in) const {
+	auto unitnv = nv_t(1,0);
+	auto m = static_cast<int>((-1)*std::log2(nvt_in.base()/unitnv));
+
+	return nvt_mn {m,nvt_in.ndot()};
+}
+
+
+
+
 
