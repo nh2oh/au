@@ -4,10 +4,16 @@
 #include <vector>
 #include <regex>
 #include <set>
-//#include <cstdio> // sprintf()
-//#include <cstdarg> // va_arg
+#include <cstdio>
 
-//std::string sprintf(std::string const&, ...);
+template<typename... Ts>
+std::string bsprintf(const char *fmt, Ts... args) {
+	size_t size = std::snprintf(nullptr,0,fmt,args...);
+	std::string s_out(size+1,'\0');
+	std::sprintf(&s_out[0], fmt, args...);
+	return s_out;
+}
+
 
 std::string int_suffix(int const&);
 

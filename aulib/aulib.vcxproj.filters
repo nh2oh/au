@@ -155,5 +155,11 @@
     <ClInclude Include="types\cent_oct_t.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="tinyformat.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tinyformat2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
