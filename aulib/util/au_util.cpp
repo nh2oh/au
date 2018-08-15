@@ -5,6 +5,20 @@
 #include <optional>
 #include <regex>
 #include <chrono>  // for wait()
+//#include <cstdio> // sprintf()
+//#include <cstdarg> // va_arg
+
+
+/*
+std::string sprintf(std::string const& fmt, ...) {
+	va_list args;
+	va_start(args,fmt);
+
+
+	va_end(args);
+}
+
+*/
 
 
 std::string int_suffix(int const& int_in) {

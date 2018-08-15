@@ -78,6 +78,9 @@
     <ClCompile Include="util\au_frac.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="types\cent_oct_t.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="util\au_algs.h">
@@ -147,6 +150,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="util\au_frac.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="types\cent_oct_t.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

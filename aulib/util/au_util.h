@@ -4,6 +4,10 @@
 #include <vector>
 #include <regex>
 #include <set>
+//#include <cstdio> // sprintf()
+//#include <cstdarg> // va_arg
+
+//std::string sprintf(std::string const&, ...);
 
 std::string int_suffix(int const&);
 
@@ -20,6 +24,7 @@ std::optional<std::vector<std::optional<std::string>>>
 // Waits a v. short amount of time... sometimes useful for debugging
 int wait();
 
+/*
 template<typename T>
 class uih_pred {
 public:
@@ -60,7 +65,7 @@ private:
 	
 };
 
-
+*/
 
 
 
