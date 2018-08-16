@@ -161,5 +161,8 @@
     <ClInclude Include="tinyformat2.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="scale\scales_all.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

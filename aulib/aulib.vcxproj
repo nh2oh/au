@@ -48,6 +48,7 @@
     <ClInclude Include="nv_uih.h" />
     <ClInclude Include="rpgen\rand_rp.h" />
     <ClInclude Include="scale\scale.h" />
+    <ClInclude Include="scale\scales_all.h" />
     <ClInclude Include="scale\scale_12tet.h" />
     <ClInclude Include="scale\scale_diatonic12tet.h" />
     <ClInclude Include="tinyformat.h" />

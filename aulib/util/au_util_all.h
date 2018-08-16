@@ -5,3 +5,4 @@
 #include "au_algs_math.h"
 #include "au_error.h"
 #include "au_random.h"
+#include "au_frac.h"

@@ -21,12 +21,18 @@
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="scr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="au.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="line_t.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="scr.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

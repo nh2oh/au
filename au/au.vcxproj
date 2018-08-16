@@ -235,10 +235,12 @@
   <ItemGroup>
     <ClInclude Include="resource.h" />
     <ClInclude Include="line_t.h" />
+    <ClInclude Include="scr.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="au.cpp" />
     <ClCompile Include="line_t.cpp" />
+    <ClCompile Include="scr.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="au.rc" />
