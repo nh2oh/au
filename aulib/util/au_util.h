@@ -14,6 +14,10 @@ std::string bsprintf(const char *fmt, Ts... args) {
 	return s_out;
 }
 
+template<typename... Ts>
+std::string bsprintf(std::string const& fmt, Ts... args) {
+	return bsprintf(fmt.c_str(),args...);
+}
 
 std::string int_suffix(int const&);
 

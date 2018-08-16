@@ -5,6 +5,7 @@
 #include <algorithm>
 #include "scale_diatonic12tet.h"
 #include "scale_12tet.h"
+#include "..\types\cent_oct_t.h"
 #include "..\types\ntl_t.h"
 #include "..\types\frq_t.h"
 #include "..\types\scd_t.h"

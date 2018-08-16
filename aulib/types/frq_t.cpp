@@ -1,12 +1,13 @@
 #include "frq_t.h"
 #include "cent_oct_t.h"
 #include "..\util\au_algs_math.h"
+#include "..\util\au_util.h" // bsprintf()
 #include <string>
 #include <cmath>  // pow(), log2()
 #include <cstdlib> // div()... not in <cmath>
 
 // Static members
-const int m_prec {9};
+const int frq_t::m_prec {9};
 
 frq_t::frq_t(double const& frq_in, unit const& unit_in) {
 	switch(unit_in) {
@@ -18,25 +19,24 @@ frq_t::frq_t(double const& frq_in, unit const& unit_in) {
 	m_frq = fmax(0.0, frq_in*(std::pow(10,m_unit)));
 }
 
-std::string frq_t::print(int prec) const {
-	if (prec < 0) { prec = 0; }
-	auto scf = static_cast<int>(std::pow(10,prec));  // "scale factor"
-	auto frq_sr = static_cast<int>(std::round(m_frq*scf));  // "frq scaled, rounded"
-	
-	std::string s {};
-	s += std::to_string(frq_sr/scf);
-	s += ".";
-	s += std::to_string(frq_sr%scf);
+std::string frq_t::print(int const& prec) const {
+	std::string fmt {"%"};
+	if (prec > 0) { 
+		fmt += "." + std::to_string(prec);
+	}
+	fmt += "f";
+	fmt += " %s";
 
+	std::string unitstr {};
 	switch (m_unit) {
-		case 0: s += "Hz"; break;
-		case 3: s += "kHz"; break;
-		case 6: s += "MHz"; break;
-		case 9: s += "GHz"; break;
-		default: s += "? unit"; break;
+		case 0: unitstr = "Hz"; break;
+		case 3: unitstr = "kHz"; break;
+		case 6: unitstr = "MHz"; break;
+		case 9: unitstr = "GHz"; break;
+		default: unitstr = "? unit"; break;
 	}
 
-	return s;
+	return bsprintf(fmt.c_str(),m_frq,unitstr.c_str());
 }
 
 // Member operators

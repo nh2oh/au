@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <optional>
+#include "..\types\cent_oct_t.h"
 #include "..\types\frq_t.h"
 #include "..\types\ntl_t.h"
 #include "..\types\scd_t.h"
