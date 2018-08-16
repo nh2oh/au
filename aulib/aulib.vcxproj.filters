@@ -164,5 +164,8 @@
     <ClInclude Include="scale\scales_all.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="aulib_all.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

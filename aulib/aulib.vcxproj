@@ -43,6 +43,7 @@
     <ClCompile Include="util\au_util.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="aulib_all.h" />
     <ClInclude Include="input\notefile.h" />
     <ClInclude Include="number_uih.h" />
     <ClInclude Include="nv_uih.h" />

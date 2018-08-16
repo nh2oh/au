@@ -3,16 +3,10 @@
 #include <cstdio>
 #include <iostream>
 #include <vector>
+#include <tuple>
+#include <functional>
 
-void printx();
 
-template<typename T, typename... Tail>
-void printx(T head, Tail... tail) {
-	std::cout << head << ' ';
-	printx(tail...);
-};
-
-/*
 template<typename T> struct uih_pred {
 public:
 	uih_pred(T predfunc, std::string failmsg) 
@@ -31,7 +25,66 @@ private:
 	const std::string m_failmsg;
 };
 
-*/
+
+template<typename... T> class uih2 {
+public:
+	uih2(T... uih_preds) : m_preds(uih_preds...) { };
+
+	void update(int const& str_in) {
+		//if (str_in == m_str_last) {
+			//return;
+		//}
+		//m_str_last = str_in;
+
+		bool x = eval_preds<std::tuple_size<std::tuple<T...>>::value - 1>(str_in);
+		if (!x) {
+			std::cout << m_msg << std::endl;
+		}
+	};
+
+private:
+	std::tuple<T...> m_preds;
+	const int m_N =  std::tuple_size<std::tuple<T...>>::value;
+
+	template<int N> bool eval_preds(int const& str_in) {
+		std::cout << "eval_preds<" << N << ">(" << str_in << ")" << std::endl;
+		bool pred_passed = std::get<N>(m_preds).isvalid(str_in);
+		if (!pred_passed) {
+			std::string s {};
+			s += "Predicate";
+			s += std::to_string(N);
+			s += " failed: ";
+			s += std::get<N>(m_preds).msg();
+			s += "\n";
+			m_msg.append(s);
+		}
+		return (pred_passed && eval_preds<N-1>(str_in));
+	};
+	template<> bool eval_preds<-1>(int const& str_in) { 
+		std::cout << "last! eval_preds<" << -1 << ">(" << str_in << ")" << std::endl;
+		// why isn't this called?
+		return true;
+	};
+
+	bool m_is_valid {false};
+	std::string m_msg {};
+	std::string m_str_last {};
+	
+};
+
+
+
+
+template<typename TP1, typename TP2>
+class uih {
+public:
+	uih(uih_pred<TP1> p1, uih_pred<TP2> p2) : m_p1(p1),m_p2(p2) {};
+
+private:
+	uih_pred<TP1> m_p1;
+	uih_pred<TP2> m_p2;
+};
+
 
 
 /*
