@@ -5,6 +5,18 @@
 #include <vector>
 #include <tuple>
 #include <functional>
+#include <type_traits>
+#include <optional>
+
+template<typename T> struct uih_parser {
+	using RType = typename std::invoke_result<T,std::string>::type;
+	using RFType = typename std::remove_reference<decltype(std::declval<RType>().value())>::type;
+public:
+	uih_parser(T parsefunc) : m_parsefunc(parsefunc), m_parseresult(RType {}) {};
+private:
+	const T m_parsefunc;
+	RType m_parseresult;
+};
 
 
 template<typename T> struct uih_pred {
@@ -13,8 +25,8 @@ public:
 		: m_predfunc(predfunc), m_failmsg(failmsg) {};
 	
 	template<typename U>
-	bool isvalid(U const& inpint) const {
-		return m_predfunc(inpint);
+	bool isvalid(U const& predarg) const {
+		return m_predfunc(predarg);
 	};
 
 	std::string msg() const {
@@ -34,35 +46,38 @@ public:
 		//if (str_in == m_str_last) {
 			//return;
 		//}
-		//m_str_last = str_in;
+		m_str_last = str_in;
 
 		bool x = eval_preds<std::tuple_size<std::tuple<T...>>::value - 1>(str_in);
 		if (!x) {
-			std::cout << m_msg << std::endl;
+			std::cout << "Invalid:  "  << m_msg << std::endl;
+			m_is_valid = false;
+		} else {
+			m_is_valid = true;
 		}
+	};
+
+	bool is_valid() { 
+		return m_is_valid; 
 	};
 
 private:
 	std::tuple<T...> m_preds;
 	const int m_N =  std::tuple_size<std::tuple<T...>>::value;
 
-	template<int N> bool eval_preds(int const& str_in) {
-		std::cout << "eval_preds<" << N << ">(" << str_in << ")" << std::endl;
-		bool pred_passed = std::get<N>(m_preds).isvalid(str_in);
+	template<int N> bool eval_preds(int const& predarg) {
+		std::cout << "eval_preds<" << N << ">(" << predarg << "):  \"" 
+			<< std::get<N>(m_preds).msg() << "\"" << std::endl;
+		bool pred_passed = std::get<N>(m_preds).isvalid(predarg);
 		if (!pred_passed) {
 			std::string s {};
-			s += "Predicate";
-			s += std::to_string(N);
-			s += " failed: ";
-			s += std::get<N>(m_preds).msg();
-			s += "\n";
+			s += " => Predicate " + std::to_string(N) + " failed:  ";
+			s += std::get<N>(m_preds).msg() + "\n";
 			m_msg.append(s);
 		}
-		return (pred_passed && eval_preds<N-1>(str_in));
+		return (pred_passed && eval_preds<N-1>(predarg));
 	};
-	template<> bool eval_preds<-1>(int const& str_in) { 
-		std::cout << "last! eval_preds<" << -1 << ">(" << str_in << ")" << std::endl;
-		// why isn't this called?
+	template<> bool eval_preds<-1>(int const& predarg) { // Recursion terminator
 		return true;
 	};
 

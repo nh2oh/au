@@ -236,11 +236,13 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="line_t.h" />
     <ClInclude Include="scr.h" />
+    <ClInclude Include="scr2.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="au.cpp" />
     <ClCompile Include="line_t.cpp" />
     <ClCompile Include="scr.cpp" />
+    <ClCompile Include="scr2.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="au.rc" />
