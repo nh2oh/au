@@ -31,8 +31,6 @@ private:
 	RType m_parseresult;
 };
 
-
-
 template<typename Tpf, typename Tpa> struct uih_pred2 {
 public:
 	uih_pred2(Tpf predfunc, std::string failmsg) 
@@ -52,6 +50,7 @@ private:
 
 template<typename Tprsr, typename... T>
 class testyclass {
+	//std::enable_if<Tprsr,T>;
 	//using Tprsr_rftype = typename Tprsr::RFtype;
 public:
 	testyclass(Tprsr uih_parserfunc, T... uih_preds) : m_parser(uih_parserfunc), m_preds(uih_preds...) { };
