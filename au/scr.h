@@ -8,7 +8,20 @@
 #include <type_traits>
 #include <optional>
 
+// EX:
+// stdoptional_internaltype<std::optional<std::string>>::type should_bea_string {};
+template<typename T> struct stdoptional_internaltype {
+	using type = typename std::remove_reference<decltype(std::declval<T>().value())>::type;
+};
+
+
+// a parsefunc is a function object that returns a std::optional<T>, where T
+// is some sort of type (probably a struct) containing the elements
+// represented by the input string.  If the parse is unsuccessfull, parsefunc
+// just returns the empty std::optional<T> {};
+//
 template<typename T> struct uih_parser {
+	// "Return type" and "Return fundamental type"
 	using RType = typename std::invoke_result<T,std::string>::type;
 	using RFType = typename std::remove_reference<decltype(std::declval<RType>().value())>::type;
 public:
@@ -18,6 +31,35 @@ private:
 	RType m_parseresult;
 };
 
+
+
+template<typename Tpf, typename Tpa> struct uih_pred2 {
+public:
+	uih_pred2(Tpf predfunc, std::string failmsg) 
+		: m_predfunc(predfunc), m_failmsg(failmsg) {};
+
+	bool isvalid(Tpa const& predarg) const {
+		return m_predfunc(predarg);
+	};
+
+	std::string msg() const {
+		return m_failmsg;
+	};
+private:
+	const Tpf m_predfunc;
+	const std::string m_failmsg;
+};
+
+template<typename Tprsr, typename... T>
+class testyclass {
+	//using Tprsr_rftype = typename Tprsr::RFtype;
+public:
+	testyclass(Tprsr uih_parserfunc, T... uih_preds) : m_parser(uih_parserfunc), m_preds(uih_preds...) { };
+private:
+	Tprsr m_parser;
+	typename Tprsr::RType m_parse_result {};
+	std::tuple<T...> m_preds;
+};
 
 template<typename T> struct uih_pred {
 public:
@@ -44,12 +86,12 @@ public:
 
 	void update(int const& str_in) {
 		//if (str_in == m_str_last) {
-			//return;
+		//	return;
 		//}
-		m_str_last = str_in;
+		//m_str_last = str_in;
 
-		bool x = eval_preds<std::tuple_size<std::tuple<T...>>::value - 1>(str_in);
-		if (!x) {
+		bool all_preds_passed = eval_preds<std::tuple_size<std::tuple<T...>>::value - 1>(str_in);
+		if (!all_preds_passed) {
 			std::cout << "Invalid:  "  << m_msg << std::endl;
 			m_is_valid = false;
 		} else {
