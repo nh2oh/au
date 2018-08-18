@@ -8,31 +8,27 @@
 
 
 ts_t::ts_t() {
-	//...
+	// => 4/4 simple
 }
 
-ts_t::ts_t(beat_t const& bt_in, nv_t const& nv_in, bool const& is_compound_in) {
-	au_assert(bt_in > beat_t{0.0}); // nv_per_bt is always > 0
+ts_t::ts_t(beat_t const& num, nv_t const& denom, bool const& is_compound_in) {
+	au_assert(num > beat_t{0.0});
 
 	m_compound = is_compound_in;
 	if (!is_compound_in) { // "Simple" time signature
-		m_bpb = bt_in;
-		m_beat_unit = nv_in;
+		m_bpb = num;
+		m_beat_unit = denom;
 	} else { // Compound time signature
-		// bt_in is really the "number of subdivisions of the beat"-per bar.  
-		// Since each beat is divided into 3, dividing by 3 yields the number of
-		// beats-per bar.  
-		// Ex, if the number is 6, there are 2 beats per bar.  Each beat is divided
-		// into 3 subdivisions, hence 6 subdivisions-per-bar.  
-		m_bpb = bt_in/3.0;
+		// The numerator is the "number of into-3 subdivisions of the beat"-per
+		// bar.  Thus, dividing by 3 yields the number of beats-per bar.  
+		m_bpb = num/3.0;
 
-		// nv_per_bt is really the "note-value per 3-part beat subdivision," so
-		// 3 such note-value's span a single beat.  We need the note value 3x 
-		// larger than what was passed in:
+		// The denominator is the "note-value per (3-part) beat subdivision."
+		// That is, 3 notes of value denom == 1 beat.  
 		// A group of three identical note-values x is equivalent a single nv
 		// having twice the duration of x, 2x, dotted once: (2x).
-		auto unitnv = nv_t();
-		m_beat_unit = nv_t{2.0*(nv_in/unitnv),1};
+		auto unitnv = nv_t {1,0};
+		m_beat_unit = nv_t {2.0*(denom/unitnv),1};
 	}
 }
 
@@ -40,11 +36,9 @@ ts_t::ts_t(std::string const& str_in) {
 	from_string(str_in);
 }
 
-
-// This shouldn't call validate_ts_str() and go through all the "helper"
-// bullshit:  It should simply parse the string in the most unforgiving
-// way and crash on failure.  No leading/trailing spaces, etc.  
-void ts_t::from_string(std::string const& str_in) {  // Delegated constructor
+// Called by the constructor ts_t(std::string const&)
+// Defined as its own function because ... ???
+void ts_t::from_string(std::string const& str_in) {  
 	auto o_matches = rx_match_captures("(\\d+)/(\\d+)(c)?",str_in);
 	if (!o_matches || (*o_matches).size() != 4) {
 		au_error("Could not parse ts string literal");
@@ -81,11 +75,9 @@ beat_t ts_t::beats_per_bar() const {
 }
 
 std::string ts_t::print() const {
-	std::string compound_indicator {""};
-	if (m_compound) {
-		compound_indicator = "c";
-	}
-	std::string s = m_bpb.print() + "/" + m_beat_unit.print() + compound_indicator;
+	std::string s = m_bpb.print() + "/" + m_beat_unit.print();
+	if (m_compound) { s += "c"; }
+	
 	return s;
 }
 
