@@ -3,6 +3,7 @@
 #include "aulib\rpgen\rand_rp.h"
 #include "ui_rp_builder.h"
 #include "aulib\types\types_all.h"
+#include "aulib\types\ts_t_uih.h"
 #include <vector>
 #include <string>
 
@@ -25,10 +26,13 @@ private:
 	};
 	defaults defaults_ {};
 
-	ts_uih ts_;
+	uih_parser<parse_userinput_ts> m_ts_parser {parse_userinput_ts {},
+		"The format of a ts is n/d[c] where n,d are both integers > 0."};
+	uih<uih_parser<parse_userinput_ts>> m_ts_uih {m_ts_parser};
+	//ts_uih ts_;
 	nv_uih curr_nv_;
 	std::vector<nv_uih> nv_pool_;
-	randrp_uih randrp_input_;
+	//randrp_uih randrp_input_;
 	std::vector<double> pd_;  // Convert to helper
 	int n_nts_;  // Convert to helper
 	bar_t n_bars_;  // Convert to helper

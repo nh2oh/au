@@ -39,7 +39,7 @@ rp_builder::rp_builder(QWidget *parent) : QMainWindow(parent) {
 void rp_builder::on_generate_clicked() {
 	set_rand_rp_inputs();
 
-	if (randrp_input_.is_valid()) {
+	/*if (randrp_input_.is_valid()) {
 		auto randrp_input = randrp_input_.get();
 		auto rp_result = rand_rp(randrp_input.ts,randrp_input.nvset,randrp_input.pd,randrp_input.n_nts,
 			randrp_input.n_bars);
@@ -47,12 +47,12 @@ void rp_builder::on_generate_clicked() {
 			rp_result_ = *rp_result;
 			ui.rp_result->setPlainText(QString().fromStdString(printrp(randrp_input.ts,rp_result_)));
 		}
-	}
+	}*/
 	wait();
 }
 
 void rp_builder::set_rand_rp_inputs() {
-	randrp_input_.update(ts_, nv_pool_, pd_, n_nts_, n_bars_);
+	//randrp_input_.update(ts_, nv_pool_, pd_, n_nts_, n_bars_);
 }
 
 void rp_builder::set_n_nts() {
@@ -64,8 +64,8 @@ void rp_builder::set_n_bars() {
 }
 
 void rp_builder::set_ts() {
-	ts_.update(ui.ts->text().toStdString());
-	if (!ts_.is_valid()) {
+	m_ts_uih.update(ui.ts->text().toStdString());
+	if (!m_ts_uih.is_valid()) {
 		ui.ts->setStyleSheet("QLineEdit { background: rgb(255,153,153); }");
 	} else {
 		ui.ts->setStyleSheet("QLineEdit { background: rgb(255,255,255); }");

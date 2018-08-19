@@ -14,18 +14,20 @@ nf_import_window::nf_import_window(QWidget *parent) : QMainWindow(parent) {
 	ui.setupUi(this);
 
 	QFileDialog fd(this);
-	fd.setDirectory(QString().fromStdString(defaults_.init_dir));
+	fd.setDirectory(QString().fromStdString(m_defaults.init_dir));
 	auto fname = fd.getOpenFileName().toStdString();
 	m_fname = fname;
 	set_nf();
+	set_dt();
 	set_nftable();
 
 	ui.curr_fname->setText(QString().fromStdString(m_fname));
-	ui.ts->setText(QString().fromStdString(defaults_.ts));
+	ui.ts->setText(QString().fromStdString(m_defaults.ts));
 	set_ts();
-	ui.bpm->setText(QString().fromStdString(defaults_.bpm));
+
+	ui.bpm->setText(QString().fromStdString(m_defaults.bpm));
 	set_bpm();
-	ui.err->setText(QString().fromStdString(defaults_.err));
+	ui.err->setText(QString().fromStdString(m_defaults.err));
 	set_err();
 
 	update_nv_t_count();
@@ -33,15 +35,18 @@ nf_import_window::nf_import_window(QWidget *parent) : QMainWindow(parent) {
 
 void nf_import_window::set_nf() {
 	m_nf = read_notefile(m_fname, notefileopts::seconds);
+	m_status.nf = !m_nf.file_error;
+}
+
+void nf_import_window::set_dt() {
 	m_dt = notefile2dt(m_nf);
-	status.nf = !m_nf.file_error;
 }
 
 // Computes m_nf_table from m_nf and populates ui->nf_data with pointers to
 // m_nf_table
 void nf_import_window::set_nftable() {
-	if (!status.nf) {
-		status.nf_table = false;
+	if (!m_status.nf) {
+		m_status.nf_table = false;
 		return;
 	}
 
@@ -65,45 +70,46 @@ void nf_import_window::set_nftable() {
 			ui.nf_data->item(i,3)->setBackground(QBrush(QColor(255,153,153)));
 		}
 	}
-	status.nf_table = !negative_dt;
+	m_status.nf_table = !negative_dt;
 }
 
 void nf_import_window::update_nv_t_count() {
 	//bool window_is_valid = status.bpm && status.nf_table && status.err 
 	//	&& status.nf && status.ts;
-	bool window_is_valid = status.bpm && status.nf_table && status.err 
-		&& status.nf && ts_.is_valid();
+	bool window_is_valid = m_status.bpm && m_status.nf_table && m_status.err 
+		&& m_status.nf && m_ts_uih.is_valid();
 	if (!window_is_valid) {
 		return;
 	}
 
-	auto nvs = deltat2rp(m_dt,ts_.get(),m_bpm,m_err);
+	auto nvs = deltat2rp(m_dt,m_ts_uih.get(),m_bpm,m_err);
 	auto uq_nvs = unique_n(nvs);
 
 	ui.nv_t_counts->clear();
-	for (int i=0; i<uq_nvs.values.size(); ++i) {
+	/*for (int i=0; i<uq_nvs.values.size(); ++i) {
 		std::string cline {};
 		cline += uq_nvs.values[i].print();
 		cline += " : ";
 		cline += std::to_string(uq_nvs.counts[i]);
 		
 		ui.nv_t_counts->appendPlainText(QString().fromStdString(cline));
-	}
+	}*/
 }
 
 void nf_import_window::on_ts_textEdited() {
 	set_ts();
-	if (ts_.is_valid()) { update_nv_t_count();	}
+	if (m_ts_uih.is_valid()) { update_nv_t_count();	}
 }
 
 void nf_import_window::on_ts_returnPressed() {
 	set_ts();
-	if (ts_.is_valid()) { update_nv_t_count();	}
+	if (m_ts_uih.is_valid()) { update_nv_t_count();	}
 }
 
 void nf_import_window::set_ts() {
-	ts_.update(ui.ts->text().toStdString());
-	if (!ts_.is_valid()) {
+	m_ts_uih.update(ui.ts->text().toStdString());
+	ui.ts->setToolTip(QString::fromStdString(m_ts_uih.msg()));
+	if (!m_ts_uih.is_valid()) {
 		ui.ts->setStyleSheet("QLineEdit { background: rgb(255,153,153); }");
 	} else {
 		ui.ts->setStyleSheet("QLineEdit { background: rgb(255,255,255); }");
@@ -112,21 +118,21 @@ void nf_import_window::set_ts() {
 
 void nf_import_window::on_bpm_returnPressed() {
 	set_bpm();
-	if (status.bpm) { update_nv_t_count(); }
+	if (m_status.bpm) { update_nv_t_count(); }
 }
 
 void nf_import_window::on_bpm_textEdited() {
 	set_bpm();
-	if (status.bpm) { update_nv_t_count(); }
+	if (m_status.bpm) { update_nv_t_count(); }
 }
 
 void nf_import_window::set_bpm() {
 	auto usrinput_bpm = validate_bpm_str(ui.bpm->text().toStdString());
 	if (!usrinput_bpm.is_valid || usrinput_bpm.bpm <= 0) {
-		status.bpm = false;
+		m_status.bpm = false;
 		ui.bpm->setStyleSheet("QLineEdit { background: rgb(255,153,153); }");
 	} else {
-		status.bpm = true;
+		m_status.bpm = true;
 		ui.bpm->setStyleSheet("QLineEdit { background: rgb(255,255,255); }");
 		m_bpm = usrinput_bpm.bpm;
 	}
@@ -134,16 +140,16 @@ void nf_import_window::set_bpm() {
 
 void nf_import_window::on_err_returnPressed() {
 	set_err();
-	if (status.err) { update_nv_t_count(); }
+	if (m_status.err) { update_nv_t_count(); }
 }
 
 void nf_import_window::set_err() {
 	auto usrinput_err = ui.err->text().toStdString();
 	if (std::stod(usrinput_err) < 0) {
-		status.err = false;
+		m_status.err = false;
 		ui.err->setStyleSheet("QLineEdit { background: rgb(255,153,153); }");
 	} else {
-		status.err = true;
+		m_status.err = true;
 		ui.err->setStyleSheet("QLineEdit { background: rgb(255,255,255); }");
 		m_err = std::stod(usrinput_err);
 	}

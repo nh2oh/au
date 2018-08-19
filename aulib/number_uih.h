@@ -3,6 +3,8 @@
 #include <string>
 #include <optional>
 
+
+/*
 // User input helpers for "simple" numbers
 //
 // The purpose of this class is to provide a container to hold std::string
@@ -94,3 +96,5 @@ bool int_uih::operator==(int_uih const& rhs) const {
 	//...
 	return false;
 };
+
+*/

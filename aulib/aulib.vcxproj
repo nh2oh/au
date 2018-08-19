@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClCompile Include="input\notefile.cpp" />
     <ClCompile Include="number_uih.cpp" />
+    <ClCompile Include="numeric_simple_uih.cpp" />
     <ClCompile Include="nv_uih.cpp" />
     <ClCompile Include="rpgen\rand_rp.cpp" />
     <ClCompile Include="scale\scale.cpp" />
@@ -35,6 +36,7 @@
     <ClCompile Include="types\rp_t.cpp" />
     <ClCompile Include="types\scd_t.cpp" />
     <ClCompile Include="types\ts_t.cpp" />
+    <ClCompile Include="types\ts_t_uih.cpp" />
     <ClCompile Include="util\au_algs.cpp" />
     <ClCompile Include="util\au_algs_math.cpp" />
     <ClCompile Include="util\au_error.cpp" />
@@ -46,6 +48,7 @@
     <ClInclude Include="aulib_all.h" />
     <ClInclude Include="input\notefile.h" />
     <ClInclude Include="number_uih.h" />
+    <ClInclude Include="numeric_simple_uih.h" />
     <ClInclude Include="nv_uih.h" />
     <ClInclude Include="rpgen\rand_rp.h" />
     <ClInclude Include="scale\scale.h" />
@@ -63,7 +66,9 @@
     <ClInclude Include="types\rp_t.h" />
     <ClInclude Include="types\scd_t.h" />
     <ClInclude Include="types\ts_t.h" />
+    <ClInclude Include="types\ts_t_uih.h" />
     <ClInclude Include="types\types_all.h" />
+    <ClInclude Include="uih.h" />
     <ClInclude Include="util\au_algs.h" />
     <ClInclude Include="util\au_algs_math.h" />
     <ClInclude Include="util\au_error.h" />

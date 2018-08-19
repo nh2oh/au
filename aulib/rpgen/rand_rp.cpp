@@ -125,6 +125,7 @@ std::optional<std::vector<nv_t>> rand_rp(ts_t ts_in, std::vector<nv_t> dp_in,
 }
 
 
+/*
 randrp_uih::randrp_uih() {
 	//...
 }
@@ -194,5 +195,5 @@ randrp_input randrp_uih::get() const {
 	return *randrp_input_;
 }
 
-
+*/
 

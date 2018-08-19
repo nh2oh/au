@@ -32,6 +32,7 @@ struct randrp_input {
 	bar_t n_bars {0};
 };
 
+/*
 // rand_rp user input helper
 //
 // The purpose of this class is to provide a container to hold uih-objects
@@ -77,3 +78,4 @@ private:
 		// where the argument to the constructor comes from a user.  
 };
 
+*/

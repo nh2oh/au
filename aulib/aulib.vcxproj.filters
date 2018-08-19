@@ -81,6 +81,12 @@
     <ClCompile Include="types\cent_oct_t.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="types\ts_t_uih.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="numeric_simple_uih.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="util\au_algs.h">
@@ -165,6 +171,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="aulib_all.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="uih.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="types\ts_t_uih.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="numeric_simple_uih.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

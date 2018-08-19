@@ -122,7 +122,7 @@ ts_str_helper validate_ts_str(std::string const& str_in) {
 
 //-----------------------------------------------------------------------------
 // The ts_uih class
-
+/*
 ts_uih::ts_uih() {
 	//...
 }
@@ -195,3 +195,4 @@ bool ts_uih::operator==(ts_uih const& rhs) const {
 	return (str_last_ == rhs.str_last_);
 }
 
+*/

@@ -68,7 +68,7 @@ ts_t operator""_ts(const char*, size_t);
 
 bool operator!=(ts_t const&, ts_t const&);
 
-
+/*
 // Time signature user input helper
 //
 // The purpose of this class is to provide a container to hold std::string
@@ -116,4 +116,4 @@ private:
 		// created with an "invalid" input.  This is ok where the argument to
 		// the constructor comes from a user.  
 };
-
+*/

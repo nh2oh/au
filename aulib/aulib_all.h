@@ -7,6 +7,6 @@
 
 #include "rpgen\rand_rp.h"
 #include "input\notefile.h"
-
+#include "uih.h"
 
 //#include "aulib\nv_uih.h"

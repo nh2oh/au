@@ -40,6 +40,9 @@ size_t n_unique(std::vector<T> s) {
 };
 
 // used w/ unique_n()
+// TODO:  count should be a template param U, unique_n should 
+// set U to something like  std::vector ... 
+// iterator_traits<???>::difference_type
 template<typename T> struct uniques_counts {
     T value {};
     size_t count {};
@@ -47,13 +50,14 @@ template<typename T> struct uniques_counts {
 
 // Returns a vector containing each unique element in s along with the 
 // number of occurences.  
+// TODO:  Fix the static_cast
 template<typename T>
 std::vector<uniques_counts<T>> unique_n(std::vector<T> const& s) {
-    auto s_uq = unique(s);  // passed by value
+    auto s_uq = unique(s);  // Note:  passed by value
 
     std::vector<uniques_counts<T>> result {};
     for (auto const& e : s_uq) {
-        result.push_back({e,std::count(s.begin(),s.end(),e)});
+        result.push_back({e,static_cast<size_t>(std::count(s.begin(),s.end(),e))});
     }
 
     return result;
