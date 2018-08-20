@@ -31,7 +31,7 @@ class Ui_nf_import_window
 {
 public:
     QWidget *centralwidget;
-    QTableWidget *nf_data;
+    QTableWidget *nf_table;
     QPushButton *cancel;
     QPushButton *import;
     QLineEdit *ts;
@@ -58,15 +58,15 @@ public:
         nf_import_window->resize(764, 543);
         centralwidget = new QWidget(nf_import_window);
         centralwidget->setObjectName(QStringLiteral("centralwidget"));
-        nf_data = new QTableWidget(centralwidget);
-        if (nf_data->columnCount() < 4)
-            nf_data->setColumnCount(4);
-        if (nf_data->rowCount() < 100)
-            nf_data->setRowCount(100);
-        nf_data->setObjectName(QStringLiteral("nf_data"));
-        nf_data->setGeometry(QRect(10, 50, 461, 451));
-        nf_data->setRowCount(100);
-        nf_data->setColumnCount(4);
+        nf_table = new QTableWidget(centralwidget);
+        if (nf_table->columnCount() < 4)
+            nf_table->setColumnCount(4);
+        if (nf_table->rowCount() < 100)
+            nf_table->setRowCount(100);
+        nf_table->setObjectName(QStringLiteral("nf_table"));
+        nf_table->setGeometry(QRect(10, 50, 461, 451));
+        nf_table->setRowCount(100);
+        nf_table->setColumnCount(4);
         cancel = new QPushButton(centralwidget);
         cancel->setObjectName(QStringLiteral("cancel"));
         cancel->setGeometry(QRect(660, 480, 75, 23));
@@ -118,7 +118,7 @@ public:
         nf_import_window->setCentralWidget(centralwidget);
         menubar = new QMenuBar(nf_import_window);
         menubar->setObjectName(QStringLiteral("menubar"));
-        menubar->setGeometry(QRect(0, 0, 764, 18));
+        menubar->setGeometry(QRect(0, 0, 764, 22));
         menuOpen = new QMenu(menubar);
         menuOpen->setObjectName(QStringLiteral("menuOpen"));
         nf_import_window->setMenuBar(menubar);

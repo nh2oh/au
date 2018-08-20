@@ -56,7 +56,7 @@ class nf_import_window : public QMainWindow {
 		QTableWidgetItem pitch {0};
 		QTableWidgetItem dt {0.0};
 	};
-	std::vector<qt_nf_table_data> m_nf_table {};
+	std::vector<qt_nf_table_data> m_nf_table_data {};
 		// ui->nf_table gets the data it displays by holding pointers
 		// to this.  
 
@@ -65,7 +65,19 @@ class nf_import_window : public QMainWindow {
 
 	//---------------------------------------------------------------------------
 	// Functions
+	//
+	// set_* functions (1) update the internal data structures, (2) check the
+	//   status of the data and set window properties accordingly.  They do 
+	//   _not_ call other set_* functions.  set_* function chaining logic is
+	//   encoded in on_* functions.  
+	//
+	// on_* functions call whatever series of set_* functions is needed to 
+	//   keep the window consistent with itself and with the internal data.  
+	//   They do _not_ set window properties.  
+	//
 	void set_nftable();
+	void set_nftable(int const r);
+	void set_nf_table_data(int const, qt_nf_table_data const);
 	void update_nv_t_count();
 	void set_ts();
 	void set_bpm();
@@ -80,7 +92,7 @@ class nf_import_window : public QMainWindow {
 	void on_bpm_textEdited();
 	void on_err_returnPressed();
 	void on_err_textEdited();
-	void on_nf_data_cellChanged(int, int);
+	void on_nf_table_cellChanged(int, int);
 
 	// "Cancel" and "import" buttons
 	void on_cancel_clicked();
