@@ -25,10 +25,10 @@ private:
 		std::vector<double> pd {1,1,1};
 	};
 	defaults defaults_ {};
-
+	/*
 	uih_parser<parse_userinput_ts> m_ts_parser {parse_userinput_ts {},
 		"The format of a ts is n/d[c] where n,d are both integers > 0."};
-	uih<uih_parser<parse_userinput_ts>> m_ts_uih {m_ts_parser};
+	uih<uih_parser<parse_userinput_ts>> m_ts_uih {m_ts_parser};*/
 	//ts_uih ts_;
 	nv_uih curr_nv_;
 	std::vector<nv_uih> nv_pool_;

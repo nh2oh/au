@@ -28,6 +28,10 @@ struct notefileline {
 
 struct notefile {
 	bool file_error {true};
+		// Indicates some error reading or opening the file.  Does not
+		// depend on the contents of the file. To see if the file contents
+		// are in some way suspicious, see member error_lines.  
+
 	std::string fname {};
 	std::vector<notefileline> lines {};
 	int opts {0};

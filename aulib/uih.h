@@ -50,6 +50,7 @@ template<typename T> struct uih_parser {
 	//   the type of:  *(parsefunc().o_result)
 	using PRType = typename std::invoke_result<T,std::string>::type;
 	using RFType = typename PRType::PFType;
+	using type = typename uih_parser<T>;
 	//using RFType = typename std::remove_reference<decltype(std::declval<PRType>().value())>::type;
 public:
 	uih_parser(T parsefunc, std::string infomsg) : 
@@ -66,6 +67,10 @@ private:
 	const std::string m_info_msg {};
 };
 
+template<typename T>
+uih_parser<T> make_uih_parser(T parsefunc, std::string infomsg) {
+	return uih_parser {parsefunc, infomsg};
+};
 
 //
 // A uih_pred functor associates some sort of unary predicate with a

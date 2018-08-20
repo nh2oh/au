@@ -164,7 +164,6 @@
     <ClCompile Include="data_pool.cpp" />
     <ClCompile Include="fonts_colors.cpp" />
     <ClCompile Include="gui2.cpp" />
-    <ClCompile Include="guitest.cpp" />
     <ClCompile Include="g_data_pool.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="nf_import_window.cpp" />
@@ -203,7 +202,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="data_pool.h" />
-    <ClInclude Include="guitest.h" />
     <ClInclude Include="g_data_pool.h" />
     <ClInclude Include="qt_helpers.h" />
     <QtMoc Include="rp_builder.h">

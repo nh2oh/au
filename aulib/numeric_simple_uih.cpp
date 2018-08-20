@@ -5,6 +5,8 @@
 
 using namespace au;
 
+// TODO::  std::stod() simply crashes if you give it certain invalid
+// inputs, ex, '.'
 uih_parser_result<double> 
 	parse_userinput_double::operator()(std::string const& str_in) const {
 

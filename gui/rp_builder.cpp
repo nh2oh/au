@@ -63,13 +63,13 @@ void rp_builder::set_n_bars() {
 	n_bars_ = bar_t {std::stod(ui.n_bars->text().toStdString())};
 }
 
-void rp_builder::set_ts() {
+void rp_builder::set_ts() {/*
 	m_ts_uih.update(ui.ts->text().toStdString());
 	if (!m_ts_uih.is_valid()) {
 		ui.ts->setStyleSheet("QLineEdit { background: rgb(255,153,153); }");
 	} else {
 		ui.ts->setStyleSheet("QLineEdit { background: rgb(255,255,255); }");
-	}
+	}*/
 }
 void rp_builder::on_ts_returnPressed() {
 	set_ts();

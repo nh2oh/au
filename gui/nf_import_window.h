@@ -17,15 +17,19 @@ class nf_import_window : public QMainWindow {
 	private:
 		//---------------------------------------------------------------------------
 		// Data
-		au::uih_parser m_ts_parser {parse_userinput_ts {},
-			"The format of a ts is n/d[c] where n,d are both integers > 0."};
-		au::uih m_ts_uih {m_ts_parser};
+		au::uih_parser<parse_userinput_ts> m_ts_parser {parse_userinput_ts {},
+			"The time signature (format: n/d[c] where c means \"compound\")"};
+		au::uih<decltype(m_ts_parser)> m_ts_uih {m_ts_parser};
 
-		uih_parser<parse_userinput_double> m_bpm_parser {parse_userinput_double {},
-			"A number > 0 (decimals allowed)."};
-		uih_pred bpm_pred_positive {[](double const& inp){return (inp > 0.0);},
-			"Value must be > 0"};
-		uih m_bpm_uih {m_bpm_parser,bpm_pred_positive};
+		au::uih_parser<parse_userinput_double> m_bpm_parser {parse_userinput_double {},
+			"The tempo in beats-per-minute"};
+		au::uih_pred<ftr_gt> p_gtzero {ftr_gt{0.0},"A tempo is always > 0"};
+		au::uih<decltype(m_bpm_parser),decltype(p_gtzero)> m_bpm_uih {m_bpm_parser,p_gtzero};
+
+		au::uih_parser<parse_userinput_double> m_err_parser {parse_userinput_double {},
+			"A number >= 0 (decimals allowed)."};
+		au::uih_pred<ftr_geq> p_geqzero {ftr_geq{0.0},"Value must be >= 0."};
+		au::uih<decltype(m_err_parser),decltype(p_geqzero)> m_err_uih {m_err_parser,p_geqzero};
 
 	struct defaults {
 		std::string ts {"4/4"};
@@ -42,8 +46,7 @@ class nf_import_window : public QMainWindow {
 		bool curr_fname {false};
 		bool nf {false};
 		bool nf_table {false};
-		bool bpm {false};
-		bool err {false};
+		bool global {false};
 	};
 	status_flags m_status {};
 
@@ -58,15 +61,7 @@ class nf_import_window : public QMainWindow {
 		// to this.  
 
 	std::string m_fname {};
-
 	notefile m_nf {};
-	std::vector<double> m_dt {}; 
-		// This is used over and over again so it is convienient to extract
-		// it from m_nf.  
-
-	double m_bpm {90.0};
-	double m_err {0.25};  // fudge-factor (seconds)
-
 
 	//---------------------------------------------------------------------------
 	// Functions
@@ -75,8 +70,7 @@ class nf_import_window : public QMainWindow {
 	void set_ts();
 	void set_bpm();
 	void set_err();
-	void set_nf();
-	void set_dt(); 
+	void set_nf(); 
 
 	Ui::nf_import_window ui;
 	private slots:
@@ -85,6 +79,8 @@ class nf_import_window : public QMainWindow {
 	void on_bpm_returnPressed();
 	void on_bpm_textEdited();
 	void on_err_returnPressed();
+	void on_err_textEdited();
+	void on_nf_data_cellChanged(int, int);
 
 	// "Cancel" and "import" buttons
 	void on_cancel_clicked();
