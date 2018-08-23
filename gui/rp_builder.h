@@ -1,11 +1,16 @@
 #pragma once
 #include <QtWidgets/QMainWindow>
-#include "aulib\rpgen\rand_rp.h"
 #include "ui_rp_builder.h"
+#include "aulib\rpgen\rand_rp.h"
+#include "aulib\uih.h"
+#include "aulib\types\ts_t_uih.h"
+#include "aulib\numeric_simple_uih.h"
 #include "aulib\types\types_all.h"
 #include "aulib\types\ts_t_uih.h"
 #include <vector>
+#include <optional> // rand_rp() returns a std::optional<std::vector<nv_t>>
 #include <string>
+#include <set>
 
 class rp_builder : public QMainWindow {
 	Q_OBJECT
@@ -18,26 +23,33 @@ private:
 		std::string n_nts {"0"};
 		std::string n_bars {"2"};
 
-		std::vector<std::string> common_nvs {"2/1", "1/1", "1/2", "1/2.", "1/4",
-			"1/4.", "1/8", "1/8.","1/16", "1/16.","1/32"};
+		std::set<nv_t> common_nvs {nv_t {1,0}, nv_t {2,0}, nv_t {4,0}};
 
-		std::vector<std::string> nv_pool {"1/4", "1/8", "1/16"};
-		std::vector<double> pd {1,1,1};
+		std::set<nv_t> nv_pool {nv_t {0.0625,0}, nv_t {0.125,0}, nv_t {0.25,0}, nv_t {0.5,0}};
+		std::vector<double> pd {1,1,1,1};
 	};
-	defaults defaults_ {};
-	/*
-	uih_parser<parse_userinput_ts> m_ts_parser {parse_userinput_ts {},
-		"The format of a ts is n/d[c] where n,d are both integers > 0."};
-	uih<uih_parser<parse_userinput_ts>> m_ts_uih {m_ts_parser};*/
-	//ts_uih ts_;
-	nv_uih curr_nv_;
-	std::vector<nv_uih> nv_pool_;
-	//randrp_uih randrp_input_;
-	std::vector<double> pd_;  // Convert to helper
-	int n_nts_;  // Convert to helper
-	bar_t n_bars_;  // Convert to helper
-	std::vector<nv_t> rp_result_;
+	defaults m_defaults {};
 
+	au::uih_parser<parse_userinput_ts> m_ts_parser {parse_userinput_ts {},
+		"The time signature (format: n/d[c] where c means \"compound\")"};
+	au::uih<decltype(m_ts_parser)> m_ts_uih {m_ts_parser};
+
+	au::uih_parser<parse_userinput_int> m_nnts_parser {parse_userinput_int {},
+		"Constrain the generated sequence to contain this many notes"};
+	au::uih_pred<ftr_geq> p_geqzero {ftr_geq{0.0},"Must be >= 0"};
+	au::uih<decltype(m_nnts_parser),decltype(p_geqzero)> m_nnts_uih {m_nnts_parser,p_geqzero};
+
+	au::uih_parser<parse_userinput_double> m_nbars_parser {parse_userinput_double {},
+		"Number of bars to generate"};
+	au::uih<decltype(m_nbars_parser),decltype(p_geqzero)> m_nbars_uih {m_nbars_parser,p_geqzero};
+
+	nv_uih m_curr_nv;
+	std::set<nv_t> m_nv_pool;
+	std::vector<double> m_pd;  // TODO:  Convert to helper
+
+	randrp_input m_rand_rp_input {};
+	randrp_input_check_result m_rand_rp_input_status {};
+	std::optional<std::vector<nv_t>> m_rand_rp_result;  // output of rand_rp()
 
 	void set_ts();
 	void set_curr_nv();
@@ -52,6 +64,12 @@ private slots:
 
 	void on_ts_returnPressed();
 	void on_ts_textEdited();
+
+	void on_n_nts_returnPressed();
+	void on_n_nts_textEdited();
+	void on_n_bars_returnPressed();
+	void on_n_bars_textEdited();
+
 	void on_nv_in_returnPressed();
 	void on_nv_in_textEdited();
 
@@ -59,7 +77,7 @@ private slots:
 	void on_remove_nv_clicked();
 
 	void on_generate_clicked();
-	void on_import_2_clicked();
+	void on_import_btn_clicked();
 	void on_cancel_clicked();
 };
 

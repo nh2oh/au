@@ -10,9 +10,11 @@
 #include <vector>
 #include <algorithm> // remove() to drop a value from m_nf.error_lines
 #include <QtWidgets/QFileDialog>
+#include <qmessagebox.h> // Error msg if "import" is clicked w/ m_nf.error_lines !empty
+
 
 // TODO
-// - Uniform method of setting backgrpound colors for ui widgets
+// - Uniform method of setting background colors for ui widgets
 
 nf_import_window::nf_import_window(QWidget *parent) : QMainWindow(parent) {
 	ui.setupUi(this);
@@ -117,7 +119,9 @@ void nf_import_window::set_nftable() {
 	ui.nf_table->blockSignals(false);
 }
 // Overload for updating a particular row of the table widget from the backend
-// datastore m_nf/m_nf_table_data.  
+// datastore m_nf/m_nf_table_data.  If thiss is being called in response to a
+// user making a change to the table, set_nf_from_nftable(int const) needs to be
+// called first to update the backend datastore.  
 void nf_import_window::set_nftable(int const r) {
 	ui.nf_table->blockSignals(true);
 	if (r >= ui.nf_table->rowCount()) {
@@ -248,38 +252,14 @@ void nf_import_window::on_cancel_clicked() {
 }
 
 void nf_import_window::on_import_clicked() {
-	gdp.create(m_nf,m_fname);
-	this->close();
-}
-
-// Utility functions
-// TODO:  Should probably extract into some sort of separate "qt utilities" 
-// library.  
-
-// 
-std::vector<double> nf_import_window::qt_table2double(int const rmin, int const rmax,
-	int const c, double const def_nodata) const {
-	// QTableWidget->item(r,c) returns a *QTableWidgetItem
-	// QTableWidgetItem->.data(int role) returns a QVariant
-	// QVariant::toDouble() returns a double if possible... otherwise returns 0.0
-	// Alternatively...
-	// ui.nf_table->item(r,c)->text() gets a QString w/o any of the QVariant shit
-	//
-
-	parse_userinput_double parser {};
-	std::vector<double> result {}; result.reserve(rmax-rmin);
-
-	for (auto curr_row=rmin; curr_row<rmax; ++curr_row) {
-		auto cell_txt = ui.nf_table->item(curr_row,c)->text();
-		auto cell_data = parser(cell_txt.toStdString());
-		if (!cell_data.o_result) {
-			result.push_back(def_nodata);
-		} else {
-			result.push_back(*(cell_data.o_result));
-		}
+	if (m_nf.error_lines.size() > 0) {
+		QMessageBox *err_msg = new QMessageBox(this);
+		err_msg->setText("Can't import if there are errorlines...");
+		err_msg->exec();
+		return;
 	}
-
-	return result;
+	gdp.create(m_nf,m_nf.fname);
+	this->close();
 }
 
 

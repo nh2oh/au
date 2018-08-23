@@ -17,13 +17,6 @@ struct rand_rp_opts {
 	std::chrono::seconds maxt;
 };
 
-std::optional<std::vector<nv_t>> rand_rp(ts_t,std::vector<nv_t>,
-	std::vector<double>,int,bar_t);
-std::optional<std::vector<nv_t>> rand_rp(ts_t,std::vector<nv_t>,
-	std::vector<double>,int,bar_t,rand_rp_opts);
-
-
-
 struct randrp_input {
 	ts_t ts {};
 	std::vector<nv_t> nvset {};
@@ -31,6 +24,22 @@ struct randrp_input {
 	int n_nts {0};
 	bar_t n_bars {0};
 };
+
+struct randrp_input_check_result {
+	bool is_valid {false};
+	std::string msg {};
+};
+
+randrp_input_check_result rand_rp_check_input(randrp_input const);
+
+std::optional<std::vector<nv_t>> rand_rp(ts_t,std::vector<nv_t>,
+	std::vector<double>,int,bar_t);
+std::optional<std::vector<nv_t>> rand_rp(ts_t,std::vector<nv_t>,
+	std::vector<double>,int,bar_t,rand_rp_opts);
+
+
+
+
 
 /*
 // rand_rp user input helper

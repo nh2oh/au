@@ -55,7 +55,8 @@ public:
     {
         if (nf_import_window->objectName().isEmpty())
             nf_import_window->setObjectName(QStringLiteral("nf_import_window"));
-        nf_import_window->resize(764, 543);
+        nf_import_window->resize(764, 550);
+        nf_import_window->setMinimumSize(QSize(764, 550));
         centralwidget = new QWidget(nf_import_window);
         centralwidget->setObjectName(QStringLiteral("centralwidget"));
         nf_table = new QTableWidget(centralwidget);

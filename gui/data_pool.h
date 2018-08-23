@@ -16,9 +16,10 @@ public:
 
 	bool create(notefile, std::string);
 	bool create(std::vector<nv_t>, std::string);
-	bool destroy(std::shared_ptr<std::vector<notefile>>);
+	bool destroy(std::string const);
+	
 	std::string print_nfs();
-	std::vector<std::string> list_all();
+	std::vector<std::string> list_all() const;
 
 private:
 	template<typename T> struct dp_item {
@@ -30,9 +31,7 @@ private:
 		std::vector<dp_item<T>> items;
 	};
 
-	std::map<std::string,int> m_idx;  
-		// Global index for all the data in the pool.  Associates names with the
-		// data type.  
+	std::string name2uniquename(std::string) const;
 
 	dp_type_pool<std::vector<nv_t>> m_rps {};
 	dp_type_pool<std::vector<scd_t>> m_scds {};

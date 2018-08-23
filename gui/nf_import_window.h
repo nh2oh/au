@@ -17,6 +17,17 @@ class nf_import_window : public QMainWindow {
 	private:
 	//----------------------------------------------------------------------------
 	// Data
+	struct defaults {
+		std::string ts {"4/4"};
+		std::string err {"0.250"};
+		std::string bpm {"90"};
+		std::string curr_fname {""};
+
+		std::string init_dir {"..\\stuff\\"};
+	};
+	defaults m_defaults {};
+
+
 	au::uih_parser<parse_userinput_ts> m_ts_parser {parse_userinput_ts {},
 		"The time signature (format: n/d[c] where c means \"compound\")"};
 	au::uih<decltype(m_ts_parser)> m_ts_uih {m_ts_parser};
@@ -31,16 +42,9 @@ class nf_import_window : public QMainWindow {
 	au::uih_pred<ftr_geq> p_geqzero {ftr_geq{0.0},"Value must be >= 0."};
 	au::uih<decltype(m_err_parser),decltype(p_geqzero)> m_err_uih {m_err_parser,p_geqzero};
 
-	struct defaults {
-		std::string ts {"4/4"};
-		std::string err {"0.250"};
-		std::string bpm {"90"};
-		std::string curr_fname {""};
+	std::string m_fname {};
 
-		std::string init_dir {"..\\stuff\\"};
-	};
-	defaults m_defaults {};
-
+	notefile m_nf {};
 	struct qt_nf_table_data {
 		QTableWidgetItem ontime {0.0};
 		QTableWidgetItem offtime {0.0};
@@ -50,9 +54,6 @@ class nf_import_window : public QMainWindow {
 	std::vector<qt_nf_table_data> m_nf_table_data {};
 		// ui->nf_table gets the data it displays by holding pointers
 		// to this.  Populated by set_nf_table_data()
-
-	std::string m_fname {};
-	notefile m_nf {};
 
 	//---------------------------------------------------------------------------
 	// Functions
@@ -89,10 +90,6 @@ class nf_import_window : public QMainWindow {
 	void set_ts();
 	void set_bpm();
 	void set_err();
-	
-	// TODO:  No longer needed...
-	std::vector<double> qt_table2double(int const, int const, int const,
-		double const) const;
 
 	Ui::nf_import_window ui;
 

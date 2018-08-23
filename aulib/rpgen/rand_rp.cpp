@@ -12,9 +12,43 @@
 #include <optional>
 
 
+randrp_input_check_result rand_rp_check_input(randrp_input const input) {
+	randrp_input_check_result res {};
+	res.is_valid = true;
+
+	if (input.nvset.size() < 1) {
+		res.is_valid = false;
+		res.msg += "Must supply at least one nv.\n";
+	}
+	if (input.nvset.size() != input.pd.size()) {
+		res.is_valid = false;
+		res.msg += "Must supply a relative probability for each nv.\n";
+	}
+
+	// pd_in should all be >0
+
+	if (input.n_nts < 0) {
+		res.is_valid = false;
+		res.msg += "n_nts must be >= 0.\n";
+	}
+
+	if (input.n_nts == 0 && input.n_bars == bar_t{0}) {
+		res.is_valid = false;
+		res.msg += "One of n_nts, n_bars must be constrained.\n";
+	}
+
+	return res;
+}
+
 // rand_rp() ~ rdur()
 // The rp returned will always span an integer number of bars (if requested) since the
 // algorithm appends random 1-bar "segments" to a growing rp.  
+//
+// TODO:  Does this actually make use of the values in pd_in ??? Seems to ignore them...
+//
+// TODO:  Will this work if nbars = 0.5 ???  Always generates exactly 1 bar at a time?
+//
+//
 std::optional<std::vector<nv_t>> rand_rp(ts_t ts_in, 
 	std::vector<nv_t> dp_in, std::vector<double> pd_in, int nnts_in, 
 	bar_t nbr_in, rand_rp_opts opts) {

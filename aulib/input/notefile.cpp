@@ -4,6 +4,7 @@
 #include <string>
 #include <fstream>
 #include <regex>
+#include <filesystem>
 
 //
 // Does not verify any sort of ordering (ex, that the events returned occur
@@ -18,6 +19,8 @@
 //
 
 notefile read_notefile(std::string const& filename, int const& flags) {
+	auto fpath = std::filesystem::path(filename);
+
 	auto f = std::ifstream(filename);
 	if (!f.is_open()) {
 		notefile nf {};  nf.file_error = true;
@@ -56,7 +59,8 @@ notefile read_notefile(std::string const& filename, int const& flags) {
 	}
 	f.close();
 
-	return notefile {false, filename, nf_lines, flags, error_lines};
+	return notefile {false, fpath.filename().string(), fpath.relative_path().string(), 
+		nf_lines, flags, error_lines};
 }
 
 std::vector<double> notefile2dt(notefile const& nf) {

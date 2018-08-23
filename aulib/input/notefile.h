@@ -33,6 +33,7 @@ struct notefile {
 		// are in some way suspicious, see member error_lines.  
 
 	std::string fname {};
+	std::string fpath {};
 	std::vector<notefileline> lines {};
 	int opts {0};
 	std::vector<int> error_lines {};

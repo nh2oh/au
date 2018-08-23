@@ -37,7 +37,7 @@ public:
     QLabel *label_2;
     QPushButton *add_nv;
     QPushButton *remove_nv;
-    QPushButton *import_2;
+    QPushButton *import_btn;
     QPushButton *cancel;
     QLineEdit *n_nts;
     QLabel *label_3;
@@ -81,9 +81,9 @@ public:
         remove_nv = new QPushButton(centralwidget);
         remove_nv->setObjectName(QStringLiteral("remove_nv"));
         remove_nv->setGeometry(QRect(130, 170, 31, 23));
-        import_2 = new QPushButton(centralwidget);
-        import_2->setObjectName(QStringLiteral("import_2"));
-        import_2->setGeometry(QRect(700, 280, 75, 23));
+		import_btn = new QPushButton(centralwidget);
+        import_btn->setObjectName(QStringLiteral("import_btn"));
+		import_btn->setGeometry(QRect(700, 280, 75, 23));
         cancel = new QPushButton(centralwidget);
         cancel->setObjectName(QStringLiteral("cancel"));
         cancel->setGeometry(QRect(610, 280, 75, 23));
@@ -133,7 +133,7 @@ public:
         label_2->setText(QApplication::translate("rp_builder", "NV Pool", nullptr));
         add_nv->setText(QApplication::translate("rp_builder", ">", nullptr));
         remove_nv->setText(QApplication::translate("rp_builder", "<", nullptr));
-        import_2->setText(QApplication::translate("rp_builder", "Import", nullptr));
+		import_btn->setText(QApplication::translate("rp_builder", "Import", nullptr));
         cancel->setText(QApplication::translate("rp_builder", "Cancel", nullptr));
         label_3->setText(QApplication::translate("rp_builder", "nnts", nullptr));
         n_bars->setText(QString());
