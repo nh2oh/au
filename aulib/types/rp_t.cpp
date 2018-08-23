@@ -89,6 +89,9 @@ std::string rp_t_info() {
 // Convert a sequence of note durations (in seconds) to a sequence of 
 // note-values.  
 //
+//
+// TODO:  Algorithm based on clustering dt's, not nv_t's
+//
 std::vector<nv_t> deltat2rp(std::vector<double> const& delta_t, 
 	ts_t const& ts_in, double const& bpm, double const& s_resolution) {
 	au_assert(delta_t.size()>=2,"A delta-t vector must contain >= 2 events.");
@@ -121,7 +124,7 @@ std::vector<nv_t> deltat2rp(std::vector<double> const& delta_t,
 //
 // Does the reverse of deltat2rp().
 // Units of the delta_t vector is seconds.  
-//  
+//
 std::vector<double> rp2deltat(std::vector<nv_t> const& rp_in, 
 	ts_t const& ts_in, double const& bpm) {
 	au_assert(rp_in.size()>=1);
