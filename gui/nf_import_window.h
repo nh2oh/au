@@ -42,13 +42,12 @@ class nf_import_window : public QMainWindow {
 	defaults m_defaults {};
 
 	//-------------------------------
-	struct status_flags {
-		bool curr_fname {false};
-		bool nf {false};
-		bool nf_table {false};
-		bool global {false};
-	};
-	status_flags m_status {};
+	//struct status_flags {
+	//	bool curr_fname {false};
+	//	bool nf {false};
+	//	bool nf_table {false};
+	//};
+	//status_flags m_status {};
 
 	struct qt_nf_table_data {
 		QTableWidgetItem ontime {0.0};
@@ -58,7 +57,7 @@ class nf_import_window : public QMainWindow {
 	};
 	std::vector<qt_nf_table_data> m_nf_table_data {};
 		// ui->nf_table gets the data it displays by holding pointers
-		// to this.  
+		// to this.  Populated by set_nf_table_data()
 
 	std::string m_fname {};
 	notefile m_nf {};
@@ -75,14 +74,30 @@ class nf_import_window : public QMainWindow {
 	//   keep the window consistent with itself and with the internal data.  
 	//   They do _not_ set window properties.  
 	//
+	void set_nf_from_file(); 
+	void set_nf_from_nftable(int const);
+		// Both populate the internal datastores m_nf/m_nf_table_data
+		// without altering the table widget.  Overload 
+		// set_nf_from_nftable(int const) _reads_ the table widget.  
+	
 	void set_nftable();
 	void set_nftable(int const r);
-	void set_nf_table_data(int const, qt_nf_table_data const);
+		// Populates the gui widget from m_nf_table_data.  Overload 
+		// set_nftable(int const r) does only one row of the table,
+		// overload set_nftable() clears the entire table widget then
+		// calls overload set_nftable(int const r) for every row in the
+		// backend datastore m_nf/m_nf_table_data.  
+		// Overload m_nf_table_data(int const r) is responsible for 
+		// setting cell colors for valid/invalid cells.  
+
 	void update_nv_t_count();
 	void set_ts();
 	void set_bpm();
 	void set_err();
-	void set_nf(); 
+	
+
+	std::vector<double> qt_table2double(int const, int const, int const,
+		double const) const;
 
 	Ui::nf_import_window ui;
 	private slots:
