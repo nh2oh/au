@@ -3,7 +3,6 @@
 #include "aulib\util\au_algs.h"
 #include "aulib\util\au_util.h"
 #include "aulib\types\rp_t.h"
-#include "data_pool.h"
 #include "g_data_pool.h"
 #include "aulib\numeric_simple_uih.h" // for qt_table2double()
 #include <string>
@@ -100,7 +99,6 @@ void nf_import_window::set_nf_from_nftable(int const r) {
 		m_nf.error_lines.push_back(r+1);
 	}
 
-	//m_status.nf_table = !(m_nf.error_lines.size() > 0);
 }
 
 //

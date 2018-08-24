@@ -70,27 +70,3 @@ bool operator<=(bar_t const&, bar_t const&);
 
 
 
-struct bpm_str_helper {
-	bool is_valid {false};
-
-	// Some kind of helpful error message (if is_valid == false) or possibly
-	// some other helper message if the user has entered something crazy or
-	// unusual that parses as a valid bpm.
-	std::string msg {};
-
-	// Use to indicate some sort of unusual condition where is_valid==true but
-	// we nonetheless want to alert the user about something.  
-	int flags {0};
-
-	// Created from the components of the parsed input string.  Things like
-	// leading and trailing spaces are stripped.  
-	std::string str_clean {};
-
-	// If the input is valid, this is set from the input string.  Can be used
-	// by a constructor.
-	double bpm {0.0};
-};
-
-bpm_str_helper validate_bpm_str(std::string const&);
-
-

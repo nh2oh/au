@@ -4,6 +4,9 @@
 #include <type_traits>  // For remove_ref<>m invoke<>, etc
 #include <optional>
 
+// TODO:  Comments, contained types need work
+
+
 namespace au {
 
 // EX:
@@ -48,7 +51,7 @@ template<typename T> struct uih_parser {
 	//   uih_parser_result {std::optional<T> o_result; std::string failmsg}
 	// RFType ~ "return fundamental type" => if parsefunc is successfull,
 	//   the type of:  *(parsefunc().o_result)
-	using PRType = typename std::invoke_result<T,std::string>::type;
+	using PRType = typename std::invoke_result<T,/*std::string*/typename T::PIType>::type;
 	using RFType = typename PRType::PFType;
 	using type = typename uih_parser<T>;
 	using PIType = typename T::PIType;  // "parser input type"

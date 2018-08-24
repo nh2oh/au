@@ -203,7 +203,6 @@
   <ItemGroup>
     <ClInclude Include="data_pool.h" />
     <ClInclude Include="g_data_pool.h" />
-    <ClInclude Include="qt_helpers.h" />
     <QtMoc Include="rp_builder.h">
       <IncludePath Condition="'$(Configuration)|$(Platform)'=='dll|x64'">.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName)\.;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtUiTools;$(QTDIR)\include\QtWidgets</IncludePath>
       <Define Condition="'$(Configuration)|$(Platform)'=='dll|x64'">UNICODE;_UNICODE;WIN32;WIN64;QT_CORE_LIB;QT_GUI_LIB;QT_UITOOLS_LIB;QT_WIDGETS_LIB</Define>

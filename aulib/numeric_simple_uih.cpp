@@ -11,7 +11,8 @@ using namespace au;
 uih_parser_result<double> 
 	parse_userinput_double::operator()(std::string const& str_in) const {
 
-	std::regex rxp {"^\\s*(\\-)?([0-9]+)?(\\.)?([0-9]+)?\\s*$"};
+	//std::regex rxp {"^\\s*(\\-)?([0-9]+)?(\\.)?([0-9]+)?\\s*$"};
+	std::regex rxp {"^\\s*\\-?(?:[0-9]+\\.?[0-9]*)|(?:[0-9]*\\.?[0-9]+)\\s*$"};
 	if (!std::regex_search(str_in,rxp)) {
 		return uih_parser_result<double> {{},
 			"Enter a number in the format: [-][\\d*][.][\\d*]"};
@@ -24,7 +25,8 @@ uih_parser_result<double>
 uih_parser_result<int> 
 parse_userinput_int::operator()(std::string const& str_in) const {
 
-	std::regex rxp {"^\\s*(\\-)?([0-9]+)\\s*$"};
+	//std::regex rxp {"^\\s*(\\-)?([0-9]+)\\s*$"};
+	std::regex rxp {"^\\s*\\-?[0-9]+\\s*$"};
 	if (!std::regex_search(str_in,rxp)) {
 		return uih_parser_result<int> {{},
 			"Enter a number in the format: [-]\\d*"};

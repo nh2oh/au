@@ -63,13 +63,7 @@
     <ClCompile Include="rpgen\rand_rp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="number_uih.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="types\nv_t.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="nv_uih.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="util\au_random.cpp">
@@ -146,13 +140,7 @@
     <ClInclude Include="rpgen\rand_rp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="number_uih.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="types\nv_t.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="nv_uih.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="util\au_random.h">

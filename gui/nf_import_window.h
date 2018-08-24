@@ -2,7 +2,7 @@
 #include <QtWidgets/QMainWindow>
 #include "ui_nf_import_window.h"
 #include "aulib\uih.h"
-#include "aulib\types\ts_t_uih.h"
+#include "aulib\types\ts_t_uih.h"  // NB:  ts_t.h not needed
 #include "aulib\numeric_simple_uih.h"
 #include "aulib\input\notefile.h"
 #include <string>

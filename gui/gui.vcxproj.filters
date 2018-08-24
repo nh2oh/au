@@ -95,8 +95,5 @@
     <ClInclude Include="g_data_pool.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="qt_helpers.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
 </Project>

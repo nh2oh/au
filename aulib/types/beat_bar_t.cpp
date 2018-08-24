@@ -153,44 +153,4 @@ bool operator<=(bar_t const& lhs, bar_t const& rhs) {
 
 
 
-//-----------------------------------------------------------------------------
-// Non-class helpers
-
-
-bpm_str_helper validate_bpm_str(std::string const& str_in) {
-	bpm_str_helper result { };
-
-	auto o_matches = rx_match_captures("^\\s*(\\d+)?(\\.\\d*)?\\s*$",str_in);
-	if (!o_matches || (*o_matches).size() != 3) {
-		result.is_valid = false;
-		result.msg += "Enter a decimal value >= 0.  ";
-		return result;
-	}
-	auto matches = *o_matches;
-
-	if (!(matches[1]) && !(matches[2])) {
-		// Both the numbers before and after the decimal are missing
-		result.is_valid = false;
-		result.msg += "Enter a decimal value >= 0.  ";
-		return result;
-	}
-
-	result.is_valid = true;
-
-	if (matches[1]) {
-		result.str_clean += *(matches[1]);
-	} else {
-		result.str_clean += "0";
-	}
-	if (matches[2]) {
-		result.str_clean += *(matches[2]);
-	}
-	result.bpm = std::stod(result.str_clean);
-	if (std::round(result.bpm) == 0.0) {
-		// A BPM of 0 is ok, but weird
-		result.flags = 1;
-		result.msg += "BPM == 0";
-	}
-	return result;
-}
 

@@ -1,15 +1,13 @@
 #pragma once
 #include <QtWidgets/QMainWindow>
 #include "ui_rp_builder.h"
-#include "aulib\types\ts_t.h"
 #include "aulib\types\nv_t.h"
+#include "aulib\nv_t_uih.h"
 #include "aulib\types\beat_bar_t.h"
+#include "aulib\numeric_simple_uih.h"
 #include "aulib\rpgen\rand_rp.h"
 #include "aulib\uih.h"
-#include "aulib\types\ts_t_uih.h"
-#include "aulib\nv_t_uih.h"
-#include "aulib\numeric_simple_uih.h"
-
+#include "aulib\types\ts_t_uih.h"  // NB:  ts_t.h not needed
 #include <vector>
 #include <optional> // rand_rp() returns a std::optional<std::vector<nv_t>>
 #include <string>
@@ -43,11 +41,9 @@ private:
 	au::uih<decltype(m_nv_parser)> m_nv_uih {m_nv_parser};
 	au::uih<decltype(m_nv_parser)> m_nv_uih2 {m_nv_parser};
 
-	//au::uih_parser<parse_randrp_input> m_rand_rp_input_parser {parse_randrp_input {},
-	//	"rand_rp(ts_t, std::vector<nv_t>, std::vector<double>, int, bar_t, rand_rp_opts)"};
-	//au::uih<decltype(m_rand_rp_input_parser)> m_rand_rp_uih {m_rand_rp_input_parser};
-	parse_randrp_input m_rand_rp_input_parser {};
-	// The parser has to take a std::string to use all my uih functionality...
+	au::uih_parser<parse_randrp_input> m_rand_rp_input_parser {parse_randrp_input {},
+		"rand_rp(ts_t, std::vector<nv_t>, std::vector<double>, int, bar_t, rand_rp_opts)"};
+	au::uih<decltype(m_rand_rp_input_parser)> m_rand_rp_uih {m_rand_rp_input_parser};
 
 	au::uih_parser<parse_userinput_int> m_nnts_parser {parse_userinput_int {},
 		"Constrain the generated sequence to contain this many notes"};
@@ -70,7 +66,6 @@ private:
 	QStringList m_nvprobs_qsl_items {};
 	std::vector<double> m_pd;
 
-	au::uih_parser_result<randrp_input> m_rand_rp_input_uih {};
 	std::optional<std::vector<nv_t>> m_rand_rp_result;  // output of rand_rp()
 
 	void set_ts();
