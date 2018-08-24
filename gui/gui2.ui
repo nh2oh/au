@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>au</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -139,7 +139,7 @@
   </action>
   <action name="actionRandrp">
    <property name="text">
-    <string>Randrp()</string>
+    <string>rand_rp()</string>
    </property>
   </action>
  </widget>

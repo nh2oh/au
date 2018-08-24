@@ -55,7 +55,7 @@ public:
     {
         if (scale_builder->objectName().isEmpty())
             scale_builder->setObjectName(QStringLiteral("scale_builder"));
-        scale_builder->resize(708, 584);
+        scale_builder->resize(708, 590);
         centralWidget = new QWidget(scale_builder);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         label = new QLabel(centralWidget);
@@ -104,7 +104,7 @@ public:
         scale_builder->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(scale_builder);
         menuBar->setObjectName(QStringLiteral("menuBar"));
-        menuBar->setGeometry(QRect(0, 0, 708, 18));
+        menuBar->setGeometry(QRect(0, 0, 708, 22));
         menuFiler = new QMenu(menuBar);
         menuFiler->setObjectName(QStringLiteral("menuFiler"));
         menuHelp = new QMenu(menuBar);
@@ -127,7 +127,7 @@ public:
 
     void retranslateUi(QMainWindow *scale_builder)
     {
-        scale_builder->setWindowTitle(QApplication::translate("scale_builder", "MainWindow", nullptr));
+        scale_builder->setWindowTitle(QApplication::translate("scale_builder", "Scale Builder", nullptr));
         label->setText(QApplication::translate("scale_builder", "Name", nullptr));
         label_2->setText(QApplication::translate("scale_builder", "Description", nullptr));
         groupBox->setTitle(QApplication::translate("scale_builder", "Frq generator", nullptr));

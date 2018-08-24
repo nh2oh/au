@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 #include <tuple>
-#include <type_traits>  // For remove_ref<>m invoke<>, etc
+#include <type_traits>  // For remove_ref<>, invoke<>, etc
 #include <optional>
 
 // TODO:  Comments, contained types need work
@@ -37,13 +37,15 @@ template<typename T> struct uih_parser_result {
 // A uih_parser pairs a "parsefunc" (see below) with an "info message"
 // explaining to the user the expected format of the input.  
 //
-// A parsefunc is a function object that returns a uih_parser_result struct:
-// { std::optional<T> o_result; std::string failmsg; }
-// where T is some sort of type (possibly itself a struct) containing the 
-// elements parsed out of the input string.  If the input string could not 
-// be parsed, parsefunc returns the uih_parser_result as:
-// { std::optional<T> {}, "a helpful error message"}.  
-// 
+// A parsefunc is a function object that
+// 1) Returns a uih_parser_result struct:
+//    { std::optional<T> o_result; std::string failmsg; }
+//    where T is some sort of type (possibly itself a struct) containing the 
+//    elements parsed out of the input passed to the parser.  If the input
+//    could not be parsed, parsefunc returns the uih_parser_result as:
+//    { std::optional<T> {}, "a helpful error message"}.  
+// 2) Defines a member type PIType ("parser input type") that is whatever
+//    the operator() of the function object takes as input.  
 //
 template<typename T> struct uih_parser {
 	// PRType ~ "parser return type" => the return type of the functor
@@ -51,17 +53,16 @@ template<typename T> struct uih_parser {
 	//   uih_parser_result {std::optional<T> o_result; std::string failmsg}
 	// RFType ~ "return fundamental type" => if parsefunc is successfull,
 	//   the type of:  *(parsefunc().o_result)
-	using PRType = typename std::invoke_result<T,/*std::string*/typename T::PIType>::type;
-	using RFType = typename PRType::PFType;
-	using type = typename uih_parser<T>;
 	using PIType = typename T::PIType;  // "parser input type"
+	using PRType = typename std::invoke_result<T,PIType>::type;
+	using RFType = typename PRType::PFType;
 	//using RFType = typename std::remove_reference<decltype(std::declval<PRType>().value())>::type;
 public:
 	uih_parser(T parsefunc, std::string infomsg) : 
 		m_parsefunc(parsefunc),
 		m_info_msg(infomsg) {};
 
-	PRType operator()(/*std::string const&*/ PIType str_in) const {
+	PRType operator()(PIType str_in) const {
 		return m_parsefunc(str_in);
 	};
 
@@ -70,11 +71,6 @@ private:
 	const T m_parsefunc;  // A parsing function has no state, hence const
 	const std::string m_info_msg {};
 };
-
-//template<typename T>
-//uih_parser<T> make_uih_parser(T parsefunc, std::string infomsg) {
-//	return uih_parser {parsefunc, infomsg};
-//};
 
 //
 // A uih_pred functor associates some sort of unary predicate with a
@@ -100,9 +96,12 @@ private:
 
 //
 // What you do is:
-// 1)  Write a functor taking a std::string and returning a
-//   uih_parser_result<whatever>.  For example, to parse a ts_t:
+// 1)  Write a functor taking a T (ex, a std::string) and returning a
+//   uih_parser_result<whatever>.  Within the functor, define the member
+//   type PIType as T.  For example, to parse a ts_t from a std::string:
+//   
 //   struct parse_userinput_ts {
+//     using PIType = typename std::string;
 //     uih_parser_result<ts_t> operator()(std::string) {
 //       result = uih_parser_result<ts_t> {}
 //       ...
@@ -118,18 +117,22 @@ private:
 //    };
 //  };
 //
+// 
 //
 // 2)  Construct a uih_parser object containing your functor
-//   (parse_userinput_ts(std::string)) as a member:
+//   (parse_userinput_ts(std::string)) as a member, by packaging the functor
+//   with a helpful message to the user, say, explaining the expected format
+//   for the input.  
 //
 //   uih_parser ts_parser {parse_userinput_ts {}, "The format of a ts
 //     is n/d where n,d are both integers > 0."};
 //
+// 
 //
 // 3)  Create any uih_pred functors as necessary.  These must 
-//   take in the same type as the RFType of the uih_parser functor
-//   returned by the parser.  
-//   For example,
+//   take in the same type RFType as that returned by the parser, 
+//   uih_parser_result<RFType>.  For example:
+//   
 //   uih_pred pred_numerator {[](ts_t const& ts){return (ts.m_bpb() > beat_t{12});},  
 //     "Numerators > 12 are not yet supported."};
 //   uih_pred pred_compound {[](ts_t const& ts){return (!ts.is_compound());},  
@@ -164,15 +167,16 @@ public:
 	//using PIType_noconst = typename std::remove_const<PIType>::type;
 	using PIType_noref = typename std::remove_reference<PIType>::type;
 	using PIType_norefconst = typename std::remove_const<PIType_noref>::type;
+	
 	uih(Tprsr uih_parserfunc, Tpredfuncs... uih_preds) :
 		m_parser(uih_parserfunc), m_preds(uih_preds...) { };
 	
-	void update(PIType /*std::string const&*/ str_in) {
-		if (str_in == m_str_last) {	return;	}
-		m_str_last = str_in;
+	void update(PIType raw_usr_input) {
+		if (raw_usr_input == m_raw_usr_input_last) { return; }
+		m_raw_usr_input_last = raw_usr_input;
 		m_msg.clear();
 
-		m_parse_result = m_parser(str_in);  // uih_parser_result struct
+		m_parse_result = m_parser(raw_usr_input);  // uih_parser_result struct
 		if (!m_parse_result.o_result) {
 			m_is_valid = false;
 			m_msg = m_parse_result.failmsg;
@@ -226,7 +230,7 @@ private:
 		// m_parser() (if parsing fails) or std::get<i>(m_preds).msg() for
 		// those elements of m_preds that fail.  
 
-	PIType_norefconst /*std::string */ m_str_last {};
+	PIType_norefconst m_raw_usr_input_last {};
 		// The most recent value passed to update().  Used to avoid 
 		// unnecessary repeated processing of the same input string.  
 };

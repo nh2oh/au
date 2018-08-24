@@ -51,6 +51,9 @@
     <ClCompile Include="rp_builder.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="scale_builder.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="fonts_colors.h">
@@ -63,6 +66,9 @@
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="nf_import_window.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="scale_builder.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>

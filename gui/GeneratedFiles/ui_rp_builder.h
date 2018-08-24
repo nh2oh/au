@@ -120,7 +120,7 @@ public:
         rp_builder->setCentralWidget(centralwidget);
         menubar = new QMenuBar(rp_builder);
         menubar->setObjectName(QStringLiteral("menubar"));
-        menubar->setGeometry(QRect(0, 0, 800, 18));
+        menubar->setGeometry(QRect(0, 0, 800, 22));
         menuLoad_template = new QMenu(menubar);
         menuLoad_template->setObjectName(QStringLiteral("menuLoad_template"));
         rp_builder->setMenuBar(menubar);
@@ -137,7 +137,7 @@ public:
 
     void retranslateUi(QMainWindow *rp_builder)
     {
-        rp_builder->setWindowTitle(QApplication::translate("rp_builder", "MainWindow", nullptr));
+        rp_builder->setWindowTitle(QApplication::translate("rp_builder", "rand_rp()", nullptr));
         label->setText(QApplication::translate("rp_builder", "TS", nullptr));
         label_2->setText(QApplication::translate("rp_builder", "NV Pool", nullptr));
         add_nv->setText(QApplication::translate("rp_builder", ">", nullptr));

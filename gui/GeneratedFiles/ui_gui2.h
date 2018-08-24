@@ -165,12 +165,12 @@ public:
 
     void retranslateUi(QMainWindow *gui2)
     {
-        gui2->setWindowTitle(QApplication::translate("gui2", "MainWindow", nullptr));
+        gui2->setWindowTitle(QApplication::translate("gui2", "au", nullptr));
         actionImport->setText(QApplication::translate("gui2", "Import", nullptr));
         actionOpen->setText(QApplication::translate("gui2", "Open", nullptr));
         actionExit->setText(QApplication::translate("gui2", "Exit", nullptr));
         actionScale_builder->setText(QApplication::translate("gui2", "Scale builder", nullptr));
-        actionRandrp->setText(QApplication::translate("gui2", "Randrp()", nullptr));
+        actionRandrp->setText(QApplication::translate("gui2", "rand_rp()", nullptr));
         subwindow->setWindowTitle(QApplication::translate("gui2", "Subwindow", nullptr));
         pushButton->setText(QApplication::translate("gui2", "PushButton", nullptr));
         dump->setText(QApplication::translate("gui2", "dump", nullptr));

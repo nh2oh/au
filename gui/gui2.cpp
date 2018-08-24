@@ -2,6 +2,7 @@
 #include "aulib\util\au_util_all.h"
 #include "nf_import_window.h"
 #include "rp_builder.h"
+#include "scale_builder.h"
 #include "g_data_pool.h"
 #include <string>
 
@@ -22,13 +23,17 @@ void gui2::on_actionRandrp_triggered() {
 	rp_builder_w->show();
 }
 
+void gui2::on_actionScale_builder_triggered() {
+	scale_builder *scale_builder_w = new scale_builder(this);
+	scale_builder_w->setAttribute(Qt::WA_DeleteOnClose);
+	scale_builder_w->show();
+}
+
 void gui2::on_update_clicked() {
 	auto all_nfs = gdp.list_all();
 	ui.gdata_list->clear();
 	for (auto e : all_nfs) {
 		new QListWidgetItem(QString().fromStdString(e), ui.gdata_list);
 	}
-
-	wait();
 }
 
