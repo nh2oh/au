@@ -1,4 +1,5 @@
 #include "rand_rp.h"
+#include "..\uih.h"
 #include "..\types\nv_t.h"
 #include "..\types\ts_t.h"
 #include "..\types\beat_bar_t.h"
@@ -10,8 +11,41 @@
 #include <chrono>
 #include <random>
 #include <optional>
+#include <set>
 
 
+au::uih_parser_result<randrp_input>
+parse_randrp_input::operator()(randrp_input const& randrp_input_in) const {
+	au::uih_parser_result<randrp_input> result {{},""};
+		// NB: Clearing the default failmsg
+	bool input_is_valid = true;
+	if (randrp_input_in.nvset.size() < 1) {
+		input_is_valid = false;
+		result.failmsg += "Must supply at least one nv.\n";
+	}
+	if (randrp_input_in.nvset.size() != randrp_input_in.pd.size()) {
+		input_is_valid = false;
+		result.failmsg += "Must supply a relative probability for each nv.\n";
+	}
+	// TODO:  At least 2 elements of pd_in should be > 0
+	if (randrp_input_in.n_nts < 0) {
+		input_is_valid = false;
+		result.failmsg += "n_nts must be >= 0.\n";
+	}
+	if (randrp_input_in.n_nts == 0 && randrp_input_in.n_bars == bar_t{0}) {
+		input_is_valid = false;
+		result.failmsg += "One of n_nts, n_bars must be constrained.\n";
+	}
+
+	if (input_is_valid) { result.o_result = randrp_input_in;}
+	return result;
+}
+
+
+
+
+
+/*
 randrp_input_check_result rand_rp_check_input(randrp_input const input) {
 	randrp_input_check_result res {};
 	res.is_valid = true;
@@ -39,6 +73,7 @@ randrp_input_check_result rand_rp_check_input(randrp_input const input) {
 
 	return res;
 }
+*/
 
 // rand_rp() ~ rdur()
 // The rp returned will always span an integer number of bars (if requested) since the
@@ -150,6 +185,15 @@ std::optional<std::vector<nv_t>> rand_rp(ts_t ts_in,
 	// All success paths return inside the loop.  If we're here, the outer loop
 	// timed out.  
 	return {};
+}
+
+// TODO:  Convert rand_rp to take a std::set of nv_t instead of a std::vector
+std::optional<std::vector<nv_t>> rand_rp(randrp_input rand_rp_input_in) {
+	rand_rp_opts opts{std::chrono::seconds{3}};
+	std::vector<nv_t> gross(rand_rp_input_in.nvset.begin(),rand_rp_input_in.nvset.end());
+
+	return rand_rp(rand_rp_input_in.ts,gross,
+		rand_rp_input_in.pd,rand_rp_input_in.n_nts,rand_rp_input_in.n_bars,opts);
 }
 
 std::optional<std::vector<nv_t>> rand_rp(ts_t ts_in, std::vector<nv_t> dp_in,

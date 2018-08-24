@@ -13,6 +13,7 @@ struct ts_t_parts {
 
 // My primary ts parser
 struct parse_userinput_ts {
+	using PIType = typename std::string const&;
 	au::uih_parser_result<ts_t> operator()(std::string const&) const;
 };
 

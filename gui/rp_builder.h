@@ -38,11 +38,16 @@ private:
 		"The time signature (format: n/d[c] where c means \"compound\")"};
 	au::uih<decltype(m_ts_parser)> m_ts_uih {m_ts_parser};
 
-
 	au::uih_parser<parse_userinput_nv> m_nv_parser {parse_userinput_nv {},
 		"The note-value format:  1/n[.] where n is a positive integer and [.] is 1 or more dots."};
 	au::uih<decltype(m_nv_parser)> m_nv_uih {m_nv_parser};
 	au::uih<decltype(m_nv_parser)> m_nv_uih2 {m_nv_parser};
+
+	//au::uih_parser<parse_randrp_input> m_rand_rp_input_parser {parse_randrp_input {},
+	//	"rand_rp(ts_t, std::vector<nv_t>, std::vector<double>, int, bar_t, rand_rp_opts)"};
+	//au::uih<decltype(m_rand_rp_input_parser)> m_rand_rp_uih {m_rand_rp_input_parser};
+	parse_randrp_input m_rand_rp_input_parser {};
+	// The parser has to take a std::string to use all my uih functionality...
 
 	au::uih_parser<parse_userinput_int> m_nnts_parser {parse_userinput_int {},
 		"Constrain the generated sequence to contain this many notes"};
@@ -65,8 +70,7 @@ private:
 	QStringList m_nvprobs_qsl_items {};
 	std::vector<double> m_pd;
 
-	randrp_input m_rand_rp_input {};
-	randrp_input_check_result m_rand_rp_input_status {};
+	au::uih_parser_result<randrp_input> m_rand_rp_input_uih {};
 	std::optional<std::vector<nv_t>> m_rand_rp_result;  // output of rand_rp()
 
 	void set_ts();

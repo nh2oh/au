@@ -15,7 +15,7 @@ template<typename T> struct stdoptional_internaltype {
 
 template<typename T> struct uih_parser_result {
 	// PFType => "parser fundamental type" is whatever type contains the
-	// results of a successfull parse.  The corresponding parser packages
+	// results of a successful parse.  The corresponding parser packages
 	// an object of type PFType inside a std::optional and inserts it
 	// into uih_parser_result.o_result.  
 	using PFType = typename T;
@@ -51,13 +51,14 @@ template<typename T> struct uih_parser {
 	using PRType = typename std::invoke_result<T,std::string>::type;
 	using RFType = typename PRType::PFType;
 	using type = typename uih_parser<T>;
+	using PIType = typename T::PIType;  // "parser input type"
 	//using RFType = typename std::remove_reference<decltype(std::declval<PRType>().value())>::type;
 public:
 	uih_parser(T parsefunc, std::string infomsg) : 
 		m_parsefunc(parsefunc),
 		m_info_msg(infomsg) {};
 
-	PRType operator()(std::string const& str_in) const {
+	PRType operator()(/*std::string const&*/ PIType str_in) const {
 		return m_parsefunc(str_in);
 	};
 
@@ -67,10 +68,10 @@ private:
 	const std::string m_info_msg {};
 };
 
-template<typename T>
-uih_parser<T> make_uih_parser(T parsefunc, std::string infomsg) {
-	return uih_parser {parsefunc, infomsg};
-};
+//template<typename T>
+//uih_parser<T> make_uih_parser(T parsefunc, std::string infomsg) {
+//	return uih_parser {parsefunc, infomsg};
+//};
 
 //
 // A uih_pred functor associates some sort of unary predicate with a
@@ -156,11 +157,14 @@ template<typename Tprsr, typename... Tpredfuncs>
 class uih {
 public:
 	using PAType = typename Tprsr::RFType;  // Predicate arg type
-
+	using PIType = typename Tprsr::PIType;  // Parser input type
+	//using PIType_noconst = typename std::remove_const<PIType>::type;
+	using PIType_noref = typename std::remove_reference<PIType>::type;
+	using PIType_norefconst = typename std::remove_const<PIType_noref>::type;
 	uih(Tprsr uih_parserfunc, Tpredfuncs... uih_preds) :
 		m_parser(uih_parserfunc), m_preds(uih_preds...) { };
 	
-	void update(std::string const& str_in) {
+	void update(PIType /*std::string const&*/ str_in) {
 		if (str_in == m_str_last) {	return;	}
 		m_str_last = str_in;
 		m_msg.clear();
@@ -219,7 +223,7 @@ private:
 		// m_parser() (if parsing fails) or std::get<i>(m_preds).msg() for
 		// those elements of m_preds that fail.  
 
-	std::string m_str_last {};
+	PIType_norefconst /*std::string */ m_str_last {};
 		// The most recent value passed to update().  Used to avoid 
 		// unnecessary repeated processing of the same input string.  
 };

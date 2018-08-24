@@ -4,10 +4,12 @@
 #include <vector>
 
 struct parse_userinput_int {
+	using PIType = typename std::string const&;
 	au::uih_parser_result<int> operator()(std::string const&) const;
 };
 
 struct parse_userinput_double {
+	using PIType = typename std::string const&;
 	au::uih_parser_result<double> operator()(std::string const&) const;
 };
 

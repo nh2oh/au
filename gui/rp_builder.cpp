@@ -6,6 +6,7 @@
 #include "aulib\util\au_util.h" // bsprintf() for printing m_pd elements
 #include "aulib\uih.h"
 #include "aulib\types\ts_t_uih.h"
+#include "aulib\types\rp_t.h"  // printrp() for printing the output of rand_rp()
 #include "aulib\nv_t_uih.h"
 #include "aulib\numeric_simple_uih.h"
 #include <vector>
@@ -44,22 +45,30 @@ rp_builder::rp_builder(QWidget *parent) : QMainWindow(parent) {
 
 void rp_builder::on_generate_clicked() {
 	set_rand_rp_inputs();
-	if (!m_rand_rp_input_status.is_valid) { return; }
+	if (!m_rand_rp_input_uih.o_result) { return; }
 
-	//m_rand_rp_result = rand_rp(m_rand_rp_input);
+	m_rand_rp_result = rand_rp(*(m_rand_rp_input_uih.o_result));
 	// rand_rp() returns a std::optional<std::vector<nv_t>>
 
+	if (!m_rand_rp_result) {
+		return;
+	}
+
+	ui.rp_result->setPlainText(QString::fromStdString(printrp(m_ts_uih.get(),*m_rand_rp_result)));
 }
 
 void rp_builder::set_rand_rp_inputs() {
-	if (m_ts_uih.is_valid() && m_nnts_uih.is_valid() && m_nbars_uih.is_valid()) {
-		m_rand_rp_input = {m_ts_uih.get(),m_nvpool,m_pd,m_nnts_uih.get(),
-			bar_t{m_nbars_uih.get()}};
-		m_rand_rp_input_status = rand_rp_check_input(m_rand_rp_input);
+	if (!m_ts_uih.is_valid() || !m_nnts_uih.is_valid() || 
+		!m_nbars_uih.is_valid()) {
+		return;
 	}
 
-	if (!m_rand_rp_input_status.is_valid) {
-		ui.rand_rp_status_msg->setText(QString::fromStdString(m_rand_rp_input_status.msg));
+	m_rand_rp_input_uih = m_rand_rp_input_parser(
+		randrp_input{m_ts_uih.get(),m_nvpool,m_pd,m_nnts_uih.get(),
+		bar_t{m_nbars_uih.get()}});
+	if (!m_rand_rp_input_uih.o_result) {
+		ui.rand_rp_status_msg->setText(QString::fromStdString(m_rand_rp_input_uih.failmsg));
+		return;
 	}
 }
 
@@ -184,7 +193,7 @@ void rp_builder::set_nvpool() {
 	for (auto e : m_nvpool) {
 		m_nvpool_qsl_items.push_back(QString::fromStdString(e.print()));
 	}
-	//m_nvpool_model.setStringList(m_nvpool_qsl_items);  // Needed more than once??
+	m_nvpool_model.setStringList(m_nvpool_qsl_items);  // Needed more than once??
 }
 void rp_builder::set_common_nvs() {
 	// Updates the widget w/ the elements of m_common_nvs (a std::set<nv_t>).  
@@ -192,7 +201,7 @@ void rp_builder::set_common_nvs() {
 	for (auto e : m_common_nvs) {
 		m_comm_nvs_qsl_items.push_back(QString::fromStdString(e.print()));
 	}
-	//m_comm_nvs_model.setStringList(m_comm_nvs_qsl_items);  // Needed more than once??
+	m_comm_nvs_model.setStringList(m_comm_nvs_qsl_items);  // Needed more than once??
 }
 void rp_builder::set_pd() {
 	// Updates the widget w/ the elements of m_nvprobs (a std::set<nv_t>).  
@@ -200,7 +209,7 @@ void rp_builder::set_pd() {
 	for (auto e : m_pd) {
 		m_nvprobs_qsl_items.push_back(QString::fromStdString(bsprintf("%.3f",e)));
 	}
-	//m_nvprobs_model.setStringList(m_nvprobs_qsl_items);  // Needed more than once??
+	m_nvprobs_model.setStringList(m_nvprobs_qsl_items);  // Needed more than once??
 }
 void rp_builder::on_import_btn_clicked() {
 	if (!m_rand_rp_result) {
