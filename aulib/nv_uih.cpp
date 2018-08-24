@@ -12,7 +12,7 @@ bool uih_pred_t::operator()(nv_t const&) {
 
 //-----------------------------------------------------------------------------
 // The nv_uih class
-
+/*
 nv_uih::nv_uih() {
 	//...
 }
@@ -42,7 +42,7 @@ void nv_uih::update(std::string const& str_in) {
 	// Addnl tests... weird magnitudes, large number of dots...
 
 	nv_t nv {(nv_parts.num)/(nv_parts.denom), nv_parts.ndots};
-
+	*/
 	/*if (m_addnl_pred) {
 		auto tf_addnl_pred = (*m_addnl_pred)(nv);
 		if (!tf_addnl_pred) {
@@ -51,7 +51,7 @@ void nv_uih::update(std::string const& str_in) {
 			return;
 		}
 	}*/
-
+/*
 	m_nv = nv;
 	m_is_valid = true;
 	
@@ -99,4 +99,6 @@ bool operator==(nv_uih const& lhs, nv_uih const& rhs) {
 bool operator!=(nv_uih const& lhs, nv_uih const& rhs) {
 	return (lhs.m_str_last != rhs.m_str_last);
 }
+
+*/
 

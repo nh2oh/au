@@ -1,10 +1,16 @@
 #include "rp_builder.h"
 #include "g_data_pool.h"
 #include "aulib\rpgen\rand_rp.h"
-#include "aulib\types\types_all.h"
-#include "aulib\util\au_util_all.h"
+#include "aulib\types\ts_t.h"
+#include "aulib\types\nv_t.h"
+#include "aulib\util\au_util.h" // bsprintf() for printing m_pd elements
+#include "aulib\uih.h"
+#include "aulib\types\ts_t_uih.h"
+#include "aulib\nv_t_uih.h"
+#include "aulib\numeric_simple_uih.h"
 #include <vector>
 #include <string>
+#include <QStringListModel>
 
 rp_builder::rp_builder(QWidget *parent) : QMainWindow(parent) {
 	ui.setupUi(this);
@@ -12,49 +18,48 @@ rp_builder::rp_builder(QWidget *parent) : QMainWindow(parent) {
 	m_pd = m_defaults.pd;  // no setter or ui component yet
 	ui.ts->setText(QString().fromStdString(m_defaults.ts));
 	set_ts();
-	ui.nv_in->setText(QString().fromStdString(m_defaults.curr_nv));
-	set_curr_nv();
+	ui.nv->setText(QString().fromStdString(m_defaults.nv));
+	set_nv();
+	ui.nnts->setText(QString().fromStdString(m_defaults.nnts));
+	set_nnts();
+	ui.nbars->setText(QString().fromStdString(m_defaults.nbars));
+	set_nbars();
 
-	ui.n_nts->setText(QString().fromStdString(m_defaults.n_nts));
-	set_n_nts();
-	ui.n_bars->setText(QString().fromStdString(m_defaults.n_bars));
-	set_n_bars();
-
-	for (auto e : m_defaults.common_nvs) {
-		if (nv_uih(e).is_valid()) {
-			new QListWidgetItem(QString().fromStdString(e), ui.nvpool_addnl);
-		}
-	}
-	
-	for (auto e : m_defaults.nv_pool) {
-		if (nv_uih(e).is_valid()) {
-			new QListWidgetItem(QString().fromStdString(e), ui.nv_pool);
-		}
-	}
+	m_nvpool = m_defaults.nv_pool;
+	ui.nvpool->setModel(&m_nvpool_model);
 	set_nvpool();
+		// moves the m_nvpool elements into m_nvpool_qsl_items and therefore into
+		// the gui widget.  
+
+	m_common_nvs = m_defaults.common_nvs;
+	ui.nvpool_addnl->setModel(&m_comm_nvs_model);
+	set_common_nvs();  // Same deal as set_nvpool()
+
+	m_pd = m_defaults.pd;
+	ui.nvprobs->setModel(&m_nvprobs_model);
+	set_pd();  // Same deal as set_nvpool()
 
 	set_rand_rp_inputs();
 }
 
 void rp_builder::on_generate_clicked() {
 	set_rand_rp_inputs();
-	if (!m_rp_input_status.is_valid) { return; }
+	if (!m_rand_rp_input_status.is_valid) { return; }
 
-	m_rand_rp_result = rand_rp(m_rp_input);
+	//m_rand_rp_result = rand_rp(m_rand_rp_input);
 	// rand_rp() returns a std::optional<std::vector<nv_t>>
 
 }
 
 void rp_builder::set_rand_rp_inputs() {
-	if (m_ts_uih.is_valid() && m_nnts_uih.is_valid() && m_nbars_uih.is_valid() &&
-		m_dp_uih.is_valid() && m_nvpool_uih.is_valid()) {
-		m_rp_input = {m_ts_uih.get(),m_nv_pool,m_pd,m_nnts_uih.get(),
-			m_nbars_uih.get()};
-		m_rp_input_status = rand_rp_check_input(m_rp_input);
+	if (m_ts_uih.is_valid() && m_nnts_uih.is_valid() && m_nbars_uih.is_valid()) {
+		m_rand_rp_input = {m_ts_uih.get(),m_nvpool,m_pd,m_nnts_uih.get(),
+			bar_t{m_nbars_uih.get()}};
+		m_rand_rp_input_status = rand_rp_check_input(m_rand_rp_input);
 	}
 
-	if (!m_rp_input_status.is_valid) {
-		// set some kind of message on the window
+	if (!m_rand_rp_input_status.is_valid) {
+		ui.rand_rp_status_msg->setText(QString::fromStdString(m_rand_rp_input_status.msg));
 	}
 }
 
@@ -76,100 +81,127 @@ void rp_builder::on_ts_textEdited() {
 	set_rand_rp_inputs();
 }
 
-void rp_builder::set_n_nts() {
-	m_nnts_uih.update(ui.n_nts->text().toStdString());
+void rp_builder::set_nnts() {
+	m_nnts_uih.update(ui.nnts->text().toStdString());
 	ui.ts->setToolTip(QString::fromStdString(m_nnts_uih.msg()));
 	if (!m_nnts_uih.is_valid()) {
-		ui.n_nts->setStyleSheet("QLineEdit { background: rgb(255,153,153); }");
+		ui.nnts->setStyleSheet("QLineEdit { background: rgb(255,153,153); }");
 	} else {
-		ui.n_nts->setStyleSheet("QLineEdit { background: rgb(255,255,255); }");
+		ui.nnts->setStyleSheet("QLineEdit { background: rgb(255,255,255); }");
 	}
 }
-void rp_builder::on_n_nts_returnPressed() {
-	set_n_nts();
+void rp_builder::on_nnts_returnPressed() {
+	set_nnts();
 	set_rand_rp_inputs();
 }
-void rp_builder::on_n_nts_textEdited() {
-	set_n_nts();
+void rp_builder::on_nnts_textEdited() {
+	set_nnts();
 	set_rand_rp_inputs();
 }
 
-void rp_builder::set_n_bars() {
-	m_nbars_uih.update(ui.n_bars->text().toStdString());
-	ui.n_bars->setToolTip(QString::fromStdString(m_nbars_uih.msg()));
+void rp_builder::set_nbars() {
+	m_nbars_uih.update(ui.nbars->text().toStdString());
+	ui.nbars->setToolTip(QString::fromStdString(m_nbars_uih.msg()));
 	if (!m_nbars_uih.is_valid()) {
-		ui.n_bars->setStyleSheet("QLineEdit { background: rgb(255,153,153); }");
+		ui.nbars->setStyleSheet("QLineEdit { background: rgb(255,153,153); }");
 	} else {
-		ui.n_bars->setStyleSheet("QLineEdit { background: rgb(255,255,255); }");
+		ui.nbars->setStyleSheet("QLineEdit { background: rgb(255,255,255); }");
 	}
 }
-void rp_builder::on_n_bars_returnPressed() {
-	set_n_bars();
+void rp_builder::on_nbars_returnPressed() {
+	set_nbars();
 	set_rand_rp_inputs();
 }
-void rp_builder::on_n_bars_textEdited() {
-	set_n_bars();
+void rp_builder::on_nbars_textEdited() {
+	set_nbars();
 	set_rand_rp_inputs();
 }
 
-void rp_builder::set_curr_nv() {
-	m_curr_nv.update(ui.nv_in->text().toStdString());
-	if (!m_curr_nv.is_valid() && !ui.nv_in->text().isEmpty()) {
-		ui.nv_in->setStyleSheet("QLineEdit { background: rgb(255,153,153); }");
+void rp_builder::set_nv() {
+	m_nv_uih.update(ui.nv->text().toStdString());
+	ui.rp_result->setPlainText(ui.nv->text());
+
+	ui.rp_result->appendPlainText(ui.nv->text());
+	if (!m_nv_uih.is_valid() && !ui.nv->text().isEmpty()) {
+		ui.nv->setStyleSheet("QLineEdit { background: rgb(255,153,153); }");
 	} else {
-		ui.nv_in->setStyleSheet("QLineEdit { background: rgb(255,255,255); }");
+		ui.nv->setStyleSheet("QLineEdit { background: rgb(255,255,255); }");
 	}
 }
-void rp_builder::on_nv_in_returnPressed() {
-	void set_curr_nv();
+void rp_builder::on_nv_returnPressed() {
+	set_nv();
 	set_rand_rp_inputs();
 }
-void rp_builder::on_nv_in_textEdited() {
-	void set_curr_nv();
+void rp_builder::on_nv_textEdited() {
+	set_nv();
 	set_rand_rp_inputs();
 }
 void rp_builder::on_add_nv_clicked() {
-	auto nvs_selected = ui.nvpool_addnl->selectedItems();
-	for (int i=0; i<nvs_selected.count(); ++i) {
-		new QListWidgetItem(nvs_selected[i]->text(), ui.nv_pool);
+	// Selected elements are added to m_nv_pool
+	auto idxs = ui.nvpool_addnl->selectionModel()->selectedIndexes();
+	for (auto e : idxs) {
+		auto curr_nvstr = m_comm_nvs_qsl_items.at(e.row()).toStdString();
+		m_nv_uih2.update(curr_nvstr);
+		if (m_nv_uih2.is_valid()) { // Should always be valid...
+			m_nvpool.insert(m_nv_uih2.get());
+		}
 	}
 
-	if (!(ui.nv_in->text().isEmpty())) {
-		new QListWidgetItem(ui.nv_in->text(), ui.nv_pool);
+	m_nv_uih.update(ui.nv->text().toStdString());
+	if (m_nv_uih.is_valid()) { 
+		m_nvpool.insert(m_nv_uih.get());
 	}
+
+	// Should remove elements from common_nvs??
 
 	set_nvpool();
 	set_rand_rp_inputs();
 }
 
 void rp_builder::on_remove_nv_clicked() {
-	auto nvs_selected = ui.nv_pool->selectedItems();
-	for (int i=0; i<nvs_selected.count(); ++i) {
-		delete nvs_selected[i];
+	// Items removed from the nvpool widget get added to the "common_nvs"
+	// widget (added to m_common_nvs, removed from m_nvpool, followed by 
+	// calls to set_nvpool() and set_common_nvs() to update the widgets
+	// and other backend data).  
+	auto idxs = ui.nvpool->selectionModel()->selectedIndexes();
+	for (auto e : idxs) {
+		auto curr_nvstr = m_nvpool_qsl_items.at(e.row()).toStdString();
+		m_nv_uih2.update(curr_nvstr);
+		if (m_nv_uih2.is_valid()) {  // Should always be valid...
+			m_nvpool.erase(m_nv_uih2.get());
+			m_common_nvs.insert(m_nv_uih2.get());
+		}
 	}
+
 	set_nvpool();
+	set_common_nvs();
 	set_rand_rp_inputs();
 }
 
 void rp_builder::set_nvpool() {
-
-	// Has to take all the selected nv's from ui-> common_nvs PLUS that
-	// entered in curr_nv and move them to ui->nv_pool
-
-	m_nv_pool.clear();
-	for (int i=0; i<ui.nv_pool->count(); ++i) {
-		auto curr_nv = nv_uih(ui.nv_pool->item(i)->text().toStdString());
-		if (curr_nv.is_valid()) {
-			m_nv_pool.push_back(curr_nv);
-		}
+	// Updates the widget w/ the elements of m_nvpool (a std::set<nv_t>).  
+	m_nvpool_qsl_items.clear();
+	for (auto e : m_nvpool) {
+		m_nvpool_qsl_items.push_back(QString::fromStdString(e.print()));
 	}
-
-	ui.nv_pool->clear();
-	for (auto e : m_nv_pool) {
-		new QListWidgetItem(QString().fromStdString((*(e.get())).print()), ui.nv_pool);
-	}
+	//m_nvpool_model.setStringList(m_nvpool_qsl_items);  // Needed more than once??
 }
-
+void rp_builder::set_common_nvs() {
+	// Updates the widget w/ the elements of m_common_nvs (a std::set<nv_t>).  
+	m_comm_nvs_qsl_items.clear();
+	for (auto e : m_common_nvs) {
+		m_comm_nvs_qsl_items.push_back(QString::fromStdString(e.print()));
+	}
+	//m_comm_nvs_model.setStringList(m_comm_nvs_qsl_items);  // Needed more than once??
+}
+void rp_builder::set_pd() {
+	// Updates the widget w/ the elements of m_nvprobs (a std::set<nv_t>).  
+	m_nvprobs_qsl_items.clear();
+	for (auto e : m_pd) {
+		m_nvprobs_qsl_items.push_back(QString::fromStdString(bsprintf("%.3f",e)));
+	}
+	//m_nvprobs_model.setStringList(m_nvprobs_qsl_items);  // Needed more than once??
+}
 void rp_builder::on_import_btn_clicked() {
 	if (!m_rand_rp_result) {
 		// Error message box saying can't import "nothing"

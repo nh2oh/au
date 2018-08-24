@@ -1,7 +1,7 @@
 #pragma once
 #include "uih.h"
 #include <string>
-
+#include <vector>
 
 struct parse_userinput_int {
 	au::uih_parser_result<int> operator()(std::string const&) const;
@@ -21,7 +21,7 @@ private:
 	const double m_value {0.0};
 };
 
-struct ftr_geq {
+struct ftr_geq {  // "functor greater-than-or-equal-to"
 public:
 	ftr_geq(double const value) : m_value{value} {};
 	bool operator()(double const& arg) const {

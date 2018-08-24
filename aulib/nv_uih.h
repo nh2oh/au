@@ -22,6 +22,7 @@ struct uih_pred_t {
 // whether or not it is valid and can be parsed to a nv_t.  
 //
 //
+/*
 class nv_uih {
 public:
 	nv_uih();
@@ -66,4 +67,4 @@ private:
 		// created with an "invalid" input.  This is ok where the argument to
 		// the constructor comes from a user.  
 };
-
+*/

@@ -6,6 +6,7 @@
 #include <optional>
 #include <chrono>
 #include <string>
+#include <set>
 
 
 // Fwd declarations from rp_t.h
@@ -19,7 +20,7 @@ struct rand_rp_opts {
 
 struct randrp_input {
 	ts_t ts {};
-	std::vector<nv_t> nvset {};
+	std::set<nv_t> nvset {};
 	std::vector<double> pd {};
 	int n_nts {0};
 	bar_t n_bars {0};

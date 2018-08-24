@@ -87,6 +87,9 @@
     <ClCompile Include="numeric_simple_uih.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="nv_t_uih.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="util\au_algs.h">
@@ -180,6 +183,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="numeric_simple_uih.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="nv_t_uih.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
