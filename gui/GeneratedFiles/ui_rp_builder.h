@@ -12,6 +12,7 @@
 #include <QtCore/QVariant>
 #include <QtWidgets/QAction>
 #include <QtWidgets/QApplication>
+#include <QtWidgets/QHeaderView>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QListView>
@@ -21,6 +22,7 @@
 #include <QtWidgets/QPlainTextEdit>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QStatusBar>
+#include <QtWidgets/QTableView>
 #include <QtWidgets/QWidget>
 
 QT_BEGIN_NAMESPACE
@@ -44,10 +46,9 @@ public:
     QPlainTextEdit *rp_result;
     QPushButton *generate;
     QPushButton *halt;
-    QListView *nvpool;
     QListView *nvpool_addnl;
-    QListView *nvprobs;
     QLabel *rand_rp_status_msg;
+    QTableView *nvpool;
     QMenuBar *menubar;
     QMenu *menuLoad_template;
     QStatusBar *statusbar;
@@ -104,23 +105,26 @@ public:
         halt = new QPushButton(centralwidget);
         halt->setObjectName(QStringLiteral("halt"));
         halt->setGeometry(QRect(290, 170, 75, 23));
-        nvpool = new QListView(centralwidget);
-        nvpool->setObjectName(QStringLiteral("nvpool"));
-        nvpool->setGeometry(QRect(130, 80, 61, 171));
         nvpool_addnl = new QListView(centralwidget);
         nvpool_addnl->setObjectName(QStringLiteral("nvpool_addnl"));
         nvpool_addnl->setGeometry(QRect(20, 110, 61, 141));
+        nvpool_addnl->setEditTriggers(QAbstractItemView::NoEditTriggers);
         nvpool_addnl->setSelectionMode(QAbstractItemView::MultiSelection);
-        nvprobs = new QListView(centralwidget);
-        nvprobs->setObjectName(QStringLiteral("nvprobs"));
-        nvprobs->setGeometry(QRect(200, 80, 71, 171));
         rand_rp_status_msg = new QLabel(centralwidget);
         rand_rp_status_msg->setObjectName(QStringLiteral("rand_rp_status_msg"));
         rand_rp_status_msg->setGeometry(QRect(390, 20, 381, 41));
+        nvpool = new QTableView(centralwidget);
+        nvpool->setObjectName(QStringLiteral("nvpool"));
+        nvpool->setGeometry(QRect(130, 80, 151, 171));
+        nvpool->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+        nvpool->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        nvpool->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
+        nvpool->setEditTriggers(QAbstractItemView::NoEditTriggers);
+        nvpool->setSelectionBehavior(QAbstractItemView::SelectRows);
         rp_builder->setCentralWidget(centralwidget);
         menubar = new QMenuBar(rp_builder);
         menubar->setObjectName(QStringLiteral("menubar"));
-        menubar->setGeometry(QRect(0, 0, 800, 22));
+        menubar->setGeometry(QRect(0, 0, 800, 18));
         menuLoad_template = new QMenu(menubar);
         menuLoad_template->setObjectName(QStringLiteral("menuLoad_template"));
         rp_builder->setMenuBar(menubar);

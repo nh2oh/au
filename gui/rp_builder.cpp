@@ -5,11 +5,17 @@
 #include "aulib\types\rp_t.h"  // printrp() for printing the output of rand_rp()
 #include <string>
 #include <QStringListModel>
+#include <qstandarditemmodel.h>
+#include <utility>
+#include <map>
+#include <set>
+#include <vector>
+#include <qwidget.h>
+#include <qscrollbar.h>
 
 rp_builder::rp_builder(QWidget *parent) : QMainWindow(parent) {
 	ui.setupUi(this);
 
-	m_pd = m_defaults.pd;  // no setter or ui component yet
 	ui.ts->setText(QString().fromStdString(m_defaults.ts));
 	set_ts();
 	ui.nv->setText(QString().fromStdString(m_defaults.nv));
@@ -21,17 +27,11 @@ rp_builder::rp_builder(QWidget *parent) : QMainWindow(parent) {
 
 	m_nvpool = m_defaults.nv_pool;
 	ui.nvpool->setModel(&m_nvpool_model);
-	set_nvpool();
-		// moves the m_nvpool elements into m_nvpool_qsl_items and therefore into
-		// the gui widget.  
+	set_nvpool();  // Syncs m_nvpool and the model m_nvpool_model
 
 	m_common_nvs = m_defaults.common_nvs;
 	ui.nvpool_addnl->setModel(&m_comm_nvs_model);
 	set_common_nvs();  // Same deal as set_nvpool()
-
-	m_pd = m_defaults.pd;
-	ui.nvprobs->setModel(&m_nvprobs_model);
-	set_pd();  // Same deal as set_nvpool()
 
 	set_rand_rp_inputs();
 }
@@ -54,12 +54,17 @@ void rp_builder::set_rand_rp_inputs() {
 		return;
 	}
 
-	m_rand_rp_uih.update(randrp_input{m_ts_uih.get(),m_nvpool,m_pd,m_nnts_uih.get(),
-		bar_t{m_nbars_uih.get()}});
-	if(!m_rand_rp_uih.is_valid()) {
-		ui.rand_rp_status_msg->setText(QString::fromStdString(m_rand_rp_uih.msg()));
-		return;
+	// TODO:  It's silly to pull these into temp vars... fix me
+	std::set<nv_t> nvs {};
+	std::vector<double> probs {};
+	for (auto& e : m_nvpool) {
+		nvs.insert(e.first);
+		probs.push_back(e.second);
 	}
+
+	m_rand_rp_uih.update(randrp_input{m_ts_uih.get(),nvs,probs,m_nnts_uih.get(),
+		bar_t{m_nbars_uih.get()}});
+	ui.rand_rp_status_msg->setText(QString::fromStdString(m_rand_rp_uih.msg()));
 }
 
 void rp_builder::set_ts() {
@@ -136,24 +141,34 @@ void rp_builder::on_nv_textEdited() {
 	set_rand_rp_inputs();
 }
 void rp_builder::on_add_nv_clicked() {
-	// Selected elements are added to m_nv_pool
-	auto idxs = ui.nvpool_addnl->selectionModel()->selectedIndexes();
-	for (auto e : idxs) {
-		auto curr_nvstr = m_comm_nvs_qsl_items.at(e.row()).toStdString();
+	// Selected elements are added to m_nv_pool and removed from m_common_nvs
+	// if applicable
+	
+	auto idxs_nvpa_smodel = ui.nvpool_addnl->selectionModel()->selectedIndexes();
+		// "indices of the nvpool_addnl selection model"
+		// ...refer to the model assigned to the QListView widget by the call to 
+		// the widget's setModel() (i do this in the window constructor),
+		// here, m_comm_nvs_model.  The set_common_nvs() function assigns 
+		// data to the m_comm_nvs_model.  
+		// A possibly safer way to work this is to do:
+		// auto widget_model = ui.nvpool_addnl->model();
+		// Then use widget_model instead of manually specifying m_comm_nvs_model.  
+	for (auto e : idxs_nvpa_smodel) {
+		auto curr_nvstr = m_comm_nvs_model.data(e,Qt::DisplayRole).toString().toStdString();
 		m_nv_uih2.update(curr_nvstr);
 		if (m_nv_uih2.is_valid()) { // Should always be valid...
-			m_nvpool.insert(m_nv_uih2.get());
+			m_nvpool.insert(std::make_pair(m_nv_uih2.get(),1.0));
+			m_common_nvs.erase(m_nv_uih2.get());
 		}
 	}
 
 	m_nv_uih.update(ui.nv->text().toStdString());
 	if (m_nv_uih.is_valid()) { 
-		m_nvpool.insert(m_nv_uih.get());
+		m_nvpool.insert(std::make_pair(m_nv_uih.get(),1.0));
 	}
 
-	// Should remove elements from common_nvs??
-
 	set_nvpool();
+	set_common_nvs();
 	set_rand_rp_inputs();
 }
 
@@ -164,7 +179,7 @@ void rp_builder::on_remove_nv_clicked() {
 	// and other back-end data).  
 	auto idxs = ui.nvpool->selectionModel()->selectedIndexes();
 	for (auto e : idxs) {
-		auto curr_nvstr = m_nvpool_qsl_items.at(e.row()).toStdString();
+		auto curr_nvstr = m_nvpool_model.data(e,Qt::DisplayRole).toString().toStdString();
 		m_nv_uih2.update(curr_nvstr);
 		if (m_nv_uih2.is_valid()) {  // Should always be valid...
 			m_nvpool.erase(m_nv_uih2.get());
@@ -178,29 +193,33 @@ void rp_builder::on_remove_nv_clicked() {
 }
 
 void rp_builder::set_nvpool() {
-	// Updates the widget w/ the elements of m_nvpool (a std::set<nv_t>).  
-	m_nvpool_qsl_items.clear();
+	// Updates the widget w/ the elements of m_nvpool (a std::map<nv_t,double>).  
+	m_nvpool_model.clear();
+	int r=0;
 	for (auto e : m_nvpool) {
-		m_nvpool_qsl_items.push_back(QString::fromStdString(e.print()));
+		QStandardItem *curr_nv = new QStandardItem(QString::fromStdString(e.first.print()));
+		QStandardItem *curr_prob = new QStandardItem(QString::fromStdString(bsprintf("%.3f",e.second)));
+		m_nvpool_model.setItem(r,0,curr_nv);
+		m_nvpool_model.setItem(r,1,curr_prob);
+		++r;
 	}
-	m_nvpool_model.setStringList(m_nvpool_qsl_items);  // Needed more than once??
+
+	// Column resizing.  Note the emperical fudge-factor of 4
+	auto vsb = ui.nvpool->verticalScrollBar();
+	auto vh = ui.nvpool->verticalHeader();
+	double w = (ui.nvpool->width()-(*vsb).width()-(*vh).width()-4);
+	ui.nvpool->setColumnWidth(0,w/2.0);
+	ui.nvpool->setColumnWidth(1,w/2.0);
 }
 void rp_builder::set_common_nvs() {
 	// Updates the widget w/ the elements of m_common_nvs (a std::set<nv_t>).  
-	m_comm_nvs_qsl_items.clear();
+	QStringList nvs {};
 	for (auto e : m_common_nvs) {
-		m_comm_nvs_qsl_items.push_back(QString::fromStdString(e.print()));
+		nvs.push_back(QString::fromStdString(e.print()));
 	}
-	m_comm_nvs_model.setStringList(m_comm_nvs_qsl_items);
+	m_comm_nvs_model.setStringList(nvs);
 }
-void rp_builder::set_pd() {
-	// Updates the widget w/ the elements of m_nvprobs (a std::set<nv_t>).  
-	m_nvprobs_qsl_items.clear();
-	for (auto e : m_pd) {
-		m_nvprobs_qsl_items.push_back(QString::fromStdString(bsprintf("%.3f",e)));
-	}
-	m_nvprobs_model.setStringList(m_nvprobs_qsl_items);
-}
+
 void rp_builder::on_import_btn_clicked() {
 	if (!m_rand_rp_result) {
 		// TODO:  Error message box saying can't import "nothing"

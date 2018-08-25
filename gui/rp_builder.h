@@ -11,8 +11,11 @@
 #include <vector>
 #include <optional> // rand_rp() returns a std::optional<std::vector<nv_t>>
 #include <string>
+#include <map>
 #include <set>
+#include <utility>
 #include <QStringListModel>
+#include <qstandarditemmodel.h>
 
 class rp_builder : public QMainWindow {
 	Q_OBJECT
@@ -25,10 +28,12 @@ private:
 		std::string nnts {"0"};
 		std::string nbars {"2"};
 
-		std::set<nv_t> common_nvs {nv_t {1,0}, nv_t {2,0}, nv_t {4,0}};
+		std::set<nv_t> common_nvs {nv_t {1,0}, nv_t {2,0}, nv_t {0.0625,1}, 
+			nv_t {0.0625,2}, nv_t {0.125,1}, nv_t {0.125,2}, nv_t {0.25,1},
+			nv_t {0.25,2}, nv_t {0.5,1}, nv_t {0.5,2}};
 
-		std::set<nv_t> nv_pool {nv_t {0.0625,0}, nv_t {0.125,0}, nv_t {0.25,0}, nv_t {0.5,0}};
-		std::vector<double> pd {0.25,0.25,0.25,0.25};
+		std::map<nv_t,double> nv_pool {{nv_t {0.0625,0}, 0.25}, {nv_t {0.125,0},0.25}, 
+			{nv_t {0.25,0},0.25}, {nv_t {0.5,0},0.25}};
 	};
 	defaults m_defaults {};
 
@@ -54,17 +59,11 @@ private:
 		"Number of bars to generate"};
 	au::uih<decltype(m_nbars_parser),decltype(p_geqzero)> m_nbars_uih {m_nbars_parser,p_geqzero};
 
-	QStringListModel m_nvpool_model {};
-	QStringList m_nvpool_qsl_items {};
-	std::set<nv_t> m_nvpool;
+	QStandardItemModel m_nvpool_model {};
+	std::map<nv_t,double> m_nvpool {};
 
 	QStringListModel m_comm_nvs_model {};
-	QStringList m_comm_nvs_qsl_items {};
 	std::set<nv_t> m_common_nvs;
-
-	QStringListModel m_nvprobs_model {};
-	QStringList m_nvprobs_qsl_items {};
-	std::vector<double> m_pd;
 
 	std::optional<std::vector<nv_t>> m_rand_rp_result;  // output of rand_rp()
 
@@ -75,24 +74,20 @@ private:
 	void set_rand_rp_inputs();
 	void set_nnts();
 	void set_nbars();
-	void set_pd();
 
 	Ui::rp_builder ui;
 private slots:
 
 	void on_ts_returnPressed();
 	void on_ts_textEdited();
-
 	void on_nnts_returnPressed();
 	void on_nnts_textEdited();
 	void on_nbars_returnPressed();
 	void on_nbars_textEdited();
 	void on_nv_returnPressed();
 	void on_nv_textEdited();
-
 	void on_add_nv_clicked();
 	void on_remove_nv_clicked();
-
 	void on_generate_clicked();
 	void on_import_btn_clicked();
 	void on_cancel_clicked();
