@@ -3,11 +3,185 @@
 #include "beat_bar_t.h"
 #include "ts_t.h"
 #include "..\util\au_error.h"
+#include "..\util\au_util.h"
 #include "..\util\au_algs_math.h"
 #include "..\util\au_random.h"
 #include <string>
 #include <vector>
 #include <cmath> // pow()
+#include <algorithm>
+#include <numeric>
+
+
+
+
+rp_t::rp_t() {}
+
+rp_t::rp_t(ts_t const& ts_in) {
+	m_ts = ts_in;
+}
+
+rp_t::rp_t(ts_t const& ts_in, std::vector<nv_t> const& nvs_in) {
+	m_ts = ts_in;
+	for (auto const& e : nvs_in) {
+		this->push_back(e);
+	}
+}
+
+bar_t rp_t::nbars() const {
+	return m_tot_nbars;
+}
+beat_t rp_t::nbeats() const {
+	return m_tot_nbeats;
+}
+
+rp_t rp_t::subrp(bar_t const& from, bar_t const& to) const {
+	auto from_startbar = m_rp.begin() + m_bidx[std::floor(from.to_double())].start;	
+	auto to_endbar = m_rp.begin() + m_bidx[std::floor(to.to_double())].end;
+
+	int start_offset = 0;
+	if (!isapproxint(from.to_double(),6)) {
+		std::vector<bar_t> rp_cum {};
+		auto from_endbar = m_rp.begin() + m_bidx[std::floor(from.to_double())].end;
+		bar_t totnb {0.0};
+		std::for_each(from_startbar,from_endbar,
+			[&](nv_t const& currnv) {rp_cum.push_back(totnb+=nbar(m_ts,currnv));});
+		start_offset = std::count_if(rp_cum.begin(),rp_cum.end(),
+			[&](bar_t const& currbar){return (currbar<from);});
+	}
+	int end_offset = 0;
+	if (!isapproxint(to.to_double(),6)) {
+		std::vector<bar_t> rp_cum {};
+		bar_t totnb {0.0};
+		auto to_startbar = m_rp.begin() + m_bidx[std::floor(to.to_double())].start;
+		std::for_each(to_startbar,to_endbar,
+			[&](nv_t const& currnv) {rp_cum.push_back(totnb+=nbar(m_ts,currnv));});
+		end_offset = std::count_if(rp_cum.begin(),rp_cum.end(),
+			[&](bar_t const& currbar){return (currbar<=to);});
+	}
+
+	std::vector<nv_t> result {};
+	std::copy(from_startbar+start_offset,to_endbar-end_offset,std::back_inserter(result));
+
+	return rp_t{m_ts,result};
+}
+
+void rp_t::push_back(nv_t const& nv_in) {
+	beat_t nbeats_in = nbeat(m_ts,nv_in);
+	bar_t nbars_in = nbar(m_ts,nbeats_in);
+	m_tot_nbeats += nbeats_in;
+
+	m_rp.push_back(nv_in);
+
+	double nnewbars = std::floor((m_tot_nbars+nbars_in).to_double()) - m_tot_nbars.to_double();
+		// The number of bar boundaries crossed upon addition of nv_in,
+		// not the number of bars spanned by nv_in.  
+	m_tot_nbars += nbars_in;
+	bool isexact = isapproxint((m_tot_nbars).to_double(),6);
+	// TODO:  Hardcoded precision
+
+	// Note that for each entry in m_bidx, .start is _inclusive_, and
+	// .end is _exclusive_.  That is, the bar corresponding to m_bidx[i]
+	// always includes the element indicated by m_bidx[i].start
+	// and excludes element m_bidx[i].end (m_bidx[i].end is the first 
+	// element belonging to the next bar).  
+	//
+	// Also note that m_bidx.size() is always 1+ceil(total-number-of-bars-in-rp),
+	// and m_bidx.back() always refers to an incomplete bar and has:
+	// m_bidx.back().end == 0
+	// m_bidx.end_Exact == false
+	//
+	
+	for (int i=0; i<std::floor(nnewbars); ++i) {
+		wait();
+		bool end_is_exact = isexact && (i == (std::floor(nnewbars)-1));
+		// Finish the current entry in m_bidx:
+		m_bidx.back().end = m_rp.size();
+		m_bidx.back().end_exact = end_is_exact;
+
+		// Append the next working entry:
+		if ((i+1) < nnewbars) {  // Not the last iter
+
+			m_bidx.back().end = m_rp.size();
+			m_bidx.back().end_exact = end_is_exact;
+
+			// If this is _not_ the last bar we're appending, it should begin on
+			// the final element in the sequence (nv_in, the element just appended).
+			// Said element evidently spans more than one bar and m_bidx[i].start 
+			// is inclusive of the first element on bar i.  
+			m_bidx.push_back({m_rp.size()-1,end_is_exact,0,false});
+		} else {  // Last iter
+
+			m_bidx.back().end = m_rp.size();
+			m_bidx.back().end_exact = isexact;
+
+			// If this _is_ the last bar we're appending, it should begin on
+			// one _past_ the final element in the sequence (nv_in).
+			m_bidx.push_back({m_rp.size(),isexact,0,false});
+		}
+		wait();
+	}
+}
+
+std::string rp_t::print() const {
+	std::string s {};
+	std::string sep {","};
+	std::string sep_bar_exact {"|"};
+	std::string sep_bar_nexact {"!"};
+
+	size_t n_trim {0};
+	bar_t cum_nbar {0};
+	for (auto i=0; i<m_bidx.size(); ++i) {
+		// For the very last entry k in m_bidx, m_bidx[k].start indicates
+		// the first element, but m_bidx[k].end == 0; m_bidx.size() always
+		// == the total number of bars in the sequence + 1.  Thus, for the
+		// last bar, the loop should terminate on m_rp.size()-1, not
+		// m_bidx[k].end.  
+		bool lastbar = (i == (m_bidx.size()-1));
+		int fin_j = lastbar ? m_rp.size() : m_bidx[i].end;
+		for (auto j=m_bidx[i].start; (j<fin_j); ++j) {
+			if (j == m_bidx[i].start && !m_bidx[i].start_exact && i != 0) {
+				// If the start of bar i is not exact, the rp element indicated
+				// by m_bidx[i].start has already been printed as a part of the 
+				// previous bar.  If m_bidx[i].start_exact is false, m_bidx[i].start
+				// is a member of the previous bar (has an idx j < m_bidx[i-1].end).  
+				continue;
+			}
+
+			s += m_rp[j].print();
+			if (j < (fin_j-1)) {
+				s += sep; // Not the last iter
+			}
+			s += " ";
+		}  // To next element j of bar i
+
+		// For the very last bar, which is _always_ incomplete, don't print
+		// a bar serepator char.  
+		if (!lastbar) {
+			if (m_bidx[i].end_exact) {
+				s += sep_bar_exact;
+			} else {
+				s += sep_bar_nexact;
+			}
+			s += " ";
+		}
+	}  // To next bar i
+
+	return s;
+}
+
+std::string rp_t::printbidx() const {
+	std::string s {};
+	for (int i=0; i<m_bidx.size(); ++i) {
+		s += bsprintf("%d [%d]  ->  %d [%d]\n",
+			m_bidx[i].start, m_bidx[i].start_exact, 
+			m_bidx[i].end, m_bidx[i].end_exact);
+	}
+	return s;
+}
+
+
+
 
 
 
@@ -22,7 +196,12 @@ beat_t nbeat(ts_t const& ts_in, nv_t const& nv_in) {
 
 bar_t nbar(ts_t const& ts_in, nv_t const& nv_in) {
 	beat_t nbeats = nbeat(ts_in, nv_in);
-	auto nbars_exact = nbeats/(ts_in.beats_per_bar());
+	//auto nbars_exact = nbeats/(ts_in.beats_per_bar());
+	//return bar_t {nbars_exact};
+	return nbar(ts_in,nbeats);
+}
+bar_t nbar(ts_t const& ts_in, beat_t const& nbts_in) {
+	auto nbars_exact = nbts_in/(ts_in.beats_per_bar());
 	return bar_t {nbars_exact};
 }
 

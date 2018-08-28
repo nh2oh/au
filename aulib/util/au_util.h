@@ -11,7 +11,7 @@ std::string bsprintf(const char *fmt, Ts... args) {
 	size_t size = std::snprintf(nullptr,0,fmt,args...);
 	std::string s_out(size+1,'\0');
 	std::sprintf(&s_out[0], fmt, args...);
-	return s_out;
+	return s_out.substr(0,size);
 }
 
 template<typename... Ts>
