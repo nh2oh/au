@@ -33,7 +33,7 @@ uih_parser_result<nv_t>
 
 	int ndots = 0;
 	if (matches[3]) {
-		ndots = (*(matches[3])).size();
+		ndots = static_cast<int>((*(matches[3])).size());
 	}
 
 	result.o_result = nv_t {bv,ndots};

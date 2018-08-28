@@ -67,6 +67,7 @@
     <ClInclude Include="types\ts_t_uih.h" />
     <ClInclude Include="types\types_all.h" />
     <ClInclude Include="uih.h" />
+    <ClInclude Include="uih2.h" />
     <ClInclude Include="util\au_algs.h" />
     <ClInclude Include="util\au_algs_math.h" />
     <ClInclude Include="util\au_error.h" />

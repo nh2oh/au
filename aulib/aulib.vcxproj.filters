@@ -176,5 +176,8 @@
     <ClInclude Include="nv_t_uih.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="uih2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
