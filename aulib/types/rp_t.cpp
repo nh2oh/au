@@ -21,7 +21,7 @@ rp_t::rp_t(ts_t const& ts_in, std::vector<nv_t> const& nvs_in) {
 	m_ts = ts_in;
 	m_rp = nvs_in;
 	m_tot_nbars = cum_nbar(ts_in,nvs_in).back();
-	m_tot_nbeats = bar2beat(m_ts,m_tot_nbars);
+	m_tot_nbeats = nbeat(m_ts,m_tot_nbars);
 }
 
 bar_t rp_t::nbars() const {
@@ -34,11 +34,45 @@ int rp_t::nelems() const {
 	return m_rp.size();
 }
 
+void rp_t::push_back(nv_t const& nv_in) {
+	beat_t nbeats_in = nbeat(m_ts,nv_in);
+	m_tot_nbars += nbar(m_ts,nbeats_in);
+	m_tot_nbeats += nbeats_in;
+
+	m_rp.push_back(nv_in);
+}
+
+// TODO:  Check to>from, to not > max(m_rp), etc
+rp_t rp_t::subrp(bar_t const& from,bar_t const& to) const {
+	auto cumrp = cum_nbar(m_ts,m_rp);
+
+	auto cum_its = std::find_if(cumrp.begin(),cumrp.end(),
+		[&](bar_t const& cnbar_in){return(cnbar_in >= from);});
+	auto cum_ite = std::find_if(cum_its,cumrp.end(),
+		[&](bar_t const& cnbar_in){return(cnbar_in >= to);});
+	// Note >=:  We want the end iterator to point to one past the
+	// final element of interest.  This should be obtained using >,
+	// however, the elements in cumrp are indicating the cumulative 
+	// nbars at the _end_ of the element (the sum does not start at 0).  
+	// Below, the end iterator is incremented by 1; copy then copies
+	// exclusive of this final element.  
+
+	auto it_s = cum_its-cumrp.begin();
+	auto it_e = cum_ite-cumrp.begin();
+	if(cum_ite < cumrp.end()) {
+		++it_e; // std::copy => [it_s,it_e)
+	}
+
+	std::vector<nv_t> result{};
+	std::copy(m_rp.begin()+it_s,m_rp.begin()+it_e,std::back_inserter(result));
+
+	return rp_t{m_ts,result};
+}
 
 // Implemented as a separate function the user has to manually call, and not
 // implemented durring push_back(), because there are enough situations where
 // the whole thing has to be re-computed from scratch that it is more 
-// convienient to have a purpose-build function.  For example, if two or
+// convenient to have a purpose-build function.  For example, if two or
 // more rp_t's are spliced together, or if an element is inserted into the
 // middle of an rp_t, of if the bar-numbering of rp-element 0 changes, etc
 // etc.  
@@ -65,7 +99,7 @@ void rp_t::build_bidx() {
 	int curr_bar=0; int i=0;
 	while (i<rp_cum.size()) {
 		if (rp_cum[i] <= (curr_bar+1)) {
-			// Note that we only move to the next element in rp_cum if a bar-boundry
+			// Note that we only move to the next element in rp_cum if a bar-boundary
 			// has been not been crossed in going from element i-1 to i.  The while 
 			// loop can run more than once w/ the same value of i if in passing from
 			// rp element i-1 -> i more than one bar boundry is crossed.  
@@ -110,41 +144,6 @@ void rp_t::build_bidx() {
 }
 
 
-// TODO:  Check to>from, to not > max(m_rp), etc
-rp_t rp_t::subrp(bar_t const& from, bar_t const& to) const {
-	auto cumrp = cum_nbar(m_ts,m_rp);
-
-	auto cum_its = std::find_if(cumrp.begin(),cumrp.end(),
-		[&](bar_t const& cnbar_in){return(cnbar_in >= from);});
-	auto cum_ite = std::find_if(cum_its,cumrp.end(),
-		[&](bar_t const& cnbar_in){return(cnbar_in >= to);});
-		// Note >=:  We want the end iterator to point to one past the
-		// final element of interest.  This should be obtained using >,
-		// however, the elements in cumrp are indicating the cumulative 
-		// nbars at the _end_ of the element (the sum does not start at 0).  
-		// Below, the end iterator is incremented by 1; copy then copies
-		// exclusive of this final element.  
-	
-	auto it_s = cum_its-cumrp.begin();
-	auto it_e = cum_ite-cumrp.begin();  
-	if (cum_ite < cumrp.end()) {
-		++it_e; // std::copy => [it_s,it_e)
-	}
-
-	std::vector<nv_t> result {};
-	std::copy(m_rp.begin()+it_s,m_rp.begin()+it_e,std::back_inserter(result));
-
-	return rp_t{m_ts,result};
-}
-
-void rp_t::push_back(nv_t const& nv_in) {
-	beat_t nbeats_in = nbeat(m_ts,nv_in);
-	m_tot_nbars += nbar(m_ts,nbeats_in);
-	m_tot_nbeats += nbeats_in;
-
-	m_rp.push_back(nv_in);	
-}
-
 std::string rp_t::print() {
 	build_bidx();
 
@@ -180,7 +179,7 @@ std::string rp_t::print() {
 		}  // To next element j of bar i
 
 		// For the very last bar, which is _always_ incomplete, don't print
-		// a bar serepator char.  
+		// a bar separator char.  
 		if (!lastbar) {
 			if (m_bidx[i].end_exact) {
 				s += sep_bar_exact;
@@ -219,21 +218,17 @@ std::string rp_t::printbidx() {
 beat_t nbeat(ts_t const& ts_in, nv_t const& nv_in) {
 	return beat_t{nv_in/(ts_in.beat_unit())};
 }
+beat_t nbeat(ts_t const& ts_in, bar_t const& nbars_in) {
+	return (ts_in.beats_per_bar())*(nbars_in.to_double());
+}
 
 bar_t nbar(ts_t const& ts_in, nv_t const& nv_in) {
 	beat_t nbeats = nbeat(ts_in, nv_in);
-	//auto nbars_exact = nbeats/(ts_in.beats_per_bar());
-	//return bar_t {nbars_exact};
 	return nbar(ts_in,nbeats);
 }
 bar_t nbar(ts_t const& ts_in, beat_t const& nbts_in) {
 	auto nbars_exact = nbts_in/(ts_in.beats_per_bar());
 	return bar_t {nbars_exact};
-}
-
-// TODO:  Completely untested.  How-the-F do i not have this done???
-beat_t bar2beat(ts_t const& ts_in, bar_t const& nbars_in) {
-	return beat_t{(ts_in.beats_per_bar().to_double())*nbars_in.to_double()};
 }
 
 std::vector<bar_t> cum_nbar(ts_t const& ts_in, std::vector<nv_t> const& nvs_in) {
@@ -249,6 +244,8 @@ std::vector<bar_t> cum_nbar(ts_t const& ts_in, std::vector<nv_t> const& nvs_in) 
 
 // TODO:  Deprecate
 // Old, non-rp_t-member version 
+// 
+/*
 std::string printrp(ts_t const& ts_in, std::vector<nv_t> const& nv_in) {
 	std::string s {};
 	std::string sep {", "};
@@ -268,7 +265,7 @@ std::string printrp(ts_t const& ts_in, std::vector<nv_t> const& nv_in) {
 	}
 	s.erase(s.begin()+(s.size()-n_trim),s.end());
 	return s;
-}
+}*/
 
 std::string rp_t_info() {
 	std::string s {};
@@ -401,8 +398,9 @@ std::string deltat2rp_demo() {
 	auto rp_backcalc = deltat2rp(delta_t,ts,bpm,sec_resolution);
 
 	std::string s {};
-	s += "Input seq: \n" + printrp(ts,note_seq) + "\n\n" + 
-		"deltat2rp(): \n" + printrp(ts,rp_backcalc) + "\n\n";
+	// TODO:  FIXME
+	//s += "Input seq: \n" + printrp(ts,note_seq) + "\n\n" + 
+	//	"deltat2rp(): \n" + printrp(ts,rp_backcalc) + "\n\n";
 
 	return s;
 }

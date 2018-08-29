@@ -82,6 +82,31 @@
 //
 
 
+struct decays_to_nv_t {
+	int e {0};
+	int d {0};
+	operator nv_t(){return nv_t {e,d};};
+};
+
+
+struct nvcomm {
+	static const decays_to_nv_t qw, qwd, qwdd;
+	static const decays_to_nv_t dw, dwd, dwdd;
+	static const decays_to_nv_t w, wd, wdd;
+	static const decays_to_nv_t h, hd, hdd;
+	static const decays_to_nv_t q, qd, qdd;
+	static const decays_to_nv_t e, ed, edd;
+};
+
+enum class nvc {
+	qw = -2, qwd = -1, qwdd = 0,
+	dw = 0, dwd=1, dwdd=2,
+	w = 3, wd = 4, wdd=5,
+};
+using nv = typename nvc;
+
+
+
 
 
 class nv_t {
@@ -92,6 +117,8 @@ public:
 		// The bv argument is quantized.  That is,
 		// nv_t(quantize_bv(my_bv),my_ndot).bv() == quantize_bv(my_bv)
 		// In general:  nv_t(my_bv,my_ndot).bv() != my_bv
+	
+	nv_t(nvc);
 
 	std::string print() const;
 	int ndot() const;
@@ -151,8 +178,10 @@ private:
 //std::vector<nv_t> nvsum(std::vector<nv_t>);
 //std::vector<nv_t> nvsum(std::vector<nv_t>,std::vector<nv_t>);
 //std::vector<nv_t> nvsum_finalize(std::vector<nv_t>);
-
 /*
+class common_notevalue {
+	common_notevalue(nv::
+
 namespace nv {
 	// Common note values.  
 	inline const nv_t dw {2.0,0};
@@ -170,7 +199,27 @@ namespace nv {
 	inline const nv_t t {0.03125,0};
 	inline const nv_t td {0.03125,1}; inline const nv_t tdd {0.03125,2};
 };
+	
+
+class nv {
+public:
+	static const nv_t dw;
+	static const nv_t dwd; static const nv_t dwdd;
+	static const nv_t w;
+	static const nv_t wd; static const nv_t wdd;
+	static const nv_t h;
+	static const nv_t hd; static const nv_t hdd;
+	static const nv_t q;
+	static const nv_t qd; static const nv_t qdd;
+	static const nv_t e;
+	static const nv_t ed; static const nv_t edd;
+	static const nv_t s;
+	static const nv_t sd; static const nv_t sdd;
+	static const nv_t t;
+	static const nv_t td; static const nv_t tdd;
+};
 */
+
 
 
 

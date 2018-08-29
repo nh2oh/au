@@ -91,16 +91,17 @@ private:
 // or nv_t.h ...
 // Number of beats spanned by a given nv_t for a given ts.  
 beat_t nbeat(ts_t const&, nv_t const&);
+beat_t nbeat(ts_t const&, bar_t const&);
 // Number of bars spanned by a given nv_t for a given ts.  
 // Overload for a given nbeats
 bar_t nbar(ts_t const&, nv_t const&);
 bar_t nbar(ts_t const&, beat_t const&);
 std::vector<bar_t> cum_nbar(ts_t const&, std::vector<nv_t> const&);
-beat_t bar2beat(ts_t const&, bar_t const&);
+
 
 // Print a vector of nv_ts
 // Old, non-rp_t-member version... should delete
-std::string printrp(ts_t const&, std::vector<nv_t> const&);
+//std::string printrp(ts_t const&, std::vector<nv_t> const&);
 
 std::string rp_t_info();
 
