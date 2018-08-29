@@ -9,11 +9,7 @@
 #include <string>
 #include <vector>
 #include <cmath> // pow()
-#include <algorithm>
-#include <numeric>
-
-
-
+#include <algorithm> // find_if(), copy()
 
 rp_t::rp_t() {}
 
@@ -23,9 +19,9 @@ rp_t::rp_t(ts_t const& ts_in) {
 
 rp_t::rp_t(ts_t const& ts_in, std::vector<nv_t> const& nvs_in) {
 	m_ts = ts_in;
-	for (auto const& e : nvs_in) {
-		this->push_back(e);
-	}
+	m_rp = nvs_in;
+	m_tot_nbars = cum_nbar(ts_in,nvs_in).back();
+	m_tot_nbeats = bar2beat(m_ts,m_tot_nbars);
 }
 
 bar_t rp_t::nbars() const {
@@ -34,96 +30,124 @@ bar_t rp_t::nbars() const {
 beat_t rp_t::nbeats() const {
 	return m_tot_nbeats;
 }
+int rp_t::nelems() const {
+	return m_rp.size();
+}
 
-rp_t rp_t::subrp(bar_t const& from, bar_t const& to) const {
-	auto from_startbar = m_rp.begin() + m_bidx[std::floor(from.to_double())].start;	
-	auto to_endbar = m_rp.begin() + m_bidx[std::floor(to.to_double())].end;
 
-	int start_offset = 0;
-	if (!isapproxint(from.to_double(),6)) {
-		std::vector<bar_t> rp_cum {};
-		auto from_endbar = m_rp.begin() + m_bidx[std::floor(from.to_double())].end;
-		bar_t totnb {0.0};
-		std::for_each(from_startbar,from_endbar,
-			[&](nv_t const& currnv) {rp_cum.push_back(totnb+=nbar(m_ts,currnv));});
-		start_offset = std::count_if(rp_cum.begin(),rp_cum.end(),
-			[&](bar_t const& currbar){return (currbar<from);});
+// Implemented as a separate function the user has to manually call, and not
+// implemented durring push_back(), because there are enough situations where
+// the whole thing has to be re-computed from scratch that it is more 
+// convienient to have a purpose-build function.  For example, if two or
+// more rp_t's are spliced together, or if an element is inserted into the
+// middle of an rp_t, of if the bar-numbering of rp-element 0 changes, etc
+// etc.  
+//
+// Also, there is no need to carry all this data around w/ every rp_t object;
+// it is only used occasionally.  
+//
+//
+// TODO:  Crashes if m_rp is empty??
+void rp_t::build_bidx() {
+	// Duplicates cum_nbar(ts,std::vector<nv_t>), but i need a vector
+	// of doubles, not a vector of bar_t.  
+	std::vector<double> rp_cum {}; rp_cum.reserve(m_rp.size());
+	bar_t totnb {0.0};  // Only used by the lambda
+	std::for_each(m_rp.begin(),m_rp.end(),
+		[&](nv_t const& currnv) {
+			totnb+=nbar(m_ts,currnv);
+			rp_cum.push_back(totnb.to_double());
+		});
+
+	std::vector<bidx> baridx(std::ceil(m_tot_nbars.to_double()),bidx{});
+	baridx[0] = {0,true,0,false};
+
+	int curr_bar=0; int i=0;
+	while (i<rp_cum.size()) {
+		if (rp_cum[i] <= (curr_bar+1)) {
+			// Note that we only move to the next element in rp_cum if a bar-boundry
+			// has been not been crossed in going from element i-1 to i.  The while 
+			// loop can run more than once w/ the same value of i if in passing from
+			// rp element i-1 -> i more than one bar boundry is crossed.  
+			++i;
+		} else if (rp_cum[i] > (curr_bar+1)) {
+			if (i == 0) {
+				// Special case for the first iteration where there is no rp_cum[i-1].
+				// This situation arises if rp element 0 is something larger than a 
+				// w-note.  
+				//
+				// If element i=0 is > curr_bar+1 (==0+1 for i==0), curr_bar can not 
+				// possibly have end_exact == true.  end_exact==true => rp element i
+				// corresponds to exactly 1 bar, but it's clearly > 1 bar.  
+				//
+				baridx[curr_bar].end_exact = false;
+
+				baridx[curr_bar].end = i+1;
+				// Since element i (here, ==0) is spans > 1 bar the first element past 
+				// bar 0 must be i+1.  
+			} else {
+				baridx[curr_bar].end_exact = (rp_cum[i-1] == (curr_bar+1));
+				if (rp_cum[i-1] == (curr_bar+1)) {
+					// Element i is not needed to complete curr_bar; it is a member
+					// of curr_bar+1 and not a member of curr_bar
+					baridx[curr_bar].end = i; // 1 past the end of curr_bar
+				} else if (rp_cum[i-1] < (curr_bar+1)) {
+					// Element i is needed to complete curr_bar; it is a member
+					// of curr_bar
+					baridx[curr_bar].end = i+1;
+				}
+			}
+
+			++curr_bar;
+			baridx[curr_bar].start = i;
+			baridx[curr_bar].start_exact = baridx[curr_bar-1].end_exact;
+				// Duplicate of baridx[prev_bar].end_exact
+		}
 	}
-	int end_offset = 0;
-	if (!isapproxint(to.to_double(),6)) {
-		std::vector<bar_t> rp_cum {};
-		bar_t totnb {0.0};
-		auto to_startbar = m_rp.begin() + m_bidx[std::floor(to.to_double())].start;
-		std::for_each(to_startbar,to_endbar,
-			[&](nv_t const& currnv) {rp_cum.push_back(totnb+=nbar(m_ts,currnv));});
-		end_offset = std::count_if(rp_cum.begin(),rp_cum.end(),
-			[&](bar_t const& currbar){return (currbar<=to);});
+	baridx.back().end = rp_cum.size()-1;
+
+	m_bidx = baridx;
+}
+
+
+// TODO:  Check to>from, to not > max(m_rp), etc
+rp_t rp_t::subrp(bar_t const& from, bar_t const& to) const {
+	auto cumrp = cum_nbar(m_ts,m_rp);
+
+	auto cum_its = std::find_if(cumrp.begin(),cumrp.end(),
+		[&](bar_t const& cnbar_in){return(cnbar_in >= from);});
+	auto cum_ite = std::find_if(cum_its,cumrp.end(),
+		[&](bar_t const& cnbar_in){return(cnbar_in >= to);});
+		// Note >=:  We want the end iterator to point to one past the
+		// final element of interest.  This should be obtained using >,
+		// however, the elements in cumrp are indicating the cumulative 
+		// nbars at the _end_ of the element (the sum does not start at 0).  
+		// Below, the end iterator is incremented by 1; copy then copies
+		// exclusive of this final element.  
+	
+	auto it_s = cum_its-cumrp.begin();
+	auto it_e = cum_ite-cumrp.begin();  
+	if (cum_ite < cumrp.end()) {
+		++it_e; // std::copy => [it_s,it_e)
 	}
 
 	std::vector<nv_t> result {};
-	std::copy(from_startbar+start_offset,to_endbar-end_offset,std::back_inserter(result));
+	std::copy(m_rp.begin()+it_s,m_rp.begin()+it_e,std::back_inserter(result));
 
 	return rp_t{m_ts,result};
 }
 
 void rp_t::push_back(nv_t const& nv_in) {
 	beat_t nbeats_in = nbeat(m_ts,nv_in);
-	bar_t nbars_in = nbar(m_ts,nbeats_in);
+	m_tot_nbars += nbar(m_ts,nbeats_in);
 	m_tot_nbeats += nbeats_in;
 
-	m_rp.push_back(nv_in);
-
-	double nnewbars = std::floor((m_tot_nbars+nbars_in).to_double()) - m_tot_nbars.to_double();
-		// The number of bar boundaries crossed upon addition of nv_in,
-		// not the number of bars spanned by nv_in.  
-	m_tot_nbars += nbars_in;
-	bool isexact = isapproxint((m_tot_nbars).to_double(),6);
-	// TODO:  Hardcoded precision
-
-	// Note that for each entry in m_bidx, .start is _inclusive_, and
-	// .end is _exclusive_.  That is, the bar corresponding to m_bidx[i]
-	// always includes the element indicated by m_bidx[i].start
-	// and excludes element m_bidx[i].end (m_bidx[i].end is the first 
-	// element belonging to the next bar).  
-	//
-	// Also note that m_bidx.size() is always 1+ceil(total-number-of-bars-in-rp),
-	// and m_bidx.back() always refers to an incomplete bar and has:
-	// m_bidx.back().end == 0
-	// m_bidx.end_Exact == false
-	//
-	
-	for (int i=0; i<std::floor(nnewbars); ++i) {
-		wait();
-		bool end_is_exact = isexact && (i == (std::floor(nnewbars)-1));
-		// Finish the current entry in m_bidx:
-		m_bidx.back().end = m_rp.size();
-		m_bidx.back().end_exact = end_is_exact;
-
-		// Append the next working entry:
-		if ((i+1) < nnewbars) {  // Not the last iter
-
-			m_bidx.back().end = m_rp.size();
-			m_bidx.back().end_exact = end_is_exact;
-
-			// If this is _not_ the last bar we're appending, it should begin on
-			// the final element in the sequence (nv_in, the element just appended).
-			// Said element evidently spans more than one bar and m_bidx[i].start 
-			// is inclusive of the first element on bar i.  
-			m_bidx.push_back({m_rp.size()-1,end_is_exact,0,false});
-		} else {  // Last iter
-
-			m_bidx.back().end = m_rp.size();
-			m_bidx.back().end_exact = isexact;
-
-			// If this _is_ the last bar we're appending, it should begin on
-			// one _past_ the final element in the sequence (nv_in).
-			m_bidx.push_back({m_rp.size(),isexact,0,false});
-		}
-		wait();
-	}
+	m_rp.push_back(nv_in);	
 }
 
-std::string rp_t::print() const {
+std::string rp_t::print() {
+	build_bidx();
+
 	std::string s {};
 	std::string sep {","};
 	std::string sep_bar_exact {"|"};
@@ -170,7 +194,9 @@ std::string rp_t::print() const {
 	return s;
 }
 
-std::string rp_t::printbidx() const {
+std::string rp_t::printbidx() {
+	build_bidx();
+
 	std::string s {};
 	for (int i=0; i<m_bidx.size(); ++i) {
 		s += bsprintf("%d [%d]  ->  %d [%d]\n",
@@ -205,6 +231,24 @@ bar_t nbar(ts_t const& ts_in, beat_t const& nbts_in) {
 	return bar_t {nbars_exact};
 }
 
+// TODO:  Completely untested.  How-the-F do i not have this done???
+beat_t bar2beat(ts_t const& ts_in, bar_t const& nbars_in) {
+	return beat_t{(ts_in.beats_per_bar().to_double())*nbars_in.to_double()};
+}
+
+std::vector<bar_t> cum_nbar(ts_t const& ts_in, std::vector<nv_t> const& nvs_in) {
+	std::vector<bar_t> rp_cum {}; rp_cum.reserve(nvs_in.size());
+	
+	bar_t totnb {0.0};  // Only used by the lambda
+	std::for_each(nvs_in.begin(),nvs_in.end(),
+		[&](nv_t const& currnv){rp_cum.push_back(totnb+=nbar(ts_in,currnv));});
+
+	return rp_cum;
+}
+
+
+// TODO:  Deprecate
+// Old, non-rp_t-member version 
 std::string printrp(ts_t const& ts_in, std::vector<nv_t> const& nv_in) {
 	std::string s {};
 	std::string sep {", "};
