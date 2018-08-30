@@ -2,19 +2,14 @@
 #include "nv_t.h"
 #include "beat_bar_t.h"
 #include "ts_t.h"
-#include "..\util\au_error.h"
-#include "..\util\au_util.h"
-#include "..\util\au_algs_math.h"
-#include "..\util\au_algs.h"
-#include "..\util\au_random.h"
+#include "..\util\au_util.h"  // bsprintf()
+#include "..\util\au_algs.h"  // unique_n() in nv_members()
 #include <string>
 #include <vector>
 #include <cmath> // pow()
 #include <algorithm> // find_if(), copy()
 #include <chrono>
 #include <map>
-
-rp_t::rp_t() {}
 
 rp_t::rp_t(ts_t const& ts_in) {
 	m_ts = ts_in;
@@ -107,11 +102,11 @@ bar_t rp_t::nbars() const {
 beat_t rp_t::nbeats() const {
 	return m_tot_nbeats;
 }
-int rp_t::nelems() const {
+size_t rp_t::nelems() const {
 	return m_rp.size();
 }
 
-std::vector<uniques_counts<nv_t>> rp_t::nv_members() const {
+std::map<nv_t,size_t> rp_t::nv_members() const {
 	return unique_n(m_rp);
 }
 
@@ -190,10 +185,10 @@ void rp_t::build_bidx() {
 			rp_cum.push_back(totnb.to_double());
 		});
 
-	std::vector<bidx> baridx(std::ceil(m_tot_nbars.to_double()),bidx{});
-	baridx[0] = {0,true,0,false};
+	std::vector<bidx> baridx {}; //(std::ceil(m_tot_nbars.to_double()),bidx{});
+	baridx.push_back({0,true,0,false});
 
-	int curr_bar=0; int i=0;
+	int curr_bar=0; size_t i=0;
 	while (i<rp_cum.size()) {
 		if (rp_cum[i] <= (curr_bar+1)) {
 			// Note that we only move to the next element in rp_cum if a bar-boundary
@@ -230,12 +225,13 @@ void rp_t::build_bidx() {
 			}
 
 			++curr_bar;
-			baridx[curr_bar].start = i;
-			baridx[curr_bar].start_exact = baridx[curr_bar-1].end_exact;
+			baridx.push_back({i,baridx[curr_bar-1].end_exact,0,false});
+			//baridx[curr_bar].start = i;
+			//baridx[curr_bar].start_exact = baridx[curr_bar-1].end_exact;
 				// Duplicate of baridx[prev_bar].end_exact
 		}
 	}
-	baridx.back().end = rp_cum.size()-1;
+	baridx.back().end = rp_cum.size();
 
 	m_bidx = baridx;
 }
@@ -251,16 +247,9 @@ std::string rp_t::print() {
 
 	size_t n_trim {0};
 	bar_t cum_nbar {0};
-	for (auto i=0; i<m_bidx.size(); ++i) {
-		// For the very last entry k in m_bidx, m_bidx[k].start indicates
-		// the first element, but m_bidx[k].end == 0; m_bidx.size() always
-		// == the total number of bars in the sequence + 1.  Thus, for the
-		// last bar, the loop should terminate on m_rp.size()-1, not
-		// m_bidx[k].end.  
-		bool lastbar = (i == (m_bidx.size()-1));
-		int fin_j = lastbar ? m_rp.size() : m_bidx[i].end;
-		for (auto j=m_bidx[i].start; (j<fin_j); ++j) {
-			if (j == m_bidx[i].start && !m_bidx[i].start_exact && i != 0) {
+	for (size_t i=0; i<m_bidx.size(); ++i) {
+		for (auto j=m_bidx[i].start; (j<m_bidx[i].end); ++j) {
+			if (j == m_bidx[i].start && !m_bidx[i].start_exact) {
 				// If the start of bar i is not exact, the rp element indicated
 				// by m_bidx[i].start has already been printed as a part of the 
 				// previous bar.  If m_bidx[i].start_exact is false, m_bidx[i].start
@@ -269,7 +258,7 @@ std::string rp_t::print() {
 			}
 
 			s += m_rp[j].print();
-			if (j < (fin_j-1)) {
+			if (j < (m_bidx[i].end-1)) {
 				s += sep; // Not the last iter
 			}
 			s += " ";
@@ -277,7 +266,7 @@ std::string rp_t::print() {
 
 		// For the very last bar, which is _always_ incomplete, don't print
 		// a bar separator char.  
-		if (!lastbar) {
+		if (i != (m_bidx.size()-1)) {  // Not the last bar
 			if (m_bidx[i].end_exact) {
 				s += sep_bar_exact;
 			} else {
@@ -301,12 +290,6 @@ std::string rp_t::printbidx() {
 	}
 	return s;
 }
-
-
-
-
-
-
 
 
 //-----------------------------------------------------------------------------
@@ -336,20 +319,5 @@ std::vector<bar_t> cum_nbar(ts_t const& ts_in, std::vector<nv_t> const& nvs_in) 
 		[&](nv_t const& currnv){rp_cum.push_back(totnb+=nbar(ts_in,currnv));});
 
 	return rp_cum;
-}
-
-
-
-
-//
-// Units of dt is seconds.  
-//  
-double nv2dt(nv_t const& nv_in, 
-	ts_t const& ts_in, double const& bpm) {
-	au_assert(bpm>0);
-
-	auto bps = bpm/60;
-	auto delta_t = (nbeat(ts_in,nv_in).to_double())/bps;
-	return delta_t;
 }
 

@@ -7,10 +7,6 @@
 #include <optional>
 
 
-ts_t::ts_t() {
-	// => 4/4 simple
-}
-
 ts_t::ts_t(beat_t const& num, nv_t const& denom, bool const& is_compound_in) {
 	au_assert(num > beat_t{0.0});
 

@@ -84,7 +84,7 @@
 
 class nv_t {
 public:
-	explicit nv_t();
+	explicit nv_t()=default;
 		// Creates a whole-note:  bv == 1, ndots == 0
 	explicit nv_t(double const&,int const& =0);  // base-value (=1/2^m), n-dots
 		// The bv argument is quantized.  That is,

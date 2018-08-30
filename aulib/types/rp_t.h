@@ -2,7 +2,7 @@
 #include "nv_t.h"
 #include "beat_bar_t.h"
 #include "ts_t.h"
-#include "../util/au_algs.h"
+#include <map>
 #include <string>
 #include <vector>
 
@@ -26,7 +26,7 @@
 //
 class rp_t {
 public:
-	explicit rp_t();
+	explicit rp_t() = default;
 	explicit rp_t(ts_t const&);
 	explicit rp_t(ts_t const&, std::vector<nv_t> const&);
 	explicit rp_t(ts_t const&, std::vector<std::chrono::milliseconds> const&,
@@ -41,8 +41,8 @@ public:
 		// subrp(bar_t{n}, bar_t{n+1})
 	bar_t nbars() const;
 	beat_t nbeats() const;
-	int nelems() const;
-	std::vector<uniques_counts<nv_t>> nv_members() const;
+	size_t nelems() const;
+	std::map<nv_t,size_t> nv_members() const;
 
 	std::vector<std::chrono::milliseconds> dt(tempo_t const&) const;
 
@@ -105,6 +105,4 @@ bar_t nbar(ts_t const&, beat_t const&);
 std::vector<bar_t> cum_nbar(ts_t const&, std::vector<nv_t> const&);
 
 //nv_t closest_nv(ts_t const&, beat_t const&, std::set<nv_t>)
-
-double nv2dt(nv_t const&, ts_t const&, double const&);
 

@@ -47,10 +47,7 @@ int nv_t::bv_exponent(double const& bv) {  // private
 
 //-----------------------------------------------------------------------------
 // Constructors
-nv_t::nv_t() {  // creates the "unit nv"
-	m_m = 0;
-	m_n = 0;
-}
+
 nv_t::nv_t(double const& bv, int const& ndot) {
 	au_assert((ndots_isvalid(ndot) && bv_isvalid(bv)), __FUNCTION__);
 	m_m = bv_exponent(bv);

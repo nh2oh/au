@@ -26,7 +26,7 @@ ntl_t operator""_ntl(const char *, size_t);
 // The ntstr_t class
 class ntstr_t {
 public:
-	ntstr_t() = delete;
+	explicit ntstr_t() = default;
 	explicit ntstr_t(std::string);
 	explicit ntstr_t(ntl_t, int);  // arg2 ~ octave number
 	explicit ntstr_t(ntl_t, octn_t);

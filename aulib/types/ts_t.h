@@ -35,7 +35,7 @@
 //
 class ts_t {
 public:
-	explicit ts_t();
+	explicit ts_t() = default;;
 	explicit ts_t(beat_t const&, nv_t const&, bool const& =false); // num, denom, is-compound
 	explicit ts_t(std::string const&);  // Calls ts_t.from_string()
 

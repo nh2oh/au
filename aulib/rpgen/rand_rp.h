@@ -8,43 +8,36 @@
 #include <chrono>
 #include <string>
 #include <set>
+#include <optional>
 
-// TODO:  Not sure why i have to explictly define ==
 struct rand_rp_opts {
 	std::chrono::seconds maxt;
 };
 
-
-
-std::optional<rp_t> rand_rp(ts_t,std::vector<nv_t>,
-	std::vector<double>,int,bar_t);
-std::optional<rp_t> rand_rp(ts_t,std::vector<nv_t>,
-	std::vector<double>,int,bar_t,rand_rp_opts);
-
-
-class randrp_input {
-public:
-	randrp_input() {
-		nvset = std::set<nv_t> {};
-		pd = std::vector<double> {};
-	};
-	randrp_input(ts_t ts, std::set<nv_t> nvset, std::vector<double> pd, int nnts,
-		bar_t nbars) : ts{ts}, nvset{nvset}, pd{pd}, n_nts{nnts}, n_bars{nbars} {};
-
-	bool operator==(randrp_input const& rhs) const {
-		return (ts==rhs.ts && nvset==rhs.nvset && pd==rhs.pd &&
-			n_nts == rhs.n_nts && n_bars == rhs.n_bars);
-	};
-
+struct randrp_input {
 	ts_t ts {};
 	std::set<nv_t> nvset {};
 	std::vector<double> pd {};
 	int n_nts {};
 	bar_t n_bars {};
+
+	bool operator==(randrp_input const& rhs) const {
+		return (ts==rhs.ts && nvset==rhs.nvset && pd==rhs.pd &&
+			n_nts == rhs.n_nts && n_bars == rhs.n_bars);
+	};
 };
+
+
+std::optional<rp_t> rand_rp(ts_t,std::vector<nv_t>,
+	std::vector<double>,int,bar_t);
+
+std::optional<rp_t> rand_rp(ts_t,std::vector<nv_t>,
+	std::vector<double>,int,bar_t,rand_rp_opts);
 
 std::optional<rp_t> rand_rp(randrp_input);
 
+
+//
 // My randrp_input parser
 // As w/ all uih parsers, returns a uih_parser_result struct. Member 
 // o_result is a std::optional<randrp_input>.   If there is some problem 
@@ -60,8 +53,4 @@ struct parse_randrp_input {
 	using PIType = typename randrp_input const&;
 	au::uih_parser_result<randrp_input> operator()(randrp_input const&) const;
 };
-
-
-
-
 

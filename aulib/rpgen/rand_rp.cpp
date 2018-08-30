@@ -115,7 +115,6 @@ std::optional<rp_t> rand_rp(ts_t ts_in,
 			}
 		} else if (mode == 3) { // Fixed nbars, fixed nnotes
 			if (nbar_rp == nbr_in && rp.size() == nnts_in) { // Success
-				//rp_t anrp {ts_in,rp};
 				return std::optional<rp_t> {rp_t{ts_in,rp}};
 			} else if (nbar_rp > nbr_in || rp.size() > nnts_in) { // Overshot
 				rp.clear();	nbar_rp = bar_t{0};

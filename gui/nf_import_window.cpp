@@ -157,12 +157,10 @@ void nf_import_window::update_nv_t_count() {
 	//auto uq_nvs = unique_n(nvs);
 
 	ui.nv_t_counts->clear();
-	for (int i=0; i<uq_nvs.size(); ++i) {
-		std::string cline {};
-		cline += uq_nvs[i].value.print();
-		cline += " : ";
-		cline += std::to_string(uq_nvs[i].count);
-		ui.nv_t_counts->appendPlainText(QString().fromStdString(cline));
+	for (auto const& e : uq_nvs) {
+		std::string cline = e.first.print() + " : " + std::to_string(e.second) + 
+			std::to_string(e.second);
+		ui.nv_t_counts->appendPlainText(QString::fromStdString(cline));
 	}
 	wait();
 }
