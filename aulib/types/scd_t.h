@@ -18,7 +18,7 @@
 
 class scd_t {
 public:
-	explicit scd_t() = default;
+	scd_t() = default;
 	explicit scd_t(int);
 
 	int to_int() const;
@@ -46,8 +46,6 @@ bool operator>=(scd_t const&, scd_t const&);
 bool operator<=(scd_t const&, scd_t const&);
 
 
-
-
 //-----------------------------------------------------------------------------
 // The octn_t class
 //
@@ -59,7 +57,7 @@ bool operator<=(scd_t const&, scd_t const&);
 
 class octn_t {
 public:
-	explicit octn_t() = default;
+	octn_t() = default;
 	explicit octn_t(scd_t,int);
 	explicit octn_t(int);
 
@@ -82,7 +80,7 @@ private:
 
 class rscdoctn_t {
 public:
-	explicit rscdoctn_t() = default;
+	rscdoctn_t() = default;
 	explicit rscdoctn_t(scd_t, int);  // arg2 is num scds/octave
 
 	scd_t to_scd(octn_t) const;

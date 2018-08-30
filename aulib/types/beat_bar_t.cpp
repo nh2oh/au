@@ -194,7 +194,7 @@ std::chrono::milliseconds operator/(beat_t const& num, tempo_t const& denom) {
 beat_t operator*(tempo_t const& lhs, std::chrono::milliseconds const& rhs) {
 	auto unitms = std::chrono::milliseconds(1);
 	double r = (rhs/unitms);  // ms
-	r /= (1000*60);  // minutes
+	r /= (1000.0*60.0);  // minutes
 	return r*static_cast<beat_t>(lhs);
 }
 beat_t operator*(std::chrono::milliseconds const& lhs, tempo_t const& rhs) {

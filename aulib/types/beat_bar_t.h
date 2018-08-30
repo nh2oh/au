@@ -8,7 +8,7 @@
 
 class beat_t {
 public:
-	explicit beat_t() = default;
+	beat_t() = default;
 	explicit beat_t(int);
 	explicit beat_t(double);
 
@@ -42,7 +42,7 @@ bool operator<=(beat_t const&, beat_t const&);
 // Represents some number of bars
 class bar_t {
 public:
-	explicit bar_t() = default;
+	bar_t() = default;
 	explicit bar_t(int);
 	explicit bar_t(double);
 
@@ -78,7 +78,7 @@ bool operator<=(bar_t const&, bar_t const&);
 class tempo_t {
 public:
 	//using namespace std::chrono_literals;
-	explicit tempo_t() = default;  // 60 bpm
+	tempo_t() = default;  // 60 bpm
 	explicit tempo_t(double const& beats_in);  // means beats-per-minute
 	explicit tempo_t(beat_t const&, double const&); // arg2 == minutes
 	explicit tempo_t(beat_t const&, std::chrono::minutes const&);

@@ -88,7 +88,7 @@ int comdenom(std::vector<frac> const& fracs) {
 
 // Rational approximation
 frac rapprox(double x, int N) {  // number-to-approximate, max-denominator
-	int prec = 6;
+	const int prec = 6;
 
 	double integral {0};
 	int sign = 1;

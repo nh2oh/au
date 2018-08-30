@@ -36,9 +36,9 @@ std::optional<rp_t> rand_rp(ts_t ts_in,
 	au_assert(dp_in.size() == pd_in.size());
 
 	// Timeout settings
-	std::chrono::seconds maxt {3000};
+	const std::chrono::seconds maxt {3000};
 	//auto tfail {std::chrono::system_clock::now()+opts.maxt};
-	auto tfail {std::chrono::system_clock::now()+maxt};
+	const auto tfail {std::chrono::system_clock::now()+maxt};
 
 	int mode {0};
 	if (nnts_in == 0 && nbr_in >= bar_t{1}) {  // fixed nbr, unconstrained nnts

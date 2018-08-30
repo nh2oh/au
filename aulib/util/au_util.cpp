@@ -5,11 +5,6 @@
 #include <optional>
 #include <regex>
 #include <chrono>  // for wait()
-//#include <cstdio> // sprintf()
-//#include <cstdarg> // va_arg
-
-
-
 
 std::string int_suffix(int const& int_in) {
 	std::string s {};
@@ -74,6 +69,6 @@ int wait() {
 		keep_busy /= 3.0;
 	}
 
-	return 1;
+	return static_cast<int>(keep_busy);
 }
 

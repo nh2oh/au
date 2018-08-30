@@ -225,7 +225,7 @@ void rp_t::build_bidx() {
 			}
 
 			++curr_bar;
-			baridx.push_back({i,baridx[curr_bar-1].end_exact,0,false});
+			baridx.push_back({i,baridx.back().end_exact,0,false});
 			//baridx[curr_bar].start = i;
 			//baridx[curr_bar].start_exact = baridx[curr_bar-1].end_exact;
 				// Duplicate of baridx[prev_bar].end_exact

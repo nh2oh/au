@@ -26,7 +26,7 @@
 //
 class rp_t {
 public:
-	explicit rp_t() = default;
+	rp_t() = default;
 	explicit rp_t(ts_t const&);
 	explicit rp_t(ts_t const&, std::vector<nv_t> const&);
 	explicit rp_t(ts_t const&, std::vector<std::chrono::milliseconds> const&,

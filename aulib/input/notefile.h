@@ -19,6 +19,7 @@ enum {
 };
 
 struct notefileline {
+	notefileline() = default;
 	int file_line_num {0};  // The actual line number in the txt file
 	double ontime {0.0};  // Milliseconds by default
 	double offtime {0.0};
@@ -27,6 +28,7 @@ struct notefileline {
 };
 
 struct notefile {
+	notefile() = default;
 	bool file_error {true};
 		// Indicates some error reading or opening the file.  Does not
 		// depend on the contents of the file. To see if the file contents

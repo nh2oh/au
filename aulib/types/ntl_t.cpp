@@ -10,8 +10,6 @@
 
 const std::string ntl_t::m_illegal = "()[] ;,";
 
-ntl_t::ntl_t() { }
-
 ntl_t::ntl_t(std::string const& str_in) {
 	set_ntl(str_in);
 }

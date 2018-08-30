@@ -1,6 +1,5 @@
 #pragma once
 #include <string>
-#include <optional>
 #include <map>
 #include <vector>
 
@@ -47,7 +46,7 @@ class frq_t;
 
 class cent_t {
 public:
-	explicit cent_t() = default;
+	cent_t() = default;
 	explicit cent_t(frq_t, frq_t);  // Interpret as a frq_t ratio
 	explicit cent_t(double);  // Interpret as a number-of-cents
 	cent_t(oct_t); // Number-of-octaves, not octave-number...
@@ -61,8 +60,8 @@ public:
 	// The int argument specifies which name to return if the interval
 	// can be named in more than one way.  In this case, the name 
 	// returned is that with idx = the int argument.  
-	std::optional<std::string> to_fcname(int=0) const;  // full common name
-	std::optional<std::string> to_acname(int=0) const; // abbreviated common name
+	std::string to_fcname(int=0) const;  // full common name
+	std::string to_acname(int=0) const; // abbreviated common name
 
 private:
 	double m_cents {0.0};

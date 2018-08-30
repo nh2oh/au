@@ -5,7 +5,7 @@
 
 class ntl_t {
 public:
-	explicit ntl_t();
+	ntl_t() = default;
 	explicit ntl_t(const char*);
 	explicit ntl_t(std::string const&);
 
@@ -26,7 +26,7 @@ ntl_t operator""_ntl(const char *, size_t);
 // The ntstr_t class
 class ntstr_t {
 public:
-	explicit ntstr_t() = default;
+	ntstr_t() = default;
 	explicit ntstr_t(std::string);
 	explicit ntstr_t(ntl_t, int);  // arg2 ~ octave number
 	explicit ntstr_t(ntl_t, octn_t);
