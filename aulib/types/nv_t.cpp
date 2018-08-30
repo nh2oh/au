@@ -57,28 +57,6 @@ nv_t::nv_t(double const& bv, int const& ndot) {
 	m_n = ndot;
 }
 
-nv_t::nv_t(nvc e_class_nv_in) {
-	if (e_class_nv_in == nvc::dw) {
-		m_m = bv_exponent(2.0);
-		m_n = 0;
-	} else if (e_class_nv_in == nvc::dwd) {
-		m_m = bv_exponent(2.0);
-		m_n = 1;
-	} else if (e_class_nv_in == nvc::dwdd) {
-		m_m = bv_exponent(2.0);
-		m_n = 2;
-	} else if (e_class_nv_in == nvc::w) {
-		m_m = bv_exponent(1.0);
-		m_n = 0;
-	} else if(e_class_nv_in == nvc::wd) {
-		m_m = bv_exponent(1.0);
-		m_n = 1;
-	} else if(e_class_nv_in == nvc::wdd) {
-		m_m = bv_exponent(1.0);
-		m_n = 2;
-	}
-}
-
 //-----------------------------------------------------------------------------
 // Getters
 std::string nv_t::print() const {

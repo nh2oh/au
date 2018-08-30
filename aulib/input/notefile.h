@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
 #include <string>
-
+#include <chrono>
 //
 // Functions to read and write "notefiles" in "notelist" format:
 // "Note [ontime] [offtime] [pitch-num]"
@@ -44,7 +44,7 @@ struct notefile {
 notefile read_notefile(std::string const&, int const& = 0);
 
 //double notefileelement2dt(notefile const&, int const& = notefileopts::defaultopts);
-std::vector<double> notefile2dt(notefile const&);
+std::vector<std::chrono::milliseconds> notefile2dt(notefile const&);
 
 
 

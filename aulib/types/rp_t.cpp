@@ -10,6 +10,8 @@
 #include <vector>
 #include <cmath> // pow()
 #include <algorithm> // find_if(), copy()
+#include <chrono>
+#include <map>
 
 rp_t::rp_t() {}
 
@@ -22,6 +24,80 @@ rp_t::rp_t(ts_t const& ts_in, std::vector<nv_t> const& nvs_in) {
 	m_rp = nvs_in;
 	m_tot_nbars = cum_nbar(ts_in,nvs_in).back();
 	m_tot_nbeats = nbeat(m_ts,m_tot_nbars);
+}
+
+// The reverse of member function dt(...)
+// Each element of dt is interpreted as the nearest integer multiple of res
+// and the nv_t closest to this dt is chosen.  
+rp_t::rp_t(ts_t const& ts_in, std::vector<std::chrono::milliseconds> const& dt,
+	tempo_t const& tempo, std::chrono::milliseconds const& res) {
+
+	m_ts = ts_in;
+
+	std::map<beat_t,nv_t> nvset {};
+	for (int m=-3; m<8; ++m) { // -3 => 8 (qw) 5 => 1/32
+		for (int n=0; n<5; ++n) {
+			auto curr_nv = nv_t{std::pow(2,-m),n};
+			nvset[nbeat(m_ts,curr_nv)]=curr_nv;
+		}
+	}
+
+	// The t difference between each dt element and the dt of the nv_t
+	// chosen to represent said element.  
+	std::vector<std::chrono::milliseconds> error {};
+
+	decltype(res/res) one = {1};
+	for (auto e : dt) {
+		// Find the integer multiple r of res closest to e:
+		// e/res is essentially integer division, so r*res will always 
+		// be <= e, and (r+1)*res will always be > e.  If e < res, e/res
+		// = r == 0.  
+		auto r = e/res;	
+		(e-r*res <= ((r+1)*res-e)) ? r=r : r=(r+1);
+		// I do not want to skip events < res since this will change the
+		// size of the vectors (or i'll have to have 0-duration elements...
+		// which don't exist...)
+		if (r == 0) { r = one; }
+
+		auto curr_nbts = (r*res)*tempo;
+
+		// Find the element in nvset for which nbeats is closest to curr_nbts
+		// TODO:  Generalize to find_closest()
+		beat_t nbts_best_nv {};
+		nv_t best_nv {};
+		auto nvset_firstgt = std::find_if(nvset.begin(),nvset.end(),
+			[&](std::pair<beat_t,nv_t> const& in){return(in.first > curr_nbts);});
+		if (nvset_firstgt == nvset.begin()) {
+			best_nv = (*nvset_firstgt).second;
+			nbts_best_nv = (*nvset_firstgt).first;
+		} else if (nvset_firstgt == nvset.end()) {
+			--nvset_firstgt;
+			best_nv = (*nvset_firstgt).second;
+			nbts_best_nv = (*nvset_firstgt).first;
+		} else {
+			auto first_gt = *nvset_firstgt;  // closest > curr_nbts
+			--nvset_firstgt;
+			auto first_lteq = *nvset_firstgt;  // closest <= curr_nbts
+			if ((first_gt.first-curr_nbts) < (curr_nbts-first_lteq.first)) {
+				best_nv = first_gt.second;
+				nbts_best_nv = first_gt.first;
+			} else {
+				best_nv = first_lteq.second;
+				nbts_best_nv = first_lteq.first;
+			}
+		}
+
+		m_rp.push_back(best_nv);
+		m_tot_nbeats += nbts_best_nv;
+
+		// Error measure
+		auto x= nbts_best_nv/tempo;
+		error.push_back(x - e);
+		
+	}
+	m_tot_nbars = nbar(m_ts,m_tot_nbeats);
+	wait();
+
 }
 
 bar_t rp_t::nbars() const {
@@ -42,7 +118,17 @@ void rp_t::push_back(nv_t const& nv_in) {
 	m_rp.push_back(nv_in);
 }
 
+std::vector<std::chrono::milliseconds> rp_t::dt(tempo_t const& bpm) const {
+	std::vector<std::chrono::milliseconds> dt {};
+	for (auto e : m_rp) {
+		auto dt_ms = nbeat(m_ts,e)/bpm;
+		dt.push_back(dt_ms);
+	}
+	return dt;
+}
+
 // TODO:  Check to>from, to not > max(m_rp), etc
+// TODO:  Should be a template: from,to could be bar_t, beat_t, seconds...
 rp_t rp_t::subrp(bar_t const& from,bar_t const& to) const {
 	auto cumrp = cum_nbar(m_ts,m_rp);
 
@@ -345,6 +431,7 @@ std::vector<nv_t> deltat2rp(std::vector<double> const& delta_t,
 // Does the reverse of deltat2rp().
 // Units of the delta_t vector is seconds.  
 //
+// TODO:  Deprecate
 std::vector<double> rp2deltat(std::vector<nv_t> const& rp_in, 
 	ts_t const& ts_in, double const& bpm) {
 	au_assert(rp_in.size()>=1);
@@ -357,6 +444,10 @@ std::vector<double> rp2deltat(std::vector<nv_t> const& rp_in,
 	}
 	return delta_t;
 }
+
+
+
+
 
 //
 // Units of dt is seconds.  

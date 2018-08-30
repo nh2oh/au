@@ -5,6 +5,7 @@
 #include <fstream>
 #include <regex>
 #include <filesystem>
+#include <chrono>
 
 //
 // Does not verify any sort of ordering (ex, that the events returned occur
@@ -27,11 +28,6 @@ notefile read_notefile(std::string const& filename, int const& flags) {
 		return nf;
 	}
 
-	int scale_fctr = 1;
-	if (flags & notefileopts::seconds) {
-		scale_fctr = 1000;
-	}
-
 	std::vector<notefileline> nf_lines; nf_lines.reserve(100);
 	std::vector<int> error_lines {};
 	std::regex rx("Note\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)");
@@ -45,9 +41,9 @@ notefile read_notefile(std::string const& filename, int const& flags) {
 
 		++n;
 		notefileline curr_nf_line;
-		curr_nf_line.file_line_num = fline_num/scale_fctr;
-		curr_nf_line.ontime = std::stod(*(matches[1]))/scale_fctr;
-		curr_nf_line.offtime = std::stod(*(matches[2]))/scale_fctr;
+		curr_nf_line.file_line_num = fline_num;
+		curr_nf_line.ontime = std::stod(*(matches[1]));
+		curr_nf_line.offtime = std::stod(*(matches[2]));
 		curr_nf_line.dt = curr_nf_line.offtime - curr_nf_line.ontime;
 		curr_nf_line.pitch = std::stoi(*(matches[3]));
 
@@ -63,10 +59,10 @@ notefile read_notefile(std::string const& filename, int const& flags) {
 		nf_lines, flags, error_lines};
 }
 
-std::vector<double> notefile2dt(notefile const& nf) {
-	std::vector<double> dt {}; dt.reserve(nf.lines.size());
+std::vector<std::chrono::milliseconds> notefile2dt(notefile const& nf) {
+	std::vector<std::chrono::milliseconds> dt {}; dt.reserve(nf.lines.size());
 	for (auto const& e : nf.lines) {
-		dt.push_back(e.dt);
+		dt.push_back(std::chrono::milliseconds(static_cast<int>(e.dt)));
 	}
 	return dt;
 }

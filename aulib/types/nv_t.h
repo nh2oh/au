@@ -82,33 +82,6 @@
 //
 
 
-struct decays_to_nv_t {
-	int e {0};
-	int d {0};
-	operator nv_t(){return nv_t {e,d};};
-};
-
-
-struct nvcomm {
-	static const decays_to_nv_t qw, qwd, qwdd;
-	static const decays_to_nv_t dw, dwd, dwdd;
-	static const decays_to_nv_t w, wd, wdd;
-	static const decays_to_nv_t h, hd, hdd;
-	static const decays_to_nv_t q, qd, qdd;
-	static const decays_to_nv_t e, ed, edd;
-};
-
-enum class nvc {
-	qw = -2, qwd = -1, qwdd = 0,
-	dw = 0, dwd=1, dwdd=2,
-	w = 3, wd = 4, wdd=5,
-};
-using nv = typename nvc;
-
-
-
-
-
 class nv_t {
 public:
 	explicit nv_t();
@@ -117,8 +90,6 @@ public:
 		// The bv argument is quantized.  That is,
 		// nv_t(quantize_bv(my_bv),my_ndot).bv() == quantize_bv(my_bv)
 		// In general:  nv_t(my_bv,my_ndot).bv() != my_bv
-	
-	nv_t(nvc);
 
 	std::string print() const;
 	int ndot() const;
@@ -246,7 +217,6 @@ public:
 // is the case, the sum can not be represented as a single nv_t (ie, as a
 // function of positive integers m, n), and will have to be represented as 
 // a doublet or some sort of tuplet.  
-//
 //
 //
 

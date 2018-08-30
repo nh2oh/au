@@ -152,5 +152,51 @@ bool operator<=(bar_t const& lhs, bar_t const& rhs) {
 }
 
 
+//-----------------------------------------------------------------------------
+// Class tempo_t
 
+tempo_t::tempo_t(double const& beats_in) {
+	au_assert(beats_in >= 0.0);
+	m_bpm = beat_t{beats_in};
+}
 
+tempo_t::tempo_t(beat_t const& beats_in, double const& dt_in) {
+	au_assert(beats_in >= beat_t{0});
+	au_assert(dt_in>0.0);
+	auto miliseconds = std::chrono::milliseconds(static_cast<int>(dt_in*1000*1000));
+	m_bpm = beats_in*dt_in;
+}
+tempo_t::tempo_t(beat_t const& beats_in, std::chrono::minutes const& dt_in) {
+	au_assert(beats_in >= beat_t{0});
+	au_assert(dt_in>std::chrono::minutes(0));
+	m_bpm = beats_in*(dt_in/dt_in);
+}
+tempo_t::tempo_t(beat_t const& beats_in, std::chrono::seconds const& dt_in) {
+	au_assert(beats_in >= beat_t{0});
+	au_assert(dt_in>std::chrono::minutes(0));
+	m_bpm = beats_in*(std::chrono::milliseconds(60*1000)/std::chrono::milliseconds(dt_in));
+}
+tempo_t::tempo_t(beat_t const& beats_in, std::chrono::milliseconds const& dt_in) {
+	au_assert(beats_in >= beat_t{0});
+	au_assert(dt_in>std::chrono::minutes(0));
+	m_bpm = beats_in*(std::chrono::milliseconds(60*1000)/dt_in);
+}
+
+tempo_t::operator beat_t() const {
+	return m_bpm;
+}
+
+std::chrono::milliseconds operator/(beat_t const& num, tempo_t const& denom) {
+	auto mins = num/static_cast<beat_t>(denom);
+	return std::chrono::milliseconds(static_cast<int>(mins*60*1000));
+}
+
+beat_t operator*(tempo_t const& lhs, std::chrono::milliseconds const& rhs) {
+	auto unitms = std::chrono::milliseconds(1);
+	double r = (rhs/unitms);  // ms
+	r /= (1000*60);  // minutes
+	return r*static_cast<beat_t>(lhs);
+}
+beat_t operator*(std::chrono::milliseconds const& lhs, tempo_t const& rhs) {
+	return (rhs*lhs);
+}

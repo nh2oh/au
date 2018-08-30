@@ -22,28 +22,33 @@
 //
 // 6)  Set bar number of element 0 (ie set pickup bar) ???
 //
+//
 class rp_t {
 public:
 	explicit rp_t();
 	explicit rp_t(ts_t const&);
 	explicit rp_t(ts_t const&, std::vector<nv_t> const&); 
+	explicit rp_t(ts_t const&, std::vector<std::chrono::milliseconds> const&,
+		tempo_t const&, std::chrono::milliseconds const&);
 
 	// Getters
 	std::string print();  // Calls build_bidx(), hence not const
 	std::string printbidx();  // Calls build_bidx(), hence not const
-
-	bar_t nbars() const;
-	beat_t nbeats() const;
-	int nelems() const;
-
 	rp_t subrp(bar_t const&, bar_t const&) const;  
 		// [From, to)
 		// To get all the elements belonging to only bar n, call
 		// subrp(bar_t{n}, bar_t{n+1})
+	bar_t nbars() const;
+	beat_t nbeats() const;
+	int nelems() const;
+
+	std::vector<std::chrono::milliseconds> dt(tempo_t const&) const;
 
 	// Setters
 	void push_back(nv_t const&);
 private:
+	//----------------------------------------------------------------------------
+	// Data members
 	ts_t m_ts {};  // Default ts_t == 4/4
 	std::vector<nv_t> m_rp {};
 	
@@ -80,9 +85,7 @@ private:
 	beat_t m_tot_nbeats {0};  // Exact
 	bar_t m_tot_nbars {0};  // Exact; std::ceil(m_tot_nbars) == m_bidx.size()
 
-	beat_t m_nbeats_pickup {0};
-	bar_t m_nbars_pickup {0};
-
+	//----------------------------------------------------------------------------
 	// Private functions
 	void build_bidx();
 };
@@ -98,6 +101,7 @@ bar_t nbar(ts_t const&, nv_t const&);
 bar_t nbar(ts_t const&, beat_t const&);
 std::vector<bar_t> cum_nbar(ts_t const&, std::vector<nv_t> const&);
 
+//nv_t closest_nv(ts_t const&, beat_t const&, std::set<nv_t>)
 
 // Print a vector of nv_ts
 // Old, non-rp_t-member version... should delete

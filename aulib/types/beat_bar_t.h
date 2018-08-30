@@ -1,5 +1,6 @@
 #pragma once
 #include <string> // for validate_bpm_str()
+#include <chrono>
 
 //-----------------------------------------------------------------------------
 // Class beat_t
@@ -68,5 +69,30 @@ bool operator<(bar_t const&, bar_t const&);
 bool operator>=(bar_t const&, bar_t const&);
 bool operator<=(bar_t const&, bar_t const&);
 
+
+
+//-----------------------------------------------------------------------------
+// Class tempo_t
+// Represents some number of beats per minute
+
+class tempo_t {
+public:
+	//using namespace std::chrono_literals;
+	explicit tempo_t() = default;  // 60 bpm
+	explicit tempo_t(double const& beats_in);  // means beats-per-minute
+	explicit tempo_t(beat_t const&, double const&); // arg2 == minutes
+	explicit tempo_t(beat_t const&, std::chrono::minutes const&);
+	explicit tempo_t(beat_t const&, std::chrono::seconds const&);
+	explicit tempo_t(beat_t const&, std::chrono::milliseconds const&);
+
+	explicit operator beat_t() const;
+
+private:
+	beat_t m_bpm {60};  // Per minute
+};
+
+std::chrono::milliseconds operator/(beat_t const&, tempo_t const&);
+beat_t operator*(tempo_t const&, std::chrono::milliseconds const&); 
+beat_t operator*(std::chrono::milliseconds const&, tempo_t const&); 
 
 
