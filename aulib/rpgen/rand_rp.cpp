@@ -12,34 +12,7 @@
 #include <random>
 #include <optional>
 #include <set>
-
-
-au::uih_parser_result<randrp_input>
-parse_randrp_input::operator()(randrp_input const& randrp_input_in) const {
-	au::uih_parser_result<randrp_input> result {{},""};
-		// NB: Clearing the default failmsg
-	bool input_is_valid = true;
-	if (randrp_input_in.nvset.size() < 1) {
-		input_is_valid = false;
-		result.failmsg += "Must supply at least one nv.\n";
-	}
-	if (randrp_input_in.nvset.size() != randrp_input_in.pd.size()) {
-		input_is_valid = false;
-		result.failmsg += "Must supply a relative probability for each nv.\n";
-	}
-	// TODO:  At least 2 elements of pd_in should be > 0
-	if (randrp_input_in.n_nts < 0) {
-		input_is_valid = false;
-		result.failmsg += "n_nts must be >= 0.\n";
-	}
-	if (randrp_input_in.n_nts == 0 && randrp_input_in.n_bars == bar_t{0}) {
-		input_is_valid = false;
-		result.failmsg += "One of n_nts, n_bars must be constrained.\n";
-	}
-
-	if (input_is_valid) { result.o_result = randrp_input_in;}
-	return result;
-}
+#include <string>
 
 
 // rand_rp() ~ rdur()
@@ -51,7 +24,7 @@ parse_randrp_input::operator()(randrp_input const& randrp_input_in) const {
 // TODO:  Will this work if nbars = 0.5 ???  Always generates exactly 1 bar at a time?
 //
 //
-std::optional<std::vector<nv_t>> rand_rp(ts_t ts_in, 
+std::optional<rp_t> rand_rp(ts_t ts_in, 
 	std::vector<nv_t> dp_in, std::vector<double> pd_in, int nnts_in, 
 	bar_t nbr_in, rand_rp_opts opts) {
 
@@ -126,13 +99,15 @@ std::optional<std::vector<nv_t>> rand_rp(ts_t ts_in,
 
 		if (mode == 1) { // Fixed nbars, floating nnotes
 			if (nbar_rp == nbr_in) { // Success
-				return std::optional<std::vector<nv_t>> {rp};
+				//return std::optional<std::vector<nv_t>> {rp};
+				return std::optional<rp_t> {rp_t{ts_in,rp}};
 			}
 			// There is no overshooting in mode 1, since in mode 1 the inner loop
 			// always adds exactly 1 bar
 		} else if (mode == 2) {  // Fixed nnts, floating nbars
 			if (rp.size() == nnts_in) { // Success
-				return std::optional<std::vector<nv_t>> {rp};
+				//return std::optional<std::vector<nv_t>> {rp};
+				return std::optional<rp_t> {rp_t{ts_in,rp}};
 			} else if (rp.size() > nnts_in) { // Overshot
 				rp.clear();	nbar_rp = bar_t{0};
 			} else if (rp.size() < nnts_in) {
@@ -140,7 +115,8 @@ std::optional<std::vector<nv_t>> rand_rp(ts_t ts_in,
 			}
 		} else if (mode == 3) { // Fixed nbars, fixed nnotes
 			if (nbar_rp == nbr_in && rp.size() == nnts_in) { // Success
-				return std::optional<std::vector<nv_t>> {rp};
+				//rp_t anrp {ts_in,rp};
+				return std::optional<rp_t> {rp_t{ts_in,rp}};
 			} else if (nbar_rp > nbr_in || rp.size() > nnts_in) { // Overshot
 				rp.clear();	nbar_rp = bar_t{0};
 			} else {
@@ -155,7 +131,7 @@ std::optional<std::vector<nv_t>> rand_rp(ts_t ts_in,
 }
 
 // TODO:  Convert rand_rp to take a std::set of nv_t instead of a std::vector
-std::optional<std::vector<nv_t>> rand_rp(randrp_input rand_rp_input_in) {
+std::optional<rp_t> rand_rp(randrp_input rand_rp_input_in) {
 	rand_rp_opts opts{std::chrono::seconds{3}};
 	std::vector<nv_t> gross(rand_rp_input_in.nvset.begin(),rand_rp_input_in.nvset.end());
 
@@ -163,9 +139,37 @@ std::optional<std::vector<nv_t>> rand_rp(randrp_input rand_rp_input_in) {
 		rand_rp_input_in.pd,rand_rp_input_in.n_nts,rand_rp_input_in.n_bars,opts);
 }
 
-std::optional<std::vector<nv_t>> rand_rp(ts_t ts_in, std::vector<nv_t> dp_in,
+std::optional<rp_t> rand_rp(ts_t ts_in, std::vector<nv_t> dp_in,
 	std::vector<double> pd_in, int nnts_in, bar_t nbr_in) {
 	rand_rp_opts opts {std::chrono::seconds {3}};
 	return rand_rp(ts_in, dp_in, pd_in, nnts_in, nbr_in, opts);
 }
+
+au::uih_parser_result<randrp_input>
+parse_randrp_input::operator()(randrp_input const& randrp_input_in) const {
+	au::uih_parser_result<randrp_input> result {{},""};
+		// NB: Clearing the default failmsg
+	bool input_is_valid = true;
+	if (randrp_input_in.nvset.size() < 1) {
+		input_is_valid = false;
+		result.failmsg += "Must supply at least one nv.\n";
+	}
+	if (randrp_input_in.nvset.size() != randrp_input_in.pd.size()) {
+		input_is_valid = false;
+		result.failmsg += "Must supply a relative probability for each nv.\n";
+	}
+	// TODO:  At least 2 elements of pd_in should be > 0
+	if (randrp_input_in.n_nts < 0) {
+		input_is_valid = false;
+		result.failmsg += "n_nts must be >= 0.\n";
+	}
+	if (randrp_input_in.n_nts == 0 && randrp_input_in.n_bars == bar_t{0}) {
+		input_is_valid = false;
+		result.failmsg += "One of n_nts, n_bars must be constrained.\n";
+	}
+
+	if (input_is_valid) { result.o_result = randrp_input_in;}
+	return result;
+}
+
 

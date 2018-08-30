@@ -3,6 +3,7 @@
 #include "..\types\ts_t.h"
 #include "..\types\beat_bar_t.h"
 #include "..\uih.h"
+#include "..\types\rp_t.h"
 #include <vector>
 #include <chrono>
 #include <string>
@@ -12,6 +13,14 @@
 struct rand_rp_opts {
 	std::chrono::seconds maxt;
 };
+
+
+
+std::optional<rp_t> rand_rp(ts_t,std::vector<nv_t>,
+	std::vector<double>,int,bar_t);
+std::optional<rp_t> rand_rp(ts_t,std::vector<nv_t>,
+	std::vector<double>,int,bar_t,rand_rp_opts);
+
 
 class randrp_input {
 public:
@@ -28,11 +37,13 @@ public:
 	};
 
 	ts_t ts {};
-	std::set<nv_t> nvset;
-	std::vector<double> pd;
+	std::set<nv_t> nvset {};
+	std::vector<double> pd {};
 	int n_nts {};
 	bar_t n_bars {};
 };
+
+std::optional<rp_t> rand_rp(randrp_input);
 
 // My randrp_input parser
 // As w/ all uih parsers, returns a uih_parser_result struct. Member 
@@ -51,10 +62,6 @@ struct parse_randrp_input {
 };
 
 
-std::optional<std::vector<nv_t>> rand_rp(randrp_input);
-std::optional<std::vector<nv_t>> rand_rp(ts_t,std::vector<nv_t>,
-	std::vector<double>,int,bar_t);
-std::optional<std::vector<nv_t>> rand_rp(ts_t,std::vector<nv_t>,
-	std::vector<double>,int,bar_t,rand_rp_opts);
+
 
 

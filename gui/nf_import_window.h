@@ -19,7 +19,7 @@ class nf_import_window : public QMainWindow {
 	// Data
 	struct defaults {
 		std::string ts {"4/4"};
-		std::string err {"0.250"};
+		std::string err {"250"};
 		std::string bpm {"90"};
 		std::string curr_fname {""};
 
@@ -37,8 +37,8 @@ class nf_import_window : public QMainWindow {
 	au::uih_pred<ftr_gt> p_gtzero {ftr_gt{0.0},"A tempo is always > 0"};
 	au::uih<decltype(m_bpm_parser),decltype(p_gtzero)> m_bpm_uih {m_bpm_parser,p_gtzero};
 
-	au::uih_parser<parse_userinput_double> m_err_parser {parse_userinput_double {},
-		"A number >= 0 (decimals allowed)."};
+	au::uih_parser<parse_userinput_int> m_err_parser {parse_userinput_int {},
+		"A number >= 0 (decimals not allowed)."};
 	au::uih_pred<ftr_geq> p_geqzero {ftr_geq{0.0},"Value must be >= 0."};
 	au::uih<decltype(m_err_parser),decltype(p_geqzero)> m_err_uih {m_err_parser,p_geqzero};
 

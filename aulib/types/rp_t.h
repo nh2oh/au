@@ -2,6 +2,7 @@
 #include "nv_t.h"
 #include "beat_bar_t.h"
 #include "ts_t.h"
+#include "../util/au_algs.h"
 #include <string>
 #include <vector>
 
@@ -27,7 +28,7 @@ class rp_t {
 public:
 	explicit rp_t();
 	explicit rp_t(ts_t const&);
-	explicit rp_t(ts_t const&, std::vector<nv_t> const&); 
+	explicit rp_t(ts_t const&, std::vector<nv_t> const&);
 	explicit rp_t(ts_t const&, std::vector<std::chrono::milliseconds> const&,
 		tempo_t const&, std::chrono::milliseconds const&);
 
@@ -41,10 +42,12 @@ public:
 	bar_t nbars() const;
 	beat_t nbeats() const;
 	int nelems() const;
+	std::vector<uniques_counts<nv_t>> nv_members() const;
 
 	std::vector<std::chrono::milliseconds> dt(tempo_t const&) const;
 
 	// Setters
+	void set_ts(ts_t const&);
 	void push_back(nv_t const&);
 private:
 	//----------------------------------------------------------------------------
@@ -103,25 +106,5 @@ std::vector<bar_t> cum_nbar(ts_t const&, std::vector<nv_t> const&);
 
 //nv_t closest_nv(ts_t const&, beat_t const&, std::set<nv_t>)
 
-// Print a vector of nv_ts
-// Old, non-rp_t-member version... should delete
-//std::string printrp(ts_t const&, std::vector<nv_t> const&);
-
-std::string rp_t_info();
-
-// Convert a vector of durations (units ~ time) to an rp
-//  delta_t, ts, bpm, resolution-in-seconds
-std::vector<nv_t> deltat2rp(std::vector<double> const&, ts_t const&, 
-	double const&, double const&);
-
-//  rp, ts, bpm
-std::vector<double> rp2deltat(std::vector<nv_t> const&, ts_t const&, 
-	double const&);
-
 double nv2dt(nv_t const&, ts_t const&, double const&);
-
-std::string deltat2rp_demo();
-
-
-
 

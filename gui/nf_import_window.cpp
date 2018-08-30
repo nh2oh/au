@@ -10,7 +10,7 @@
 #include <algorithm> // remove() to drop a value from m_nf.error_lines
 #include <QtWidgets/QFileDialog>
 #include <qmessagebox.h> // Error msg if "import" is clicked w/ m_nf.error_lines !empty
-
+#include <chrono>
 
 // TODO
 // - Uniform method of setting background colors for ui widgets
@@ -147,12 +147,14 @@ void nf_import_window::update_nv_t_count() {
 	}
 
 	auto bpm = m_bpm_uih.get();
-	auto err = m_err_uih.get();
+	int err = m_err_uih.get();
 	auto ts = m_ts_uih.get();
 	auto dt = notefile2dt(m_nf);
 
-	auto nvs = deltat2rp(dt,ts,bpm,err);
-	auto uq_nvs = unique_n(nvs);
+	//auto nvs = deltat2rp(dt,ts,bpm,err);
+	auto rp = rp_t(ts,dt,tempo_t{bpm},std::chrono::milliseconds(err));
+	auto uq_nvs = rp.nv_members();
+	//auto uq_nvs = unique_n(nvs);
 
 	ui.nv_t_counts->clear();
 	for (int i=0; i<uq_nvs.size(); ++i) {

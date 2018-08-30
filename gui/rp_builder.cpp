@@ -45,7 +45,9 @@ void rp_builder::on_generate_clicked() {
 		return;
 	}
 
-	ui.rp_result->setPlainText(QString::fromStdString(printrp(m_ts_uih.get(),*m_rand_rp_result)));
+	//ui.rp_result->setPlainText(QString::fromStdString(printrp(m_ts_uih.get(),*m_rand_rp_result)));
+	//auto x = *m_rand_rp_result;
+	ui.rp_result->setPlainText(QString::fromStdString((*m_rand_rp_result).print()));
 }
 
 void rp_builder::set_rand_rp_inputs() {
@@ -226,7 +228,7 @@ void rp_builder::on_import_btn_clicked() {
 		return;
 	}
 
-	gdp.create(*m_rand_rp_result,std::string{"what"});
+	//gdp.create(*m_rand_rp_result,std::string{"what"});
 	this->close();
 }
 

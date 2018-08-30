@@ -1,6 +1,6 @@
+#pragma once
 #include <vector>
 #include <algorithm>
-
 
 template<typename T>
 bool ismember(T const& e, std::vector<T> const& s) {

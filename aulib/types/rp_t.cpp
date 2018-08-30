@@ -5,6 +5,7 @@
 #include "..\util\au_error.h"
 #include "..\util\au_util.h"
 #include "..\util\au_algs_math.h"
+#include "..\util\au_algs.h"
 #include "..\util\au_random.h"
 #include <string>
 #include <vector>
@@ -108,6 +109,16 @@ beat_t rp_t::nbeats() const {
 }
 int rp_t::nelems() const {
 	return m_rp.size();
+}
+
+std::vector<uniques_counts<nv_t>> rp_t::nv_members() const {
+	return unique_n(m_rp);
+}
+
+void rp_t::set_ts(ts_t const& ts_in) {
+	m_ts = ts_in;
+	m_tot_nbars = cum_nbar(ts_in,m_rp).back();
+	m_tot_nbeats = nbeat(m_ts,m_tot_nbars);
 }
 
 void rp_t::push_back(nv_t const& nv_in) {
@@ -328,125 +339,6 @@ std::vector<bar_t> cum_nbar(ts_t const& ts_in, std::vector<nv_t> const& nvs_in) 
 }
 
 
-// TODO:  Deprecate
-// Old, non-rp_t-member version 
-// 
-/*
-std::string printrp(ts_t const& ts_in, std::vector<nv_t> const& nv_in) {
-	std::string s {};
-	std::string sep {", "};
-	std::string sep_bar {" | "};
-
-	size_t n_trim {0};
-	bar_t cum_nbar {0};
-	for (auto i=0; i<nv_in.size(); ++i) {
-		s += nv_in[i].print();
-		cum_nbar += nbar(ts_in, nv_in[i]);
-		if (isapproxint(cum_nbar.to_double(),6)) {
-			s += sep_bar;
-		} else {
-			s += sep;
-			n_trim = sep.size();
-		}
-	}
-	s.erase(s.begin()+(s.size()-n_trim),s.end());
-	return s;
-}*/
-
-std::string rp_t_info() {
-	std::string s {};
-	std::vector<ts_t> ts_simple {"2/2"_ts,"3/2"_ts,"4/4"_ts,"2/4"_ts,
-		"3/4"_ts,"3/8"_ts,"6/8"_ts,"9/8"_ts,"12/8"_ts};
-	std::vector<ts_t> ts_compound {"3/4c"_ts,"3/8c"_ts,"6/8c"_ts,"9/8c"_ts,"12/8c"_ts};
-	std::vector<ts_t> ts_weird {"5/4"_ts,"5/8"_ts,"7/4"_ts,"11/8"_ts,"11/4"_ts};
-
-	s += "SIMPLE TIME SIGNATURES\n";
-	for (auto e : ts_simple) {
-		s += e.print() + "   =>   ";
-		s += std::to_string(e.beats_per_bar().to_double()) + " ";
-		s += e.beat_unit().print() + " -note beats per bar;\n";
-		s+= "\tThe bar-equivalent note value is " + e.bar_unit().print() + "\n";
-	}
-	s += "\n\n";
-
-	s += "COMPOUND TIME SIGNATURES\n";
-	for (auto e : ts_compound) {
-		s += e.print() + "   =>   ";
-		s += std::to_string(e.beats_per_bar().to_double()) + " ";
-		s += e.beat_unit().print() + " -note beats per bar;\n";
-		s += "\tThe bar-equivalent note value is " + e.bar_unit().print() + "\n";
-	}
-	s += "\n\n";
-
-	s += "WEIRD TIME SIGNATURES\n";
-	for (auto e : ts_weird) {
-		s += e.print() + "   =>   ";
-		s += std::to_string(e.beats_per_bar().to_double()) + " ";
-		s += e.beat_unit().print() + " -note beats per bar;\n";
-		s += "\tThe bar-equivalent note value is " + e.bar_unit().print() + "\n";
-	}
-	s += "\n\n";
-
-	return s;
-}
-
-
-//
-// Convert a sequence of note durations (in seconds) to a sequence of 
-// note-values.  
-//
-//
-// TODO:  Algorithm based on clustering dt's, not nv_t's
-//
-std::vector<nv_t> deltat2rp(std::vector<double> const& delta_t, 
-	ts_t const& ts_in, double const& bpm, double const& s_resolution) {
-	au_assert(delta_t.size()>=2,"A delta-t vector must contain >= 2 events.");
-	au_assert(bpm>0,"bpm>0");
-	au_assert(s_resolution>0,"s_resolution>0");
-	auto bps = bpm/60.0;
-	auto bt_resolution = beat_t{bps*s_resolution};
-
-	std::vector<nv_t> ntset {};
-	std::vector<double> dtset {};
-	for (int m = 0; m<5; ++m) { // 5 => 1/32
-		for (int n = 0; n<2; ++n) {
-			auto curr_nv = nv_t{std::pow(2,-m),n};
-			if (nbeat(ts_in,curr_nv) >= bt_resolution) {
-				ntset.push_back(curr_nv);
-				dtset.push_back(nv2dt(curr_nv,ts_in,bpm));
-			}
-		}
-	}
-
-	std::vector<nv_t> nts {}; nts.reserve(delta_t.size());
-	for (auto curr_dt: delta_t) {
-		auto i = nearest_idx(curr_dt,dtset);
-		nts.push_back(ntset[i]);
-	}
-	return nts;
-}
-
-
-//
-// Does the reverse of deltat2rp().
-// Units of the delta_t vector is seconds.  
-//
-// TODO:  Deprecate
-std::vector<double> rp2deltat(std::vector<nv_t> const& rp_in, 
-	ts_t const& ts_in, double const& bpm) {
-	au_assert(rp_in.size()>=1);
-	au_assert(bpm>0);
-
-	std::vector<double> delta_t(rp_in.size(), 0.0);
-	auto bps = bpm/60;
-	for (auto curr_nt : rp_in) {
-		delta_t.push_back((nbeat(ts_in,curr_nt).to_double())/bps);
-	}
-	return delta_t;
-}
-
-
-
 
 
 //
@@ -459,40 +351,5 @@ double nv2dt(nv_t const& nv_in,
 	auto bps = bpm/60;
 	auto delta_t = (nbeat(ts_in,nv_in).to_double())/bps;
 	return delta_t;
-}
-
-std::string deltat2rp_demo() {
-	std::vector<nv_t> nts {nv_t{1.0/1.0},nv_t{1.0/2.0},
-		nv_t{1.0/4.0},nv_t{1.0/8.0}};
-	auto ts = "4/4"_ts;
-	double bpm = 60; auto bps = bpm/60;
-	int n = 15;
-
-	auto ridx_nts = urandi(n,0,nts.size()-1);
-	auto rand_frac_delta_t = urandd(n,-0.075,0.075);
-
-	std::vector<nv_t> note_seq {}; // Random seq of nv_t's
-	std::vector<double> delta_t {}; // dt for note_seq +/- some random offset
-	double t_total {0.0};
-	for (auto i=0; i<n; ++i) {
-		auto curr_nt = nts[ridx_nts[i]];
-		note_seq.push_back(curr_nt);
-		
-		auto dt_exact = nbeat(ts,curr_nt).to_double()/bps;
-		auto dt_fuzz = dt_exact + dt_exact*(rand_frac_delta_t[i]);
-		t_total += dt_fuzz;
-		delta_t.push_back(dt_fuzz);
-	}
-
-	auto nv_resolution = nv_t{1.0/8.0};
-	double sec_resolution = nbeat(ts,nv_resolution).to_double()/(bps+1);
-	auto rp_backcalc = deltat2rp(delta_t,ts,bpm,sec_resolution);
-
-	std::string s {};
-	// TODO:  FIXME
-	//s += "Input seq: \n" + printrp(ts,note_seq) + "\n\n" + 
-	//	"deltat2rp(): \n" + printrp(ts,rp_backcalc) + "\n\n";
-
-	return s;
 }
 

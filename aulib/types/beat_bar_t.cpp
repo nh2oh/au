@@ -1,7 +1,7 @@
 #include "beat_bar_t.h"
 #include "..\util\au_util_all.h"
 #include <string>
-
+#include <chrono>
 
 
 
@@ -200,3 +200,4 @@ beat_t operator*(tempo_t const& lhs, std::chrono::milliseconds const& rhs) {
 beat_t operator*(std::chrono::milliseconds const& lhs, tempo_t const& rhs) {
 	return (rhs*lhs);
 }
+

@@ -1,6 +1,7 @@
 #pragma once
 #include <QtWidgets/QMainWindow>
 #include "ui_rp_builder.h"
+#include "aulib\types\rp_t.h"
 #include "aulib\types\nv_t.h"
 #include "aulib\nv_t_uih.h"
 #include "aulib\types\beat_bar_t.h"
@@ -65,7 +66,8 @@ private:
 	QStringListModel m_comm_nvs_model {};
 	std::set<nv_t> m_common_nvs;
 
-	std::optional<std::vector<nv_t>> m_rand_rp_result;  // output of rand_rp()
+	//std::optional<std::vector<nv_t>> m_rand_rp_result;  // output of rand_rp()
+	std::optional<rp_t> m_rand_rp_result;
 
 	void set_ts();
 	void set_nv();
