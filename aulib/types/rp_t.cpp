@@ -11,6 +11,74 @@
 #include <chrono>
 #include <map>
 
+
+
+rp_t2::rp_t2(ts_t const& ts) {
+	m_ts = ts;
+}
+
+rp_t2::rp_t2(ts_t const& ts, std::vector<nv_t> const& nv) {
+	m_ts = ts;
+	for (auto e : nv) {
+		push_back(e);
+	}
+}
+
+void rp_t2::push_back(nv_t nv) {
+	auto nv_max = nbeat(m_ts, bar_t{std::floor(m_nbars+1.0)-m_nbars});
+	auto tuplet = nv_factor(nv,mv_max);
+	while (tuplet - tuplet.first > m_ts.bar_unit()) {
+		tuplet = tuplet_t{tuplet.first,tuplet.remain};
+		//whatever
+	}
+	// Now tuplet ~ nv_max + ts.bar_uint() + ts.bar_unit() + ...
+	// access w/ tuplet[0]... tuplet[tuplet.size()-1]
+
+	for (int i=0; i<tuplet.size(); ++i) {
+		vgroup cvg {tuplet[i];
+			m_nusrelems;
+			tuplet.size()-1;  // tie_f
+			i;  // tie_b
+		};
+		m_e.push_back(cvg);
+	}
+
+	// also need to append rests
+
+	++m_nuserelems;
+	m_nbars += nbar(m_ts,nv);
+	m_nbeats += nbeat(m_ts,nv);
+}
+
+std::string rp_t2::print() const {
+	std::string s {};
+	for (auto e : m_e) {
+		cnb += nbar(m_ts,e.e);
+		if (isapproxint(cnb)) {	s += "|"; }
+		if (e.tie_b > 0 && e.tie_f == 0) { s += ")"; }
+		s += e.e.print();
+		if (e.tie_b==0 && e.tie_f > 0) { s += "("; }
+	}
+	return s;
+}
+
+std::string rp_t2::print_bidx() const {
+	std::string s {};
+	double cnb {0.0};
+	while (cnb < m_nbars) {
+		std::vector<vgroup> curr_bar {};
+		for (auto e : m_e) {
+			cnb += nbar(m_ts,e.e);
+			curr_bar.push_back(e);
+			if (isapproxint(cnb)) { break; }
+		}
+		s += bsprintf("%4d:  %s\\n",5,"yay");
+	}
+	return s;
+}
+
+
+
 rp_t::rp_t(ts_t const& ts_in) {
 	m_ts = ts_in;
 }
