@@ -3,6 +3,16 @@
 #include <cmath> // std::abs for template roundstep(), std::round for template roundquant()
 #include <random>
 #include <optional>
+#include <map>
+
+// k-means
+struct kmeans_result {
+	double mean {};
+	double stdev {};
+	std::vector<size_t> members {};
+};
+std::map<short,kmeans_result> kmeans(std::vector<double>,std::vector<double>);
+
 
 // Regression
 struct linreg_result {
