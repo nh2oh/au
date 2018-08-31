@@ -144,8 +144,8 @@ std::optional<rp_t> rand_rp(ts_t ts_in, std::vector<nv_t> dp_in,
 	return rand_rp(ts_in, dp_in, pd_in, nnts_in, nbr_in, opts);
 }
 
-au::uih_parser_result<randrp_input>
-parse_randrp_input::operator()(randrp_input const& randrp_input_in) const {
+au::uih_parser_result<randrp_input> 
+	parse_randrp_input::operator()(randrp_input const& randrp_input_in) const {
 	au::uih_parser_result<randrp_input> result {{},""};
 		// NB: Clearing the default failmsg
 	bool input_is_valid = true;

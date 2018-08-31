@@ -84,6 +84,9 @@
     <ClCompile Include="nv_t_uih.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="de_t.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="util\au_algs.h">
@@ -177,6 +180,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="uih2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="de_t.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

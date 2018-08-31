@@ -5,21 +5,6 @@
 #include <vector>
 #include <cmath>  // std::pow(), std::log2, std::round
 #include <algorithm> // for swap()
-/*
-const nv_t nv::dw {2.0,0};
-const nv_t nv::dwd {2.0,1}; const nv_t nv::dwdd {2.0,2};
-const nv_t nv::w{1,0};
-const nv_t nv::wd{1,1}; const nv_t nv::wdd{1,2};
-const nv_t nv::h{0.5,0};
-const nv_t nv::hd{0.5,1}; const nv_t nv::hdd{0.5,2};
-const nv_t nv::q{0.25,0};
-const nv_t nv::qd{0.25,1}; const nv_t nv::qdd{0.25,2};
-const nv_t nv::e{0.125,0};
-const nv_t nv::ed{0.125,1}; const nv_t nv::edd{0.125,2};
-const nv_t nv::s{0.0625,0};
-const nv_t nv::sd{0.0625,1}; const nv_t nv::sdd{0.0625,2};
-const nv_t nv::t{0.03125,0};
-const nv_t nv::td{0.03125,1}; const nv_t nv::tdd{0.03125,2};*/
 
 //-----------------------------------------------------------------------------
 // Public & private statics

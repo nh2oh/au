@@ -11,10 +11,11 @@
 #include <optional>
 
 struct rand_rp_opts {
-	std::chrono::seconds maxt;
+	std::chrono::seconds maxt {3};
 };
 
 struct randrp_input {
+	randrp_input()=default;
 	ts_t ts {};
 	std::set<nv_t> nvset {};
 	std::vector<double> pd {};

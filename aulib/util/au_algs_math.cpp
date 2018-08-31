@@ -18,7 +18,7 @@ std::optional<linreg_result> linreg(std::vector<double> const& x,
 	double sx = 0.0; double sx2 = 0.0;
 	double sxy = 0.0;
 	double sy = 0.0; double sy2 = 0.0;
-	for (decltype(n) i=0; i<n; ++i) {
+	for (size_t i=0; i<n; ++i) {
 		sx += x[i]; sx2 += (x[i])*(x[i]);
 		sxy += (x[i])*(y[i]);
 		sy += y[i]; sy2 += (y[i])*(y[i]);

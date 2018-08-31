@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="de_t.cpp" />
     <ClCompile Include="input\notefile.cpp" />
     <ClCompile Include="numeric_simple_uih.cpp" />
     <ClCompile Include="nv_t_uih.cpp" />
@@ -45,6 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="aulib_all.h" />
+    <ClInclude Include="de_t.h" />
     <ClInclude Include="input\notefile.h" />
     <ClInclude Include="numeric_simple_uih.h" />
     <ClInclude Include="nv_t_uih.h" />

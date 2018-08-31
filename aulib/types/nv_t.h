@@ -146,55 +146,6 @@ private:
 	static const int max_bv_exponent;
 };
 
-//std::vector<nv_t> nvsum(std::vector<nv_t>);
-//std::vector<nv_t> nvsum(std::vector<nv_t>,std::vector<nv_t>);
-//std::vector<nv_t> nvsum_finalize(std::vector<nv_t>);
-/*
-class common_notevalue {
-	common_notevalue(nv::
-
-namespace nv {
-	// Common note values.  
-	inline const nv_t dw {2.0,0};
-	inline const nv_t dwd {2.0,1}; inline const nv_t dwdd {2.0,2};
-	inline const nv_t w {1,0};
-	inline const nv_t wd {1,1}; inline const nv_t wdd {1,2};
-	inline const nv_t h {0.5,0};
-	inline const nv_t hd {0.5,1}; inline const nv_t hdd {0.5,2};
-	inline const nv_t q {0.25,0};
-	inline const nv_t qd {0.25,1}; inline const nv_t qdd {0.25,2};
-	inline const nv_t e {0.125,0};
-	inline const nv_t ed {0.125,1}; inline const nv_t edd {0.125,2};
-	inline const nv_t s {0.0625,0};
-	inline const nv_t sd {0.0625,1}; inline const nv_t sdd {0.0625,2};
-	inline const nv_t t {0.03125,0};
-	inline const nv_t td {0.03125,1}; inline const nv_t tdd {0.03125,2};
-};
-	
-
-class nv {
-public:
-	static const nv_t dw;
-	static const nv_t dwd; static const nv_t dwdd;
-	static const nv_t w;
-	static const nv_t wd; static const nv_t wdd;
-	static const nv_t h;
-	static const nv_t hd; static const nv_t hdd;
-	static const nv_t q;
-	static const nv_t qd; static const nv_t qdd;
-	static const nv_t e;
-	static const nv_t ed; static const nv_t edd;
-	static const nv_t s;
-	static const nv_t sd; static const nv_t sdd;
-	static const nv_t t;
-	static const nv_t td; static const nv_t tdd;
-};
-*/
-
-
-
-
-
 //
 // The nv() of nv_t can be represented as a/2^b, where:
 // a = sum(i=0,i=n,2^i) = 2^(n+1)-1
@@ -253,4 +204,15 @@ private:
 	// Some other member recording how this should be displayed; possibly
 	// based on which constructor was called.  
 };
+
+
+
+
+
+
+
+
+
+
+
 
