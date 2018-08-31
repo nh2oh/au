@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include <chrono>
+
 //
 // Functions to read and write "notefiles" in "notelist" format:
 // "Note [ontime] [offtime] [pitch-num]"
@@ -10,6 +11,11 @@
 //
 // In all the notefiles I have, ontime and offtime are always ints, but I am
 // entering them as doubles so i can work with them more easily.  
+//
+//
+// TODO:  Function to examine a t vector and pull out overlapping events
+//   into multiple "voices."  This can not be done w/a dt vector b/c 
+//   absolute temporal positions have been tossed.  
 //
 namespace notefileopts {
 enum {
@@ -42,11 +48,14 @@ struct notefile {
 		// idxs of notefile.lines where dt <= 0, etc
 };
 
-
 notefile read_notefile(std::string const&, int const& = 0);
 
-//double notefileelement2dt(notefile const&, int const& = notefileopts::defaultopts);
 std::vector<std::chrono::milliseconds> notefile2dt(notefile const&);
 
+// Attempt at forward declarations...
+class scd_t;
+template<typename T> class line_t;
+
+line_t<scd_t> notefile2line(notefile const&);
 
 

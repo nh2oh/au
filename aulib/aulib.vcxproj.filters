@@ -84,7 +84,10 @@
     <ClCompile Include="nv_t_uih.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="de_t.cpp">
+    <ClCompile Include="types\de_t.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="types\line_t.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -182,7 +185,10 @@
     <ClInclude Include="uih2.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="de_t.h">
+    <ClInclude Include="types\de_t.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="types\line_t.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
