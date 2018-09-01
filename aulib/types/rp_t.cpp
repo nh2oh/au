@@ -12,7 +12,7 @@
 #include <map>
 
 
-
+/*
 rp_t2::rp_t2(ts_t const& ts) {
 	m_ts = ts;
 }
@@ -76,7 +76,7 @@ std::string rp_t2::print_bidx() const {
 	}
 	return s;
 }
-
+*/
 
 
 rp_t::rp_t(ts_t const& ts_in) {

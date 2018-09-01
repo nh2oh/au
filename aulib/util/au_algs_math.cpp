@@ -7,14 +7,6 @@
 
 
 
-
-std::map<short,kmeans_result> kmeans(std::vector<double> d, std::vector<double> minit) {
-	for (auto de : d) {
-		for (auto me : minit) {
-
-
-
-
 // Linear regression
 std::optional<linreg_result> linreg(std::vector<double> const& x, 
 	std::vector<double> const& y) {

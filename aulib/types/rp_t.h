@@ -83,7 +83,7 @@
 //  from the output of print().  
 //
 
-
+/*
 class rp_t2 {
 public:
 	rp_t2()=default;
@@ -107,7 +107,7 @@ private:
 	size_t m_nusrelems {0};
 	ts_t m_ts;
 };
-
+*/
 // TODO
 // 1)  Some sort of interospection/analysis functions...  Are there 
 //     bar-spanning elements?  What is the nv_t dist?  the ts?

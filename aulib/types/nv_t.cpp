@@ -1,5 +1,6 @@
 #include "nv_t.h"
 #include "../util/au_error.h"
+#include "../util/au_util.h"
 #include "../util/au_algs_math.h"
 #include <string>
 #include <vector>
@@ -167,56 +168,132 @@ std::vector<nv_t> nvsum_finalize(std::vector<nv_t>);
 
 
 
+const int tie_t::max_nplet {5};
 
-
-
-tuplet_t::tuplet_t() {};
-tuplet_t::tuplet_t(nv_t const& nv1) {
-	auto mn = nvt_to_mn(nv1);
-	auto ab = mn2ab(mn);
-	m_a = ab.a; m_b = ab.b;
+tie_t::tie_t(nv_t const& nv1) {
+	//auto mn = nvt2mn(nv1);
+	//auto ab = mn2ab(mn);
+	//m_a = ab.a; m_b = ab.b;
+	m_ab = nvt2ab(nv1);
 }
-tuplet_t::tuplet_t(int const& n_nv_in, nv_t const& nv_in) {
-	auto mn = nvt_to_mn(nv_in);
-	auto ab = mn2ab(mn);
-	m_a = n_nv_in*(ab.a); m_b = ab.b;
+tie_t::tie_t(int const& n_nv_in, nv_t const& nv_in) {
+	auto ab_in = nvt2ab(nv_in);
+	m_ab = ab_in; 
+	for (int i=1; i<n_nv_in; ++i) {
+		m_ab = add_ab(m_ab,ab_in);
+	}
+	//auto mn = nvt2mn(nv_in);
+	//auto ab = mn2ab(mn);
+	//m_a = n_nv_in*(ab.a); m_b = ab.b;
 }
-tuplet_t::tuplet_t(nv_t const& nv1, nv_t const& nv2) {
-	auto mn1 = nvt_to_mn(nv1); auto mn2 = nvt_to_mn(nv2);
-	auto ab1 = mn2ab(mn1); auto ab2 = mn2ab(mn2);
+tie_t::tie_t(nv_t const& nv1, nv_t const& nv2) {
+	auto ab1 = nvt2ab(nv1); auto ab2 = nvt2ab(nv2);
+	m_ab = add_ab(ab1,ab2);
+	//auto mn1 = nvt2mn(nv1); auto mn2 = nvt2mn(nv2);
+	//auto ab1 = mn2ab(mn1); auto ab2 = mn2ab(mn2);
+	//if (ab1.b > ab2.b) { std::swap(ab1,ab2); }
+
+	//m_a = (ab1.a)*std::pow(2,(ab2.b-ab1.b)) + ab2.a;
+	//m_b = std::pow(2,ab2.b);
+	//m_b = ab2.b;
+}
+
+tie_t::tie_t(nv_t const&, nv_t const&,  nv_t const&) {
+	//...
+}
+tie_t::tie_t(std::vector<nv_t> const& nvs) {
+	for (auto e : nvs) {
+		m_ab = add_ab(m_ab,nvt2ab(e));
+	}
+}
+
+// Can this duration be represented as a single nv_t ?
+bool tie_t::singlet_exists() const {
+	return is_mersenne(m_ab.a);
+}
+
+tie_t::nvt_ab tie_t::add_ab(nvt_ab ab1, nvt_ab ab2) const {
 	if (ab1.b > ab2.b) { std::swap(ab1,ab2); }
-
-	m_a = (ab1.a)*std::pow(2,(ab2.b-ab1.b)) + ab2.a;
-	m_b = std::pow(2,ab2.b);
+		// The static_cast<int> below requires (ab1.a)*std::pow(2,db)
+		// actually be an integer... 2^db needs to be >=1
+	auto db = ab2.b - ab1.b;
+	auto a3 = static_cast<int>((ab1.a)*(std::pow(2,db))) + ab2.a;
+	auto b3 = ab2.b;
+	return nvt_ab {a3,b3};
 }
 
-tuplet_t::tuplet_t(nv_t const&, nv_t const&,  nv_t const&) {
-	//...
-}
-tuplet_t::tuplet_t(std::vector<nv_t> const&) {
-	//...
+// Convert the duration to a tuplet of nv_t's, the sum of which
+// is equivalent to the duration.  
+//
+// Algorithm:
+// Given a d = a/(2^b) with integer a >= 1, integer b (which holds provided
+// d arose as either an nv_t or a sum of nv_t's), decompose it into some
+// set of nv_t's which if summed would have a duration == d.  
+//
+// CASE 1:
+// If a is a mersenne number, d has an nv_t representation, so just calculate
+// m,n and return the corresponding nv_t.  
+//
+// CASE 2:
+// If a is _not_ a mersenne number, break d into a sum:
+// d = a/(2^b) = (2^p)/(2^b) + a2/(2^b)
+// where (2^p) is the largest integer power of 2 not > a.  The first term 
+// thus reduces easily, and the sum becomes:
+// d = 1/(2^(b-p) + (a-2^p)/(2^b)
+// Since 1 is a mersenne number and b-p is an integer, the first term has
+// an nv_t representation with n = 0 and m = b-p.  Note that since the 
+// numerator of the first term is always 1, the corresponding nv_t always
+// has zero dots.  Note also that (since durations are always > 0) the
+// second term is always a shorter duration than the first.  
+// 
+// Compute the nv_t for the first term and push_back the result into the
+// result std::vector<nv_t>.  
+// 
+// Set d == the second term (a == a-2^p, b == 2^b) and repeat the process
+// with the new d.  
+//
+std::vector<nv_t> tie_t::to_nvs() const {
+	auto ab = m_ab;
+	std::vector<nv_t> res {};
+
+	while (ab.a>0) {
+		if (is_mersenne(ab.a)) {
+			auto n = std::log2(ab.a+1)-1.0;
+			nvt_mn mn = {ab.b-static_cast<int>(n), static_cast<int>(n)};
+			res.push_back(mn2nvt(mn));
+			break;
+		} else {
+			auto p = static_cast<int>(std::floor(std::log2(ab.a)));
+			nvt_mn mn {ab.b-p,0};
+			res.push_back(mn2nvt(mn));  // ab1 converted to an mn
+			ab.a = ab.a-std::pow(2,p);
+			wait();
+		}
+	}
+	return res;
 }
 
-bool tuplet_t::singlet_exists() const {
-	return isapproxint(std::log2(m_a+1),6);
-}
-
-tuplet_t::nvt_ab tuplet_t::mn2ab(tuplet_t::nvt_mn const& mn) const {
-	// a = sum(i=0,i=n,2^i) = 2^(n+1)-1
-    // b = m+n
+// Always possible.  Every m,n representation has an a,b representation.  
+tie_t::nvt_ab tie_t::mn2ab(tie_t::nvt_mn const& mn) const {
 	int a = static_cast<int>(std::pow(2,mn.n+1))-1;
 	int b = mn.m + mn.n;
 	return nvt_ab {a,b};
 }
 
-tuplet_t::nvt_mn tuplet_t::nvt_to_mn(nv_t const& nvt_in) const {
-	auto unitnv = nv_t(1,0);
-	auto m = static_cast<int>((-1)*std::log2(nvt_in.base()/unitnv));
+nv_t tie_t::mn2nvt(tie_t::nvt_mn const& mn) const {
+	return nv_t {1.0/std::pow(2,mn.m),mn.n};
+}
 
+tie_t::nvt_mn tie_t::nvt2mn(nv_t const& nvt_in) const {
+	nv_t unitnv {1,0};
+	auto m = static_cast<int>((-1)*std::log2(nvt_in.base()/unitnv));
 	return nvt_mn {m,nvt_in.ndot()};
 }
 
-
+tie_t::nvt_ab tie_t::nvt2ab(nv_t const& nvt_in) const {
+	auto mn = nvt2mn(nvt_in);
+	return mn2ab(mn);
+}
 
 
 

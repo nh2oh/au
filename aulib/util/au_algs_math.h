@@ -3,16 +3,7 @@
 #include <cmath> // std::abs for template roundstep(), std::round for template roundquant()
 #include <random>
 #include <optional>
-#include <map>
-
-// k-means
-struct kmeans_result {
-	double mean {};
-	double stdev {};
-	std::vector<size_t> members {};
-};
-std::map<short,kmeans_result> kmeans(std::vector<double>,std::vector<double>);
-
+//#include <map>
 
 // Regression
 struct linreg_result {
@@ -27,6 +18,30 @@ std::optional<linreg_result> linreg(std::vector<double> const&, std::vector<doub
 bool isapproxint(double,int); // is approximately integer
 bool isapproxeq(double, double, int);
 bool ismultiple(double, double, int); // true if arg1/arg2 == integer
+
+// Better version of isapproxeq()
+template<typename T>
+bool aprx_eq(T a, T b, int ulp=2) {
+	auto e = std::numeric_limits<T>::epsilon();
+	auto m = std::numeric_limits<T>::min();
+	auto d = std::abs(a-b);
+	auto s = std::abs(a+b);
+	return (d <= e*s*ulp || d < m);
+};
+
+// Better version of isapproxint()
+template<typename T>
+bool aprx_int(T a, int ulp=2) {
+	T ra {std::round(a)};
+	return aprx_eq(a, ra, ulp);
+};
+
+template<typename T>
+bool is_mersenne(T a, int ulp=2) {
+	if (a < 1) {return false;}
+	auto n = std::log2(a+1);
+	return (n >= 1 && aprx_int(n,ulp));
+};
 
 // Vectorized lcm, gcd
 int lcm(std::vector<int> const&);
