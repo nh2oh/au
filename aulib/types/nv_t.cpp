@@ -1,185 +1,45 @@
 #include "nv_t.h"
-#include "../util/au_error.h"
 #include "../util/au_util.h"
 #include "../util/au_algs_math.h"
 #include <string>
 #include <vector>
 #include <cmath>  // std::pow(), std::log2, std::round
-#include <algorithm> // for swap()
-
-//-----------------------------------------------------------------------------
-// Public & private statics
-int const nv_t::min_bv_exponent = -3;  // => 8, private
-int const nv_t::max_bv_exponent = 10;  // => 1/1024, private
-double const nv_t::min_bv = 1.0/std::pow(2,nv_t::max_bv_exponent); // public
-double const nv_t::max_bv = 1.0/std::pow(2,nv_t::min_bv_exponent); // public
-int const nv_t::max_ndots = 5; // public
-
-bool nv_t::bv_isvalid(double const& bv) { // public
-	if (bv < min_bv || bv > max_bv) {
-		return false;
-	}
-	return true;
-}
-bool nv_t::ndots_isvalid(int const& ndot) { // public
-	return (ndot >= 0 && ndot <= max_ndots);
-}
-double nv_t::quantize_bv(double const& bv) { // public
-	return 1.0/std::pow(2,bv_exponent(bv));
-}
-int nv_t::bv_exponent(double const& bv) {  // private
-	return static_cast<int>(std::round(std::log2(1.0/bv)));
-}
-
-//-----------------------------------------------------------------------------
-// Constructors
-
-nv_t::nv_t(double const& bv, int const& ndot) {
-	au_assert((ndots_isvalid(ndot) && bv_isvalid(bv)), __FUNCTION__);
-	m_m = bv_exponent(bv);
-	m_n = ndot;
-}
-
-//-----------------------------------------------------------------------------
-// Getters
-std::string nv_t::print() const {
-	std::string s {};
-	if (m_m > 0) { // nv() < the whole note
-		s += "1/";
-		s += std::to_string(static_cast<int>(std::pow(2,m_m)));
-	} else { // nv() >= the whole note
-		s += std::to_string(static_cast<int>(std::pow(2,-1*m_m)));
-	}
-	s += std::string(m_n,'.');
-	return s;
-}
-int nv_t::ndot() const {
-	return m_n;
-}
-nv_t nv_t::base() const {
-	return nv_t {bv(),0};
-}
-
-/*
-// Returns a vector of unique, zero-dotted nv_t's which, if their nv()'s 
-// were summed, would == the nv() of the input.  The nv() of each element
-// (i+1) == 1/2 element i.  
-std::vector<nv_t> nv_t::explode() const {
-	std::vector<nv_t> result {};
-	for (int i=0; i<m_n; ++i) {
-		result.push_back(nv_t{bv()/std::pow(2,i),0});
-	}
-	return result;
-}
-*/
-//-----------------------------------------------------------------------------
-// Setters; public, non-static
-nv_t& nv_t::set_base(double const& bv) {
-	au_assert(bv_isvalid(bv), __FUNCTION__);
-
-	m_m = bv_exponent(bv);
-	m_n = 0;
-
-	return *this;
-}
-nv_t& nv_t::set_dots(int const& ndots) {
-	au_assert(ndots_isvalid(ndots), __FUNCTION__);
-	return *this;
-}
-nv_t& nv_t::add_dot(int const& ndots) {  // default value ndots == 1
-	int new_n = m_n + ndots;
-	au_assert(ndots_isvalid(new_n), __FUNCTION__);
-	m_n = new_n;
-	return *this;
-}
-nv_t& nv_t::rm_dots(int const& ndots) {
-	int new_n = m_n - ndots;
-	au_assert(ndots_isvalid(new_n), __FUNCTION__);
-	m_n = new_n;
-	return *this;
-}
-nv_t& nv_t::rm_dots() {
-	m_n = 0;
-	return *this;
-}
-
-//-----------------------------------------------------------------------------
-// Private non-static methods
-double nv_t::nv() const {
-	return (1.0/std::pow(2,m_m))*(2.0 - 1.0/std::pow(2,m_n));
-}
-double nv_t::bv() const {
-	return 1.0/std::pow(2,m_m);
-}
-
-//-----------------------------------------------------------------------------
-// Operators
-double operator/(nv_t const& num, nv_t const& denom) {
-	return num.nv()/denom.nv();
-}
-bool operator==(nv_t const& lhs, nv_t const& rhs) {
-	return(lhs.nv() == rhs.nv());
-}
-bool operator!=(nv_t const& lhs, nv_t const& rhs) {
-	return(!(rhs==lhs));
-}
-bool operator<(nv_t const& lhs, nv_t const& rhs) {
-	return (lhs.nv() < rhs.nv());
-}
-bool operator>(nv_t const& lhs, nv_t const& rhs) {
-	return (lhs.nv() > rhs.nv());
-}
-bool operator<=(nv_t const& lhs, nv_t const& rhs) {
-	return (lhs.nv() <= rhs.nv());
-}
-bool operator>=(nv_t const& lhs, nv_t const& rhs) {
-	return (lhs.nv() >= rhs.nv());
-}
 
 
+const int d_t::max_nplet {5};
 
-
-const int tie_t::max_nplet {5};
-
-tie_t::tie_t(nv_t const& nv1) {
-	m_ab = nvt2ab(nv1);
-}
-tie_t::tie_t(int const& n_nv_in, nv_t const& nv_in) {
-	auto ab_in = nvt2ab(nv_in);
-	m_ab = ab_in; 
-	for (int i=1; i<n_nv_in; ++i) {
-		m_ab = add_ab(m_ab,ab_in);
-	}
-}
-tie_t::tie_t(nv_t const& nv1, nv_t const& nv2) {
-	auto ab1 = nvt2ab(nv1); auto ab2 = nvt2ab(nv2);
-	m_ab = add_ab(ab1,ab2);
+d_t::d_t(common_duration_t d) {
+	auto dint = static_cast<int>(d);
+	int n = std::abs(dint%10);
+	int m = dint/10;
+	
+	auto ab_in = mn2ab({m,n});
+	m_a = ab_in.a; m_b = ab_in.b;
 }
 
-tie_t::tie_t(std::vector<nv_t> const& nvs) {
-	for (auto e : nvs) {
-		m_ab = add_ab(m_ab,nvt2ab(e));
-	}
+d_t::d_t(const mn& mn_in) {
+	auto ab_in = mn2ab(mn_in);
+	m_a = ab_in.a; m_b = ab_in.b;
 }
 
-// Can this duration be represented as a single nv_t ?
-bool tie_t::singlet_exists() const {
-	return is_mersenne(m_ab.a);
+// Called by multiple constructors and other internal methods
+d_t::ab d_t::mn2ab(const d_t::mn& mn_in) const {
+	int a = static_cast<int>(std::pow(2,mn_in.n+1))-1;
+	int b = mn_in.m + mn_in.n;
+	return d_t::ab {a,b};
 }
 
-tie_t::nvt_ab tie_t::add_ab(nvt_ab ab1, nvt_ab ab2) const {
-	// The static_cast<int> below requires (ab1.a)*std::pow(2,db)
-	// actually be an integer... 2^db needs to be >=1
-	auto db = ab2.b - ab1.b;
-	if (db >= 0) {
-		auto a3 = (ab1.a)*static_cast<int>(std::pow(2,db)) + ab2.a;
-		auto b3 = ab2.b;
-		return nvt_ab {a3,b3};
-	} else {
-		auto a3 = (ab2.a)*static_cast<int>(std::pow(2,-1*db)) + ab1.a;
-		auto b3 = ab1.b;
-		return nvt_ab {a3,b3};
-	}
+// You have to check if a singlet_exists() first, otherwise the 
+// answer could be _way_ wrong.  
+d_t::mn d_t::ab2mn(const d_t::ab& ab_in) const {
+	auto n = static_cast<int>(std::log2(ab_in.a+1)-1.0);
+	return d_t::mn{ab_in.b-n, n};
+}
+
+// Can this duration be represented as a singlet?  That is, is there
+// an m,n representation?
+bool d_t::singlet_exists() const {
+	return is_mersenne(m_a);
 }
 
 // Convert the duration to a tuplet of nv_t's, the sum of which
@@ -212,67 +72,319 @@ tie_t::nvt_ab tie_t::add_ab(nvt_ab ab1, nvt_ab ab2) const {
 // Set d == the second term (a == a-2^p, b == 2^b) and repeat the process
 // with the new d.  
 //
-std::vector<nv_t> tie_t::to_nvs() const {
-	auto ab = m_ab;
-	std::vector<nv_t> res {};
+std::vector<d_t> d_t::to_singlets() const {
+	std::vector<d_t> res {};
 
-	while (ab.a>0) {
-		if (is_mersenne(ab.a)) {
-			auto n = std::log2(ab.a+1)-1.0;
-			nvt_mn mn = {ab.b-static_cast<int>(n), static_cast<int>(n)};
-			res.push_back(mn2nvt(mn));
+	auto a = m_a; auto b = m_b;
+	while (a>0) {
+		if (is_mersenne(a)) {
+			auto n = static_cast<int>(std::log2(a+1)-1.0);
+			res.push_back(d_t{d_t::mn{b-n, n}});
 			break;
 		} else {
-			auto p = static_cast<int>(std::floor(std::log2(ab.a)));
-			nvt_mn mn {ab.b-p,0};
-			res.push_back(mn2nvt(mn));  // ab1 converted to an mn
-			ab.a = ab.a-std::pow(2,p);
+			auto p = static_cast<int>(std::floor(std::log2(a)));
+			res.push_back(d_t{d_t::mn{b-p, 0}});
+			a = a-static_cast<int>(std::pow(2,p));
 			wait();
 		}
 	}
+
 	return res;
 }
 
-// Always possible.  Every m,n representation has an a,b representation.  
-tie_t::nvt_ab tie_t::mn2ab(tie_t::nvt_mn const& mn) const {
+int d_t::ndot() const {
+	if (singlet_exists()) {
+		auto mn_rep = ab2mn({m_a,m_b});
+		return mn_rep.n;
+	}
+	return 0;
+}
+int d_t::base() const {
+	if (singlet_exists()) {
+		auto mn_rep = ab2mn({m_a,m_b});
+		return mn_rep.m;
+	}
+	return 0;
+}
+
+std::string d_t::print() const {
+	auto vs = to_singlets();
+	std::string s {};
+
+	bool tie = (vs.size() > 1);
+	for (int i=0; i<vs.size(); ++i) {
+		bool firstiter = (i == 0);
+		bool lastiter = (i == vs.size()-1);
+		auto curr_mn = ab2mn({vs[i].m_a,vs[i].m_b});
+
+		auto bv = std::pow(2,curr_mn.m);
+		if (curr_mn.m > 0) { // nv() < the whole note
+			s += "1/";
+			s += std::to_string(static_cast<int>(bv));
+		} else { // nv() >= the whole note
+			s += std::to_string(static_cast<int>(1.0/bv));
+		}
+
+		if (tie && !firstiter) {
+			s += ")";
+		}
+		s += std::string(curr_mn.n, '.');
+		if (tie && !lastiter) {
+			s += "(";
+		}
+	}
+	return s;
+}
+
+bool d_t::set_base(int const& m_in) {
+	if (singlet_exists()) {
+		auto mn_rep = ab2mn({m_a,m_b});
+		mn_rep.m = m_in;
+		auto ab_rep = mn2ab(mn_rep);
+		m_a = ab_rep.a; m_b = ab_rep.b;
+		return true;
+	}
+	return false;
+}
+bool d_t::set_dots(int const& ndots) {
+	if (singlet_exists()) {
+		auto mn_rep = ab2mn({m_a,m_b});
+		mn_rep.n = ndots;
+		auto ab_rep = mn2ab(mn_rep);
+		m_a = ab_rep.a; m_b = ab_rep.b;
+		return true;
+	}
+	return false;
+}
+bool d_t::add_dots(int const& ndots) {  // default value ndots == 1
+	if (singlet_exists()) {
+		auto mn_rep = ab2mn({m_a,m_b});
+		mn_rep.n += ndots;
+		auto ab_rep = mn2ab(mn_rep);
+		m_a = ab_rep.a; m_b = ab_rep.b;
+		return true;
+	}
+	return false;
+}
+bool d_t::rm_dots(int const& ndots) {
+	if (singlet_exists()) {
+		auto mn_rep = ab2mn({m_a,m_b});
+		mn_rep.n = std::max(mn_rep.n-ndots,0);
+		auto ab_rep = mn2ab(mn_rep);
+		m_a = ab_rep.a; m_b = ab_rep.b;
+		return true;
+	}
+	return false;
+}
+bool d_t::rm_dots() {
+	if (singlet_exists()) {
+		auto mn_rep = ab2mn({m_a,m_b});
+		mn_rep.n = 0;
+		auto ab_rep = mn2ab(mn_rep);
+		m_a = ab_rep.a; m_b = ab_rep.b;
+		return true;
+	};
+	return false;
+}
+
+
+d_t& d_t::operator+=(const d_t& d2) {
+	// a,b-form requires a be an integer, therefore 2^db must be >= 1
+	// because the a term of the sum is: m_a = m_a*(2^db)*d2.m_a
+	auto db = d2.m_b - m_b;  // "delta b"
+	if (db >= 0) {
+		m_a = (m_a)*static_cast<int>(std::pow(2,db)) + d2.m_a;
+		m_b = d2.m_b;
+	} else {
+		m_a = (d2.m_a)*static_cast<int>(std::pow(2,-1*db)) + m_a;
+		m_b = m_b;
+	}
+
+	return *this;
+}
+
+
+// TODO:  Check this for both branches
+d_t& d_t::operator-=(const d_t& d2) {
+	// a,b-form requires a be an integer, therefore 2^db must be >= 1
+	// because the a term of the sum is: m_a = m_a*(2^db)*d2.m_a
+	auto db = d2.m_b - m_b;  // "delta b"
+	if (db >= 0) {
+		m_a = (m_a)*static_cast<int>(std::pow(2,db)) - d2.m_a;
+		m_b = d2.m_b;
+	} else {
+		m_a = (d2.m_a)*static_cast<int>(std::pow(2,-1*db)) - m_a;
+		m_b = m_b;
+	}
+
+	return *this;
+}
+
+d_t operator+(d_t lhs, const d_t& rhs) {
+	return lhs += rhs;
+}
+d_t operator-(d_t lhs, const d_t& rhs) {
+	return lhs -= rhs;
+}
+d_t& d_t::operator*=(const int& n) {
+	m_a *= n;
+	return *this;
+}
+bool d_t::operator<(const d_t& d) const {
+	return (static_cast<double>(m_a)/std::pow(2,m_b) < 
+		static_cast<double>(d.m_a)/std::pow(2,d.m_b));
+}
+bool d_t::operator>(const d_t& d) const {
+	return (static_cast<double>(m_a)/std::pow(2,m_b) > 
+		static_cast<double>(d.m_a)/std::pow(2,d.m_b));
+}
+bool d_t::operator==(const d_t& d) const {
+	return (aprx_eq(static_cast<double>(m_a)/std::pow(2,m_b), 
+		static_cast<double>(d.m_a)/std::pow(2,d.m_b)));
+}
+bool operator!=(const d_t& lhs, const d_t& rhs) {
+	return !(lhs==rhs);
+}
+bool operator<=(const d_t& lhs, const d_t& rhs) {
+	return (lhs < rhs || lhs == rhs);
+}
+bool operator>=(const d_t& lhs, const d_t& rhs) {
+	return (lhs > rhs || lhs == rhs);
+}
+
+
+/*
+//-----------------------------------------------------------------------------
+// nv_t
+
+int const nv_t::min_bv_exponent = -3;  // => 8, private
+int const nv_t::max_bv_exponent = 10;  // => 1/1024, private
+double const nv_t::min_bv = 1.0/std::pow(2,nv_t::max_bv_exponent); // public
+double const nv_t::max_bv = 1.0/std::pow(2,nv_t::min_bv_exponent); // public
+int const nv_t::max_ndots = 5; // public
+
+nv_t::nv_t(common_duration_t nv) {
+	m_d = d_t(nv);
+}
+
+nv_t::nv_t(int m, int n) {
+	m_d = mn2d({m,n});
+}
+
+//-----------------------------------------------------------------------------
+// Getters
+std::string nv_t::print() const {
+	std::string s {};
+	if (m_m > 0) { // nv() < the whole note
+		s += "1/";
+		s += std::to_string(static_cast<int>(std::pow(2,m_m)));
+	} else { // nv() >= the whole note
+		s += std::to_string(static_cast<int>(std::pow(2,-1*m_m)));
+	}
+	s += std::string(m_n,'.');
+	return s;
+}
+
+
+
+//-----------------------------------------------------------------------------
+// Setters; public, non-static
+nv_t& nv_t::set_base(double const& bv) {
+	au_assert(bv_isvalid(bv), __FUNCTION__);
+
+	m_m = bv_exponent(bv);
+	m_n = 0;
+
+	return *this;
+}
+
+//-----------------------------------------------------------------------------
+// Private non-static methods
+double nv_t::nv() const {
+	return (1.0/std::pow(2,m_m))*(2.0 - 1.0/std::pow(2,m_n));
+}
+double nv_t::bv() const {
+	return 1.0/std::pow(2,m_m);
+}
+
+// This defines m,n form by relating an m,n pair to a d
+d_t nv_t::mn2d(const nv_t::mn& mn) const {
 	int a = static_cast<int>(std::pow(2,mn.n+1))-1;
 	int b = mn.m + mn.n;
-	return nvt_ab {a,b};
+	return d_t {a,b};
 }
 
-nv_t tie_t::mn2nvt(tie_t::nvt_mn const& mn) const {
-	return nv_t {1.0/std::pow(2,mn.m),mn.n};
+//-----------------------------------------------------------------------------
+// Operators
+double operator/(nv_t const& num, nv_t const& denom) {
+	return num.nv()/denom.nv();
 }
-
-tie_t::nvt_mn tie_t::nvt2mn(nv_t const& nvt_in) const {
-	nv_t unitnv {1,0};
-	auto m = static_cast<int>((-1)*std::log2(nvt_in.base()/unitnv));
-	return nvt_mn {m,nvt_in.ndot()};
+bool operator==(nv_t const& lhs, nv_t const& rhs) {
+	return(lhs.nv() == rhs.nv());
 }
-
-tie_t::nvt_ab tie_t::nvt2ab(nv_t const& nvt_in) const {
-	auto mn = nvt2mn(nvt_in);
-	return mn2ab(mn);
+bool operator!=(nv_t const& lhs, nv_t const& rhs) {
+	return(!(rhs==lhs));
 }
-
-
-
-
-
-
-
-d_t::d_t(common_duration_t d) {
-	auto dint = static_cast<int>(d);
-	int n = std::abs(dint%10);
-	int m = dint/10;
-	
-	m_a = std::pow(2,(n+1))-1;
-	m_b = n+m;
+bool operator<(nv_t const& lhs, nv_t const& rhs) {
+	return (lhs.nv() < rhs.nv());
+}
+bool operator>(nv_t const& lhs, nv_t const& rhs) {
+	return (lhs.nv() > rhs.nv());
+}
+bool operator<=(nv_t const& lhs, nv_t const& rhs) {
+	return (lhs.nv() <= rhs.nv());
+}
+bool operator>=(nv_t const& lhs, nv_t const& rhs) {
+	return (lhs.nv() >= rhs.nv());
 }
 
 
 
 
+
+
+tie_t::tie_t(nv_t const& nv1) {
+	m_ab = nvt2ab(nv1);
+}
+tie_t::tie_t(int const& n_nv_in, nv_t const& nv_in) {
+	auto ab_in = nvt2ab(nv_in);
+	m_ab = ab_in; 
+	for (int i=1; i<n_nv_in; ++i) {
+		m_ab = add_ab(m_ab,ab_in);
+	}
+}
+tie_t::tie_t(nv_t const& nv1, nv_t const& nv2) {
+	auto ab1 = nvt2ab(nv1); auto ab2 = nvt2ab(nv2);
+	m_ab = add_ab(ab1,ab2);
+}
+
+tie_t::tie_t(std::vector<nv_t> const& nvs) {
+	for (auto e : nvs) {
+		m_ab = add_ab(m_ab,nvt2ab(e));
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+*/
 
 
 

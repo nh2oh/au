@@ -7,7 +7,7 @@
 #include <optional>
 
 
-ts_t::ts_t(beat_t const& num, nv_t const& denom, bool const& is_compound_in) {
+ts_t::ts_t(beat_t const& num, d_t const& denom, bool const& is_compound_in) {
 	au_assert(num > beat_t{0.0});
 
 	m_compound = is_compound_in;
@@ -23,8 +23,9 @@ ts_t::ts_t(beat_t const& num, nv_t const& denom, bool const& is_compound_in) {
 		// That is, 3 notes of value denom == 1 beat.  
 		// A group of three identical note-values x is equivalent a single nv
 		// having twice the duration of x, 2x, dotted once: (2x).
-		auto unitnv = nv_t {1,0};
-		m_beat_unit = nv_t {2.0*(denom/unitnv),1};
+
+		auto beat_unit = 2*denom; au_assert(beat_unit.add_dots(1));
+		m_beat_unit = beat_unit;
 	}
 }
 
@@ -42,13 +43,13 @@ void ts_t::from_string(std::string const& str_in) {
 	auto matches = *o_matches;
 
 	double bt_per_bar {std::stod(*(matches[1]))};
-	double inv_nv_per_bt {std::stod(*(matches[2]))};
-	au_assert((bt_per_bar > 0 && inv_nv_per_bt > 0), "No (-) values in a ts");
+	int dv_per_bt = std::stoi(*(matches[2]));
+	au_assert((bt_per_bar > 0 && dv_per_bt > 0), "No (-) values in a ts");
 	
 	bool is_compound {false};
 	if (matches[3]) { is_compound = true; }
 
-	m_beat_unit = nv_t {1.0/inv_nv_per_bt};
+	m_beat_unit = d_t {d_t::mn{dv_per_bt,0}};
 	m_bpb = beat_t {bt_per_bar};
 	m_compound = is_compound;
 }
@@ -57,13 +58,12 @@ ts_t operator""_ts(const char *literal_in, size_t length) {
 	return ts_t {std::string {literal_in}};
 }
 
-nv_t ts_t::beat_unit() const {
+d_t ts_t::beat_unit() const {
 	return m_beat_unit;
 }
 
-nv_t ts_t::bar_unit() const {
-	auto unitnv = nv_t{1,0};
-	return nv_t{(m_beat_unit/unitnv)*(m_bpb/beat_t{1}),0};
+d_t ts_t::bar_unit() const {
+	return (m_bpb/beat_t{1})*(m_beat_unit);
 }
 
 beat_t ts_t::beats_per_bar() const {

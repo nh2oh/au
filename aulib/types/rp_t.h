@@ -83,20 +83,20 @@
 //  from the output of print().  
 //
 
-/*
+
 class rp_t2 {
 public:
 	rp_t2()=default;
 	explicit rp_t2(ts_t const&);
-	explicit rp_t2(ts_t const&, std::vector<nv_t> const&);
+	explicit rp_t2(ts_t const&, std::vector<d_t> const&);
 
-	void push_back(nv_t);
+	void push_back(d_t);
 
 	std::string print() const;
 	std::string print_bidx() const;
 private:
 	struct vgroup {
-		nv_t e {};
+		d_t e {};
 		size_t usrix {0};
 		size_t tie_f {0};
 		size_t tie_b {0};
@@ -107,7 +107,7 @@ private:
 	size_t m_nusrelems {0};
 	ts_t m_ts;
 };
-*/
+
 // TODO
 // 1)  Some sort of interospection/analysis functions...  Are there 
 //     bar-spanning elements?  What is the nv_t dist?  the ts?
@@ -129,7 +129,7 @@ class rp_t {
 public:
 	rp_t() = default;
 	explicit rp_t(ts_t const&);
-	explicit rp_t(ts_t const&, std::vector<nv_t> const&);
+	explicit rp_t(ts_t const&, std::vector<d_t> const&);
 	explicit rp_t(ts_t const&, std::vector<std::chrono::milliseconds> const&,
 		tempo_t const&, std::chrono::milliseconds const&);
 
@@ -143,18 +143,18 @@ public:
 	bar_t nbars() const;
 	beat_t nbeats() const;
 	size_t nelems() const;
-	std::map<nv_t,size_t> nv_members() const;
+	std::map<d_t,size_t> nv_members() const;
 
 	std::vector<std::chrono::milliseconds> dt(tempo_t const&) const;
 
 	// Setters
 	void set_ts(ts_t const&);
-	void push_back(nv_t const&);
+	void push_back(d_t const&);
 private:
 	//----------------------------------------------------------------------------
 	// Data members
 	ts_t m_ts {};  // Default ts_t == 4/4
-	std::vector<nv_t> m_rp {};
+	std::vector<d_t> m_rp {};
 	
 	// m_bidx:  "Bar indices"
 	// Only computed upon a call to build_bidx() (private function)
@@ -177,10 +177,10 @@ private:
 	// m_bidx[i].end_exact == m_bidx[i+1].start_exact
 	//
 	struct bidx {
-		std::vector<nv_t>::size_type start {0};  // The first element of the bar
+		std::vector<d_t>::size_type start {0};  // The first element of the bar
 		bool start_exact {true};  
 			// Is the start element of bar i the end element of bar i-1 ?
-		std::vector<nv_t>::size_type end {0};  // The first element of the _next_ bar
+		std::vector<d_t>::size_type end {0};  // The first element of the _next_ bar
 		bool end_exact {false};
 			// Is the end element of bar i the start element of bar i+1 ?
 	};
@@ -197,13 +197,13 @@ private:
 // TODO:  Some (all?) of these belong in either ts_t.h or beat_bar_t.h
 // or nv_t.h ...
 // Number of beats spanned by a given nv_t for a given ts.  
-beat_t nbeat(ts_t const&, nv_t const&);
+beat_t nbeat(ts_t const&, d_t const&);
 beat_t nbeat(ts_t const&, bar_t const&);
 // Number of bars spanned by a given nv_t for a given ts.  
 // Overload for a given nbeats
-bar_t nbar(ts_t const&, nv_t const&);
+bar_t nbar(ts_t const&, d_t const&);
 bar_t nbar(ts_t const&, beat_t const&);
-std::vector<bar_t> cum_nbar(ts_t const&, std::vector<nv_t> const&);
+std::vector<bar_t> cum_nbar(ts_t const&, std::vector<d_t> const&);
 
 //nv_t closest_nv(ts_t const&, beat_t const&, std::set<nv_t>)
 

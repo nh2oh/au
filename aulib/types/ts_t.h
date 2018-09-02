@@ -36,16 +36,16 @@
 class ts_t {
 public:
 	ts_t() = default;;
-	explicit ts_t(beat_t const&, nv_t const&, bool const& =false); // num, denom, is-compound
+	explicit ts_t(beat_t const&, d_t const&, bool const& =false); // num, denom, is-compound
 	explicit ts_t(std::string const&);  // Calls ts_t.from_string()
 
-	nv_t beat_unit() const;
-		// The nv_t corresponding to one beat (== m_beat_unit).  
+	d_t beat_unit() const;
+		// The d_t corresponding to one beat (== m_beat_unit).  
 		// If the ts is simple, this is the denominator.  If compound,
-		// it's the nv_t w/ twice the duration of the denominator, then
+		// it's the d_t w/ twice the duration of the denominator, then
 		// dotted once.  
 
-	nv_t bar_unit() const;
+	d_t bar_unit() const;
 		// The note value that spans exactly 1 bar
 	
 	beat_t beats_per_bar() const;
@@ -59,7 +59,7 @@ private:
 	void from_string(std::string const&);
 		// Called by ts_t(std::string const&);
 
-	nv_t m_beat_unit {1.0/4.0};  // The nv_t corresponding to one beat
+	d_t m_beat_unit {d::q};//{1.0/4.0};  // The d_t corresponding to one beat
 	beat_t m_bpb {4.0};  // Beats per bar (numerator)
 	bool m_compound {false};  // False => simple
 };

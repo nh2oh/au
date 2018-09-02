@@ -12,19 +12,19 @@
 #include <map>
 
 
-/*
+
 rp_t2::rp_t2(ts_t const& ts) {
 	m_ts = ts;
 }
 
-rp_t2::rp_t2(ts_t const& ts, std::vector<nv_t> const& nv) {
+rp_t2::rp_t2(ts_t const& ts, std::vector<d_t> const& nv) {
 	m_ts = ts;
 	for (auto e : nv) {
 		push_back(e);
 	}
 }
 
-void rp_t2::push_back(nv_t nv) {
+void rp_t2::push_back(d_t nv) {
 	auto nv_max = nbeat(m_ts, bar_t{std::floor(m_nbars+1.0)-m_nbars});
 	auto tuplet = nv_factor(nv,mv_max);
 	while (tuplet - tuplet.first > m_ts.bar_unit()) {
@@ -76,7 +76,7 @@ std::string rp_t2::print_bidx() const {
 	}
 	return s;
 }
-*/
+
 
 
 rp_t::rp_t(ts_t const& ts_in) {

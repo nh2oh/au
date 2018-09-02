@@ -44,16 +44,16 @@ template<typename T=rest_dummy_t>
 class de_t {
 public:
 	de_t()=default;
-	explicit de_t(nv_t dv) {
+	explicit de_t(d_t dv) {
 		m_dv = dv;
 	};  // Creates a rest: T=rest_dummy_t
 
-	explicit de_t(T nt, nv_t dv) {
+	explicit de_t(T nt, d_t dv) {
 		m_nts.push_back(nt);
 		m_dv = dv;
 	};
 
-	explicit de_t(std::vector<T> nts, nv_t dv) {
+	explicit de_t(std::vector<T> nts, d_t dv) {
 		for (auto e : nts) {
 			insert(e);
 		}
@@ -73,12 +73,12 @@ public:
 		return;
 	};
 
-	void setd(nv_t dv) {  // set duration
+	void setd(d_t dv) {  // set duration
 		m_dv = dv;
 		return;
 	};
 
-	nv_t dv() {
+	d_t dv() {
 		return m_dv;
 	};
 
@@ -86,15 +86,8 @@ public:
 		return m_nts;
 	};
 
-	// if T=!rest_dummy_t...
-	//template<typename U>
-	//operator de_t<typename std::enable_if_t<!std::is_same<U,rest_dummy_t>::value,U>>() { return de_t<U>{}; };
-
-	// if T=rest_dummy_t...
-	//template<typename U>
-	//operator de_t<typename std::enable_if_t<std::is_same<U,rest_dummy_t>::value,U>>() { return de_t<U>{}; };
 private:
-	nv_t m_dv {};
+	d_t m_dv {};
 	std::vector<T> m_nts {};
 };
 
