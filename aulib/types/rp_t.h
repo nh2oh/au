@@ -104,7 +104,8 @@ private:
 	std::vector<vgroup> m_e {};
 	double m_nbeats {};
 	double m_nbars {};
-	size_t m_nusrelems {0};
+	d_t m_dtot {};
+	size_t m_usridx {0};
 	ts_t m_ts;
 };
 

@@ -93,7 +93,13 @@ public:
 
 	bool singlet_exists() const;
 	std::vector<d_t> to_singlets() const;
-		// Add options to set which types of tuplets are returned
+		// Unconstrained
+	std::vector<d_t> to_singlets_partition(const d_t&) const;
+		// The first n entries must exactly == the arg
+	std::vector<d_t> to_singlets_partition_max(const d_t&, const d_t&) const;
+		// The first n entries must exactly == arg1; entries [n+1,end) must be
+		// divisible into s s_i-element subsequences m->m+s_i each exactly == 
+		// arg2, except the final subsequence, which may be <= arg2.
 
 	int ndot() const;
 		// If the object has no singlet representation, ndot == 0, even if
@@ -113,7 +119,7 @@ public:
 	d_t& operator+=(const d_t&);
 	d_t& operator-=(const d_t&);
 	d_t& operator*=(const int&);
-	// d_t& operator/=(const int&);
+	double friend operator/(const d_t&, const d_t&);
 	bool operator<(const d_t&) const;
 	bool operator>(const d_t&) const;
 	bool operator==(const d_t&) const;
@@ -139,7 +145,7 @@ bool operator>=(const d_t&, const d_t&);
 bool operator!=(const d_t&, const d_t&);
 d_t operator-(d_t, const d_t&);
 d_t operator+(d_t, const d_t&);
-//double operator/(const d_t&, const d_t&);
+double operator/(const d_t&, const d_t&);
 d_t operator/(const d_t&, const int&);
 d_t operator*(const int&, const d_t&);
 d_t operator*(const d_t&, const int&);

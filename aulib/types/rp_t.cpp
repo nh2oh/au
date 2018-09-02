@@ -24,36 +24,30 @@ rp_t2::rp_t2(ts_t const& ts, std::vector<d_t> const& nv) {
 	}
 }
 
-void rp_t2::push_back(d_t nv) {
-	auto nv_max = nbeat(m_ts, bar_t{std::floor(m_nbars+1.0)-m_nbars});
-	auto tuplet = nv_factor(nv,mv_max);
-	while (tuplet - tuplet.first > m_ts.bar_unit()) {
-		tuplet = tuplet_t{tuplet.first,tuplet.remain};
-		//whatever
+void rp_t2::push_back(d_t d) {
+	int working_bar_n = std::floor(m_nbars);
+	int next_bar_n = std::floor(m_nbars)+1;
+	auto d_to_next_bar = next_bar_n*m_ts.bar_unit()-m_dtot;
+	
+	
+	auto d_singlets = d.to_singlets_partition_max(d_to_next_bar,m_ts.bar_unit());
+	for (int i=0; i<d_singlets.size(); ++i) {
+		m_e.push_back(vgroup{d_singlets[i],m_usridx,i,d_singlets.size()});
 	}
-	// Now tuplet ~ nv_max + ts.bar_uint() + ts.bar_unit() + ...
-	// access w/ tuplet[0]... tuplet[tuplet.size()-1]
-
-	for (int i=0; i<tuplet.size(); ++i) {
-		vgroup cvg {tuplet[i];
-			m_nusrelems;
-			tuplet.size()-1;  // tie_f
-			i;  // tie_b
-		};
-		m_e.push_back(cvg);
-	}
-
 	// also need to append rests
-
-	++m_nuserelems;
-	m_nbars += nbar(m_ts,nv);
-	m_nbeats += nbeat(m_ts,nv);
+	++m_usridx;
+	m_dtot += d;
+	m_nbars += nbar(m_ts,d);
+	m_nbeats += nbeat(m_ts,d);
 }
 
 std::string rp_t2::print() const {
 	std::string s {};
+	bar_t curr_bar {0};
 	for (auto e : m_e) {
-		cnb += nbar(m_ts,e.e);
+		curr_bar += nbar(m_ts,e.e);
+		//  Want: curr_bar += (curr_d += e)/m_ts
+		// if (curr_bar.exact())
 		if (isapproxint(cnb)) {	s += "|"; }
 		if (e.tie_b > 0 && e.tie_f == 0) { s += ")"; }
 		s += e.e.print();

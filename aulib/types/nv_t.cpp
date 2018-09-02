@@ -72,6 +72,7 @@ bool d_t::singlet_exists() const {
 // Set d == the second term (a == a-2^p, b == 2^b) and repeat the process
 // with the new d.  
 //
+
 std::vector<d_t> d_t::to_singlets() const {
 	std::vector<d_t> res {};
 
@@ -87,6 +88,38 @@ std::vector<d_t> d_t::to_singlets() const {
 			a = a-static_cast<int>(std::pow(2,p));
 			wait();
 		}
+	}
+
+	return res;
+}
+
+// The elments [0,n] must sum to exactly d1
+std::vector<d_t> d_t::to_singlets_partition(const d_t& d1) const {
+	std::vector<d_t> res {};
+	if (d1 > *this) { return to_singlets(); }
+	
+	auto rem = *this - d1;
+	for (auto e : d1.to_singlets()) {
+		res.push_back(e);
+	}
+	for (auto e : rem.to_singlets()) {
+		res.push_back(e);
+	}
+
+	return res;
+}
+
+// The elments [0,n] must sum to exactly d1
+std::vector<d_t> d_t::to_singlets_partition_max(const d_t& d1, const d_t& dmax) const {
+	std::vector<d_t> res {};
+	if (d1 > *this) { return to_singlets(); }
+	
+	auto rem = *this - d1;
+	for (auto e : d1.to_singlets()) {
+		res.push_back(e);
+	}
+	for (auto e : rem.to_singlets_partition_max(dmax, dmax)) {
+		res.push_back(e);
 	}
 
 	return res;
@@ -223,12 +256,18 @@ d_t& d_t::operator-=(const d_t& d2) {
 d_t operator+(d_t lhs, const d_t& rhs) {
 	return lhs += rhs;
 }
+
 d_t operator-(d_t lhs, const d_t& rhs) {
 	return lhs -= rhs;
 }
 d_t& d_t::operator*=(const int& n) {
 	m_a *= n;
 	return *this;
+}
+double operator/(const d_t& n, const d_t& d) {
+	double n_tot = static_cast<double>(n.m_a)/std::pow(2,n.m_b);
+	double d_tot = static_cast<double>(d.m_a)/std::pow(2,d.m_b);
+	return n_tot/d_tot;
 }
 bool d_t::operator<(const d_t& d) const {
 	return (static_cast<double>(m_a)/std::pow(2,m_b) < 
