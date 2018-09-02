@@ -137,43 +137,11 @@ bool operator>=(nv_t const& lhs, nv_t const& rhs) {
 }
 
 
-/*
-std::vector<nv_t> nvsum(std::vector<nv_t> nvs) {
-	if (n_unique(nvs) < nvs.size()) {
-		auto smallest = nvs[0].explode().back();
-		for (int i=0; i<nvs.size(); ++i) {
-			if (nvs[i].explode().back() < smallest) {
-				smallest = nvs[i].explode().back();
-			}
-		}
-	
-		int n = 0;
-		for (int i=0; i<nvs.size(); ++i) {
-			n += static_cast<int>(nvs[i]/smallest);
-		}
-		auto Nx = std::vector<nv_t>(n,smallest);
-		nvsum(Nx);
-	}
-	// Nx...
-}
-
-
-std::vector<nv_t> nvsum(std::vector<nv_t>,std::vector<nv_t>);
-std::vector<nv_t> nvsum_finalize(std::vector<nv_t>);
-*/
-
-
-
-
-
 
 
 const int tie_t::max_nplet {5};
 
 tie_t::tie_t(nv_t const& nv1) {
-	//auto mn = nvt2mn(nv1);
-	//auto ab = mn2ab(mn);
-	//m_a = ab.a; m_b = ab.b;
 	m_ab = nvt2ab(nv1);
 }
 tie_t::tie_t(int const& n_nv_in, nv_t const& nv_in) {
@@ -182,25 +150,12 @@ tie_t::tie_t(int const& n_nv_in, nv_t const& nv_in) {
 	for (int i=1; i<n_nv_in; ++i) {
 		m_ab = add_ab(m_ab,ab_in);
 	}
-	//auto mn = nvt2mn(nv_in);
-	//auto ab = mn2ab(mn);
-	//m_a = n_nv_in*(ab.a); m_b = ab.b;
 }
 tie_t::tie_t(nv_t const& nv1, nv_t const& nv2) {
 	auto ab1 = nvt2ab(nv1); auto ab2 = nvt2ab(nv2);
 	m_ab = add_ab(ab1,ab2);
-	//auto mn1 = nvt2mn(nv1); auto mn2 = nvt2mn(nv2);
-	//auto ab1 = mn2ab(mn1); auto ab2 = mn2ab(mn2);
-	//if (ab1.b > ab2.b) { std::swap(ab1,ab2); }
-
-	//m_a = (ab1.a)*std::pow(2,(ab2.b-ab1.b)) + ab2.a;
-	//m_b = std::pow(2,ab2.b);
-	//m_b = ab2.b;
 }
 
-tie_t::tie_t(nv_t const&, nv_t const&,  nv_t const&) {
-	//...
-}
 tie_t::tie_t(std::vector<nv_t> const& nvs) {
 	for (auto e : nvs) {
 		m_ab = add_ab(m_ab,nvt2ab(e));
@@ -213,13 +168,18 @@ bool tie_t::singlet_exists() const {
 }
 
 tie_t::nvt_ab tie_t::add_ab(nvt_ab ab1, nvt_ab ab2) const {
-	if (ab1.b > ab2.b) { std::swap(ab1,ab2); }
-		// The static_cast<int> below requires (ab1.a)*std::pow(2,db)
-		// actually be an integer... 2^db needs to be >=1
+	// The static_cast<int> below requires (ab1.a)*std::pow(2,db)
+	// actually be an integer... 2^db needs to be >=1
 	auto db = ab2.b - ab1.b;
-	auto a3 = static_cast<int>((ab1.a)*(std::pow(2,db))) + ab2.a;
-	auto b3 = ab2.b;
-	return nvt_ab {a3,b3};
+	if (db >= 0) {
+		auto a3 = (ab1.a)*static_cast<int>(std::pow(2,db)) + ab2.a;
+		auto b3 = ab2.b;
+		return nvt_ab {a3,b3};
+	} else {
+		auto a3 = (ab2.a)*static_cast<int>(std::pow(2,-1*db)) + ab1.a;
+		auto b3 = ab1.b;
+		return nvt_ab {a3,b3};
+	}
 }
 
 // Convert the duration to a tuplet of nv_t's, the sum of which
@@ -294,6 +254,25 @@ tie_t::nvt_ab tie_t::nvt2ab(nv_t const& nvt_in) const {
 	auto mn = nvt2mn(nvt_in);
 	return mn2ab(mn);
 }
+
+
+
+
+
+
+
+d_t::d_t(common_duration_t d) {
+	auto dint = static_cast<int>(d);
+	int n = std::abs(dint%10);
+	int m = dint/10;
+	
+	m_a = std::pow(2,(n+1))-1;
+	m_b = n+m;
+}
+
+
+
+
 
 
 

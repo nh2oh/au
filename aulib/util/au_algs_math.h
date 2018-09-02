@@ -3,7 +3,6 @@
 #include <cmath> // std::abs for template roundstep(), std::round for template roundquant()
 #include <random>
 #include <optional>
-//#include <map>
 
 // Regression
 struct linreg_result {
@@ -39,8 +38,7 @@ bool aprx_int(T a, int ulp=2) {
 template<typename T>
 bool is_mersenne(T a, int ulp=2) {
 	if (a < 1) {return false;}
-	auto n = std::log2(a+1);
-	return (n >= 1 && aprx_int(n,ulp));
+	return aprx_int(std::log2(a+1),ulp);
 };
 
 // Vectorized lcm, gcd

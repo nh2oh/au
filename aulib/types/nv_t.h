@@ -147,15 +147,6 @@ private:
 };
 
 
-//
-//
-//
-//
-//
-//
-//
-
-
 
 class tie_t {
 public:
@@ -163,7 +154,6 @@ public:
 	explicit tie_t(nv_t const&);
 	explicit tie_t(int const&, nv_t const&);
 	explicit tie_t(nv_t const&, nv_t const&);
-	explicit tie_t(nv_t const&, nv_t const&,  nv_t const&);
 	explicit tie_t(std::vector<nv_t> const&);
 
 	bool singlet_exists() const;
@@ -194,8 +184,8 @@ private:
 		//
 		// If both (1) and (2) are true, d=a/(2^b) can be represented as a single
 		// nv_t with m,n such that:
-		// a = 2^(n+1) - 1
-		// b = n + m
+		// a = 2^(n+1) - 1  <=>  n = log2(a+1) - 1
+		// b = n + m        <=>  m = b - log2(a+1) + 1
 		//
 		// For any pair of durations d1 = a1/2^b1, d2 = a2/2^b2, their sum 
 		// d3 = d1 + d2 = a3/2^b3 with
@@ -234,10 +224,54 @@ private:
 
 
 
+enum class common_duration_t {
+	// The final digit is the number of dots, the leading digits are the
+	// exponent of the base-value (m).  
+	ow = 8, owd = 81, owdd = 82, owddd = 83,
+	qw = 20, qwd = 21, qwdd = 22, qwddd = 23,
+	dw = 10, dwd = 11, wdd = 12, dwddd = 13,
+	w = 00, wd = 01, wdd = 02, wddd = 03,
+	h = -10, hd = -11, hdd = -12, hddd = -13,
+	q = -20, qd = -21, qdd = -22, qddd = -23,
+	e = -30, ed = -31, edd = -32, eddd = -33,
+	sx = -40, sxd = -41, sxdd = -42, sxddd = -43,
+	t = -50, td = -51, tdd = -52, tddd = -53,
+	sf = -60, sfd = -61, dfdd = -62, sfddd = -63,
+	ote = -70, oted = -71, otedd = -72, oteddd = -73,
+	tfs = -80, tfsd = -81, tfsdd = -82, tfsddd = -83,
+	ftw = -90, ftwd = -91, ftwdd = -92, ftwddd = -93,
+	ttwf = -100, ttwfd = -101, ttwfdd = -102, ttwfddd = -103, 
+	twfe = -110, twfe = -111, twfe = -112, twfe = -113,
+	fnsx = -120, fnsx = -121, fnsx = -122, fnsx = -123
+};
 
 
+// Implements duration math
+// Contained within the rest_t, nv_t, de_t,...
+// Just represents time-span.  Could mean a group of tied notes, could 
+// represent a sequence of non-tied notes, could represent a rest...  
 
+class d_t {
+public:
+	d_t()=default;
+	explicit d_t(common_duration_t);
 
+	d_t& operator+=(const d_t&);
+	d_t& operator-=(const d_t&);
+	d_t& operator*=(const int&);
+	d_t& operator/=(const int&);
+
+private:
+	int m_a {0};
+	int m_b {0};
+};
+
+d_t operator-(const d_t&, const d_t&);
+d_t operator+(const d_t&, const d_t&);
+double operator/(const d_t&, const d_t&);
+d_t operator/(const d_t&, const int&);
+d_t operator*(const int&, const d_t&);
+d_t operator*(const d_t&, const int&);
 
 
 
