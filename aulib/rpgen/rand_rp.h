@@ -17,7 +17,7 @@ struct rand_rp_opts {
 struct randrp_input {
 	randrp_input()=default;
 	ts_t ts {};
-	std::set<nv_t> nvset {};
+	std::set<d_t> nvset {};
 	std::vector<double> pd {};
 	int n_nts {};
 	bar_t n_bars {};
@@ -29,10 +29,10 @@ struct randrp_input {
 };
 
 
-std::optional<rp_t> rand_rp(ts_t,std::vector<nv_t>,
+std::optional<rp_t> rand_rp(ts_t,std::vector<d_t>,
 	std::vector<double>,int,bar_t);
 
-std::optional<rp_t> rand_rp(ts_t,std::vector<nv_t>,
+std::optional<rp_t> rand_rp(ts_t,std::vector<d_t>,
 	std::vector<double>,int,bar_t,rand_rp_opts);
 
 std::optional<rp_t> rand_rp(randrp_input);

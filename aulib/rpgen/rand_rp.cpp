@@ -25,7 +25,7 @@
 //
 //
 std::optional<rp_t> rand_rp(ts_t ts_in, 
-	std::vector<nv_t> dp_in, std::vector<double> pd_in, int nnts_in, 
+	std::vector<d_t> dp_in, std::vector<double> pd_in, int nnts_in, 
 	bar_t nbr_in, rand_rp_opts opts) {
 
 	au_assert(nbr_in >= bar_t{0});
@@ -49,8 +49,8 @@ std::optional<rp_t> rand_rp(ts_t ts_in,
 		mode = 3;
 	}
 
-	std::vector<nv_t> rpseg {};  // "rp segment" always == 1 bar exactly
-	std::vector<nv_t> rp {};
+	std::vector<d_t> rpseg {};  // "rp segment" always == 1 bar exactly
+	std::vector<d_t> rp {};
 
 	//std::default_random_engine randeng {};
 	//randeng.seed(std::chrono::system_clock::now().time_since_epoch().count());
@@ -77,7 +77,7 @@ std::optional<rp_t> rand_rp(ts_t ts_in,
 			// than a bar_t.  
 			//
 			auto ridx {rdist(randeng)};
-			nv_t rp_e {dp_in[ridx]};  // "rp element"
+			d_t rp_e {dp_in[ridx]};  // "rp element"
 			rpseg.push_back(rp_e);
 			rpseg_nbar += nbar(ts_in,rp_e);
 
@@ -132,13 +132,13 @@ std::optional<rp_t> rand_rp(ts_t ts_in,
 // TODO:  Convert rand_rp to take a std::set of nv_t instead of a std::vector
 std::optional<rp_t> rand_rp(randrp_input rand_rp_input_in) {
 	rand_rp_opts opts{std::chrono::seconds{3}};
-	std::vector<nv_t> gross(rand_rp_input_in.nvset.begin(),rand_rp_input_in.nvset.end());
+	std::vector<d_t> gross(rand_rp_input_in.nvset.begin(),rand_rp_input_in.nvset.end());
 
 	return rand_rp(rand_rp_input_in.ts,gross,
 		rand_rp_input_in.pd,rand_rp_input_in.n_nts,rand_rp_input_in.n_bars,opts);
 }
 
-std::optional<rp_t> rand_rp(ts_t ts_in, std::vector<nv_t> dp_in,
+std::optional<rp_t> rand_rp(ts_t ts_in, std::vector<d_t> dp_in,
 	std::vector<double> pd_in, int nnts_in, bar_t nbr_in) {
 	rand_rp_opts opts {std::chrono::seconds {3}};
 	return rand_rp(ts_in, dp_in, pd_in, nnts_in, nbr_in, opts);

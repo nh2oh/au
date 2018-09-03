@@ -18,7 +18,7 @@
 const int tmetg_t::m_bt_quantization {1024};
 
 // Constructors
-tmetg_t::tmetg_t(ts_t ts_in, std::vector<nv_t> nvs_in, std::vector<beat_t> ph_in) {
+tmetg_t::tmetg_t(ts_t ts_in, std::vector<d_t> nvs_in, std::vector<beat_t> ph_in) {
 	if (ph_in.size() != nvs_in.size()) {
 		au_error("ph_in.size() != nv_ts_in.size()");
 	}
@@ -86,8 +86,8 @@ void tmetg_t::set_rand_pg() {
 	}
 }
 
-std::vector<nv_t> tmetg_t::draw() const {
-	std::vector<nv_t> rnts {};
+std::vector<d_t> tmetg_t::draw() const {
+	std::vector<d_t> rnts {};
 	auto re = new_randeng(true);
 
 	beat_t curr_bt {0};
@@ -166,7 +166,7 @@ void tmetg_t::m_enumerator(std::vector<std::vector<int>>& rps,
 
 
 // True if _any_ note of m_nv_ts occurs at beat one nv past beat
-bool tmetg_t::allowed_next(beat_t beat, nv_t nv) const {
+bool tmetg_t::allowed_next(beat_t beat, d_t nv) const {
 	auto nxt_bt = beat+nbeat(m_ts,nv); // Beat-number of the next beat
 	return allowed_at(nxt_bt);
 }

@@ -88,8 +88,10 @@ public:
 		int n {0};
 	};
 	d_t()=default;
-	explicit d_t(common_duration_t);
+	d_t(common_duration_t);
 	explicit d_t(const mn&);
+	explicit d_t(double);
+		// A duration spanning an amount of time == this many whole notes.
 
 	bool singlet_exists() const;
 	std::vector<d_t> to_singlets() const;
@@ -118,8 +120,9 @@ public:
 
 	d_t& operator+=(const d_t&);
 	d_t& operator-=(const d_t&);
-	d_t& operator*=(const int&);
-	double friend operator/(const d_t&, const d_t&);
+	d_t& operator*=(const double&);
+	d_t& operator/=(const double&);
+	friend double operator/(const d_t&, const d_t&);
 	bool operator<(const d_t&) const;
 	bool operator>(const d_t&) const;
 	bool operator==(const d_t&) const;
@@ -127,14 +130,17 @@ private:
 	struct ab {
 		int a {0};
 		int b {0};
+		double val() const;
+		ab operator+(const ab&) const;
+		ab operator-(const ab&) const;
 	};
 
-	int m_a {0};
-	int m_b {0};
-	static const int max_nplet;
-		// Possibly a better way to do this is to specify a maximum
-		// "resolution" in terms of a,b and/or m,n
+	ab m_ab {0,0};
 
+	static const int max_nplet;
+	static const double min_duration;
+
+	ab dbl2ab(double) const;
 	d_t::ab mn2ab(const d_t::mn&) const;
 	d_t::mn ab2mn(const d_t::ab&) const;
 		// Assumes the m,n-form exists
@@ -145,11 +151,9 @@ bool operator>=(const d_t&, const d_t&);
 bool operator!=(const d_t&, const d_t&);
 d_t operator-(d_t, const d_t&);
 d_t operator+(d_t, const d_t&);
-double operator/(const d_t&, const d_t&);
-d_t operator/(const d_t&, const int&);
-d_t operator*(const int&, const d_t&);
-d_t operator*(const d_t&, const int&);
-
+d_t operator*(const double&, d_t);
+d_t operator*(d_t, const double&);
+d_t operator/(d_t, const double&);
 
 
 

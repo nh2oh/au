@@ -7,19 +7,43 @@
 
 
 const int d_t::max_nplet {5};
+const double d_t::min_duration = 1.0/std::pow(2,13);  // whatever comes after 1/4096
 
 d_t::d_t(common_duration_t d) {
 	auto dint = static_cast<int>(d);
-	int n = std::abs(dint%10);
-	int m = dint/10;
+	int n = std::abs(dint)%10;
+	int m = -1*(dint/10);
 	
-	auto ab_in = mn2ab({m,n});
-	m_a = ab_in.a; m_b = ab_in.b;
+	m_ab = mn2ab({m,n});
 }
 
 d_t::d_t(const mn& mn_in) {
-	auto ab_in = mn2ab(mn_in);
-	m_a = ab_in.a; m_b = ab_in.b;
+	m_ab = mn2ab(mn_in);
+}
+
+d_t::d_t(double d) {
+	// The argument ratio_w is interpreted as a duration, that is, as being 
+	// proportional to the whole-note (also => proportional to time ).
+	//
+	m_ab = dbl2ab(d);
+}
+
+d_t::ab d_t::dbl2ab(double d) const {
+	// For any note of duration d > 0 w/ 0-dots:  
+	// frexp(d) => f == 0.5, exp ~ integer, where m = -(exp-1).
+	// For a d>0 _with_ dots, 0.5 < f < 1.0, exp ~ integer, where 
+	// m = -(exp-1), n=0 is the corresponding d_t w/ 0-dots.  The "remainder," 
+	// d - 0.5*std::pow(2,exp), is the contribution of the dots to d.  
+	//
+	d_t:ab res {};
+	while(d>=d_t::min_duration) {
+		int exp = 0;
+		auto f = frexp(d,&exp);
+		res = res + d_t::ab{1,-1*(exp-1)};
+		d -= 0.5*std::pow(2,exp);
+		wait();
+	}
+	return res;
 }
 
 // Called by multiple constructors and other internal methods
@@ -39,7 +63,7 @@ d_t::mn d_t::ab2mn(const d_t::ab& ab_in) const {
 // Can this duration be represented as a singlet?  That is, is there
 // an m,n representation?
 bool d_t::singlet_exists() const {
-	return is_mersenne(m_a);
+	return is_mersenne(m_ab.a);
 }
 
 // Convert the duration to a tuplet of nv_t's, the sum of which
@@ -76,7 +100,7 @@ bool d_t::singlet_exists() const {
 std::vector<d_t> d_t::to_singlets() const {
 	std::vector<d_t> res {};
 
-	auto a = m_a; auto b = m_b;
+	auto a = m_ab.a; auto b = m_ab.b;
 	while (a>0) {
 		if (is_mersenne(a)) {
 			auto n = static_cast<int>(std::log2(a+1)-1.0);
@@ -109,7 +133,8 @@ std::vector<d_t> d_t::to_singlets_partition(const d_t& d1) const {
 	return res;
 }
 
-// The elments [0,n] must sum to exactly d1
+// The elments n elements in the return sum to exactly d1.  No singlet 
+// following n is > dmax.  
 std::vector<d_t> d_t::to_singlets_partition_max(const d_t& d1, const d_t& dmax) const {
 	std::vector<d_t> res {};
 	if (d1 > *this) { return to_singlets(); }
@@ -127,15 +152,15 @@ std::vector<d_t> d_t::to_singlets_partition_max(const d_t& d1, const d_t& dmax) 
 
 int d_t::ndot() const {
 	if (singlet_exists()) {
-		auto mn_rep = ab2mn({m_a,m_b});
-		return mn_rep.n;
+		auto mn = ab2mn(m_ab);
+		return mn.n;
 	}
 	return 0;
 }
 int d_t::base() const {
 	if (singlet_exists()) {
-		auto mn_rep = ab2mn({m_a,m_b});
-		return mn_rep.m;
+		auto mn = ab2mn(m_ab);
+		return mn.m;
 	}
 	return 0;
 }
@@ -148,7 +173,7 @@ std::string d_t::print() const {
 	for (int i=0; i<vs.size(); ++i) {
 		bool firstiter = (i == 0);
 		bool lastiter = (i == vs.size()-1);
-		auto curr_mn = ab2mn({vs[i].m_a,vs[i].m_b});
+		auto curr_mn = ab2mn(vs[i].m_ab);
 
 		auto bv = std::pow(2,curr_mn.m);
 		if (curr_mn.m > 0) { // nv() < the whole note
@@ -171,85 +196,93 @@ std::string d_t::print() const {
 
 bool d_t::set_base(int const& m_in) {
 	if (singlet_exists()) {
-		auto mn_rep = ab2mn({m_a,m_b});
-		mn_rep.m = m_in;
-		auto ab_rep = mn2ab(mn_rep);
-		m_a = ab_rep.a; m_b = ab_rep.b;
+		auto mn = ab2mn(m_ab);
+		mn.m = m_in;
+		m_ab = mn2ab(mn);
 		return true;
 	}
 	return false;
 }
 bool d_t::set_dots(int const& ndots) {
 	if (singlet_exists()) {
-		auto mn_rep = ab2mn({m_a,m_b});
-		mn_rep.n = ndots;
-		auto ab_rep = mn2ab(mn_rep);
-		m_a = ab_rep.a; m_b = ab_rep.b;
+		auto mn = ab2mn(m_ab);
+		mn.n = ndots;
+		m_ab = mn2ab(mn);
 		return true;
 	}
 	return false;
 }
 bool d_t::add_dots(int const& ndots) {  // default value ndots == 1
 	if (singlet_exists()) {
-		auto mn_rep = ab2mn({m_a,m_b});
-		mn_rep.n += ndots;
-		auto ab_rep = mn2ab(mn_rep);
-		m_a = ab_rep.a; m_b = ab_rep.b;
+		auto mn = ab2mn(m_ab);
+		mn.n += ndots;
+		m_ab = mn2ab(mn);
 		return true;
 	}
 	return false;
 }
 bool d_t::rm_dots(int const& ndots) {
 	if (singlet_exists()) {
-		auto mn_rep = ab2mn({m_a,m_b});
-		mn_rep.n = std::max(mn_rep.n-ndots,0);
-		auto ab_rep = mn2ab(mn_rep);
-		m_a = ab_rep.a; m_b = ab_rep.b;
+		auto mn = ab2mn(m_ab);
+		mn.n = std::max(mn.n-ndots,0);
+		m_ab = mn2ab(mn);
 		return true;
 	}
 	return false;
 }
 bool d_t::rm_dots() {
 	if (singlet_exists()) {
-		auto mn_rep = ab2mn({m_a,m_b});
-		mn_rep.n = 0;
-		auto ab_rep = mn2ab(mn_rep);
-		m_a = ab_rep.a; m_b = ab_rep.b;
+		auto mn = ab2mn(m_ab);
+		mn.n = 0;
+		m_ab = mn2ab(mn);
 		return true;
 	};
 	return false;
 }
 
+double d_t::ab::val() const {
+	return static_cast<double>(a)/std::pow(2,b);
+}
 
-d_t& d_t::operator+=(const d_t& d2) {
+d_t::ab d_t::ab::operator+(const d_t::ab& rhs) const {
 	// a,b-form requires a be an integer, therefore 2^db must be >= 1
 	// because the a term of the sum is: m_a = m_a*(2^db)*d2.m_a
-	auto db = d2.m_b - m_b;  // "delta b"
+	ab res {};
+	auto db = rhs.b - b;  // "delta b"
 	if (db >= 0) {
-		m_a = (m_a)*static_cast<int>(std::pow(2,db)) + d2.m_a;
-		m_b = d2.m_b;
+		res.a = (a)*static_cast<int>(std::pow(2,db)) + rhs.a;
+		res.b = rhs.b;
 	} else {
-		m_a = (d2.m_a)*static_cast<int>(std::pow(2,-1*db)) + m_a;
-		m_b = m_b;
+		res.a = (rhs.a)*static_cast<int>(std::pow(2,-1*db)) + a;
+		res.b = b;
 	}
+	return res;
+}
 
+// TODO:  Check this for both branches
+d_t::ab d_t::ab::operator-(const d_t::ab& rhs) const {
+	// a,b-form requires a be an integer, therefore 2^db must be >= 1
+	// because the a term of the sum is: m_a = m_a*(2^db)*d2.m_a
+	ab res {};
+	auto db = rhs.b - b;  // "delta b"
+	if (db >= 0) {
+		res.a = (a)*static_cast<int>(std::pow(2,db)) - rhs.a;
+		res.b = rhs.b;
+	} else {
+		res.a = (rhs.a)*static_cast<int>(std::pow(2,-1*db)) - a;
+		res.b = b;
+	}
+	return res;
+}
+
+d_t& d_t::operator+=(const d_t& rhs) {
+	m_ab = m_ab + rhs.m_ab;
 	return *this;
 }
 
-
 // TODO:  Check this for both branches
-d_t& d_t::operator-=(const d_t& d2) {
-	// a,b-form requires a be an integer, therefore 2^db must be >= 1
-	// because the a term of the sum is: m_a = m_a*(2^db)*d2.m_a
-	auto db = d2.m_b - m_b;  // "delta b"
-	if (db >= 0) {
-		m_a = (m_a)*static_cast<int>(std::pow(2,db)) - d2.m_a;
-		m_b = d2.m_b;
-	} else {
-		m_a = (d2.m_a)*static_cast<int>(std::pow(2,-1*db)) - m_a;
-		m_b = m_b;
-	}
-
+d_t& d_t::operator-=(const d_t& rhs) {
+	m_ab = m_ab - rhs.m_ab;
 	return *this;
 }
 
@@ -260,26 +293,25 @@ d_t operator+(d_t lhs, const d_t& rhs) {
 d_t operator-(d_t lhs, const d_t& rhs) {
 	return lhs -= rhs;
 }
-d_t& d_t::operator*=(const int& n) {
-	m_a *= n;
+d_t& d_t::operator*=(const double& n) {
+	m_ab = dbl2ab(m_ab.val()*n);
+	return *this;
+}
+d_t& d_t::operator/=(const double& d) {
+	m_ab = dbl2ab(m_ab.val()/d);
 	return *this;
 }
 double operator/(const d_t& n, const d_t& d) {
-	double n_tot = static_cast<double>(n.m_a)/std::pow(2,n.m_b);
-	double d_tot = static_cast<double>(d.m_a)/std::pow(2,d.m_b);
-	return n_tot/d_tot;
+	return (n.m_ab.val() / d.m_ab.val());
 }
-bool d_t::operator<(const d_t& d) const {
-	return (static_cast<double>(m_a)/std::pow(2,m_b) < 
-		static_cast<double>(d.m_a)/std::pow(2,d.m_b));
+bool d_t::operator<(const d_t& rhs) const {
+	return (m_ab.val() < rhs.m_ab.val());
 }
-bool d_t::operator>(const d_t& d) const {
-	return (static_cast<double>(m_a)/std::pow(2,m_b) > 
-		static_cast<double>(d.m_a)/std::pow(2,d.m_b));
+bool d_t::operator>(const d_t& rhs) const {
+	return (m_ab.val() > rhs.m_ab.val());
 }
-bool d_t::operator==(const d_t& d) const {
-	return (aprx_eq(static_cast<double>(m_a)/std::pow(2,m_b), 
-		static_cast<double>(d.m_a)/std::pow(2,d.m_b)));
+bool d_t::operator==(const d_t& rhs) const {
+	return aprx_eq(m_ab.val(), rhs.m_ab.val());
 }
 bool operator!=(const d_t& lhs, const d_t& rhs) {
 	return !(lhs==rhs);
@@ -291,6 +323,15 @@ bool operator>=(const d_t& lhs, const d_t& rhs) {
 	return (lhs > rhs || lhs == rhs);
 }
 
+d_t operator*(const double& lhs, d_t rhs) {
+	return (rhs *= lhs);
+}
+d_t operator*(d_t lhs, const double& rhs) {
+	return (lhs *= rhs);
+}
+d_t operator/(d_t n, const double& d) {
+	return n /= d;
+}
 
 /*
 //-----------------------------------------------------------------------------
@@ -402,22 +443,6 @@ tie_t::tie_t(std::vector<nv_t> const& nvs) {
 		m_ab = add_ab(m_ab,nvt2ab(e));
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

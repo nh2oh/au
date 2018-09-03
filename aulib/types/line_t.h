@@ -36,7 +36,7 @@ public:
 		// At the time i write this, rp_t is less effecient w/a bunch of
 		// calls to push_back than it is being created in one shot from a
 		// std::vector<nv_t>.  
-		std::vector<nv_t> d {};
+		std::vector<d_t> d {};
 		for (auto e : des) {
 			d.push_back(e.dv());
 			m_e.push_back(e.nts());
@@ -55,7 +55,7 @@ public:
 		}
 	};
 
-	void push_back(T nt, nv_t nv) {
+	void push_back(T nt, d_t nv) {
 		m_e.push_back(nt);
 		m_rp.push_back(nv);
 	};

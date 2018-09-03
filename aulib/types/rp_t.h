@@ -84,16 +84,22 @@
 //
 
 
-class rp_t2 {
+class rp_t {
 public:
-	rp_t2()=default;
-	explicit rp_t2(ts_t const&);
-	explicit rp_t2(ts_t const&, std::vector<d_t> const&);
+	rp_t()=default;
+	explicit rp_t(ts_t const&);
+	explicit rp_t(ts_t const&, std::vector<d_t> const&);
+	//TODO:  Split the quantizer out of this
+	explicit rp_t(ts_t const& ts_in, 
+		std::vector<std::chrono::milliseconds> const& dt, tempo_t const& tempo,
+		std::chrono::milliseconds const& res);
 
 	void push_back(d_t);
 
 	std::string print() const;
-	std::string print_bidx() const;
+	bar_t nbars() const;
+	beat_t nbeats() const;
+	size_t nelems() const;
 private:
 	struct vgroup {
 		d_t e {};
@@ -109,6 +115,19 @@ private:
 	ts_t m_ts;
 };
 
+// TODO:  Some (all?) of these belong in either ts_t.h or beat_bar_t.h
+// or nv_t.h ...
+// Number of beats spanned by a given nv_t for a given ts.  
+beat_t nbeat(ts_t const&, d_t const&);
+beat_t nbeat(ts_t const&, bar_t const&);
+// Number of bars spanned by a given nv_t for a given ts.  
+// Overload for a given nbeats
+bar_t nbar(ts_t const&, d_t const&);
+bar_t nbar(ts_t const&, beat_t const&);
+std::vector<bar_t> cum_nbar(ts_t const&, std::vector<d_t> const&);
+
+
+/*
 // TODO
 // 1)  Some sort of interospection/analysis functions...  Are there 
 //     bar-spanning elements?  What is the nv_t dist?  the ts?
@@ -194,17 +213,9 @@ private:
 	// Private functions
 	void build_bidx();
 };
+*/
 
-// TODO:  Some (all?) of these belong in either ts_t.h or beat_bar_t.h
-// or nv_t.h ...
-// Number of beats spanned by a given nv_t for a given ts.  
-beat_t nbeat(ts_t const&, d_t const&);
-beat_t nbeat(ts_t const&, bar_t const&);
-// Number of bars spanned by a given nv_t for a given ts.  
-// Overload for a given nbeats
-bar_t nbar(ts_t const&, d_t const&);
-bar_t nbar(ts_t const&, beat_t const&);
-std::vector<bar_t> cum_nbar(ts_t const&, std::vector<d_t> const&);
+
 
 //nv_t closest_nv(ts_t const&, beat_t const&, std::set<nv_t>)
 
