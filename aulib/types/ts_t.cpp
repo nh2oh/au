@@ -4,8 +4,8 @@
 #include "..\util\au_error.h"
 #include "..\util\au_util.h"
 #include <string>
-#include <optional>
-
+#include <algorithm>
+#include <vector>  // cum_nbar()
 
 ts_t::ts_t(beat_t const& num, d_t const& denom, bool const& is_compound_in) {
 	au_assert(num > beat_t{0.0});
@@ -61,11 +61,9 @@ ts_t operator""_ts(const char *literal_in, size_t length) {
 d_t ts_t::beat_unit() const {
 	return m_beat_unit;
 }
-
 d_t ts_t::bar_unit() const {
 	return (m_bpb/beat_t{1})*(m_beat_unit);
 }
-
 beat_t ts_t::beats_per_bar() const {
 	return m_bpb;
 }
@@ -82,8 +80,35 @@ bool ts_t::operator==(ts_t const& rhs) const {
 		(m_beat_unit == rhs.m_beat_unit) &&
 		(m_compound == rhs.m_compound));
 }
-
 bool operator!=(ts_t const& lhs, ts_t const& rhs) {
 	return !(lhs == rhs);
 }
 
+
+//-----------------------------------------------------------------------------
+// beat_t - bar_t - d_t conversion functions
+
+beat_t nbeat(ts_t const& ts_in, d_t const& d_in) {
+	return beat_t{d_in/(ts_in.beat_unit())};
+}
+beat_t nbeat(ts_t const& ts_in, bar_t const& nbars_in) {
+	return (ts_in.beats_per_bar())*(nbars_in.to_double());
+}
+
+bar_t nbar(ts_t const& ts_in, d_t const& d_in) {
+	beat_t nbeats = nbeat(ts_in, d_in);
+	return nbar(ts_in,nbeats);
+}
+bar_t nbar(ts_t const& ts_in, beat_t const& nbts_in) {
+	auto nbars_exact = nbts_in/(ts_in.beats_per_bar());
+	return bar_t {nbars_exact};
+}
+
+std::vector<bar_t> cum_nbar(ts_t const& ts_in, std::vector<d_t> const& d_in) {
+	std::vector<bar_t> rp_cum {}; rp_cum.reserve(d_in.size());
+	bar_t totnb {0.0};  // Only used by the lambda
+	std::for_each(d_in.begin(),d_in.end(),
+		[&](d_t const& currnv){rp_cum.push_back(totnb+=nbar(ts_in,currnv));});
+
+	return rp_cum;
+}

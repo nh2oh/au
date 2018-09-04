@@ -49,6 +49,12 @@ public:
 	double to_double() const;
 	std::string print() const;
 
+	bar_t full() const;  // Number of full bars
+	bar_t next() const;
+	bar_t remain() const;
+	bool isexact() const;
+	double fremain() const;
+
 	bar_t& operator+=(bar_t const&);
 	bar_t& operator-=(bar_t const&);
 private:

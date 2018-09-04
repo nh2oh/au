@@ -2,7 +2,7 @@
 #include "beat_bar_t.h"
 #include "nv_t.h"
 #include <string>
-#include <optional>
+#include <vector>  // declaration of cum_nbar(...)
 
 //
 // Class ts_t
@@ -29,9 +29,6 @@
 //   once.  That is, three eithth notes (1/8) (1/8) (1/8) == (1/4). and
 //   three (1/6). notes == (1/8).. (an eighth note w/ 2 dots).  
 //
-//
-// TODO
-// - Should beats_per_bar() return a beat_t??  It's a "_number_ of beats"
 //
 class ts_t {
 public:
@@ -67,4 +64,15 @@ private:
 ts_t operator""_ts(const char*, size_t);
 
 bool operator!=(ts_t const&, ts_t const&);
+
+
+
+// Number of beats spanned by a given nv_t or bar_t.  
+beat_t nbeat(ts_t const&, d_t const&);
+beat_t nbeat(ts_t const&, bar_t const&);
+// Number of bars spanned by a given nv_t or d_t.  
+bar_t nbar(ts_t const&, d_t const&);
+bar_t nbar(ts_t const&, beat_t const&);
+std::vector<bar_t> cum_nbar(ts_t const&, std::vector<d_t> const&);
+
 

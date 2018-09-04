@@ -17,12 +17,12 @@ enum class common_duration_t {
 	sx = -40, sxd = -41, sxdd = -42, sxddd = -43,
 	t = -50, td = -51, tdd = -52, tddd = -53,
 	sf = -60, sfd = -61, dfdd = -62, sfddd = -63,
-	ote = -70, oted = -71, otedd = -72, oteddd = -73,
-	tfs = -80, tfsd = -81, tfsdd = -82, tfsddd = -83,
-	ftw = -90, ftwd = -91, ftwdd = -92, ftwddd = -93,
-	ttwf = -100, ttwfd = -101, ttwfdd = -102, ttwfddd = -103, 
-	twfe = -110, twfed = -111, twfedd = -112, twfeddd = -113,
-	fnsx = -120, fnsxd = -121, fnsxdd = -122, fnsxddd = -123
+	ote = -70, oted = -71, otedd = -72, oteddd = -73,  //  1/128
+	tfs = -80, tfsd = -81, tfsdd = -82, tfsddd = -83,  //  1/256
+	ftw = -90, ftwd = -91, ftwdd = -92, ftwddd = -93,  //  1/512
+	ttwf = -100, ttwfd = -101, ttwfdd = -102, ttwfddd = -103,   //  1/1024
+	twfe = -110, twfed = -111, twfedd = -112, twfeddd = -113,  //  1/2048
+	fnsx = -120, fnsxd = -121, fnsxdd = -122, fnsxddd = -123  //  1/4096
 };
 
 using d = common_duration_t;
@@ -128,15 +128,18 @@ public:
 	bool operator==(const d_t&) const;
 private:
 	class ab {
+		// a,b-form:  a/(2^b)
+		// a,b are stored such that the fraction a/(2^b) is in reduced form.  
 	public:
 		ab()=default;
 		explicit ab(int,int);
 		explicit ab(const d_t::mn&);
+
 		ab operator+(const ab&) const;
 		ab operator-(const ab&) const;
 		double val() const;
 		bool singlet_exists() const;
-		d_t::mn to_mn() const;
+		d_t::mn to_mn() const;  // Assumes the m,n-form exists; check first!
 		int get_a() const;
 		int get_b() const;
 	private:
@@ -151,9 +154,9 @@ private:
 	static const double min_duration;
 
 	ab dbl2ab(double) const;
-	d_t::ab mn2ab(const d_t::mn&) const;
-	d_t::mn ab2mn(const d_t::ab&) const;
-		// Assumes the m,n-form exists
+		// This is implemented here, and not as a constructor of class ab, because
+		// it reads min_duration.  I could make it an ab constructor with the addnl
+		// min-duration argument.  
 };
 
 bool operator<=(const d_t&, const d_t&);
@@ -165,72 +168,3 @@ d_t operator*(const double&, d_t);
 d_t operator*(d_t, const double&);
 d_t operator/(d_t, const double&);
 
-
-
-/*
-//
-// A duration that represents a note value.  
-// Although singlet nv_t's have an m,n-form, nv_t's need not be singlets;
-// it is perfectly acceptable for an nv_t to have to be represented as a
-// tuplet.  
-//
-//
-
-
-class nv_t {
-public:
-	nv_t() = default;
-		// Creates a whole-note:  bv == 1, ndots == 0
-	nv_t(common_duration_t);
-	explicit nv_t(int m, int n);
-
-	std::string print() const;
-
-
-
-
-
-	friend double operator/(nv_t const&, nv_t const&);
-		// Division is needed to get the nv without breaking encapsulation.  
-		// The nv() can be extracted from an nv_t by dividing the nv_t by
-		// a whole note, the "unit nv_t" nv_t {1,0}.  A whole note may also
-		// be obtained by calling the constructor with no arguments, ie,
-		// nv_t() == nv_t {1,0} == a whole note.  
-	friend bool operator==(nv_t const&, nv_t const&);
-	friend bool operator!=(nv_t const&, nv_t const&);
-	friend bool operator<(nv_t const&, nv_t const&);
-	friend bool operator>(nv_t const&, nv_t const&);
-	friend bool operator<=(nv_t const&, nv_t const&);
-	friend bool operator>=(nv_t const&, nv_t const&);
-
-	static const double max_bv;
-	static const double min_bv;
-	static const int max_ndots;
-private:
-
-
-	d_t mn2d(const nv_t::mn&) const;
-	d_t m_d {common_duration_t::w};
-
-	double nv() const;  // == (1/(2^m))*(2-1/(2^n))
-	double bv() const;  // == 1/(2^m)
-
-	static const int min_bv_exponent;
-	static const int max_bv_exponent;
-};
-
-
-
-class tie_t {
-public:
-	tie_t()=default;
-	explicit tie_t(nv_t const&);
-	explicit tie_t(int const&, nv_t const&);
-	explicit tie_t(nv_t const&, nv_t const&);
-	explicit tie_t(std::vector<nv_t> const&);
-
-private:
-};
-
-
-*/

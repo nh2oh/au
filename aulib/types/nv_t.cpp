@@ -46,17 +46,6 @@ d_t::ab d_t::dbl2ab(double d) const {
 	return res;
 }
 
-/*
-// Called by multiple constructors and other internal methods
-d_t::ab d_t::mn2ab(const d_t::mn& mn_in) const {
-	int a = static_cast<int>(std::pow(2,mn_in.n+1))-1;
-	int b = mn_in.m + mn_in.n;
-	return d_t::ab {a,b};
-}*/
-
-
-
-
 bool d_t::singlet_exists() const {
 	return m_ab.singlet_exists();
 }
@@ -134,12 +123,28 @@ std::vector<d_t> d_t::to_singlets_partition_max(const d_t& d1, const d_t& dmax) 
 	if (d1 >= *this) { return to_singlets(); }
 	
 	auto rem = *this - d1;
-	for (auto e : d1.to_singlets()) {
-		res.push_back(e);
+	//for (auto e : d1.to_singlets()) {
+	//	res.push_back(e);
+	//}
+	auto dmaxs = dmax.to_singlets();
+	auto d1s = d1.to_singlets();
+	res.insert(res.end(),d1s.begin(),d1s.end());
+	while (rem > dmax) {
+		res.insert(res.end(),dmaxs.begin(),dmaxs.end());
+		//for (auto e : dmax.to_singlets()) {
+		//	res.push_back(e);
+		//}
+		rem -= dmax;
 	}
-	for (auto e : rem.to_singlets_partition_max(dmax, dmax)) {
-		res.push_back(e);
-	}
+	//for (auto e : rem.to_singlets()) {
+	//	res.push_back(e);
+	//}
+	auto rems = rem.to_singlets();
+	res.insert(res.end(),rems.begin(),rems.end());
+
+	//for (auto e : rem.to_singlets_partition_max(dmax, dmax)) {
+	//	res.push_back(e);
+	//}
 
 	return res;
 }
@@ -168,7 +173,6 @@ std::string d_t::print() const {
 		bool firstiter = (i == 0);
 		bool lastiter = (i == vs.size()-1);
 		auto curr_mn = vs[i].m_ab.to_mn();
-		//auto curr_mn = ab2mn(vs[i].m_ab);
 
 		auto bv = std::pow(2,curr_mn.m);
 		if (curr_mn.m > 0) { // nv() < the whole note
@@ -243,7 +247,6 @@ d_t& d_t::operator+=(const d_t& rhs) {
 	return *this;
 }
 
-// TODO:  Check this for both branches
 d_t& d_t::operator-=(const d_t& rhs) {
 	m_ab = m_ab - rhs.m_ab;
 	return *this;
@@ -295,8 +298,6 @@ d_t operator*(d_t lhs, const double& rhs) {
 d_t operator/(d_t n, const double& d) {
 	return n /= d;
 }
-
-
 
 d_t::ab::ab(const d_t::mn& mn_in) {
 	a = static_cast<int>(std::pow(2,mn_in.n+1))-1;
@@ -359,7 +360,6 @@ d_t::ab d_t::ab::operator+(const d_t::ab& rhs) const {
 	return res;
 }
 
-// TODO:  Check this for both branches
 d_t::ab d_t::ab::operator-(const d_t::ab& rhs) const {
 	// a,b-form requires a be an integer, therefore 2^db must be >= 1
 	// because the a term of the sum is: m_a = m_a*(2^db)*d2.m_a
@@ -369,7 +369,7 @@ d_t::ab d_t::ab::operator-(const d_t::ab& rhs) const {
 		res.a = (a)*static_cast<int>(std::pow(2,db)) - rhs.a;
 		res.b = rhs.b;
 	} else {
-		res.a = (rhs.a)*static_cast<int>(std::pow(2,-1*db)) - a;
+		res.a = a - (rhs.a)*static_cast<int>(std::pow(2,-1*db));
 		res.b = b;
 	}
 	

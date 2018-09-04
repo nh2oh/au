@@ -36,20 +36,22 @@
 //
 //
 //
+
 struct rest_dummy_t {
-	//bool rest_dummy_t_data {true};
+	bool rest_dummy_t_data {true};
 };
 
 template<typename T=rest_dummy_t>
 class de_t {
 public:
 	de_t()=default;
+
 	explicit de_t(d_t dv) {
 		m_dv = dv;
 	};  // Creates a rest: T=rest_dummy_t
 
 	explicit de_t(T nt, d_t dv) {
-		m_nts.push_back(nt);
+		insert(nt);
 		m_dv = dv;
 	};
 
@@ -85,7 +87,6 @@ public:
 	std::vector<T> nts() {
 		return m_nts;
 	};
-
 private:
 	d_t m_dv {};
 	std::vector<T> m_nts {};

@@ -2,7 +2,7 @@
 #include "..\util\au_util_all.h"
 #include <string>
 #include <chrono>
-
+#include <numeric>
 
 
 //-----------------------------------------------------------------------------
@@ -92,11 +92,24 @@ bar_t::bar_t(int bars_in) {
 double bar_t::to_double() const {
 	return m_bars;
 }
+
+bar_t bar_t::full() const {
+	return bar_t {std::floor(m_bars)};
+}
+bar_t bar_t::next() const {
+	return bar_t {std::floor(m_bars)+1};  // "current" + 1
+}
+bar_t bar_t::remain() const {  // "next - current position"
+	return bar_t {std::floor(m_bars)+1 - m_bars};  
+}
+double bar_t::fremain() const {  // "fraction remaining"
+	return (std::floor(m_bars)+1-m_bars);  
+}
+bool bar_t::isexact() const {
+	return aprx_int(m_bars);
+}
 std::string bar_t::print() const {
-	if (isapproxint(m_bars,6)) {
-		return std::to_string(static_cast<int>(m_bars));
-	}
-	return std::to_string(m_bars);
+	return bsprintf("%.3f", m_bars);
 }
 
 bar_t& bar_t::operator+=(bar_t const& rhs) {
