@@ -107,12 +107,14 @@ rp_t::rp_t(ts_t const& ts_in, std::vector<std::chrono::milliseconds> const& dt,
 void rp_t::push_back(d_t d) {
 	int working_bar_n = std::floor(m_nbars);
 	int next_bar_n = std::floor(m_nbars)+1;
+	auto x = m_ts.bar_unit();
 	auto d_to_next_bar = next_bar_n*m_ts.bar_unit()-m_dtot;
 	
 	
 	auto d_singlets = d.to_singlets_partition_max(d_to_next_bar,m_ts.bar_unit());
 	for (size_t i=0; i<d_singlets.size(); ++i) {
-		m_e.push_back(vgroup{d_singlets[i],m_usridx,i,d_singlets.size()});
+		m_e.push_back(vgroup{d_singlets[i],m_usridx,d_singlets.size()-1-i,i});
+		wait();
 	}
 	// also need to append rests
 	++m_usridx;
@@ -125,13 +127,21 @@ std::string rp_t::print() const {
 	std::string s {};
 	bar_t curr_bar {0};
 	for (auto e : m_e) {
-		curr_bar += nbar(m_ts,e.e);
+		
 		//  Want: curr_bar += (curr_d += e)/m_ts
 		// if (curr_bar.exact())
-		if (aprx_int(curr_bar/bar_t{1.0})) { s += "|"; }
+		
 		if (e.tie_b > 0 && e.tie_f == 0) { s += ")"; }
 		s += e.e.print();
 		if (e.tie_b==0 && e.tie_f > 0) { s += "("; }
+
+		curr_bar += nbar(m_ts,e.e);
+		if (aprx_int(curr_bar/bar_t{1.0})) {
+			s += " | ";
+		} else {
+			s += " ";
+		}
+		wait();
 	}
 	return s;
 }

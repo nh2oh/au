@@ -35,7 +35,7 @@
 //
 class ts_t {
 public:
-	ts_t() = default;;
+	ts_t() = default;
 	explicit ts_t(beat_t const&, d_t const&, bool const& =false); // num, denom, is-compound
 	explicit ts_t(std::string const&);  // Calls ts_t.from_string()
 
@@ -59,7 +59,7 @@ private:
 	void from_string(std::string const&);
 		// Called by ts_t(std::string const&);
 
-	d_t m_beat_unit {d::q};//{1.0/4.0};  // The d_t corresponding to one beat
+	d_t m_beat_unit {1.0/4.0};  // The d_t corresponding to one beat
 	beat_t m_bpb {4.0};  // Beats per bar (numerator)
 	bool m_compound {false};  // False => simple
 };

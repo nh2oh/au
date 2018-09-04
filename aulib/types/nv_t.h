@@ -127,12 +127,22 @@ public:
 	bool operator>(const d_t&) const;
 	bool operator==(const d_t&) const;
 private:
-	struct ab {
-		int a {0};
-		int b {0};
-		double val() const;
+	class ab {
+	public:
+		ab()=default;
+		explicit ab(int,int);
+		explicit ab(const d_t::mn&);
 		ab operator+(const ab&) const;
 		ab operator-(const ab&) const;
+		double val() const;
+		bool singlet_exists() const;
+		d_t::mn to_mn() const;
+		int get_a() const;
+		int get_b() const;
+	private:
+		int a {0};
+		int b {0};
+		void reduce();
 	};
 
 	ab m_ab {0,0};
