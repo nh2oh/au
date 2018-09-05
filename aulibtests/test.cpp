@@ -5,7 +5,7 @@
 #include <cmath>
 
 // 
-TEST(d_t_tests, constructors) {
+TEST(d_t_tests, AssortedConstructorTests) {
 
 	// Calling the constructor with no arguments creates a duration of 0
 	d_t nv_zeroargs {};
@@ -18,7 +18,7 @@ TEST(d_t_tests, constructors) {
 }
 
 // Tests operators <, >, ==, etc
-TEST(d_t_tests, gt_lt_ne) {
+TEST(d_t_tests, OperatorsGtLtEqNeqEtc) {
 	// From short durations -> long durations
 	auto nvs = autests::make_dt_set(-3,0,12,5);
 
@@ -34,7 +34,7 @@ TEST(d_t_tests, gt_lt_ne) {
 }
 
 // Tests the getters
-TEST(d_t_tests, base_ndot_getters) {
+TEST(d_t_tests, MethodsBaseAndNdots) {
 	// From short durations -> long durations
 	auto nvs = autests::make_dt_set(-3,0,12,5);
 
@@ -49,7 +49,7 @@ TEST(d_t_tests, base_ndot_getters) {
 
 
 // 
-TEST(d_t_tests, to_singlets) {
+TEST(d_t_tests, MethodToSinglets) {
 	// From short durations -> long durations
 	auto nvs = autests::make_dt_set(-3,0,12,5);
 
@@ -65,7 +65,7 @@ TEST(d_t_tests, to_singlets) {
 }
 
 // 
-TEST(d_t_tests, plus_minus) {
+TEST(d_t_tests, OperatorsPlusMinus) {
 	// From short durations -> long durations
 	auto nvs = autests::make_dt_set(-3,0,12,5);
 
@@ -83,11 +83,12 @@ TEST(d_t_tests, plus_minus) {
 			auto y = d_t {d_t::mn{e.m+i+1,e.n-(i+1)}};
 			EXPECT_TRUE(x == y);
 		}
+
 	}
 }
 
 // 
-TEST(d_t_tests, division_and_double_constructor) {
+TEST(d_t_tests, DivisionAndConstructFromDouble) {
 	// From short durations -> long durations
 	auto nvs = autests::make_dt_set(-3,0,12,5);
 

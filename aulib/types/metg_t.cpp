@@ -70,6 +70,15 @@ tmetg_t::tmetg_t(ts_t ts_in, std::vector<d_t> nvs_in, std::vector<beat_t> ph_in)
 		N_btres_period = std::lcm((curr_bt_quant/btres_br).reduce().num,N_btres_period);
 	}
 	m_period = N_btres_period*m_btres;
+
+	auto y = nvs_in;
+	y.push_back(m_ts.bar_unit());
+	auto x = gcd(y);
+	int clcm = 1;
+	for (auto e : y) {
+		int ce = e/x;
+		clcm = std::lcm(clcm, ce);
+	}
 	wait();
 }
 
@@ -259,13 +268,33 @@ std::string tmetg_t::print() const {
 }
 
 
-void autest::metg::tests1() {
+d_t tmetg_t::gcd(const std::vector<d_t>& dset) const {
+	long long sfctr = 100'000'000'000;
+	long long cgcd = 0;
+	std::vector<long long> d_scaled {};
+	for (const auto& e : dset) {
+		long long curr = std::round(sfctr*(e/d_t{d::w}));
+		d_scaled.push_back(curr);
+		cgcd = std::gcd(cgcd, curr);
+	}
+	auto res = d_t {static_cast<double>(cgcd)/sfctr};
+	return res;
+}
+
+
+
+
+
+
+std::string autest::metg::tests1() {
 	std::vector<d_t> dt1 {d::h,d::q,d::e};
 	std::vector<beat_t> ph1(dt1.size(),beat_t{0});
 	auto mg = tmetg_t(ts_t{beat_t{3},d::q},dt1,ph1);
 
 	auto s = mg.print();
-	return;
+	std::cout <<s <<std::endl;
+	wait();
+	return s;
 }
 
 

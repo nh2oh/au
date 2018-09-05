@@ -45,6 +45,7 @@ bool is_mersenne(T a, int ulp=2) {
 int lcm(std::vector<int> const&);
 int gcd(std::vector<int> const&);
 
+
 // subject-to-round, allowed-round-targets
 // allowed_round_targets _must_ be sorted smallest -> largest
 template<typename T> T roundset(T const&, std::vector<T> const&);

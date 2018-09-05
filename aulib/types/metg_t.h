@@ -28,6 +28,7 @@ public:
 	// If I put nv_t @ beat, is any note value allowed at the next beat?
 	bool allowed_next(beat_t,d_t) const;
 	std::string print() const;
+	
 private:
 	ts_t m_ts {beat_t{4.0},d_t{d::q}};
 	std::vector<d_t> m_nvs {};
@@ -51,7 +52,11 @@ private:
 	// The maximum number of subdivisions of the beat used in calculating btres
 	static const int m_bt_quantization; 
 
-	void m_enumerator(std::vector<std::vector<int>>&, std::vector<std::vector<int>> const&, int&,int&) const;
+	void m_enumerator(std::vector<std::vector<int>>&, 
+		std::vector<std::vector<int>> const&, int&,int&) const;
+
+	
+	d_t gcd(const std::vector<d_t>&) const;  // greatest common divisor
 };
 
 
@@ -59,7 +64,7 @@ private:
 
 
 namespace autest::metg {
-	void tests1();
+	std::string tests1();
 }
 
 
