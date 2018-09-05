@@ -8,7 +8,7 @@
 #include <vector>  // cum_nbar()
 
 ts_t::ts_t(beat_t const& num, d_t const& denom, bool const& is_compound_in) {
-	au_assert(num > beat_t{0.0});
+	au_assert(num > 0_bt);
 
 	m_compound = is_compound_in;
 	if (!is_compound_in) { // "Simple" time signature
@@ -33,6 +33,7 @@ ts_t::ts_t(std::string const& str_in) {
 	from_string(str_in);
 }
 
+// TODO:  this is essentially replicated in the ts_t uih
 // Called by the constructor ts_t(std::string const&)
 // Defined as its own function because ... ???
 void ts_t::from_string(std::string const& str_in) {  
@@ -43,13 +44,13 @@ void ts_t::from_string(std::string const& str_in) {
 	auto matches = *o_matches;
 
 	double bt_per_bar {std::stod(*(matches[1]))};
-	int dv_per_bt = std::stoi(*(matches[2]));
+	double dv_per_bt = 1.0/std::stod(*(matches[2]));
 	au_assert((bt_per_bar > 0 && dv_per_bt > 0), "No (-) values in a ts");
 	
 	bool is_compound {false};
 	if (matches[3]) { is_compound = true; }
 
-	m_beat_unit = d_t {d_t::mn{dv_per_bt,0}};
+	m_beat_unit = d_t {dv_per_bt};
 	m_bpb = beat_t {bt_per_bar};
 	m_compound = is_compound;
 }
@@ -62,7 +63,7 @@ d_t ts_t::beat_unit() const {
 	return m_beat_unit;
 }
 d_t ts_t::bar_unit() const {
-	return (m_bpb/beat_t{1})*(m_beat_unit);
+	return (m_bpb/(1_bt))*(m_beat_unit);
 }
 beat_t ts_t::beats_per_bar() const {
 	return m_bpb;
@@ -71,7 +72,6 @@ beat_t ts_t::beats_per_bar() const {
 std::string ts_t::print() const {
 	std::string s = m_bpb.print() + "/" + m_beat_unit.print();
 	if (m_compound) { s += "c"; }
-	
 	return s;
 }
 

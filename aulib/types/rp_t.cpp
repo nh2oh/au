@@ -112,6 +112,7 @@ void rp_t::push_back(d_t d) {
 	m_dtot += d;
 	m_nbars += nbar(m_ts,d);
 	m_nbeats += nbeat(m_ts,d);
+	wait();
 }
 
 std::string rp_t::print() const {
@@ -140,6 +141,24 @@ beat_t rp_t::nbeats() const {
 }
 size_t rp_t::nelems() const {
 	return m_usridx;
+}
+
+std::vector<d_t> rp_t::to_duration_seq() const {
+	// TODO:  Possibly there is some overlap here w/ operator[]
+	std::vector<d_t> result {};
+	int curr_usridx = 0;
+	d_t curr_sum {};
+	for (auto const& e : m_e) {
+		if (e.usrix > curr_usridx) {
+			++curr_usridx;
+			result.push_back(curr_sum);
+			curr_sum = d_t {};
+		}
+		curr_sum += e.e;
+	}
+	result.push_back(curr_sum);
+
+	return result;
 }
 
 d_t rp_t::operator[](int i) const {

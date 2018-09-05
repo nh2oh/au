@@ -1,8 +1,8 @@
 #include "beat_bar_t.h"
-#include "..\util\au_util_all.h"
+#include "..\util\au_algs_math.h"  // aprx_eq()
+#include "..\util\au_util.h"  // bsprintf() for  *.print()
 #include <string>
 #include <chrono>
-#include <numeric>
 
 
 //-----------------------------------------------------------------------------
@@ -17,82 +17,87 @@ beat_t::beat_t(int beats_in) {
 double beat_t::to_double() const {
 	return m_beats;
 }
-std::string beat_t::print() const {
-	if (isapproxint(m_beats,6)) {
-		return std::to_string(static_cast<int>(m_beats));
-	}
-	return std::to_string(m_beats);
+beat_t operator""_bt(const char *lit) {
+	return beat_t{std::stod(lit)};
 }
-beat_t& beat_t::operator+=(beat_t const& rhs) {
+std::string beat_t::print() const {
+	return bsprintf("%.3f",m_beats);
+}
+
+beat_t& beat_t::operator+=(const beat_t& rhs) {
 	m_beats += rhs.m_beats;
 	return *this;
 }
-beat_t& beat_t::operator-=(beat_t const& rhs) {
+beat_t& beat_t::operator-=(const beat_t& rhs) {
 	m_beats -= rhs.m_beats;
 	return *this;
 }
-
-beat_t operator+(beat_t const& lhs, beat_t const& rhs) {
-	beat_t result {lhs};
-	return (result+=rhs);
+beat_t& beat_t::operator*=(const double& rhs) {
+	m_beats *= rhs;
+	return *this;
 }
-beat_t operator-(beat_t const& lhs, beat_t const& rhs) {
-	beat_t result {lhs};
-	return (result-=rhs);
+beat_t& beat_t::operator/=(const double& rhs) {
+	m_beats /= rhs;
+	return *this;
 }
-beat_t operator-(beat_t const& rhs) {
-	return beat_t{-1.0*(rhs.to_double())};
+double operator/(const beat_t& num, const beat_t& denom) {
+	return num.m_beats/denom.m_beats;
 }
-
-double operator/(beat_t const& lhs, beat_t const& rhs) {
-	return (lhs.to_double())/(rhs.to_double());
+bool beat_t::operator<(const beat_t& rhs) const {
+	return m_beats < rhs.m_beats;
 }
-double operator/(double const& lhs, beat_t const& rhs) {
-	return (lhs/rhs.to_double());
+bool beat_t::operator>(const beat_t& rhs) const {
+	return m_beats > rhs.m_beats;
 }
-beat_t operator*(double const& lhs, beat_t const& rhs) {
-	return beat_t{lhs*rhs.to_double()};
+bool beat_t::operator==(const beat_t& rhs) const {
+	return aprx_eq(m_beats,rhs.m_beats);
 }
-beat_t operator/(beat_t const& lhs, double const& rhs) {
-	return beat_t{lhs.to_double()/rhs};
+bool operator<=(const beat_t& lhs, const beat_t& rhs) {
+	return (lhs < rhs || lhs == rhs);
 }
-beat_t operator*(beat_t const& lhs, double const& rhs) {
-	return beat_t{rhs*lhs.to_double()};
+bool operator>=(const beat_t& lhs, const beat_t& rhs) {
+	return (lhs > rhs || lhs == rhs);
 }
-
-bool operator==(beat_t const& lhs, beat_t const& rhs) {
-	return (isapproxeq(lhs.to_double(),rhs.to_double(),6));
-}
-bool operator!=(beat_t const& lhs, beat_t const& rhs) {
+bool operator!=(const beat_t& lhs, const beat_t& rhs) {
 	return !(lhs==rhs);
 }
-bool operator>(beat_t const& lhs, beat_t const& rhs) {
-	return (lhs.to_double() > rhs.to_double());
+beat_t operator+(beat_t lhs, const beat_t& rhs) {
+	return (lhs += rhs);
 }
-bool operator<(beat_t const& lhs, beat_t const& rhs) {
-	return (lhs.to_double() < rhs.to_double());
+beat_t operator-(beat_t lhs, const beat_t& rhs) {
+	return (lhs -= rhs);
 }
-bool operator>=(beat_t const& lhs, beat_t const& rhs) {
-	return (lhs.to_double() >= rhs.to_double());
+beat_t operator*(const double& lhs, beat_t rhs) {
+	return rhs *= lhs;
 }
-bool operator<=(beat_t const& lhs, beat_t const& rhs) {
-	return (lhs.to_double() <= rhs.to_double());
+beat_t operator*(beat_t lhs, const double& rhs) {
+	return lhs *= rhs;
 }
+beat_t operator/(beat_t num, const double& denom) {
+	return num/=denom;
+}
+
+
 
 //-----------------------------------------------------------------------------
 // Class bar_t
 // Represents some number of bars
-bar_t::bar_t(double bars_in) {
-	m_bars = bars_in;
-}
-bar_t::bar_t(int bars_in) {
-	m_bars = bars_in;
-}
 
+bar_t::bar_t(double beats_in) {
+	m_bars = beats_in;
+}
+bar_t::bar_t(int beats_in) {
+	m_bars = static_cast<double>(beats_in);
+}
 double bar_t::to_double() const {
 	return m_bars;
 }
-
+bar_t operator""_br(const char *lit) {
+	return bar_t{std::stod(lit)};
+}
+std::string bar_t::print() const {
+	return bsprintf("%.3f",m_bars);
+}
 bar_t bar_t::full() const {
 	return bar_t {std::floor(m_bars)};
 }
@@ -108,60 +113,57 @@ double bar_t::fremain() const {  // "fraction remaining"
 bool bar_t::isexact() const {
 	return aprx_int(m_bars);
 }
-std::string bar_t::print() const {
-	return bsprintf("%.3f", m_bars);
-}
-
-bar_t& bar_t::operator+=(bar_t const& rhs) {
+bar_t& bar_t::operator+=(const bar_t& rhs) {
 	m_bars += rhs.m_bars;
 	return *this;
 }
-bar_t& bar_t::operator-=(bar_t const& rhs) {
+bar_t& bar_t::operator-=(const bar_t& rhs) {
 	m_bars -= rhs.m_bars;
 	return *this;
 }
-bar_t operator+(bar_t const& lhs, bar_t const& rhs) {
-	bar_t result {lhs};
-	return (result+=rhs);
+bar_t& bar_t::operator*=(const double& rhs) {
+	m_bars *= rhs;
+	return *this;
 }
-bar_t operator-(bar_t const& lhs, bar_t const& rhs) {
-	bar_t result {lhs};
-	return (result-=rhs);
+bar_t& bar_t::operator/=(const double& rhs) {
+	m_bars /= rhs;
+	return *this;
 }
-double operator/(bar_t const& lhs, bar_t const& rhs) {
-	return ((lhs.to_double())/(rhs.to_double()));
+double operator/(const bar_t& num, const bar_t& denom) {
+	return num.m_bars/denom.m_bars;
 }
-bar_t operator/(bar_t const& lhs, double const& rhs) {
-	return bar_t{lhs.to_double()/rhs};
+bool bar_t::operator<(const bar_t& rhs) const {
+	return m_bars < rhs.m_bars;
 }
-double operator/(double const& lhs, bar_t const& rhs) {
-	return (lhs/rhs.to_double());
+bool bar_t::operator>(const bar_t& rhs) const {
+	return m_bars > rhs.m_bars;
 }
-bar_t operator*(bar_t const& lhs, double const& rhs) {
-	return(bar_t{lhs.to_double()*rhs});
+bool bar_t::operator==(const bar_t& rhs) const {
+	return aprx_eq(m_bars,rhs.m_bars);
 }
-bar_t operator*(double const& lhs, bar_t const& rhs) {
-	return(bar_t{rhs.to_double()*lhs});
+bool operator<=(const bar_t& lhs, const bar_t& rhs) {
+	return (lhs < rhs || lhs == rhs);
 }
-
-bool operator==(bar_t const& lhs, bar_t const& rhs) {
-	//return (std::abs((lhs-rhs).to_double()) <= std::pow(10,-6));
-	return (isapproxeq(lhs.to_double(),rhs.to_double(),6));
+bool operator>=(const bar_t& lhs, const bar_t& rhs) {
+	return (lhs > rhs || lhs == rhs);
 }
-bool operator!=(bar_t const& lhs, bar_t const& rhs) {
+bool operator!=(const bar_t& lhs, const bar_t& rhs) {
 	return !(lhs==rhs);
 }
-bool operator>(bar_t const& lhs, bar_t const& rhs) {
-	return (lhs.to_double() > rhs.to_double());
+bar_t operator+(bar_t lhs, const bar_t& rhs) {
+	return (lhs += rhs);
 }
-bool operator<(bar_t const& lhs, bar_t const& rhs) {
-	return (lhs.to_double() < rhs.to_double());
+bar_t operator-(bar_t lhs, const bar_t& rhs) {
+	return (lhs -= rhs);
 }
-bool operator>=(bar_t const& lhs, bar_t const& rhs) {
-	return (lhs.to_double() >= rhs.to_double());
+bar_t operator*(const double& lhs, bar_t rhs) {
+	return rhs *= lhs;
 }
-bool operator<=(bar_t const& lhs, bar_t const& rhs) {
-	return (lhs.to_double() <= rhs.to_double());
+bar_t operator*(bar_t lhs, const double& rhs) {
+	return lhs *= rhs;
+}
+bar_t operator/(bar_t num, const double& denom) {
+	return num/=denom;
 }
 
 
@@ -169,29 +171,29 @@ bool operator<=(bar_t const& lhs, bar_t const& rhs) {
 // Class tempo_t
 
 tempo_t::tempo_t(double const& beats_in) {
-	au_assert(beats_in >= 0.0);
+	//au_assert(beats_in >= 0.0);
 	m_bpm = beat_t{beats_in};
 }
 
 tempo_t::tempo_t(beat_t const& beats_in, double const& dt_in) {
-	au_assert(beats_in >= beat_t{0});
-	au_assert(dt_in>0.0);
+	//au_assert(beats_in >= beat_t{0});
+	//au_assert(dt_in>0.0);
 	auto miliseconds = std::chrono::milliseconds(static_cast<int>(dt_in*1000*1000));
 	m_bpm = beats_in*dt_in;
 }
 tempo_t::tempo_t(beat_t const& beats_in, std::chrono::minutes const& dt_in) {
-	au_assert(beats_in >= beat_t{0});
-	au_assert(dt_in>std::chrono::minutes(0));
+	//au_assert(beats_in >= beat_t{0});
+	//au_assert(dt_in>std::chrono::minutes(0));
 	m_bpm = beats_in*(dt_in/dt_in);
 }
 tempo_t::tempo_t(beat_t const& beats_in, std::chrono::seconds const& dt_in) {
-	au_assert(beats_in >= beat_t{0});
-	au_assert(dt_in>std::chrono::minutes(0));
+	//au_assert(beats_in >= beat_t{0});
+	//au_assert(dt_in>std::chrono::minutes(0));
 	m_bpm = beats_in*(std::chrono::milliseconds(60*1000)/std::chrono::milliseconds(dt_in));
 }
 tempo_t::tempo_t(beat_t const& beats_in, std::chrono::milliseconds const& dt_in) {
-	au_assert(beats_in >= beat_t{0});
-	au_assert(dt_in>std::chrono::minutes(0));
+	//au_assert(beats_in >= beat_t{0});
+	//au_assert(dt_in>std::chrono::minutes(0));
 	m_bpm = beats_in*(std::chrono::milliseconds(60*1000)/dt_in);
 }
 

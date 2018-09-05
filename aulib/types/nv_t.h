@@ -108,8 +108,9 @@ public:
 		// there is a tuplet representation where one or more or all the
 		// members have dots (even if they have the same number of dots).
 	int base() const;
-		// The d_t w/ the same value of m_m
+		// The m exponent of the d_t
 		// If the object has no singlet representation, returns 0
+
 	std::string print() const;
 
 	bool set_base(int const&);
@@ -167,4 +168,16 @@ d_t operator+(d_t, const d_t&);
 d_t operator*(const double&, d_t);
 d_t operator*(d_t, const double&);
 d_t operator/(d_t, const double&);
+
+
+namespace autests {
+// min m, min n, max m, max n
+// Note that min m corresponds to the longest duration
+struct dtset {
+	d_t dt {};
+	int m {0};
+	int n {0};
+};
+std::vector<dtset> make_dt_set(int, int, int, int);
+}
 

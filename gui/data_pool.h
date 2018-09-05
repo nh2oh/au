@@ -15,7 +15,7 @@ public:
 	data_pool();
 
 	bool create(notefile, std::string);
-	bool create(std::vector<nv_t>, std::string);
+	bool create(std::vector<d_t>, std::string);
 	bool destroy(std::string const);
 	
 	std::string print_nfs();
@@ -33,7 +33,7 @@ private:
 
 	std::string name2uniquename(std::string) const;
 
-	dp_type_pool<std::vector<nv_t>> m_rps {};
+	dp_type_pool<std::vector<d_t>> m_rps {};
 	dp_type_pool<std::vector<scd_t>> m_scds {};
 	dp_type_pool<std::vector<frq_t>> m_frqs {};
 	dp_type_pool<std::vector<ntstr_t>> m_ntstrs {};

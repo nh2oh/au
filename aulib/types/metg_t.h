@@ -58,7 +58,9 @@ private:
 
 
 
-
+namespace autest::metg {
+	void tests1();
+}
 
 
 

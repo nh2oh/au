@@ -29,12 +29,12 @@ private:
 		std::string nnts {"0"};
 		std::string nbars {"2"};
 
-		std::set<nv_t> common_nvs {nv_t {1,0}, nv_t {2,0}, nv_t {0.0625,1}, 
-			nv_t {0.0625,2}, nv_t {0.125,1}, nv_t {0.125,2}, nv_t {0.25,1},
-			nv_t {0.25,2}, nv_t {0.5,1}, nv_t {0.5,2}};
+		std::set<d_t> common_nvs {d::dw, d::w, d::h, d::hd, d::hdd, 
+			d::q, d::qd, d::qdd, d::e, d::ed, d::edd, 
+			d::sx, d::sxd, d::sxdd};
 
-		std::map<nv_t,double> nv_pool {{nv_t {0.0625,0}, 0.25}, {nv_t {0.125,0},0.25}, 
-			{nv_t {0.25,0},0.25}, {nv_t {0.5,0},0.25}};
+		std::map<d_t,double> nv_pool {{d::sx, 0.25}, {d::e,0.25}, 
+			{d::q,0.25}, {d::h,0.25}};
 	};
 	defaults m_defaults {};
 
@@ -61,10 +61,10 @@ private:
 	au::uih<decltype(m_nbars_parser),decltype(p_geqzero)> m_nbars_uih {m_nbars_parser,p_geqzero};
 
 	QStandardItemModel m_nvpool_model {};
-	std::map<nv_t,double> m_nvpool {};
+	std::map<d_t,double> m_nvpool {};
 
 	QStringListModel m_comm_nvs_model {};
-	std::set<nv_t> m_common_nvs;
+	std::set<d_t> m_common_nvs;
 
 	//std::optional<std::vector<nv_t>> m_rand_rp_result;  // output of rand_rp()
 	std::optional<rp_t> m_rand_rp_result;

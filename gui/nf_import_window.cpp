@@ -153,7 +153,8 @@ void nf_import_window::update_nv_t_count() {
 
 	//auto nvs = deltat2rp(dt,ts,bpm,err);
 	auto rp = rp_t(ts,dt,tempo_t{bpm},std::chrono::milliseconds(err));
-	auto uq_nvs = rp.nv_members();
+	auto uq_nvs = unique_n(rp.to_duration_seq());
+	//auto uq_nvs = rp.nv_members();
 	//auto uq_nvs = unique_n(nvs);
 
 	ui.nv_t_counts->clear();

@@ -99,6 +99,14 @@ public:
 	bar_t nbars() const;
 	beat_t nbeats() const;
 	size_t nelems() const;
+	
+	std::vector<d_t> to_duration_seq() const;
+	// TODO:  Should take options, for example, maybe:  
+	// - Return a sequence of durations corresponding to the "sounded events,"
+	// ie, the sequence as push'ed_back() int construct the present rp_t
+	// - Return a sequence of singlets (obv some may span bar-boundries)
+	// - ...
+	//
 
 	d_t operator[](int) const;
 		// Returns the d_t elements as initially passed in

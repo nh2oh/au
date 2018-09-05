@@ -51,8 +51,9 @@ tmetg_t::tmetg_t(ts_t ts_in, std::vector<d_t> nvs_in, std::vector<beat_t> ph_in)
 	for (auto curr_bt : m_beat_values) {
 		auto curr_bt_quant = rapprox(curr_bt.to_double(),m_bt_quantization);
 		Nbar = std::lcm((curr_bt_quant/bt_br).reduce().denom,Nbar);
+		wait();
 	}
-
+	wait();
 	// ... The same argument applies to the phase offsets...
 	for (auto curr_ph : m_ph) {
 		auto curr_ph_quant = rapprox(curr_ph.to_double(),m_bt_quantization);
@@ -69,6 +70,7 @@ tmetg_t::tmetg_t(ts_t ts_in, std::vector<d_t> nvs_in, std::vector<beat_t> ph_in)
 		N_btres_period = std::lcm((curr_bt_quant/btres_br).reduce().num,N_btres_period);
 	}
 	m_period = N_btres_period*m_btres;
+	wait();
 }
 
 void tmetg_t::set_rand_pg() {
@@ -243,7 +245,8 @@ std::string tmetg_t::print() const {
 				s += "|" + grid_sep;
 			}
 
-			if (cbt == (std::round(cbt/m_beat_values[i])*m_beat_values[i] + m_ph[i])) {
+			if (aprx_int((cbt-m_ph[i])/m_beat_values[i])) {
+			//if (cbt == (std::round(cbt/m_beat_values[i])*m_beat_values[i] + m_ph[i])) {
 				s += "1" + grid_sep;
 			} else {
 				s += "0" + grid_sep;
@@ -253,6 +256,16 @@ std::string tmetg_t::print() const {
 	}
 
 	return s;
+}
+
+
+void autest::metg::tests1() {
+	std::vector<d_t> dt1 {d::h,d::q,d::e};
+	std::vector<beat_t> ph1(dt1.size(),beat_t{0});
+	auto mg = tmetg_t(ts_t{beat_t{3},d::q},dt1,ph1);
+
+	auto s = mg.print();
+	return;
 }
 
 

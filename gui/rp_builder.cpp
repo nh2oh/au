@@ -57,7 +57,7 @@ void rp_builder::set_rand_rp_inputs() {
 	}
 
 	// TODO:  It's silly to pull these into temp vars... fix me
-	std::set<nv_t> nvs {};
+	std::set<d_t> nvs {};
 	std::vector<double> probs {};
 	for (auto& e : m_nvpool) {
 		nvs.insert(e.first);

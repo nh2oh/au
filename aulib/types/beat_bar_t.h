@@ -1,5 +1,5 @@
 #pragma once
-#include <string> // for validate_bpm_str()
+#include <string> // for *.print()
 #include <chrono>
 
 //-----------------------------------------------------------------------------
@@ -15,31 +15,35 @@ public:
 	double to_double() const;
 	std::string print() const;
 
-	beat_t& operator+=(beat_t const&);
-	beat_t& operator-=(beat_t const&);
+	beat_t& operator+=(const beat_t&);
+	beat_t& operator-=(const beat_t&);
+	beat_t& operator*=(const double&);
+	beat_t& operator/=(const double&);
+	friend double operator/(const beat_t&, const beat_t&);
+	bool operator<(const beat_t&) const;
+	bool operator>(const beat_t&) const;
+	bool operator==(const beat_t&) const;
 	
 private:
 	double m_beats {0.0};
 };
 
-beat_t operator+(beat_t const&, beat_t const&);
-beat_t operator-(beat_t const&, beat_t const&);
-beat_t operator-(beat_t const&);
-double operator/(beat_t const&, beat_t const&);
-double operator/(double const&, beat_t const&);
-beat_t operator/(beat_t const&, double const&);
-beat_t operator*(double const&, beat_t const&);
-beat_t operator*(beat_t const&, double const&);
-bool operator==(beat_t const&, beat_t const&);
-bool operator!=(beat_t const&, beat_t const&);
-bool operator>(beat_t const&, beat_t const&);
-bool operator<(beat_t const&, beat_t const&);
-bool operator>=(beat_t const&, beat_t const&);
-bool operator<=(beat_t const&, beat_t const&);
+beat_t operator""_bt(const char*);
+
+bool operator<=(const beat_t&, const beat_t&);
+bool operator>=(const beat_t&, const beat_t&);
+bool operator!=(const beat_t&, const beat_t&);
+beat_t operator+(beat_t, const beat_t&);
+beat_t operator-(beat_t, const beat_t&);
+beat_t operator*(const double&, beat_t);
+beat_t operator*(beat_t, const double&);
+beat_t operator/(beat_t, const double&);
+
 
 //-----------------------------------------------------------------------------
 // Class bar_t
 // Represents some number of bars
+
 class bar_t {
 public:
 	bar_t() = default;
@@ -48,33 +52,35 @@ public:
 
 	double to_double() const;
 	std::string print() const;
-
 	bar_t full() const;  // Number of full bars
 	bar_t next() const;
 	bar_t remain() const;
 	bool isexact() const;
 	double fremain() const;
 
-	bar_t& operator+=(bar_t const&);
-	bar_t& operator-=(bar_t const&);
+	bar_t& operator+=(const bar_t&);
+	bar_t& operator-=(const bar_t&);
+	bar_t& operator*=(const double&);
+	bar_t& operator/=(const double&);
+	friend double operator/(const bar_t&, const bar_t&);
+	bool operator<(const bar_t&) const;
+	bool operator>(const bar_t&) const;
+	bool operator==(const bar_t&) const;
+	
 private:
 	double m_bars {0.0};
 };
 
-bar_t operator+(bar_t const&, bar_t const&);
-bar_t operator-(bar_t const&, bar_t const&);
-double operator/(bar_t const&, bar_t const&);
-double operator/(double const&, bar_t const&);
-bar_t operator/(bar_t const&, double const&);
-bar_t operator*(bar_t const&, double const&);
-bar_t operator*(double const&, bar_t const&);
-bool operator==(bar_t const&, bar_t const&);
-bool operator!=(bar_t const&, bar_t const&);
-bool operator>(bar_t const&, bar_t const&);
-bool operator<(bar_t const&, bar_t const&);
-bool operator>=(bar_t const&, bar_t const&);
-bool operator<=(bar_t const&, bar_t const&);
+bar_t operator""_br(const char*);
 
+bool operator<=(const bar_t&, const bar_t&);
+bool operator>=(const bar_t&, const bar_t&);
+bool operator!=(const bar_t&, const bar_t&);
+bar_t operator+(bar_t, const bar_t&);
+bar_t operator-(bar_t, const bar_t&);
+bar_t operator*(const double&, bar_t);
+bar_t operator*(bar_t, const double&);
+bar_t operator/(bar_t, const double&);
 
 
 //-----------------------------------------------------------------------------

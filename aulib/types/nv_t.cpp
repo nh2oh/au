@@ -378,3 +378,22 @@ d_t::ab d_t::ab::operator-(const d_t::ab& rhs) const {
 }
 
 
+
+
+
+
+
+std::vector<autests::dtset> autests::make_dt_set(int m_min, int n_min, int m_max, int n_max) {
+	//int m_min = -3; // octuple whole-note
+	//int m_max = 12; // 4096'th note 
+	//int n_min = 0; // no dots
+	//int n_max = 5; 
+	std::vector<autests::dtset> result {};
+	for (int m=m_max; m>=m_min; --m) {  // smallest bv -> largest bv
+		for (int n=n_min; n<=n_max; ++n) {
+			result.push_back({d_t {d_t::mn{m,n}}, m, n});
+		}
+	}
+
+	return result;
+}

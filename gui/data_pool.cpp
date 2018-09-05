@@ -18,8 +18,8 @@ bool data_pool::create(notefile nf_in, std::string name) {
 	return true;
 }
 
-bool data_pool::create(std::vector<nv_t> rp_in, std::string name) {
-	dp_item<std::vector<nv_t>> new_item {name, std::string {""}, rp_in};
+bool data_pool::create(std::vector<d_t> rp_in, std::string name) {
+	dp_item<std::vector<d_t>> new_item {name, std::string {""}, rp_in};
 	new_item.name = name2uniquename(new_item.name);
 
 	m_rps.items.push_back(new_item);

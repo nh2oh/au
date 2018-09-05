@@ -24,13 +24,13 @@ uih_parser_result<ts_t>
 	auto matches = *o_matches;
 	
 	auto bt_per_bar = std::stod(*(matches[1]));
-	int dv_per_bt = std::stoi(*(matches[2]));
+	double dv_per_bt = std::stod(*(matches[2]));
 	bool is_compound = false;
 	if (matches[3]) {
 		is_compound = true;
 	}
 
-	result.o_result = ts_t {beat_t{bt_per_bar}, d_t{d_t::mn{dv_per_bt,0}}, is_compound};
+	result.o_result = ts_t {beat_t{bt_per_bar}, d_t{1.0/dv_per_bt}, is_compound};
 	result.failmsg.clear();
 
 	return result;
