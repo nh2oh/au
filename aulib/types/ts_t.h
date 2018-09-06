@@ -70,6 +70,7 @@ bool operator!=(ts_t const&, ts_t const&);
 // Number of beats spanned by a given nv_t or bar_t.  
 beat_t nbeat(ts_t const&, d_t const&);
 beat_t nbeat(ts_t const&, bar_t const&);
+d_t duration(const ts_t&, beat_t);
 // Number of bars spanned by a given nv_t or d_t.  
 bar_t nbar(ts_t const&, d_t const&);
 bar_t nbar(ts_t const&, beat_t const&);

@@ -95,6 +95,10 @@ beat_t nbeat(ts_t const& ts_in, bar_t const& nbars_in) {
 	return (ts_in.beats_per_bar())*(nbars_in.to_double());
 }
 
+d_t duration(const ts_t& ts_in, beat_t nbeats_in) {
+	return d_t {ts_in.beat_unit()*(nbeats_in/(1_bt))};
+}
+
 bar_t nbar(ts_t const& ts_in, d_t const& d_in) {
 	beat_t nbeats = nbeat(ts_in, d_in);
 	return nbar(ts_in,nbeats);

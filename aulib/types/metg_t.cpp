@@ -2,101 +2,86 @@
 #include "ts_t.h"
 #include "beat_bar_t.h"
 #include "rp_t.h"
-#include "..\util\au_util_all.h"
-#include "..\util\au_frac.h"
+#include "..\util\au_error.h"
+#include "..\util\au_random.h"
+#include "..\util\au_algs_math.h"
+#include "..\util\au_util.h"  // wait()
 #include <vector>
-#include <numeric> // lcm
+#include <numeric> // lcm, gcd
 #include <string>
-#include <algorithm>
-#include <random>
 #include <iostream>
 
 //-----------------------------------------------------------------------------
 // The tmetg_t class
 
-// Statics
-const int tmetg_t::m_bt_quantization {1024};
-
 // Constructors
+
+// TODO:  This should take an options type-arg to set if bar-spanning elements 
+// should be allowed... this then changes the gres and period calcs.  
 tmetg_t::tmetg_t(ts_t ts_in, std::vector<d_t> nvs_in, std::vector<beat_t> ph_in) {
 	if (ph_in.size() != nvs_in.size()) {
 		au_error("ph_in.size() != nv_ts_in.size()");
 	}
+
 	m_ts = ts_in;
-	m_nvs = nvs_in;
-	m_ph = ph_in;
-	for (auto curr_nv : nvs_in) {
-		m_beat_values.push_back(nbeat(ts_in,curr_nv));
+	for (int i=0; i<nvs_in.size(); ++i) {
+		m_nvsph.push_back({nvs_in[i], nbeat(ts_in,nvs_in[i]), ph_in[i]});
 	}
 
-	//
-	// Each note value measured in beats (m_beat_values) spans some number of 
-	// some hitherto unknown minimum "beat resolution" beats btres.  
-	// For all the m_beat_values[i]'s, as well as the full bar
-	// (ts_in.beats_per_bar()), to be exactly representable on the grid, this
-	// "resolution" number-of-beats must be chosen small enough.  
-	// For all i, Ni/m_beat_values[i] = Nbar/bt_br (= 1/btres)
-	// where Ni is the integer number of btres beats spanned by m_beat_values[i],
-	// and Nbar is the number spanned by the full bar.  
-	//     => Ni = (m_beat_values[i]/btres), Nbar = (bt_br/btres)
-	//     => Ni/Nbar = m_beat_values[i]/bt_br
-	//     => Ni = (m_beat_values[i]/bt_br)*Nbar
-	//     
-	// The smallest value of Nbar for which all (m_beat_values[i]/bt_br)
-	// are integers yields the largest btres as:
-	// btres = Nbar/ts_in.beats_per_bar()
-	//
-	frac bt_br = rapprox(ts_in.beats_per_bar().to_double(),m_bt_quantization).reduce();
-	int Nbar = std::lcm(bt_br.denom,1);
-	for (auto curr_bt : m_beat_values) {
-		auto curr_bt_quant = rapprox(curr_bt.to_double(),m_bt_quantization);
-		Nbar = std::lcm((curr_bt_quant/bt_br).reduce().denom,Nbar);
-		wait();
+	// Minimum grid resolution
+	//  TODO:  Overload of gcd for beat_t
+	d_t gres = gcd(d_t{0.0}, m_ts.bar_unit());
+	for (auto const& e : m_nvsph) {
+		gres = gcd(gres, e.nv);
+		gres = gcd(gres, duration(m_ts,e.ph));
 	}
-	wait();
-	// ... The same argument applies to the phase offsets...
-	for (auto curr_ph : m_ph) {
-		auto curr_ph_quant = rapprox(curr_ph.to_double(),m_bt_quantization);
-		Nbar = std::lcm((curr_ph_quant/bt_br).reduce().denom,Nbar);
-	}
-	m_btres = beat_t{(bt_br/Nbar).to_double()};
+	
+	// Minimum grid period
+	// TODO:  Just do the whole thing in beat_t
+	int n_gres_units = m_ts.bar_unit()/gres;
+	int ce = 0;
+	for (auto e : m_nvsph) {
+		ce = e.nv/gres;
+		n_gres_units = std::lcm(n_gres_units, ce);
 
-	// What is the smallest number of m_btres steps containing an integer number 
-	// of all of Nbar, m_beat_values?  
-	frac btres_br = rapprox(bt_br.to_double()/m_btres.to_double(),m_bt_quantization).reduce();
-	int N_btres_period = std::lcm(btres_br.num,1);
-	for (auto curr_bt : m_beat_values) {
-		auto curr_bt_quant = rapprox(curr_bt.to_double(),m_bt_quantization);
-		N_btres_period = std::lcm((curr_bt_quant/btres_br).reduce().num,N_btres_period);
+		ce = e.ph/nbeat(m_ts,gres);
+		if (ce > 0) {
+			// TODO:  should take the abs() of a -ph
+			n_gres_units = std::lcm(n_gres_units, ce);
+		}
 	}
-	m_period = N_btres_period*m_btres;
+	auto gperiod = n_gres_units*gres;
+	m_btres = beat_t{gres/m_ts.beat_unit()};
+	m_period = beat_t{gperiod/m_ts.beat_unit()};
 
-	auto y = nvs_in;
-	y.push_back(m_ts.bar_unit());
-	auto x = gcd(y);
-	int clcm = 1;
-	for (auto e : y) {
-		int ce = e/x;
-		clcm = std::lcm(clcm, ce);
-	}
-	wait();
+	// The pg is always initialized to this dummy value to obviate the
+	// need to add a bool is_pg_set check on every method that reads the
+	// pg.  
+	set_rand_pg();
 }
 
 void tmetg_t::set_rand_pg() {
-	au_assert(isapproxint(m_period/m_btres,6));
 	auto N_cols_period = static_cast<int>(m_period/m_btres);
 	m_pg = std::vector<std::vector<double>>(N_cols_period,
-		std::vector<double>(m_nvs.size(),0.0));
-
-	for (auto i=0; i < m_pg.size(); ++i) {
+		std::vector<double>(m_nvsph.size(),0.0));
+	
+	// For each col, compute levels_allowed().  For each element (row) in 
+	// the present col, the value is either == 0 (default) or 1/n where
+	// n is the number of elements in the present col allowed to contain a
+	// note.  
+	// m_pg[col i][row j]
+	for (auto i=0; i < m_pg.size(); ++i) { // for each col...
 		auto curr_bt = i*m_btres;
 		auto curr_allowed = levels_allowed(curr_bt);
-		for (auto idx : curr_allowed) {
+		for (auto idx : curr_allowed) {  // for each row were a note is allowed
 			m_pg[i][idx] = 1.0/curr_allowed.size();
 		}
 	}
+
 }
 
+
+// Generate a random rp from the pg
 std::vector<d_t> tmetg_t::draw() const {
 	std::vector<d_t> rnts {};
 	auto re = new_randeng(true);
@@ -106,13 +91,14 @@ std::vector<d_t> tmetg_t::draw() const {
 		auto pg_col_idx = static_cast<int>(curr_bt/m_btres);
 		auto pg_col = m_pg[pg_col_idx];
 		auto ridx = randset(1,pg_col,re);
-		rnts.push_back(m_nvs[ridx[0]]);
-		curr_bt += m_beat_values[ridx[0]];
+		rnts.push_back(m_nvsph[ridx[0]].nv);
+		curr_bt += m_nvsph[ridx[0]].nbts;
 	}
 
 	return rnts;
 }
 
+// Read the note-probability vector at the given beat
 std::vector<double> tmetg_t::nt_prob(beat_t) {
 	return std::vector<double>(5,0.0);
 }
@@ -147,7 +133,7 @@ void tmetg_t::m_enumerator(std::vector<std::vector<int>>& rps,
 
 	for (int i=0; i<g[x].size(); ++i) {
 		rps[N].push_back(g[x][i]);
-		int nx = x + (m_beat_values[g[x][i]]/m_btres);
+		int nx = x + (m_nvsph[g[x][i]].nbts/m_btres);
 
 		if (nx < g.size()) {
 			f_gspan_fatal = false; f_gspan_complete = false; f_gspan_continue = true;
@@ -176,90 +162,68 @@ void tmetg_t::m_enumerator(std::vector<std::vector<int>>& rps,
 }
 
 
-// True if _any_ note of m_nv_ts occurs at beat one nv past beat
+// True if there is at least one note of m_nvs that can occur at the 
+// given (beat + the given nv)
 bool tmetg_t::allowed_next(beat_t beat, d_t nv) const {
 	auto nxt_bt = beat+nbeat(m_ts,nv); // Beat-number of the next beat
 	return allowed_at(nxt_bt);
 }
 
-// True if _any_ note of m_nv_ts occurs at beat
+// True if there is at least one member note-value that can occur at the 
+// given beat
 bool tmetg_t::allowed_at(beat_t beat) const {
-	for (auto i=0; i<m_beat_values.size(); ++i) {
-		if (beat == (std::round(beat/m_beat_values[i])*m_beat_values[i] + m_ph[i])) {
+	// aprx_int((cbt-e.ph)/e.nbts)  // TODO:  better
+	for (auto const& e : m_nvsph) {
+		if (beat == (std::round(beat/e.nbts)*e.nbts + e.ph)) {
 			return true;
 		}
 	}
 	return false;
 }
 
-// True if _any_ note of m_nv_ts occurs at beat
+//  Which levels of the grid are allowed at the given beat?
 std::vector<int> tmetg_t::levels_allowed(beat_t beat) const {
-	std::vector<int> allowed {}; allowed.reserve(m_beat_values.size());
-	for (auto i=0; i<m_beat_values.size(); ++i) {
-		if (beat==(std::round(beat/m_beat_values[i])*m_beat_values[i] + m_ph[i])) {
+	std::vector<int> allowed {}; allowed.reserve(m_nvsph.size());
+	for (int i=0; i<m_nvsph.size(); ++i) {
+		// aprx_int((cbt-e.ph)/e.nbts)  // TODO:  better
+		if (beat==(std::round(beat/m_nvsph[i].nbts)*m_nvsph[i].nbts + m_nvsph[i].ph)) {
 			allowed.push_back(i);
 		}
 	}
 	return allowed;
 }
 
-//std::vector<nv_t> tmetg_t::which_allowed(beat_t beat, 
-//	std::vector<nv_t> nvs, int mode) const {
-//	// mode == 1 => at && next (default)
-//	// mode == 2 => at only
-//	// mode == 3 => next only
-//	std::vector<nv_t> allowed_nvs {};
-//
-//	if (mode == 1 || mode == 2) {
-//		if (!allowed_at(beat)) {
-//			return allowed_nvs; // Empty vector
-//		}
-//	}
-//
-//	if (mode == 1 || mode == 3) {
-//		for (auto const& cnv : nvs) {
-//			if (allowed_next(beat,cnv)) {
-//				allowed_nvs.push_back(cnv);
-//			}
-//		}
-//	}
-//
-//	return allowed_nvs;
-//}
-
-
-
-
 
 std::string tmetg_t::print() const {
-
 	std::string s {};
 	s += "tmetg.print():\n";
 	s += "ts == " + m_ts.print() + "\n";
-	for (auto i=0; i<m_nvs.size(); ++i) {
-		s += m_nvs[i].print();
-		s += " (=> " + std::to_string(m_beat_values[i].to_double()) + " beats);  ";
-		s += "+ " + std::to_string(m_ph[i].to_double()) + " beat shift\n";
+	for (auto const& e : m_nvsph) {
+		s += e.nv.print();
+		s += " (=> " + e.nbts.print() + " beats);  ";
+		s += "+ " + e.ph.print() + " beat shift\n";
 	}
 	s += "\n\n";
-	s += "Grid resolution: " + std::to_string(m_btres.to_double()) + " beats\n";
-	s += "Period:          " + std::to_string(m_period.to_double()) + " beats\n";
+	s += "Grid resolution: " + m_btres.print() + " beats\n";
+	s += "Period:          " + m_period.print() + " beats\n";
 	s += "\n\n";
 
 	std::string grid_sep {" "};
 	std::string level_sep {"\n"};
-	for (auto i=0; i<m_beat_values.size(); ++i) {
+	for (auto const& e : m_nvsph) {
 		for (beat_t cbt {0.0}; cbt<m_period; cbt += m_btres) {
-			if (ismultiple(cbt.to_double(),m_ts.beats_per_bar().to_double(),6)) {
+			if (aprx_int(cbt/m_ts.beats_per_bar())) {
+			//if (ismultiple(cbt.to_double(),m_ts.beats_per_bar().to_double(),6)) {
 				s += "|" + grid_sep;
 			}
 
-			if (aprx_int((cbt-m_ph[i])/m_beat_values[i])) {
-			//if (cbt == (std::round(cbt/m_beat_values[i])*m_beat_values[i] + m_ph[i])) {
+			if (aprx_int((cbt-e.ph)/e.nbts)) {
 				s += "1" + grid_sep;
 			} else {
 				s += "0" + grid_sep;
 			}
+			// TODO:  Better:
+			// s += bsprintf("%d%s",(cbt-e.ph)/e.nbts, grid_sep);
 		}
 		s += level_sep;
 	}
@@ -281,112 +245,32 @@ d_t tmetg_t::gcd(const std::vector<d_t>& dset) const {
 	return res;
 }
 
-
-
-
-
+// TODO:  Inspect m, n of a,b and work out the proper scaling factor
+d_t tmetg_t::gcd(const d_t& a, const d_t& b) const {
+	long sfctr = 100'000'000'000;
+	long as = sfctr*(a/d_t{d::w});
+	long bs = sfctr*(b/d_t{d::w});
+	double cgcd = std::gcd(as,bs);
+	return d_t {cgcd/sfctr};
+}
 
 std::string autest::metg::tests1() {
-	std::vector<d_t> dt1 {d::h,d::q,d::e};
+	std::vector<d_t> dt1 {d::h,d::q,d::ed};
 	std::vector<beat_t> ph1(dt1.size(),beat_t{0});
 	auto mg = tmetg_t(ts_t{beat_t{3},d::q},dt1,ph1);
 
 	auto s = mg.print();
-	std::cout <<s <<std::endl;
+	std::cout <<s <<std::endl<<std::endl<<std::endl;
+
+	mg.set_rand_pg();
+	for (int i=0; i < 5; ++i) {
+		auto vdt = mg.draw();
+		rp_t rp {ts_t{3_bt,d::q},vdt};
+		std::cout <<rp.print() <<std::endl<<std::endl<<std::endl;
+	}
+
 	wait();
 	return s;
 }
-
-
-
-//
-// Old version that explictly constructs a discrete grid, like i did in
-// the Matlab version.  May be useful in the future for explicit grid-walking
-// algorithms.  
-//
-//
-//std::vector<std::vector<int>> tmetg(ts_t ts_in, 
-//	std::vector<nv_t> dp_in, std::vector<beat_t> ph_in) {
-//	//
-//	// Each duration element di in dp_in spans some number of grid spaces NGi.  
-//	// For all the di's, as well as the full bar, dbr (which  spans NGbr grid
-//	// spaces), and the beat, dbt (which spans NGbt grid spaces) to be 
-//	// exactly representable on the grid, the grid resolution dg (the duration
-//	// spanned by a single grid step) must be chosen small enough.  
-//	// For all i, NGi/di = NGbr/dbr (= 1/gres)
-//	//     => NGi = (di/dbr)*NGbr  (also, NGi = di/dg)
-//	//     
-//	// The smallest value of NGbr for which all (di/dbr) are integers is the
-//	// optimal solution.  
-//	//     => NGbr = lcm((di/dbr).denom) (where all (di/dbr) are reduced)
-//	//
-//	// (I should probably also consider the "beat" a duration element...)
-//	//
-//	frac dbr = rapprox(ts_in.bar_unit().to_double(),256);
-//	frac dbt = rapprox(ts_in.beat_unit().to_double(),256);
-//
-//	int NGbr = std::lcm((dbt/dbr).reduce().denom,1);
-//	std::vector<frac> dp {};
-//	for (auto e : dp_in) {
-//		auto di = rapprox(e.to_double(),256);
-//		dp.push_back(di);
-//		NGbr = std::lcm((di/dbr).reduce().denom,NGbr);
-//	}
-//	auto dg = (NGbr/dbr).reduce(); // expect same result for all NGi,di
-//
-//	std::vector<int> NGi {};  
-//	for (auto e : dp) {
-//		frac tempfrac = (NGbr*(e/dbr)).reduce(); // for testing only; all should be x/1
-//		if (tempfrac.denom != 1) {
-//			au_error("shit");
-//		}
-//		NGi.push_back(tempfrac.num);
-//	}
-//	int NGbt = (NGbr*(dbt/dbr)).reduce().num;
-//
-//	//
-//	// What is the minimum grid length containing an integer number of all
-//	// di, as well as dbr and dbt?  
-//	// For a grid with NGtot cols, Ni = NGtot/NGi, Nbr = NGtot/NGbr, 
-//	// Nbt = NGtot/NGbt, Ng = NGtot.
-//	// Thus the value of NGtot for which NGbr, NGbt, and all of the NGi are
-//	// integers is the solution.  
-//	//     => Ntot = lcm(NGall)
-//	//
-//	std::vector<int> NG_all = NGi;
-//	NG_all.push_back(NGbr);
-//	NG_all.push_back(NGbt);
-//	auto Ntot = lcm(NG_all);
-//
-//	//
-//	// Explicit construction of the total grid:
-//	// tg[0] => dp_all[0] = dp_in[0], ... tg[n] => dp_all[n] = db
-//	// dp_all is dp_in with db appended to the end, and "indexes" tg.  
-//	//
-//	std::vector<nv_t> dp_all = dp_in;
-//	dp_all.push_back(nv_t{dbr.to_double()});
-//	dp_all.push_back(nv_t{dbt.to_double()});
-//
-//	std::vector<std::vector<int>> tg {};
-//	for (auto i=0; i<dp_all.size(); ++i) {
-//		tg.push_back(std::vector<int>(Ntot,0));
-//		for (auto j=0; j<=(tg[i].size()-NG_all[i]); j+=NG_all[i]) {
-//			tg[i][j] = 1;
-//		}
-//	}
-//
-//	return tg;
-//}
-//
-
-
-
-
-
-
-
-
-
-
 
 
