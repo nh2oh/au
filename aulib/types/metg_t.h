@@ -46,7 +46,7 @@ private:
 		double lgp {0.0};
 	};
 	//std::vector<std::vector<double>> m_pg {};
-	std::vector<std::vector<pgcell>> m_pg2 {};
+	std::vector<std::vector<pgcell>> m_pg {};
 
 	struct rpp {  // "rp with probability"
 		std::vector<int> rp {};
@@ -60,8 +60,8 @@ private:
 
 	//void m_enumerator(std::vector<std::vector<int>>&, 
 	//	std::vector<std::vector<int>> const&, int&,int&) const;
-	void m_enumerator2(std::vector<rpp>&, 
-		std::vector<std::vector<pgcell>> const&, int&,int&) const;
+	void m_enumerator(std::vector<rpp>&, 
+		std::vector<std::vector<pgcell>> const&, int&, int) const;
 	
 	d_t gcd(const std::vector<d_t>&) const;  // greatest common divisor
 	d_t gcd(const d_t&, const d_t&) const;
