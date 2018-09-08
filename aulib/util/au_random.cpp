@@ -8,6 +8,7 @@
 #include <algorithm>  // find_if()
 
 // Get a new random number generator engine
+// TODO:  t does not have the resolution to do this correctly... is it seconds????
 // If randseed == true, the engine is seeded with the least-significant digits
 // of the number of seconds (???) between the present time and the system 
 // clock's (???) epoch.  If false, the engine is created w/ the default seed. 
@@ -37,6 +38,9 @@ std::vector<int> urandi(int n, int min, int max) {
 }
 std::vector<double> urandd(int n, double min, double max) {
 	auto re = new_randeng(true);
+	return urandd(n, min, max, re);
+}
+std::vector<double> urandd(int n, double min, double max, std::mt19937& re) {
 	std::uniform_real_distribution<double> rn {min,max};
 	std::vector<double> rv(n,0.0);
 	for (auto i=0; i<n; ++i) {
@@ -46,7 +50,10 @@ std::vector<double> urandd(int n, double min, double max) {
 }
 
 std::vector<double> normalize_probvec(std::vector<double> p) {
-	au_assert(p.size()>0, "p>0");
+	if (p.size() == 0) {
+		return p;
+	}
+	//au_assert(p.size()>0, "p>0");
 	au_assert(!std::any_of(p.begin(),p.end(),[](double const& e){ return e<0; }),
 		"all elements of p must be >= 0");
 

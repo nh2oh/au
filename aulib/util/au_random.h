@@ -11,6 +11,7 @@ std::mt19937 new_randeng(bool randseed=true);
 
 std::vector<int> urandi(int,int,int);
 std::vector<double> urandd(int,double,double);
+std::vector<double> urandd(int,double,double,std::mt19937&);
 
 std::vector<size_t> randset(int const&, std::vector<double> const&, std::mt19937&);
 

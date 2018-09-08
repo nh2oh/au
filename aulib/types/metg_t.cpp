@@ -10,6 +10,8 @@
 #include <numeric> // lcm, gcd
 #include <string>
 #include <iostream>
+#include <map>
+#include <algorithm>
 
 //-----------------------------------------------------------------------------
 // The tmetg_t class
@@ -57,24 +59,48 @@ tmetg_t::tmetg_t(ts_t ts_in, std::vector<d_t> nvs_in, std::vector<beat_t> ph_in)
 	// The pg is always initialized to this dummy value to obviate the
 	// need to add a bool is_pg_set check on every method that reads the
 	// pg.  
+	std::vector<pgcell> pgcol_default {};
+	for (int i=0; i<m_nvsph.size(); ++i) {
+		pgcol_default.push_back({i,static_cast<int>(m_nvsph[i].nbts/m_btres),0.0});
+	}
+	for (int i=0; i<(m_period/m_btres); ++i) {
+		m_pg2.push_back(pgcol_default); //std::vector<std::vector<pgcell>>(,pgcol_default);
+	}
+
 	set_rand_pg();
 }
 
 void tmetg_t::set_rand_pg() {
-	auto N_cols_period = static_cast<int>(m_period/m_btres);
-	m_pg = std::vector<std::vector<double>>(N_cols_period,
-		std::vector<double>(m_nvsph.size(),0.0));
+	int mode = 1;
+	// auto ncols = static_cast<int>(m_period/m_btres);
+	//m_pg = std::vector<std::vector<double>>(N_cols_period,
+	//	std::vector<double>(m_nvsph.size(),0.0));
 	
-	// For each col, compute levels_allowed().  For each element (row) in 
-	// the present col, the value is either == 0 (default) or 1/n where
-	// n is the number of elements in the present col allowed to contain a
-	// note.  
-	// m_pg[col i][row j]
-	for (auto i=0; i < m_pg.size(); ++i) { // for each col...
-		auto curr_bt = i*m_btres;
-		auto curr_allowed = levels_allowed(curr_bt);
-		for (auto idx : curr_allowed) {  // for each row were a note is allowed
-			m_pg[i][idx] = 1.0/curr_allowed.size();
+	// For each col i in g, compute a probability value for the elements 
+	// returned by levels_allowed() and assign to the corresponding element
+	// of m_pg.  For col i in g, the entry in m_pg corresponding to 
+	// note-value k (m_nvsph[k]) is m_pg[i][k].  
+	// m_pg[i].size() == m_nvsph.size() for all i.  
+	auto re = new_randeng(true);
+	for (auto i=0; i < m_pg2.size(); ++i) { // for each col in g...
+		auto curr_allowed = levels_allowed(i*m_btres);
+		std::vector<double> curr_probs {};
+		if (mode == 1) {
+			// Probabilty of all allowed elements is random
+			curr_probs = normalize_probvec(
+				urandd(curr_allowed.size(),0.0,1.0,re));
+		} else {
+			// Probabilty of all allowed elements is the same
+			curr_probs = normalize_probvec(
+				std::vector<double>(curr_allowed.size(),1.0));
+		}
+		for (auto j=0; j<curr_allowed.size(); ++j) { 
+			// for each row were a note is allowed...
+			m_pg2[i][curr_allowed[j]].lgp = curr_probs[j];
+
+			// Note that the only elements of m_pg[i] being assigned are those
+			// which are allowed at position i in g.  For the other elements
+			// in m_pg[i] the default .lgp == 0.  
 		}
 	}
 
@@ -88,9 +114,17 @@ std::vector<d_t> tmetg_t::draw() const {
 
 	beat_t curr_bt {0};
 	while (curr_bt < m_period) {
-		auto pg_col_idx = static_cast<int>(curr_bt/m_btres);
-		auto pg_col = m_pg[pg_col_idx];
-		auto ridx = randset(1,pg_col,re);
+		//auto pg_col_idx = static_cast<int>(curr_bt/m_btres);
+		//auto pg_col = m_pg[pg_col_idx];
+		//auto ridx = randset(1,pg_col,re);
+		//rnts.push_back(m_nvsph[ridx[0]].nv);
+		//curr_bt += m_nvsph[ridx[0]].nbts;
+
+		//std::vector<double> pg_col {};
+		//for (auto e : m_pg2[pg_col_idx]) {
+		//	pg_col.push_back(e.p);
+		//}
+		auto ridx = randset(1,nt_prob(curr_bt),re);
 		rnts.push_back(m_nvsph[ridx[0]].nv);
 		curr_bt += m_nvsph[ridx[0]].nbts;
 	}
@@ -99,28 +133,135 @@ std::vector<d_t> tmetg_t::draw() const {
 }
 
 // Read the note-probability vector at the given beat
-std::vector<double> tmetg_t::nt_prob(beat_t) {
-	return std::vector<double>(5,0.0);
+// TODO:  bt may exceed m_pg2.size()... in this case, should "wrap"
+// bt as if m_pg2 extended to infinity
+std::vector<double> tmetg_t::nt_prob(beat_t bt) const {
+	auto pg_col_idx = static_cast<int>(bt/m_btres);
+	std::vector<double> probs {};
+	for (auto const& e : m_pg2[pg_col_idx]) {
+		probs.push_back(e.lgp);
+	}
+	return probs;
 }
 
 // Enumerate all variations over a single period
 void tmetg_t::enumerate() const {
+	int ncols = static_cast<int>(m_period/m_btres);
 
-	std::vector<std::vector<int>> g((m_period/m_btres),std::vector<int>{});
-	for (int i=0; i<(m_period/m_btres); ++i) {
-		g[i]=levels_allowed(i*m_btres);
+	//std::vector<std::vector<int>> g((m_period/m_btres),std::vector<int>{});
+	//for (int i=0; i<(m_period/m_btres); ++i) {
+	//	g[i]=levels_allowed(i*m_btres);
+	//}
+
+	// g2 is essentially a copy of m_pg, however, instead of each col having
+	// m_nvsph rows, each col has between 0 and m_nvsph rows.  For each col, 
+	// entries appear in order of _decreasing_ probability.  Entries in m_pg 
+	// with p == 0.0 do not appear in g2.  
+	
+	int N_tot_guess =1;
+	std::vector<std::vector<pgcell>> g2(ncols,std::vector<pgcell>{});
+	for (int i=0; i<ncols; ++i) {
+
+		std::vector<double> curr_col_probs;// = m_pg2[i];
+		for (auto const& e : m_pg2[i]) {
+			curr_col_probs.push_back(e.lgp);
+		}
+		while (std::any_of(curr_col_probs.begin(),curr_col_probs.end(),[](double d){return d>0.0;})) {
+			auto it = std::max_element(curr_col_probs.begin(),curr_col_probs.end());
+			auto idx = std::distance(curr_col_probs.begin(),it);
+			if (idx < curr_col_probs.size()) {  // Shouldn't need this test
+				g2[i].push_back(m_pg2[i][idx]);
+				g2[i].back().lgp = std::log(g2[i].back().lgp);
+				curr_col_probs[idx] = 0.0;
+			}
+		}
+		if (g2[i].size() > 0) {
+			N_tot_guess *= g2[i].size();
+		}
 	}
 
-	int N_max = 10000;
-	std::vector<std::vector<int>> rps(N_max,std::vector<int>{});
+	int N_prealloc = std::min(10000,N_tot_guess);
+	std::vector<std::vector<int>> rps(N_prealloc,std::vector<int>{});
+	std::vector<rpp> rps2(N_prealloc,rpp{});
 
 	int N = 0;
 	int x = 0;
-	m_enumerator(rps,g,N,x);
+	//m_enumerator(rps,g,N,x);
+	m_enumerator2(rps2,g2,N,x);
+
+
+	// Crude print
+	for (int i=0; i<N; ++i) {
+		std::string s {};
+		s += bsprintf("i=%d:  p=%.3f  :  ",i,rps2[i].p);
+		for (auto& e : rps2[i].rp) {
+			s += m_nvsph[e].nv.print();
+			s += " ";
+		}
+		//std::cout << "i= " << i << "  " << s << std::endl;
+		std::cout << s << std::endl;
+	}
+
 
 	wait();
 }
 
+void tmetg_t::m_enumerator2(std::vector<rpp>& rps, 
+	std::vector<std::vector<pgcell>> const& g, int& N, int& x) const {
+	//...
+
+	bool f_gspan_fatal {false};
+	bool f_gspan_complete {false};
+	bool f_gspan_continue {false};
+
+	auto rp_init = rps[N];
+
+	for (int i=0; i<g[x].size(); ++i) {
+		rps[N].rp.push_back(g[x][i].ix_nvsph);
+		rps[N].p += g[x][i].lgp; //*= g[x][i].p;
+		int nx = x + g[x][i].stepsz;
+
+		if (nx < g.size()) {
+			f_gspan_fatal = false; f_gspan_complete = false; f_gspan_continue = true;
+			// Re-enter passing nx in place of x.  Note x does not change; when the
+			// call returns, it will have the same value as before the call.  
+			// On return, set rps[N] to rp_init
+			// To next loop iter
+		} else if (nx > g.size()) { // overshot the grid
+			// Note that g.size() is one past the final col of the grid.  
+			// For a "well behaved" g this should never happen.  I could implement checks in the
+			// initial-call section to check for and drop g elements that will cause this
+			// condition.
+			f_gspan_fatal = true; f_gspan_complete = false; f_gspan_continue = false;
+			// Remove the final element of rps[N]
+			// Set rps[N] to rp_init (redundant?)
+			// To next loop iter
+		} else { // rps[N] spans the grid exactly
+			f_gspan_fatal = false; f_gspan_complete = true; f_gspan_continue = false;
+			// Increment N
+			// Set rps[N] to rp_init
+			// To next loop iter
+		}
+
+		if (f_gspan_continue) {
+			// No fatal errors, append next
+			wait();
+			m_enumerator2(rps,g,N,nx);
+			wait();
+		} else if (f_gspan_complete) {
+			++N;
+		} else if (f_gspan_fatal) {
+			//rps[N].rp.pop_back();
+			//rps[N].p /= g[x][i].p;
+		}
+
+		// If f_gspan_fatal, N is not incremented
+		rps[N] = rp_init;
+	}
+
+}
+
+/*
 void tmetg_t::m_enumerator(std::vector<std::vector<int>>& rps, 
 	std::vector<std::vector<int>> const& g, int& N, int& x) const {
 	//...
@@ -137,18 +278,30 @@ void tmetg_t::m_enumerator(std::vector<std::vector<int>>& rps,
 
 		if (nx < g.size()) {
 			f_gspan_fatal = false; f_gspan_complete = false; f_gspan_continue = true;
+			// Re-enter w/ x=nx
+			// On return, set rps[N] to rp_init
+			// To next loop iter
 		} else if (nx > g.size()) { // overshot the grid
+			// Note that g.size() is one past the final col of the grid.  
 			// For a "well behaved" g this should never happen.  I could implement checks in the
 			// initial-call section to check for and drop g elements that will cause this
 			// condition.
 			f_gspan_fatal = true; f_gspan_complete = false; f_gspan_continue = false;
+			// Remove the final element of rps[N]
+			// Set rps[N] to rp_init (redundant?)
+			// To next loop iter
 		} else { // rps[N] spans the grid exactly
 			f_gspan_fatal = false; f_gspan_complete = true; f_gspan_continue = false;
+			// Increment N
+			// Set rps[N] to rp_init
+			// To next loop iter
 		}
 
 		if (f_gspan_continue) {
 			// No fatal errors, append next
+			wait();
 			m_enumerator(rps,g,N,nx);
+			wait();
 		} else if (f_gspan_complete) {
 			++N;
 		} else if (f_gspan_fatal) {
@@ -159,7 +312,7 @@ void tmetg_t::m_enumerator(std::vector<std::vector<int>>& rps,
 		rps[N] = rp_init;
 	}
 
-}
+}*/
 
 
 // True if there is at least one note of m_nvs that can occur at the 
@@ -268,6 +421,8 @@ std::string autest::metg::tests1() {
 		rp_t rp {ts_t{3_bt,d::q},vdt};
 		std::cout <<rp.print() <<std::endl<<std::endl<<std::endl;
 	}
+
+	mg.enumerate();
 
 	wait();
 	return s;
