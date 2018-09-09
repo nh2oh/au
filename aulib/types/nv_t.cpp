@@ -154,6 +154,10 @@ std::vector<d_t> d_t::to_singlets_partition_max(const d_t& d1, const d_t& dmax) 
 	return res;
 }
 
+bool d_t::weird() const {
+	return m_ab.get_a() >= 5;
+}
+
 int d_t::ndot() const {
 	if (m_ab.singlet_exists()) {
 		auto mn = m_ab.to_mn();

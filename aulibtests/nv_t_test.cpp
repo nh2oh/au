@@ -101,8 +101,3 @@ TEST(d_t_tests, DivisionAndConstructFromDouble) {
 	}
 }
 
-
-
-
-
-

@@ -48,23 +48,29 @@ tmetg_t::tmetg_t(ts_t ts_in, rp_t rp_in) {
 		m_f_pg_extends = false;  // Default is true
 	}
 	auto pg_nsteps = static_cast<int>(std::max(m_period,curr_bt)/m_btres);
-	m_pg = std::vector<std::vector<pgcell>>(pg_nsteps,std::vector<pgcell>{});
+	// TODO:  Pull this into some sort of init_pg(), set_pg_zero() method
+	// or something.  
+	std::vector<pgcell> def_pgcol {};
+	for (int i=0; i<m_nvsph.size(); ++i) {
+		def_pgcol.push_back({i,static_cast<int>(m_nvsph[i].nbts/m_btres),0.0});
+	}
+	for (int i=0; i<pg_nsteps; ++i) {
+		m_pg.push_back(def_pgcol);
+	}
 
 	curr_bt = 0_bt;
-	int curr_idx = 0;
+	int curr_step = 0;
 	for (const auto& e : vdt) {
 		auto idx = levels_allowed(curr_bt);
 		int stepsz = static_cast<int>(nbeat(m_ts,e)/m_btres);
 		for (auto i=0; i<idx.size(); ++i) {
 			if (m_nvsph[idx[i]].nv == e) {
-				m_pg[curr_idx].push_back({idx[i],stepsz,1});
+				m_pg[curr_step][idx[i]].lgp = 1.0;
 			}
 		}
 		curr_bt += nbeat(m_ts,e);
-		curr_idx += nbeat(m_ts,e)/m_btres;
+		curr_step += stepsz;
 	}
-
-	wait();
 }
 
 // TODO:  This should take an options type-arg to set if bar-spanning elements 
@@ -82,9 +88,8 @@ tmetg_t::tmetg_t(ts_t ts_in, std::vector<d_t> nvs_in, std::vector<beat_t> ph_in)
 	m_btres = gres();
 	m_period = period();
 
-	// The pg is always initialized to this dummy value to obviate the
-	// need to add a bool is_pg_set check on every method that reads the
-	// pg.  
+	// The pg is always initialized to this dummy value.  Each col of m_pg
+	// is set to contain m_nvsph.size() elements.  
 	std::vector<pgcell> pgcol_default {};
 	for (int i=0; i<m_nvsph.size(); ++i) {
 		pgcol_default.push_back({i,static_cast<int>(m_nvsph[i].nbts/m_btres),0.0});
@@ -92,14 +97,11 @@ tmetg_t::tmetg_t(ts_t ts_in, std::vector<d_t> nvs_in, std::vector<beat_t> ph_in)
 	for (int i=0; i<(m_period/m_btres); ++i) {
 		m_pg.push_back(pgcol_default);
 	}
-
 	set_rand_pg();
 }
 
-
-
+// Calculates the minimum grid resolution from m_nvsph, m_ts
 beat_t tmetg_t::gres() const {
-	// Minimum grid resolution
 	//  TODO:  Overload of gcd for beat_t ?
 	d_t gres = gcd(d_t{0.0}, m_ts.bar_unit());
 	for (auto const& e : m_nvsph) {
@@ -109,8 +111,9 @@ beat_t tmetg_t::gres() const {
 	return nbeat(m_ts,gres);
 }
 
-beat_t tmetg_t::period() const {  // Depends on m_btres being correctly set
-	// Minimum grid period
+// Cancluates the minimum grid period from m_nvsph, m_ts, m_btres.  
+// NB: Depends on m_btres being correctly set!
+beat_t tmetg_t::period() const { 
 	// TODO:  Just do the whole thing in beat_t ?
 	auto nvgres = duration(m_ts,m_btres);
 	int n_gres_units = m_ts.bar_unit()/nvgres;
@@ -121,7 +124,7 @@ beat_t tmetg_t::period() const {  // Depends on m_btres being correctly set
 
 		ce = e.ph/nbeat(m_ts,nvgres);
 		if (ce > 0) {
-			// TODO:  should take the abs() of a -ph
+			// TODO:  should take the abs() of a -ph ?
 			n_gres_units = std::lcm(n_gres_units, ce);
 		}
 	}
@@ -129,9 +132,9 @@ beat_t tmetg_t::period() const {  // Depends on m_btres being correctly set
 	return beat_t{gperiod/m_ts.beat_unit()};
 }
 
+// Assumes that each col of m_pg contains m_nvsph.size() elements
 void tmetg_t::set_rand_pg() {
 	int mode = 0;
-
 	// For each col i in g, compute a probability value for the elements 
 	// returned by levels_allowed() and assign to the corresponding element
 	// of m_pg.  For col i in g, the entry in m_pg corresponding to 
@@ -153,25 +156,29 @@ void tmetg_t::set_rand_pg() {
 		for (auto j=0; j<curr_allowed.size(); ++j) { 
 			// for each row were a note is allowed...
 			m_pg[i][curr_allowed[j]].lgp = curr_probs[j];
-
 			// Note that the only elements of m_pg[i] being assigned are those
 			// which are allowed at position i in g.  For the other elements
 			// in m_pg[i] the default .lgp == 0.  
 		}
 	}
-
 }
 
-
 // Generate a random rp from the pg
+// TODO:  This assumes that ntprob() returns a vector that is always 
+// m_nvsph.size(), but this is not true.  
 std::vector<d_t> tmetg_t::draw() const {
 	std::vector<d_t> rnts {};
 	auto re = new_randeng(true);
 	beat_t curr_bt {0};
-	while (curr_bt < m_period) {
+	int curr_step {0};
+	//while (curr_bt < m_period) {
+	while (curr_step < m_pg.size()) {
 		auto ridx = randset(1,nt_prob(curr_bt),re);
+		// Where m_pg[curr_step] and m_nvsph have the same number of rows,
+		// ridx[0] indexes both.  
 		rnts.push_back(m_nvsph[ridx[0]].nv);
 		curr_bt += m_nvsph[ridx[0]].nbts;
+		curr_step += m_pg[curr_step][ridx[0]].stepsz;
 	}
 	return rnts;
 }
@@ -179,6 +186,8 @@ std::vector<d_t> tmetg_t::draw() const {
 // Read the note-probability vector at the given beat
 // TODO:  bt may exceed m_pg2.size()... in this case, should "wrap"
 // bt as if m_pg extended to infinity
+// TODO:  the size() of the return value is == the number of rows in the
+// relevant col of m_pg; it may be less than m_nvsph.size().  
 std::vector<double> tmetg_t::nt_prob(beat_t bt) const {
 	auto pg_col_idx = static_cast<int>(bt/m_btres);
 	std::vector<double> probs {};
@@ -205,7 +214,7 @@ void tmetg_t::enumerate() const {
 	for (auto e : m_pg) {
 		std::sort(e.begin(),e.end(),
 			[](const pgcell& a, const pgcell& b){return a.lgp>b.lgp;});
-		std::vector<pgcell> e_nz {};
+		std::vector<pgcell> e_nz {};  // "elements nonzero"
 		for (auto ee : e) {
 			if (ee.lgp == 0.0) { break;}
 			e_nz.push_back(ee);
@@ -236,15 +245,13 @@ void tmetg_t::enumerate() const {
 			s += " ";
 		}
 		std::cout << s << std::endl;
-	}*/
-
+	}
 	wait();
+	*/
 }
 
 void tmetg_t::m_enumerator(std::vector<rpp>& rps, 
 	std::vector<std::vector<pgcell>> const& g, int& N, int x) const {
-	//...
-
 	bool f_gspan_fatal {false};
 	bool f_gspan_complete {false};
 	bool f_gspan_continue {false};
@@ -299,6 +306,15 @@ void tmetg_t::m_enumerator(std::vector<rpp>& rps,
 
 }
 
+/*
+int tmetg_t::nv2lvlidx(d_t nv) const {
+	auto it = std::find(m_nvsph.begin(),m_nvsph.end(),
+		[&](const nvs_ph& curr_nvsph){return nv==curr_nvsph.nv;});
+	if (it == m_nvsph.end()) {
+		return -1;
+	}
+	return static_cast<int>(it-m_nvsph.begin());
+}*/
 
 // True if there is at least one note of m_nvs that can occur at the 
 // given (beat + the given nv)
@@ -320,6 +336,9 @@ bool tmetg_t::allowed_at(beat_t beat) const {
 }
 
 // True if nv can occur at the given beat
+// TODO:  This essentially queries the "tg," not the pg... if the object
+// was made from a pg much more restricted than the tg, want to be able to
+// query the pg.  
 bool tmetg_t::allowed_at(d_t nv, beat_t beat) const {
 	for (auto const& e : m_nvsph) {
 		if (e.nv != nv) {continue;}
@@ -331,6 +350,11 @@ bool tmetg_t::allowed_at(d_t nv, beat_t beat) const {
 }
 
 //  Which levels of the grid are allowed at the given beat?
+// TODO:  This essentially queries the "tg," not the pg... if the object
+// was made from a pg much more restricted than the tg, want to be able to
+// query the pg.  
+// This is used to construct a random pg when not creating from an rp;
+// it can not rely on being able to read the pg.  
 std::vector<int> tmetg_t::levels_allowed(beat_t beat) const {
 	std::vector<int> allowed {}; allowed.reserve(m_nvsph.size());
 	for (int i=0; i<m_nvsph.size(); ++i) {
@@ -346,43 +370,37 @@ std::string tmetg_t::print() const {
 	std::string s {};
 	s += "tmetg.print():\n";
 	s += "ts == " + m_ts.print() + "\n";
-	for (auto const& e : m_nvsph) {
-		s += e.nv.print();
-		s += " (=> " + e.nbts.print() + " beats);  ";
-		s += "+ " + e.ph.print() + " beat shift\n";
-	}
-	s += "\n\n";
 	s += "Grid resolution: " + m_btres.print() + " beats\n";
 	s += "Period:          " + m_period.print() + " beats\n";
 	s += "\n\n";
+	for (auto const& e : m_nvsph) {
+		s += e.nv.print();
+		s += " (=> " + e.nbts.print() + " beats => " + std::to_string(e.nbts/m_btres) + " grid steps);  ";
+		s += "+ " + e.ph.print() + " beat shift\n";
+	}
 
-	std::string grid_sep {" "};
-	std::string level_sep {"\n"};
+	s += print_tg();
+
+	return s;
+}
+
+std::string tmetg_t::print_tg() const {
+	std::string s {};
 	for (auto const& e : m_nvsph) {
 		for (beat_t cbt {0.0}; cbt<m_period; cbt += m_btres) {
 			if (aprx_int(cbt/m_ts.beats_per_bar())) {
-			//if (ismultiple(cbt.to_double(),m_ts.beats_per_bar().to_double(),6)) {
-				s += "|" + grid_sep;
+				s += "| ";
 			}
-
-			if (aprx_int((cbt-e.ph)/e.nbts)) {
-				s += "1" + grid_sep;
-			} else {
-				s += "0" + grid_sep;
-			}
-			// TODO:  Better:
-			// s += bsprintf("%d%s",(cbt-e.ph)/e.nbts, grid_sep);
+			s += bsprintf("%d ",aprx_int((cbt-e.ph)/e.nbts));
 		}
-		s += level_sep;
+		s += "\n";
 	}
 
 	return s;
 }
 
 std::string tmetg_t::print_pg() const {
-	std::string s {};
-
-	std::vector<std::vector<double>> pg_full {}; //(m_pg.size(),std::vector<double>{});
+	std::vector<std::vector<double>> pg_full {};
 	for (const auto& e : m_pg) {
 		std::vector<double> curr_col(m_nvsph.size(),0.0);
 		for (const auto& ee : e) {
@@ -391,6 +409,7 @@ std::string tmetg_t::print_pg() const {
 		pg_full.push_back(curr_col);
 	}
 
+	std::string s {};
 	int ridx {0};
 	for (int ridx=0; ridx<m_nvsph.size(); ++ridx) {
 		for (const auto& c : pg_full) {
@@ -401,7 +420,6 @@ std::string tmetg_t::print_pg() const {
 
 	return s;
 }
-
 
 d_t tmetg_t::gcd(const std::vector<d_t>& dset) const {
 	long long sfctr = 100'000'000'000;
@@ -430,29 +448,35 @@ beat_t tmetg_t::round(beat_t bt) const {
 	return beat_t{std::round(bt/(1_bt))};
 }
 
-std::string autest::metg::tests1() {
+std::string autests::tests1() {
 	auto s = std::string();
 	std::vector<d_t> dt1 {d::h,d::q,d::ed,d::e};
 	std::vector<beat_t> ph1(dt1.size(),beat_t{0});
-	auto mg = tmetg_t(ts_t{beat_t{3},d::q},dt1,ph1);
+	std::vector<beat_t> ph2 {0_bt,0_bt,0.125_bt,0_bt};
 
-	//auto s = mg.print();
-	//std::cout <<s <<std::endl<<std::endl<<std::endl;
+	auto mg = tmetg_t(ts_t{beat_t{3},d::q},dt1,ph2);
+	std::cout << mg.print() <<std::endl<<std::endl<<std::endl;
+	std::cout << mg.print_pg() <<std::endl<<std::endl<<std::endl;
 
 	mg.set_rand_pg();
-	/*for (int i=0; i < 5; ++i) {
+	std::vector<d_t> big_vdt {};
+	for (int i=0; i < 10; ++i) {
 		auto vdt = mg.draw();
+		for (auto e : vdt) {
+			big_vdt.push_back(e);
+		}
 		rp_t rp {ts_t{3_bt,d::q},vdt};
-		std::cout <<rp.print() <<std::endl<<std::endl<<std::endl;
-		wait();
+		std::cout <<rp.print() <<std::endl<<std::endl;
 	}
-	mg.enumerate();*/
+	//mg.enumerate();
+	//wait();
+	//auto vdt = mg.draw();
+	rp_t big_rp {ts_t{3_bt,d::q},big_vdt};
+	std::cout << big_rp.print() <<std::endl<<std::endl<<std::endl;
 
-	auto vdt = mg.draw();
-	rp_t rp {ts_t{3_bt,d::q},vdt};
-	std::cout <<rp.print() <<std::endl<<std::endl<<std::endl;
+	wait();
 
-	tmetg_t mg2 {ts_t{3_bt,d::q},rp};
+	tmetg_t mg2 {ts_t{3_bt,d::q},big_rp};
 	std::cout << mg2.print_pg() <<std::endl<<std::endl<<std::endl;
 	std::cout << mg2.print() <<std::endl<<std::endl<<std::endl;
 	

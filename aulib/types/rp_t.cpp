@@ -106,6 +106,9 @@ void rp_t::push_back(d_t d) {
 	auto d_singlets = d.to_singlets_partition_max(d_to_next_bar,m_ts.bar_unit());
 	for (size_t i=0; i<d_singlets.size(); ++i) {
 		m_e.push_back(vgroup{d_singlets[i],m_usridx,d_singlets.size()-1-i,i});
+		if (d_singlets[i].weird()) {
+			wait();
+		}
 	}
 	// also need to append rests
 	++m_usridx;

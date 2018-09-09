@@ -103,6 +103,8 @@ public:
 		// divisible into s s_i-element subsequences m->m+s_i each exactly == 
 		// arg2, except the final subsequence, which may be <= arg2.
 
+
+	bool weird() const;
 	int ndot() const;
 		// If the object has no singlet representation, ndot == 0, even if
 		// there is a tuplet representation where one or more or all the
