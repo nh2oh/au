@@ -155,7 +155,7 @@ std::vector<d_t> d_t::to_singlets_partition_max(const d_t& d1, const d_t& dmax) 
 }
 
 bool d_t::weird() const {
-	return m_ab.get_a() >= 5;
+	return m_ab.get_a() >= 100;
 }
 
 int d_t::ndot() const {
@@ -277,7 +277,10 @@ d_t& d_t::operator/=(const double& d) {
 	return *this;
 }
 double operator/(const d_t& n, const d_t& d) {
-	return (n.m_ab.val() / d.m_ab.val());
+	double f = static_cast<double>(n.m_ab.get_a())/static_cast<double>(d.m_ab.get_a());
+	auto db = d.m_ab.get_b() - n.m_ab.get_b();
+	return f*std::pow(2,db);
+	//return (n.m_ab.val() / d.m_ab.val());
 }
 bool d_t::operator<(const d_t& rhs) const {
 	return (m_ab.val() < rhs.m_ab.val());

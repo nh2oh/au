@@ -100,12 +100,11 @@ d_t duration(const ts_t& ts_in, beat_t nbeats_in) {
 }
 
 bar_t nbar(ts_t const& ts_in, d_t const& d_in) {
-	beat_t nbeats = nbeat(ts_in, d_in);
-	return nbar(ts_in,nbeats);
+	//return nbar(ts_in, nbeat(ts_in,d_in));
+	return bar_t {d_in/ts_in.bar_unit()};
 }
 bar_t nbar(ts_t const& ts_in, beat_t const& nbts_in) {
-	auto nbars_exact = nbts_in/(ts_in.beats_per_bar());
-	return bar_t {nbars_exact};
+	return bar_t {nbts_in/ts_in.beats_per_bar()};
 }
 
 std::vector<bar_t> cum_nbar(ts_t const& ts_in, std::vector<d_t> const& d_in) {

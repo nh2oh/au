@@ -100,15 +100,20 @@ rp_t::rp_t(ts_t const& ts_in, std::vector<std::chrono::milliseconds> const& dt,
 }
 
 void rp_t::push_back(d_t d) {
-	auto fremain = m_nbars.fremain();
-	auto d_to_next_bar = (m_nbars.fremain())*(m_ts.bar_unit());
+	//auto fremain = m_nbars.fremain();
+	//auto d_to_next_bar = (m_nbars.fremain())*(m_ts.bar_unit());
+
+	int n_full_bars = std::floor(m_nbeats/m_ts.beats_per_bar());
+	auto bts_till_next_bar = (n_full_bars+1)*m_ts.beats_per_bar() - m_nbeats;
+	auto d_to_next_bar = duration(m_ts,bts_till_next_bar);
+
+	if (d_to_next_bar.weird()) {
+		wait();
+	}
 
 	auto d_singlets = d.to_singlets_partition_max(d_to_next_bar,m_ts.bar_unit());
 	for (size_t i=0; i<d_singlets.size(); ++i) {
 		m_e.push_back(vgroup{d_singlets[i],m_usridx,d_singlets.size()-1-i,i});
-		if (d_singlets[i].weird()) {
-			wait();
-		}
 	}
 	// also need to append rests
 	++m_usridx;
