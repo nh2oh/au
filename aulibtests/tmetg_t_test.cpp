@@ -99,10 +99,43 @@ TEST(metg_t_tests, ZeroPhaseBuildFromExistingRP) {
 	std::vector<beat_t> ph {0_bt,0_bt,0_bt,0_bt};
 	ts_t ts {beat_t{3},d::q};
 	auto mg = tmetg_t(ts,dt,ph);
-	// => m_btres = 0.25
+	// => m_btres = 0.25, m_period = 6bts = 2 bars
+	
+	// Generate a big random rp by repeatedly draw()ing from the mg
+	std::vector<d_t> rp {};
+	for (int i=0; i<10; ++i) {  // 10 reps => 20 bars
+		auto curr_rp = mg.draw();
+		for (auto e : curr_rp) {
+			rp.push_back(e);
+		}
+	}
+
+	// An mg created from an rp has a pg where element corresponding to the
+	// rp == 1.  Drawing an rp from the mg shoudl yield the same rp as 
+	// created it.  
+	tmetg_t mg2 {ts,rp_t{ts,rp}};
+	auto rp2 = mg2.draw();
+
+	EXPECT_TRUE(rp.size() == rp2.size());
+	for (int i=0; i<rp.size(); ++i) {
+		EXPECT_TRUE(rp[i]==rp2[i]);
+	}
+}
+
+
+// Same as the test above, but the note durations are much smaller:
+// 1/16 - 1/128.  The random rp is also much longer.  
+// Meant as a test of the floating-point ops that count bars, beats,
+// etc.  
+TEST(metg_t_tests, ZeroPhaseBuildFromExistingRPSmallDurations) {
+	std::vector<d_t> dt {d::sx,d::t,d::sf,d::ote};
+	std::vector<beat_t> ph {0_bt,0_bt,0_bt,0_bt};
+	ts_t ts {beat_t{3},d::q};
+	auto mg = tmetg_t(ts,dt,ph);
+	// => m_btres = 0.25, m_period = 6bts = 2 bars
 	
 	std::vector<d_t> rp {};
-	for (int i=0; i<10; ++i) {
+	for (int i=0; i<100; ++i) {  // 100 reps => 200 bars
 		auto curr_rp = mg.draw();
 		for (auto e : curr_rp) {
 			rp.push_back(e);
@@ -111,13 +144,9 @@ TEST(metg_t_tests, ZeroPhaseBuildFromExistingRP) {
 
 	tmetg_t mg2 {ts,rp_t{ts,rp}};
 	auto rp2 = mg2.draw();
-	int i = 5;
 	EXPECT_TRUE(rp.size() == rp2.size());
 
 	for (int i=0; i<rp.size(); ++i) {
 		EXPECT_TRUE(rp[i]==rp2[i]);
 	}
 }
-
-
-

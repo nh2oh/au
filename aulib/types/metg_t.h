@@ -19,16 +19,22 @@ struct tmetg_t_opts {
 // rows.  
 class tmetg_t {
 public:
+	struct rpp {  // "rp with probability" return type of enumerate()
+		std::vector<d_t> rp {};
+		double p {1.0};
+	};
+
 	tmetg_t() = delete;
 	tmetg_t(ts_t, rp_t);
 	// ts, dp, phases
 	explicit tmetg_t(ts_t,std::vector<d_t>,std::vector<beat_t>);
 
 	//  Random rp generation
-	void set_rand_pg();
+	void set_pg_random(int = 0); // argument => mode
+	void set_pg_zero(beat_t = 0_bt);
 	std::vector<double> nt_prob(beat_t) const;
 	std::vector<d_t> draw() const;  // Generate a random rp
-	void enumerate() const;  // Generate all possible rp's
+	std::vector<rpp> enumerate() const;  // Generate all possible rp's
 
 	bool allowed_at(beat_t) const;
 	bool allowed_next(beat_t,d_t) const;
@@ -36,7 +42,6 @@ public:
 	std::string print() const;
 	std::string print_pg() const;
 	std::string print_tg() const;
-
 private:
 	struct nvs_ph {
 		d_t nv {};
@@ -85,12 +90,13 @@ private:
 	std::vector<std::vector<pgcell>> m_pg {};
 	bool m_f_pg_extends {true};
 
-	// "rp with probability"
+	// "note-value pointer with probability"
 	// Data structure used by the rp enumerator.  
-	struct rpp {  
+	struct nvp_p {
 		std::vector<int> rp {};
 		double p {1.0};
 	};
+
 
 	//----------------------------------------------------------------------------
 	// Methods
@@ -102,7 +108,7 @@ private:
 		// indices mean nothing to an external caller, hence this
 		// method is private.  
 
-	void m_enumerator(std::vector<rpp>&, 
+	void m_enumerator(std::vector<nvp_p>&, 
 		std::vector<std::vector<pgcell>> const&, int&, int) const;
 	
 	d_t gcd(const std::vector<d_t>&) const;  // greatest common divisor

@@ -47,16 +47,8 @@ tmetg_t::tmetg_t(ts_t ts_in, rp_t rp_in) {
 	if (!aprx_int(m_period/curr_bt)) {
 		m_f_pg_extends = false;  // Default is true
 	}
-	auto pg_nsteps = static_cast<int>(std::max(m_period,curr_bt)/m_btres);
-	// TODO:  Pull this into some sort of init_pg(), set_pg_zero() method
-	// or something.  
-	std::vector<pgcell> def_pgcol {};
-	for (int i=0; i<m_nvsph.size(); ++i) {
-		def_pgcol.push_back({i,static_cast<int>(m_nvsph[i].nbts/m_btres),0.0});
-	}
-	for (int i=0; i<pg_nsteps; ++i) {
-		m_pg.push_back(def_pgcol);
-	}
+
+	set_pg_zero(curr_bt);
 
 	curr_bt = 0_bt;
 	int curr_step = 0;
@@ -73,6 +65,7 @@ tmetg_t::tmetg_t(ts_t ts_in, rp_t rp_in) {
 	}
 }
 
+
 // TODO:  This should take an options type-arg to set if bar-spanning elements 
 // should be allowed... this then changes the gres and period calcs.  
 tmetg_t::tmetg_t(ts_t ts_in, std::vector<d_t> nvs_in, std::vector<beat_t> ph_in) {
@@ -88,17 +81,10 @@ tmetg_t::tmetg_t(ts_t ts_in, std::vector<d_t> nvs_in, std::vector<beat_t> ph_in)
 	m_btres = gres();
 	m_period = period();
 
-	// The pg is always initialized to this dummy value.  Each col of m_pg
-	// is set to contain m_nvsph.size() elements.  
-	std::vector<pgcell> pgcol_default {};
-	for (int i=0; i<m_nvsph.size(); ++i) {
-		pgcol_default.push_back({i,static_cast<int>(m_nvsph[i].nbts/m_btres),0.0});
-	}
-	for (int i=0; i<(m_period/m_btres); ++i) {
-		m_pg.push_back(pgcol_default);
-	}
-	set_rand_pg();
+	set_pg_random();
+	wait();
 }
+
 
 // Calculates the minimum grid resolution from m_nvsph, m_ts
 beat_t tmetg_t::gres() const {
@@ -110,6 +96,7 @@ beat_t tmetg_t::gres() const {
 	}
 	return nbeat(m_ts,gres);
 }
+
 
 // Cancluates the minimum grid period from m_nvsph, m_ts, m_btres.  
 // NB: Depends on m_btres being correctly set!
@@ -132,9 +119,88 @@ beat_t tmetg_t::period() const {
 	return beat_t{gperiod/m_ts.beat_unit()};
 }
 
-// Assumes that each col of m_pg contains m_nvsph.size() elements
-void tmetg_t::set_rand_pg() {
-	int mode = 0;
+
+// True if there is at least one note of m_nvs that can occur at the 
+// given (beat + the given nv)
+bool tmetg_t::allowed_next(beat_t beat, d_t nv) const {
+	auto nxt_bt = beat+nbeat(m_ts,nv); // Beat-number of the next beat
+	return allowed_at(nxt_bt);
+}
+
+
+// True if there is at least one member note-value that can occur at the 
+// given beat
+bool tmetg_t::allowed_at(beat_t beat) const {
+	// aprx_int((cbt-e.ph)/e.nbts)  // TODO:  better
+	for (auto const& e : m_nvsph) {
+		if (beat == (std::round(beat/e.nbts)*e.nbts + e.ph)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+
+// True if nv can occur at the given beat
+// TODO:  This essentially queries the "tg," not the pg... if the object
+// was made from a pg much more restricted than the tg, want to be able to
+// query the pg.  
+bool tmetg_t::allowed_at(d_t nv, beat_t beat) const {
+	for (auto const& e : m_nvsph) {
+		if (e.nv != nv) {continue;}
+		if (aprx_int((beat-e.ph)/e.nbts)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+
+// Which levels of the grid are allowed at the given beat?
+// TODO:  This essentially queries the "tg," not the pg... if the object
+// was made from a pg much more restricted than the tg, want to be able to
+// query the pg.  
+// This is used to construct a random pg when not creating from an rp;
+// it can not rely on being able to read the pg.  
+std::vector<int> tmetg_t::levels_allowed(beat_t beat) const {
+	std::vector<int> allowed {}; allowed.reserve(m_nvsph.size());
+	for (int i=0; i<m_nvsph.size(); ++i) {
+		// aprx_int((cbt-e.ph)/e.nbts)  // TODO:  better
+		if (beat==(std::round(beat/m_nvsph[i].nbts)*m_nvsph[i].nbts + m_nvsph[i].ph)) {
+			allowed.push_back(i);
+		}
+	}
+	return allowed;
+}
+
+
+// Sets a pg nbts long with all probabilities == 0.
+// If nbts is unspecified or is == 0, the pg is m_period beats long
+void tmetg_t::set_pg_zero(beat_t nbts) {
+	m_pg.clear();
+	if (nbts == 0_bt) {
+		nbts = m_period;
+	}
+
+	std::vector<pgcell> def_pgcol {};
+	for (int i=0; i<m_nvsph.size(); ++i) {
+		def_pgcol.push_back({i,static_cast<int>(m_nvsph[i].nbts/m_btres),0.0});
+	}
+
+	auto pg_nsteps = static_cast<int>(nbts/m_btres);
+	for (int i=0; i<pg_nsteps; ++i) {
+		m_pg.push_back(def_pgcol);
+	}
+}
+
+// At each beat, sets each element of the pg returned by levels_sllowed()
+// to a random number.  The sum of all probabilities for each beat is
+// == 0 (if no nv is allowed at that beat) or == 1.  
+// First zero's the pg with a call to set_pg_zero():  All data in m_pg
+// is lost.  
+void tmetg_t::set_pg_random(int mode) {
+	set_pg_zero(m_pg.size()*m_btres);
+
 	// For each col i in g, compute a probability value for the elements 
 	// returned by levels_allowed() and assign to the corresponding element
 	// of m_pg.  For col i in g, the entry in m_pg corresponding to 
@@ -153,12 +219,13 @@ void tmetg_t::set_rand_pg() {
 			curr_probs = normalize_probvec(
 				urandd(curr_allowed.size(),0.0,1.0,re));
 		}
+
 		for (auto j=0; j<curr_allowed.size(); ++j) { 
 			// for each row were a note is allowed...
 			m_pg[i][curr_allowed[j]].lgp = curr_probs[j];
 			// Note that the only elements of m_pg[i] being assigned are those
 			// which are allowed at position i in g.  For the other elements
-			// in m_pg[i] the default .lgp == 0.  
+			// in m_pg[i] the default .lgp == 0, set by the call to set_pg_zero().  
 		}
 	}
 }
@@ -198,7 +265,7 @@ std::vector<double> tmetg_t::nt_prob(beat_t bt) const {
 }
 
 // Enumerate all variations over a single period
-void tmetg_t::enumerate() const {
+std::vector<tmetg_t::rpp> tmetg_t::enumerate() const {
 	int ncols = static_cast<int>(m_period/m_btres);
 
 	// g is derrived from m_pg:  
@@ -209,7 +276,7 @@ void tmetg_t::enumerate() const {
 	// probability, not in order of idx in m_nvsph.  
 	// 3)  g[i][j].lgp is the std::log() of the probability of the corresponding
 	// element in m_pg.  
-	int N_tot_guess = 1;
+	int N_tot_guess = 1;  // A crude guess @ the tot. # of rp's
 	std::vector<std::vector<pgcell>> g {};
 	for (auto e : m_pg) {
 		std::sort(e.begin(),e.end(),
@@ -224,34 +291,32 @@ void tmetg_t::enumerate() const {
 		N_tot_guess *= std::max(g.back().size(),static_cast<size_t>(1));
 	}
 
-	int N_prealloc = std::min(10000,N_tot_guess);
-	rpp rpp_prototype {std::vector<int>(g.size(),-1),0.0};
-	std::vector<rpp> rps(N_prealloc,rpp_prototype);
+	int N_prealloc = std::min(100000,N_tot_guess);
+	nvp_p rpp_prototype {std::vector<int>(g.size(),-1),0.0};
+	std::vector<nvp_p> rps_all(N_prealloc,rpp_prototype);
 
-	int N = 0;
+	int N = 0;  // The # of rps actually generated
 	int x = 0;
-	m_enumerator(rps,g,N,x);
+	m_enumerator(rps_all,g,N,x);
 
-	// Crude print
-	/*
-	std::vector<double> p {};
+	std::vector<rpp> rps {};
 	for (int i=0; i<N; ++i) {
-		p.push_back(rps[i].p);
-		std::string s {};
-		s += bsprintf("i=%d:  p=%.3f  :  ",i,rps[i].p);
-		for (auto& e : rps[i].rp) {
-			if (e == -1) { continue; }
-			s += m_nvsph[e].nv.print();
-			s += " ";
+		std::vector<d_t> curr_rp {};
+		for (int j=0; j<rps_all[i].rp.size(); ++j) {
+			if (rps_all[i].rp[j] != -1) {
+				curr_rp.push_back(m_nvsph[rps_all[i].rp[j]].nv);
+			}
 		}
-		std::cout << s << std::endl;
+		rps.push_back({curr_rp, rps_all[i].p});
 	}
-	wait();
-	*/
+
+	return rps;
 }
 
-void tmetg_t::m_enumerator(std::vector<rpp>& rps, 
+void tmetg_t::m_enumerator(std::vector<nvp_p>& rps, 
 	std::vector<std::vector<pgcell>> const& g, int& N, int x) const {
+	if (N >= (rps.size()-1)) { return; }
+	
 	bool f_gspan_fatal {false};
 	bool f_gspan_complete {false};
 	bool f_gspan_continue {false};
@@ -259,8 +324,6 @@ void tmetg_t::m_enumerator(std::vector<rpp>& rps,
 	auto rp_init = rps[N];
 
 	for (int i=0; i<g[x].size(); ++i) {
-		//rps[N].rp.push_back(g[x][i].ix_nvsph);
-		//rps[N].p += g[x][i].lgp;
 		rps[N].rp[x] = g[x][i].ix_nvsph;
 		rps[N].p += g[x][i].lgp;
 		int nx = x + g[x][i].stepsz;
@@ -289,9 +352,7 @@ void tmetg_t::m_enumerator(std::vector<rpp>& rps,
 
 		if (f_gspan_continue) {
 			// No fatal errors, append next
-			wait();
 			m_enumerator(rps,g,N,nx);
-			wait();
 		} else if (f_gspan_complete) {
 			++N;
 		} else if (f_gspan_fatal) {
@@ -303,68 +364,8 @@ void tmetg_t::m_enumerator(std::vector<rpp>& rps,
 		// If f_gspan_fatal, N is not incremented
 		rps[N] = rp_init;
 	}
-
 }
 
-/*
-int tmetg_t::nv2lvlidx(d_t nv) const {
-	auto it = std::find(m_nvsph.begin(),m_nvsph.end(),
-		[&](const nvs_ph& curr_nvsph){return nv==curr_nvsph.nv;});
-	if (it == m_nvsph.end()) {
-		return -1;
-	}
-	return static_cast<int>(it-m_nvsph.begin());
-}*/
-
-// True if there is at least one note of m_nvs that can occur at the 
-// given (beat + the given nv)
-bool tmetg_t::allowed_next(beat_t beat, d_t nv) const {
-	auto nxt_bt = beat+nbeat(m_ts,nv); // Beat-number of the next beat
-	return allowed_at(nxt_bt);
-}
-
-// True if there is at least one member note-value that can occur at the 
-// given beat
-bool tmetg_t::allowed_at(beat_t beat) const {
-	// aprx_int((cbt-e.ph)/e.nbts)  // TODO:  better
-	for (auto const& e : m_nvsph) {
-		if (beat == (std::round(beat/e.nbts)*e.nbts + e.ph)) {
-			return true;
-		}
-	}
-	return false;
-}
-
-// True if nv can occur at the given beat
-// TODO:  This essentially queries the "tg," not the pg... if the object
-// was made from a pg much more restricted than the tg, want to be able to
-// query the pg.  
-bool tmetg_t::allowed_at(d_t nv, beat_t beat) const {
-	for (auto const& e : m_nvsph) {
-		if (e.nv != nv) {continue;}
-		if (aprx_int((beat-e.ph)/e.nbts)) {
-			return true;
-		}
-	}
-	return false;
-}
-
-//  Which levels of the grid are allowed at the given beat?
-// TODO:  This essentially queries the "tg," not the pg... if the object
-// was made from a pg much more restricted than the tg, want to be able to
-// query the pg.  
-// This is used to construct a random pg when not creating from an rp;
-// it can not rely on being able to read the pg.  
-std::vector<int> tmetg_t::levels_allowed(beat_t beat) const {
-	std::vector<int> allowed {}; allowed.reserve(m_nvsph.size());
-	for (int i=0; i<m_nvsph.size(); ++i) {
-		// aprx_int((cbt-e.ph)/e.nbts)  // TODO:  better
-		if (beat==(std::round(beat/m_nvsph[i].nbts)*m_nvsph[i].nbts + m_nvsph[i].ph)) {
-			allowed.push_back(i);
-		}
-	}
-	return allowed;
-}
 
 std::string tmetg_t::print() const {
 	std::string s {};
@@ -384,6 +385,7 @@ std::string tmetg_t::print() const {
 	return s;
 }
 
+
 std::string tmetg_t::print_tg() const {
 	std::string s {};
 	for (auto const& e : m_nvsph) {
@@ -398,6 +400,7 @@ std::string tmetg_t::print_tg() const {
 
 	return s;
 }
+
 
 std::string tmetg_t::print_pg() const {
 	std::vector<std::vector<double>> pg_full {};
@@ -421,6 +424,7 @@ std::string tmetg_t::print_pg() const {
 	return s;
 }
 
+
 d_t tmetg_t::gcd(const std::vector<d_t>& dset) const {
 	long long sfctr = 100'000'000'000;
 	long long cgcd = 0;
@@ -433,6 +437,7 @@ d_t tmetg_t::gcd(const std::vector<d_t>& dset) const {
 	auto res = d_t {static_cast<double>(cgcd)/sfctr};
 	return res;
 }
+
 
 // TODO:  Inspect m, n of a,b and work out the proper scaling factor
 d_t tmetg_t::gcd(const d_t& a, const d_t& b) const {
@@ -452,13 +457,22 @@ std::string autests::tests1() {
 	auto s = std::string();
 	std::vector<d_t> dt1 {d::h,d::q,d::ed,d::e};
 	std::vector<beat_t> ph1(dt1.size(),beat_t{0});
-	std::vector<beat_t> ph2 {0_bt,0_bt,0.125_bt,0_bt};
+	std::vector<beat_t> ph2 {0_bt,0_bt,0_bt,0_bt};
 
-	auto mg = tmetg_t(ts_t{beat_t{3},d::q},dt1,ph2);
+	auto ts = ts_t{beat_t{3},d::q};
+	auto mg = tmetg_t(ts,dt1,ph2);
 	std::cout << mg.print() <<std::endl<<std::endl<<std::endl;
 	std::cout << mg.print_pg() <<std::endl<<std::endl<<std::endl;
 
-	mg.set_rand_pg();
+	mg.set_pg_random();
+	auto all_rps = mg.enumerate();
+	
+	for (auto e : all_rps) {
+		rp_t curr_rp {ts,e.rp};
+		std::cout << bsprintf("%6.3f:  ", e.p) << curr_rp.print() <<std::endl;
+	}
+	
+	wait();
 	std::vector<d_t> big_vdt {};
 	for (int i=0; i < 10; ++i) {
 		auto vdt = mg.draw();
