@@ -7,7 +7,7 @@
 
 
 const int d_t::max_nplet {5};
-const double d_t::min_duration = 1.0/std::pow(2,12+5);  
+const double d_t::min_duration = 1.0/std::pow(2,12);  
 // 1/2^12 => 1/4096, 1/2^(12+5) => the duration of the fif'th dot on a
 // 5-dotted 4096'th note
 // double2ab() has to deal with these values in splitting apart a dotted
@@ -41,12 +41,16 @@ d_t::ab d_t::dbl2ab(double d) const {
 	//
 	d_t::ab res {};
 
-	while(d>=d_t::min_duration) {
+	auto duration_minduration_maxdot = d_t::min_duration/std::pow(2,5);
+	//auto duration_minduration_maxdot = 1.0/std::pow(2,12);
+
+	while(d>=duration_minduration_maxdot) {
 		int exp = 0;
 		auto f = frexp(d,&exp);
 		d_t::ab t {1,-1*(exp-1)};
 		res = res + t;
 		d -= 0.5*std::pow(2,exp);
+		wait();
 	}
 	return res;
 }

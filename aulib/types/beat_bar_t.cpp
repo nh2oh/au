@@ -104,12 +104,14 @@ bar_t bar_t::full() const {
 bar_t bar_t::next() const {
 	return bar_t {std::floor(m_bars)+1.0};  // "current" + 1
 }
-bar_t bar_t::remain() const {  // "next - current position"
-	return bar_t {std::floor(m_bars) + 1.0 - m_bars};
-}
+//bar_t bar_t::remain() const {  // "next - current position"
+//	return bar_t {std::floor(m_bars) + 1.0 - m_bars};
+//}
 double bar_t::fremain() const {  // "fraction remaining"
-	//return (std::floor(m_bars) + 1.0 - m_bars); 
-	return (std::ceil(m_bars) - m_bars);  
+	if (aprx_eq(std::ceil(m_bars),m_bars)) {
+		return 1.0;
+	}
+	return (std::ceil(m_bars) - m_bars);
 }
 bool bar_t::isexact() const {
 	return aprx_int(m_bars);

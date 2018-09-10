@@ -81,7 +81,6 @@ tmetg_t::tmetg_t(ts_t ts_in, std::vector<d_t> nvs_in, std::vector<beat_t> ph_in)
 	m_period = period();
 
 	set_pg_random();
-	split();
 }
 
 
@@ -297,8 +296,6 @@ std::vector<tmetg_t> tmetg_t::split() const {
 	//auto s1 = get_slice(0_bt,cmn_ptrs[0]*m_btres);
 	//auto s2 = get_slice(cmn_ptrs[0]*m_btres,m_period);
 
-	wait();
-
 	return slices;
 }
 
@@ -314,7 +311,7 @@ tmetg_t tmetg_t::get_slice(beat_t bt_from, beat_t bt_to) const {
 
 	result.m_pg.clear();
 	std::copy(m_pg.begin()+idx_from,m_pg.begin()+idx_to,std::back_inserter(result.m_pg));
-	result.m_btinit = bt_from;
+	result.m_btstart = bt_from;
 
 
 	return result;

@@ -54,7 +54,7 @@ public:
 	std::string print() const;
 	bar_t full() const;  // Number of full bars
 	bar_t next() const;
-	bar_t remain() const;
+	//bar_t remain() const;
 	bool isexact() const;
 	double fremain() const;
 
