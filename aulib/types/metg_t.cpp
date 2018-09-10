@@ -18,7 +18,6 @@
 //-----------------------------------------------------------------------------
 // The tmetg_t class
 
-// Constructors
 
 tmetg_t::tmetg_t(ts_t ts_in, rp_t rp_in) {
 	m_ts = ts_in;
@@ -82,7 +81,6 @@ tmetg_t::tmetg_t(ts_t ts_in, std::vector<d_t> nvs_in, std::vector<beat_t> ph_in)
 	m_period = period();
 
 	set_pg_random();
-	wait();
 }
 
 
@@ -193,6 +191,7 @@ void tmetg_t::set_pg_zero(beat_t nbts) {
 	}
 }
 
+
 // At each beat, sets each element of the pg returned by levels_sllowed()
 // to a random number.  The sum of all probabilities for each beat is
 // == 0 (if no nv is allowed at that beat) or == 1.  
@@ -230,19 +229,19 @@ void tmetg_t::set_pg_random(int mode) {
 	}
 }
 
+
 // Generate a random rp from the pg
-// TODO:  This assumes that ntprob() returns a vector that is always 
-// m_nvsph.size(), but this is not true.  
+// TODO:  Return an rpp?
 std::vector<d_t> tmetg_t::draw() const {
 	std::vector<d_t> rnts {};
 	auto re = new_randeng(true);
 	beat_t curr_bt {0};
 	int curr_step {0};
-	//while (curr_bt < m_period) {
 	while (curr_step < m_pg.size()) {
 		auto ridx = randset(1,nt_prob(curr_bt),re);
-		// Where m_pg[curr_step] and m_nvsph have the same number of rows,
-		// ridx[0] indexes both.  
+		// nt_prob(curr_bt).size() == m_pg[i] where i corresponds to curr_step.  
+		// Since m_pg[i].size() == m_nvsph.size() for all i, ridx[0] indexes
+		// both.  
 		rnts.push_back(m_nvsph[ridx[0]].nv);
 		curr_bt += m_nvsph[ridx[0]].nbts;
 		curr_step += m_pg[curr_step][ridx[0]].stepsz;
@@ -250,11 +249,10 @@ std::vector<d_t> tmetg_t::draw() const {
 	return rnts;
 }
 
+
 // Read the note-probability vector at the given beat
 // TODO:  bt may exceed m_pg2.size()... in this case, should "wrap"
 // bt as if m_pg extended to infinity
-// TODO:  the size() of the return value is == the number of rows in the
-// relevant col of m_pg; it may be less than m_nvsph.size().  
 std::vector<double> tmetg_t::nt_prob(beat_t bt) const {
 	auto pg_col_idx = static_cast<int>(bt/m_btres);
 	std::vector<double> probs {};
@@ -263,6 +261,7 @@ std::vector<double> tmetg_t::nt_prob(beat_t bt) const {
 	}
 	return probs;
 }
+
 
 // Enumerate all variations over a single period
 std::vector<tmetg_t::rpp> tmetg_t::enumerate() const {
@@ -312,6 +311,7 @@ std::vector<tmetg_t::rpp> tmetg_t::enumerate() const {
 
 	return rps;
 }
+
 
 void tmetg_t::m_enumerator(std::vector<nvp_p>& rps, 
 	std::vector<std::vector<pgcell>> const& g, int& N, int x) const {
@@ -459,7 +459,7 @@ std::string autests::tests1() {
 	std::vector<beat_t> ph1(dt1.size(),beat_t{0});
 	std::vector<beat_t> ph2 {0_bt,0_bt,0_bt,0_bt};
 
-	auto ts = ts_t{beat_t{3},d::q};
+	auto ts = ts_t{beat_t{4},d::q};
 	auto mg = tmetg_t(ts,dt1,ph2);
 	std::cout << mg.print() <<std::endl<<std::endl<<std::endl;
 	std::cout << mg.print_pg() <<std::endl<<std::endl<<std::endl;
@@ -468,8 +468,8 @@ std::string autests::tests1() {
 	auto all_rps = mg.enumerate();
 	
 	for (auto e : all_rps) {
-		rp_t curr_rp {ts,e.rp};
-		std::cout << bsprintf("%6.3f:  ", e.p) << curr_rp.print() <<std::endl;
+		//rp_t curr_rp {ts,e.rp};
+		//std::cout << bsprintf("%6.3f:  ", e.p) << curr_rp.print() <<std::endl;
 	}
 	
 	wait();

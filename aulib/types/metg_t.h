@@ -6,6 +6,19 @@
 #include <vector>
 #include <string>
 
+
+// TODO:  
+// To implement rdurmetg(), rp_b(), etc, need to draw a distinction between 
+// the "tg" and the rp the object possibly represents.  
+//
+// Add a split() method to implement the factorization of rpmetg(): returns
+// a std::vector of tmetg_t's s.t. appending a draw() call to each in order
+// yields an rp that *could* have been returned from the parent.  
+// Then, can implement rpmetg() as an external function.  
+//
+// validate()
+//
+
 //-----------------------------------------------------------------------------
 // Class tmetg
 //
@@ -15,8 +28,7 @@ struct tmetg_t_opts {
 	// Does anyone want zero_pointers ever???
 };
 
-// TODO:  _must_ change this so that each col of m_pg contains m_nvsph.size()
-// rows.  
+
 class tmetg_t {
 public:
 	struct rpp {  // "rp with probability" return type of enumerate()
@@ -30,15 +42,15 @@ public:
 	explicit tmetg_t(ts_t,std::vector<d_t>,std::vector<beat_t>);
 
 	//  Random rp generation
-	void set_pg_random(int = 0); // argument => mode
+	void set_pg_random(int = 0);  // argument => mode
 	void set_pg_zero(beat_t = 0_bt);
-	std::vector<double> nt_prob(beat_t) const;
+	std::vector<double> nt_prob(beat_t) const;  // => pg
 	std::vector<d_t> draw() const;  // Generate a random rp
 	std::vector<rpp> enumerate() const;  // Generate all possible rp's
 
-	bool allowed_at(beat_t) const;
-	bool allowed_next(beat_t,d_t) const;
-	bool allowed_at(d_t, beat_t) const;
+	bool allowed_at(beat_t) const;  // => tg
+	bool allowed_next(beat_t,d_t) const;  // => tg
+	bool allowed_at(d_t, beat_t) const;  // => tg
 	std::string print() const;
 	std::string print_pg() const;
 	std::string print_tg() const;
