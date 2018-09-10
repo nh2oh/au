@@ -81,6 +81,7 @@ tmetg_t::tmetg_t(ts_t ts_in, std::vector<d_t> nvs_in, std::vector<beat_t> ph_in)
 	m_period = period();
 
 	set_pg_random();
+	split();
 }
 
 
@@ -260,6 +261,63 @@ std::vector<double> tmetg_t::nt_prob(beat_t bt) const {
 		probs.push_back(e.lgp);
 	}
 	return probs;
+}
+
+
+// Factors the pg, if possible.  
+// rp's generated from the members of the result can be concatenated to
+// produce rp's valid under the parent.  
+std::vector<tmetg_t> tmetg_t::split() const {
+	
+	std::vector<std::vector<int>> col_ptrs {};
+	for (int i=0; i<m_nvsph.size(); ++i) {
+		col_ptrs.push_back(std::vector<int>{});
+		for (int j = 0; i<m_pg.size(); ++j) {
+			if (aprx_eq(m_pg[j][i].lgp,0.0)) { continue; }
+			if (j+m_pg[j][i].stepsz >= m_pg.size()) {break;}
+			col_ptrs[i].push_back(j+m_pg[j][i].stepsz);
+		}
+	}
+
+	std::vector<int> cmn_ptrs = col_ptrs[0];
+	for (auto e : col_ptrs) {
+		auto temp_cmn_ptrs = cmn_ptrs;
+		cmn_ptrs.clear();
+		std::set_intersection(e.begin(),e.end(),temp_cmn_ptrs.begin(),temp_cmn_ptrs.end(),
+			std::back_inserter(cmn_ptrs));
+	}
+
+	std::vector<tmetg_t> slices {};
+	beat_t curr_bt {0.0};
+	for (auto e : cmn_ptrs) {
+		slices.push_back(get_slice(curr_bt,curr_bt+e*m_btres));
+		curr_bt += e*m_btres;
+	}
+	slices.push_back(get_slice(curr_bt,m_period));
+	//auto s1 = get_slice(0_bt,cmn_ptrs[0]*m_btres);
+	//auto s2 = get_slice(cmn_ptrs[0]*m_btres,m_period);
+
+	wait();
+
+	return slices;
+}
+
+
+// TODO:  range may exceed m_pg limits
+// TODO:  Extend the pg???
+// 
+tmetg_t tmetg_t::get_slice(beat_t bt_from, beat_t bt_to) const {
+	int idx_from = bt_from/m_btres;
+	int idx_to = bt_to/m_btres;
+
+	auto result = *this;
+
+	result.m_pg.clear();
+	std::copy(m_pg.begin()+idx_from,m_pg.begin()+idx_to,std::back_inserter(result.m_pg));
+	result.m_btinit = bt_from;
+
+
+	return result;
 }
 
 
@@ -456,11 +514,11 @@ beat_t tmetg_t::round(beat_t bt) const {
 std::string autests::tests1() {
 	auto s = std::string();
 	std::vector<d_t> dt1 {d::h,d::q,d::ed,d::e};
-	std::vector<beat_t> ph1(dt1.size(),beat_t{0});
-	std::vector<beat_t> ph2 {0_bt,0_bt,0_bt,0_bt};
+	std::vector<beat_t> ph1(dt1.size(),0_bt);
+	std::vector<beat_t> ph2 {0_bt,0_bt,0_bt};
 
-	auto ts = ts_t{beat_t{4},d::q};
-	auto mg = tmetg_t(ts,dt1,ph2);
+	auto ts = ts_t{4_bt,d::q};
+	auto mg = tmetg_t(ts,dt1,ph1);
 	std::cout << mg.print() <<std::endl<<std::endl<<std::endl;
 	std::cout << mg.print_pg() <<std::endl<<std::endl<<std::endl;
 

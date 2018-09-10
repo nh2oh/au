@@ -10,6 +10,8 @@
 // TODO:  
 // To implement rdurmetg(), rp_b(), etc, need to draw a distinction between 
 // the "tg" and the rp the object possibly represents.  
+// At present, the tg is "virtual" ... it's members are m_btres, m_period, m_nvsph,
+// allowed_*(), levels_allowed().  
 //
 // Add a split() method to implement the factorization of rpmetg(): returns
 // a std::vector of tmetg_t's s.t. appending a draw() call to each in order
@@ -41,12 +43,15 @@ public:
 	// ts, dp, phases
 	explicit tmetg_t(ts_t,std::vector<d_t>,std::vector<beat_t>);
 
+	tmetg_t get_slice(beat_t, beat_t) const;
+
 	//  Random rp generation
 	void set_pg_random(int = 0);  // argument => mode
 	void set_pg_zero(beat_t = 0_bt);
 	std::vector<double> nt_prob(beat_t) const;  // => pg
 	std::vector<d_t> draw() const;  // Generate a random rp
 	std::vector<rpp> enumerate() const;  // Generate all possible rp's
+	std::vector<tmetg_t> split() const;
 
 	bool allowed_at(beat_t) const;  // => tg
 	bool allowed_next(beat_t,d_t) const;  // => tg
@@ -64,7 +69,6 @@ private:
 		};
 	};
 	std::vector<nvs_ph> m_nvsph {};
-	//int nv2lvlidx(d_t) const;
 
 	ts_t m_ts {4_bt,d_t{d::q}};
 
@@ -76,6 +80,10 @@ private:
 	// (m_ts.bar_unit(), m_ts.beats_per_bar()).  
 	beat_t m_btres {0.0};  // grid resolution
 	beat_t m_period {0.0}; // The shortest repeating unit
+
+	// If representing a sub-rp...
+	beat_t m_btstart {0.0};
+	beat_t m_btend {0.0};  // Constructor should default == m_period
 
 	// Probability grid m_pg
 	// m_pg.size() == m_period/m_btres; for all i,
@@ -115,7 +123,7 @@ private:
 	beat_t gres() const;  // Reads m_ts, m_nvsph
 	beat_t period() const;  // Reads m_ts, m_nvsph, m_btres
 
-	std::vector<int> levels_allowed(beat_t) const;
+	std::vector<int> levels_allowed(beat_t) const;  // => tg
 		// idx to allowed nv's @ the given beat; these numerical
 		// indices mean nothing to an external caller, hence this
 		// method is private.  
