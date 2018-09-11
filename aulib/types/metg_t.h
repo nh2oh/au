@@ -7,23 +7,57 @@
 #include <string>
 
 
+
+// Class tmetg_t
+//
+// Probabilistic representation of an rp _and_ a corresponding tg to which
+// it must align.  The tg is a function only of the ts and set of nv_t's and
+// phases.  It is not represented explictly in the object.  The rp is
+// represented by a pg which must align to the tg.  This is not actually that
+// severe a constraint, since an nv_t of a given duration occuring at a
+// beat that would otherwise be illegal can be made legal by including in in
+// the nvsph set with an appropriate phase offset.  
+// The tg is represented as m_ts, m_nvsph, m_btres and m_period.  
+//
+//
+//
+//
+// pg properties
+// - For any beat (col), all nonzero entries point into different beats (a
+//   consequence of the uniqueness of the elements of m_nvsph).  
+//   -- Probabilities are normalized, each col has the same number of rows 
+//      as m_nvsph, ...
+// - A pg may or may not be extendable:  There is no requirement that full
+//   or partial concatenations to itself align to the tg.  For example, the
+//   object may be representing only a segment of an rp.  
+// - It is also possible that a pg spanning a noninteger number of m_peroid
+//   beats may be extendable.  The pg may specify 0 for the probability of
+//   certain nvsph elements such that the period is less than calculated by
+//   the tg.  
+//   m_f_pg_extends, pg_extends() introspects this.  
+//
+//
+
+
 // TODO:  
 // To implement rdurmetg(), rp_b(), etc, need to draw a distinction between 
 // the "tg" and the rp the object possibly represents.  
 // At present, the tg is "virtual" ... it's members are m_btres, m_period, m_nvsph,
 // allowed_*(), levels_allowed().  
 //
+// TODO:
 // Add a split() method to implement the factorization of rpmetg(): returns
 // a std::vector of tmetg_t's s.t. appending a draw() call to each in order
 // yields an rp that *could* have been returned from the parent.  
 // Then, can implement rpmetg() as an external function.  
 //
-// validate()
+// TODO:
+// The user shoudl be able to set m_btstart, and, if set by the user, the
+// tg calculation needs to take this into account
 //
 
-//-----------------------------------------------------------------------------
-// Class tmetg
-//
+
+
 struct tmetg_t_opts {
 	bool barspan {false};
 	bool zero_pointers {false};
@@ -59,13 +93,23 @@ public:
 	std::string print() const;
 	std::string print_pg() const;
 	std::string print_tg() const;
+
+	bool validate() const;
 private:
+	// m_nvsph:
+	// No two elements are the same!
 	struct nvs_ph {
 		d_t nv {};
 		beat_t nbts {};
 		beat_t ph {};
 		bool operator==(const nvs_ph& rhs) const {
-			return ((nv == rhs.nv) && (nbts == rhs.nbts) && (ph == rhs.ph));
+			//return ((nv == rhs.nv) && (nbts == rhs.nbts) && (ph == rhs.ph));
+			return ((nv == rhs.nv) && (nbts == rhs.nbts) &&
+				!aprx_int((ph-rhs.ph)/nbts));
+			// *Iff* the nv (and therefore) nbts is the same, the phases must
+			// be such that the two entries do not generate elements at the same
+			// position (beat) on the grid.  
+			// TODO:  The nv and nbts check is redundant.
 		};
 	};
 	std::vector<nvs_ph> m_nvsph {};
@@ -78,7 +122,7 @@ private:
 	// m_period:  The smallest number of beats able to contain an integer
 	// number of each element of m_nvsph and an integer number of bars 
 	// (m_ts.bar_unit(), m_ts.beats_per_bar()).  
-	beat_t m_btres {0.0};  // grid resolution
+	beat_t m_btres {0.0};  // grid resolution; beats/step
 	beat_t m_period {0.0}; // The shortest repeating unit
 
 	// If representing a sub-rp...
@@ -117,11 +161,12 @@ private:
 		double p {1.0};
 	};
 
-
 	//----------------------------------------------------------------------------
 	// Methods
 	beat_t gres() const;  // Reads m_ts, m_nvsph
 	beat_t period() const;  // Reads m_ts, m_nvsph, m_btres
+
+	bool pg_extends() const;  // Should == m_f_pg_extends, but does not set.  
 
 	std::vector<int> levels_allowed(beat_t) const;  // => tg
 		// idx to allowed nv's @ the given beat; these numerical

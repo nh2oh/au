@@ -38,15 +38,8 @@ tmetg_t::tmetg_t(ts_t ts_in, rp_t rp_in) {
 
 	m_btres = gres();
 	m_period = period();
-
-	// The rp passed in may be > or < 1 period.  If < or if 
-	// !aprx_integer(curr_bt/m_period), it is not possible to sample longer
-	// rp's by extending m_pg...  What did i do in the matlab version?
-	// Flag such situations
-	if (!aprx_int(m_period/curr_bt)) {
-		m_f_pg_extends = false;  // Default is true
-	}
-
+	m_btstart = 0_bt;
+	m_btend = curr_bt;
 	set_pg_zero(curr_bt);
 
 	curr_bt = 0_bt;
@@ -62,6 +55,10 @@ tmetg_t::tmetg_t(ts_t ts_in, rp_t rp_in) {
 		curr_bt += nbeat(m_ts,e);
 		curr_step += stepsz;
 	}
+
+	m_f_pg_extends = pg_extends();
+
+	validate();
 }
 
 
@@ -79,8 +76,13 @@ tmetg_t::tmetg_t(ts_t ts_in, std::vector<d_t> nvs_in, std::vector<beat_t> ph_in)
 
 	m_btres = gres();
 	m_period = period();
+	m_btstart = 0_bt;
+	m_btend = m_period;
 
 	set_pg_random();
+	m_f_pg_extends = pg_extends();  // Expect true...
+
+	validate();
 }
 
 
@@ -120,6 +122,7 @@ beat_t tmetg_t::period() const {
 
 // True if there is at least one note of m_nvs that can occur at the 
 // given (beat + the given nv)
+// Used by validate() to check for zero-pointers
 bool tmetg_t::allowed_next(beat_t beat, d_t nv) const {
 	auto nxt_bt = beat+nbeat(m_ts,nv); // Beat-number of the next beat
 	return allowed_at(nxt_bt);
@@ -171,13 +174,34 @@ std::vector<int> tmetg_t::levels_allowed(beat_t beat) const {
 	return allowed;
 }
 
+// Can the pg be concatenated repeatedly to itself to generate rp's always
+// aligning to the tg?
+bool tmetg_t::pg_extends() const {
+	// If m_pg is shorter than a period, extend it to exactly 1 period; if
+	// longer by a factor N, extend to ceil(N).  
+	auto bt_span_pg = m_btend - m_btstart;
+	int ncols_extend = (m_period/m_btres)*std::max(1.0,std::ceil((bt_span_pg/m_period)));
+	int nrows = m_nvsph.size();
+	for (int c=m_pg.size(); c<ncols_extend; ++c) {
+		auto curr_pg_col = m_pg[c-m_pg.size()];
+		for (int r=0; r<nrows; ++r) {
+			if (curr_pg_col[r].lgp > 0.0 && 
+				!allowed_at(m_nvsph[r].nv,c*m_btres+m_btstart)) {
+				return false;
+			}
+		}
+	}
 
-// Sets a pg nbts long with all probabilities == 0.
-// If nbts is unspecified or is == 0, the pg is m_period beats long
+	return true;
+}
+
+// Clears the existing pg and creates a new one nbts long.  If nbts is
+// not specified or is ==0 , sets the size to correspond to 
+// m_btstart-m_btend.  
 void tmetg_t::set_pg_zero(beat_t nbts) {
 	m_pg.clear();
 	if (nbts == 0_bt) {
-		nbts = m_period;
+		nbts = m_btstart-m_btend;
 	}
 
 	std::vector<pgcell> def_pgcol {};
@@ -189,6 +213,8 @@ void tmetg_t::set_pg_zero(beat_t nbts) {
 	for (int i=0; i<pg_nsteps; ++i) {
 		m_pg.push_back(def_pgcol);
 	}
+
+	validate();
 }
 
 
@@ -197,6 +223,7 @@ void tmetg_t::set_pg_zero(beat_t nbts) {
 // == 0 (if no nv is allowed at that beat) or == 1.  
 // First zero's the pg with a call to set_pg_zero():  All data in m_pg
 // is lost.  
+// Does _not_ resize m_pg.  
 void tmetg_t::set_pg_random(int mode) {
 	set_pg_zero(m_pg.size()*m_btres);
 
@@ -227,6 +254,8 @@ void tmetg_t::set_pg_random(int mode) {
 			// in m_pg[i] the default .lgp == 0, set by the call to set_pg_zero().  
 		}
 	}
+
+	validate();
 }
 
 
@@ -477,6 +506,84 @@ std::string tmetg_t::print_pg() const {
 	}
 
 	return s;
+}
+
+
+bool tmetg_t::validate() const {
+	// m_nvsph can't be empty
+	// All members are unique
+	if (m_nvsph.size() == 0) {
+		return false;
+	}
+	auto uq_nvsph = unique(m_nvsph);
+	if (uq_nvsph.size() != m_nvsph.size()) {
+		return false;
+	}
+
+	// m_btres, m_period, m_btstart, m_btend are correctly calculated & have 
+	// been updated for any additions or deletions to m_nvsph or the pg.  
+	if (m_btres != gres() || m_period != period()) {
+		return false;
+	}
+	if ((m_btend-m_btstart) != m_btres*m_pg.size()) {
+		return false;
+	}
+	if (!aprx_int(m_period/m_btres)) {
+		return false;
+	}
+	for (int i=0; i<m_nvsph.size(); ++i) {
+		if (!aprx_int(m_nvsph[i].nbts/m_btres)) {
+			return false;
+		}
+		if (!aprx_eq(m_nvsph[i].nbts, nbeat(m_ts,m_nvsph[i].nv))) {
+			return false;
+		}
+	}
+
+	// Each col of m_pg must have the same size() as m_nvsph
+	// Probabilities must be >= 0
+	//    All probability entries in a given col must sum to 1.0 or 0.0
+	// Nonzero elements in m_pg align to the tg
+	for (int c=0; c<m_pg.size(); ++c) {
+		if (m_pg[c].size() != m_nvsph.size()) {
+			return false;
+		}
+		double curr_prob_sum {0.0};
+		for (int r=0; r<m_pg[c].size(); ++r) {
+			if ((m_pg[c][r].stepsz)*m_btres != m_nvsph[r].nbts) {
+				// Stepsize is not calculated correctly...
+				return false;
+			}
+			if (m_pg[c][r].lgp < 0.0) {
+				return false;
+			}
+			if (m_pg[c][r].lgp > 0.0 && !allowed_at(m_nvsph[r].nv,c*m_btres+m_btstart)) {
+				return false;
+			}
+
+			if (!allowed_next(c*m_btres+m_btstart,m_nvsph[r].nv)) {
+				// Element c,r is a zero-pointer.
+				// TODO:  Not really: allowed_next() checks the tg, but c,r could
+				// point into a col where all probabilities are 0 in the pg.  It 
+				// could also point off the end of my "extended pg" ... I need
+				// to extend the pg for at least 2 cols.  
+				return false;
+			}
+
+			curr_prob_sum += m_pg[c][r].lgp;
+		}
+		if (!(aprx_eq(curr_prob_sum,0.0) || aprx_eq(curr_prob_sum,1.0))) {
+			// Probabilities for the col are not correctly normalized
+			return false;
+		}
+	}
+
+	// m_f_pg_sextends is set correctly
+	if (pg_extends() != m_f_pg_extends) {
+		return false;
+	}
+
+	return true;
 }
 
 
