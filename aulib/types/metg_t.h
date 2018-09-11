@@ -169,8 +169,27 @@ private:
 	
 	d_t gcd(const std::vector<d_t>&) const;  // greatest common divisor
 	d_t gcd(const d_t&, const d_t&) const;
-	beat_t round(beat_t) const;
+
+	friend class pg_t;
 };
+
+
+
+class pg_t {
+public:
+	pg_t(std::vector<tmetg_t::nvs_ph>*, size_t);
+	double operator()(size_t r, size_t c) {  //r,c
+		return m_e[r+nr()*(c%nc())];
+	};
+	double operator()(tmetg_t::nvs_ph, beat_t);  //r,c
+
+	size_t nr();
+	size_t nc();
+private:
+	std::vector<double> m_e {};
+	std::vector<tmetg_t::nvs_ph> *m_ridx;
+};
+
 
 
 namespace autests {

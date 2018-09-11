@@ -622,11 +622,6 @@ d_t tmetg_t::gcd(const d_t& a, const d_t& b) const {
 	return d_t {cgcd/sfctr};
 }
 
-// TODO:   Generalize this to any T
-beat_t tmetg_t::round(beat_t bt) const {
-	return beat_t{std::round(bt/(1_bt))};
-}
-
 
 bool tmetg_t::nvs_ph::operator==(const tmetg_t::nvs_ph& rhs) const {
 	//return ((nv == rhs.nv) && (nbts == rhs.nbts) && (ph == rhs.ph));

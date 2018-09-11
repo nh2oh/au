@@ -99,14 +99,15 @@ std::string bar_t::print() const {
 	return bsprintf("%.3f",m_bars);
 }
 bar_t bar_t::full() const {
+	if (aprx_eq(std::round(m_bars),m_bars)) {
+		return bar_t {std::round(m_bars)};
+	}
 	return bar_t {std::floor(m_bars)};
 }
 bar_t bar_t::next() const {
-	return bar_t {std::floor(m_bars)+1.0};  // "current" + 1
+	return full()+1_br;
+	//return bar_t {std::floor(m_bars)+1.0};  // "current" + 1
 }
-//bar_t bar_t::remain() const {  // "next - current position"
-//	return bar_t {std::floor(m_bars) + 1.0 - m_bars};
-//}
 double bar_t::fremain() const {  // "fraction remaining"
 	if (aprx_eq(std::ceil(m_bars),m_bars)) {
 		return 1.0;
@@ -114,7 +115,7 @@ double bar_t::fremain() const {  // "fraction remaining"
 	return (std::ceil(m_bars) - m_bars);
 }
 bool bar_t::isexact() const {
-	return aprx_int(m_bars);
+	return aprx_eq(std::round(m_bars),m_bars); //aprx_int(m_bars);
 }
 bar_t& bar_t::operator+=(const bar_t& rhs) {
 	m_bars += rhs.m_bars;
