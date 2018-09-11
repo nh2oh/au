@@ -26,6 +26,7 @@ TEST(metg_t_tests, ThreeFourZeroPhaseHQEdE) {
 	std::vector<beat_t> ph(dt.size(),beat_t{0});
 	ts_t ts {beat_t{3},d::q};
 	auto mg = tmetg_t(ts,dt,ph);
+	EXPECT_TRUE(mg.validate());
 	// => m_btres = 0.25, m_period = 6 beats (2 bars)
 
 	for (int i=0; i<48; ++i) {  // 48 => 12 beats => 2 bars
@@ -49,6 +50,7 @@ TEST(metg_t_tests, ThreeFourNegSixteenthPhaseHQEdE) {
 	std::vector<beat_t> ph {0_bt,0_bt,-1*0.125_bt,0_bt};
 	ts_t ts {beat_t{3},d::q};
 	auto mg = tmetg_t(ts,dt,ph);
+	EXPECT_TRUE(mg.validate());
 	// => m_btres = 0.125
 
 	for (int i=0; i<48; ++i) {  // 48 => 12 beats => 2 bars
@@ -71,6 +73,7 @@ TEST(metg_t_tests, ThreeFourMultiPhaseShiftHQEdE) {
 	std::vector<beat_t> ph {0_bt,0.25_bt,0.5_bt,0.75_bt};
 	ts_t ts {beat_t{3},d::q};
 	auto mg = tmetg_t(ts,dt,ph);
+	EXPECT_TRUE(mg.validate());
 	// => m_btres = 0.25
 
 	for (int i=0; i<48; ++i) {  // 48 => 12 beats => 2 bars
@@ -99,6 +102,7 @@ TEST(metg_t_tests, ZeroPhaseBuildFromExistingRP) {
 	std::vector<beat_t> ph {0_bt,0_bt,0_bt,0_bt};
 	ts_t ts {beat_t{3},d::q};
 	auto mg = tmetg_t(ts,dt,ph);
+	EXPECT_TRUE(mg.validate());
 	// => m_btres = 0.25, m_period = 6bts = 2 bars
 	
 	// Generate a big random rp by repeatedly draw()ing from the mg
@@ -114,6 +118,7 @@ TEST(metg_t_tests, ZeroPhaseBuildFromExistingRP) {
 	// rp == 1.  Drawing an rp from the mg shoudl yield the same rp as 
 	// created it.  
 	tmetg_t mg2 {ts,rp_t{ts,rp}};
+	EXPECT_TRUE(mg2.validate());
 	auto rp2 = mg2.draw();
 
 	EXPECT_TRUE(rp.size() == rp2.size());
@@ -132,6 +137,7 @@ TEST(metg_t_tests, ZeroPhaseBuildFromExistingRPSmallDurations) {
 	std::vector<beat_t> ph {0_bt,0_bt,0_bt,0_bt};
 	ts_t ts {beat_t{3},d::q};
 	auto mg = tmetg_t(ts,dt,ph);
+	EXPECT_TRUE(mg.validate());
 	// => m_btres = 0.25, m_period = 6bts = 2 bars
 	
 	std::vector<d_t> rp {};
@@ -143,6 +149,7 @@ TEST(metg_t_tests, ZeroPhaseBuildFromExistingRPSmallDurations) {
 	}
 
 	tmetg_t mg2 {ts,rp_t{ts,rp}};
+	EXPECT_TRUE(mg2.validate());
 	auto rp2 = mg2.draw();
 	EXPECT_TRUE(rp.size() == rp2.size());
 

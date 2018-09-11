@@ -66,6 +66,7 @@ tmetg_t::tmetg_t(ts_t ts_in, std::vector<d_t> nvs_in, std::vector<beat_t> ph_in)
 	}
 
 	m_ts = ts_in;
+
 	for (int i=0; i<nvs_in.size(); ++i) {
 		m_nvsph.push_back({nvs_in[i], nbeat(ts_in,nvs_in[i]), ph_in[i]});
 	}
@@ -206,7 +207,7 @@ bool tmetg_t::pg_extends() const {
 void tmetg_t::set_pg_zero(beat_t nbts) {
 	m_pg.clear();
 	if (nbts == 0_bt) {
-		nbts = m_btstart-m_btend;
+		nbts = m_btend-m_btstart;
 	}
 
 	std::vector<pgcell> def_pgcol {};
@@ -221,7 +222,7 @@ void tmetg_t::set_pg_zero(beat_t nbts) {
 		m_pg.push_back(def_pgcol);
 	}
 
-	validate();
+	//validate();
 }
 
 
@@ -577,7 +578,8 @@ bool tmetg_t::validate() const {
 				// point into a col where all probabilities are 0 in the pg.  It 
 				// could also point off the end of my "extended pg" ... I need
 				// to extend the pg for at least 2 cols.  
-				return false;
+
+				//return false;
 			}
 
 			curr_prob_sum += m_pg[c][r].lgp;
@@ -629,7 +631,7 @@ beat_t tmetg_t::round(beat_t bt) const {
 bool tmetg_t::nvs_ph::operator==(const tmetg_t::nvs_ph& rhs) const {
 	//return ((nv == rhs.nv) && (nbts == rhs.nbts) && (ph == rhs.ph));
 	return ((nv == rhs.nv) && (nbts == rhs.nbts) &&
-		!aprx_int((ph-rhs.ph)/nbts));
+		aprx_int((ph-rhs.ph)/nbts));
 	// *Iff* the nv (and therefore) nbts is the same, the phases must
 	// be such that the two entries do not generate elements at the same
 	// position (beat) on the grid.  

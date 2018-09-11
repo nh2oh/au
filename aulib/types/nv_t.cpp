@@ -50,7 +50,6 @@ d_t::ab d_t::dbl2ab(double d) const {
 		d_t::ab t {1,-1*(exp-1)};
 		res = res + t;
 		d -= 0.5*std::pow(2,exp);
-		wait();
 	}
 	return res;
 }
