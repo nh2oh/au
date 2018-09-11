@@ -12,11 +12,7 @@
 #include <numeric> // lcm, gcd
 #include <string>
 #include <iostream>
-#include <map>
 #include <algorithm>
-
-//-----------------------------------------------------------------------------
-// The tmetg_t class
 
 
 tmetg_t::tmetg_t(ts_t ts_in, rp_t rp_in) {
@@ -46,14 +42,14 @@ tmetg_t::tmetg_t(ts_t ts_in, rp_t rp_in) {
 	int curr_step = 0;
 	for (const auto& e : vdt) {
 		auto idx = levels_allowed(curr_bt);
-		int stepsz = static_cast<int>(nbeat(m_ts,e)/m_btres);
+		//int stepsz = static_cast<int>(nbeat(m_ts,e)/m_btres);
 		for (auto i=0; i<idx.size(); ++i) {
 			if (m_nvsph[idx[i]].nv == e) {
 				m_pg[curr_step][idx[i]].lgp = 1.0;
 			}
 		}
 		curr_bt += nbeat(m_ts,e);
-		curr_step += stepsz;
+		curr_step += nv2step(e); //stepsz;
 	}
 
 	m_f_pg_extends = pg_extends();
@@ -103,7 +99,7 @@ beat_t tmetg_t::gres() const {
 beat_t tmetg_t::period() const { 
 	// TODO:  Just do the whole thing in beat_t ?
 	auto nvgres = duration(m_ts,m_btres);
-	int n_gres_units = m_ts.bar_unit()/nvgres;
+	int n_gres_units = static_cast<int>(m_ts.bar_unit()/nvgres);
 	int ce = 0;
 	for (auto e : m_nvsph) {
 		ce = e.nv/nvgres;
@@ -119,6 +115,15 @@ beat_t tmetg_t::period() const {
 	return beat_t{gperiod/m_ts.beat_unit()};
 }
 
+int tmetg_t::bt2step(beat_t bt_in) const {
+	au_assert(aprx_int(bt_in/m_btres),"bt2step()");
+	return static_cast<int>(bt_in/m_btres);
+}
+
+int tmetg_t::nv2step(d_t nv_in) const {
+	au_assert(aprx_int(nbeat(m_ts,nv_in)/m_btres),"nv2step()");
+	return static_cast<int>(nbeat(m_ts,nv_in)/m_btres);
+}
 
 // True if there is at least one note of m_nvs that can occur at the 
 // given (beat + the given nv)
@@ -180,11 +185,11 @@ bool tmetg_t::pg_extends() const {
 	// If m_pg is shorter than a period, extend it to exactly 1 period; if
 	// longer by a factor N, extend to ceil(N).  
 	auto bt_span_pg = m_btend - m_btstart;
-	int ncols_extend = (m_period/m_btres)*std::max(1.0,std::ceil((bt_span_pg/m_period)));
-	int nrows = m_nvsph.size();
-	for (int c=m_pg.size(); c<ncols_extend; ++c) {
+	int ncols_extend = bt2step(m_period)*std::max(1.0,std::ceil((bt_span_pg/m_period)));
+	auto nrows = m_nvsph.size();
+	for (auto c=m_pg.size(); c<ncols_extend; ++c) {
 		auto curr_pg_col = m_pg[c-m_pg.size()];
-		for (int r=0; r<nrows; ++r) {
+		for (auto r=0; r<nrows; ++r) {
 			if (curr_pg_col[r].lgp > 0.0 && 
 				!allowed_at(m_nvsph[r].nv,c*m_btres+m_btstart)) {
 				return false;
@@ -206,10 +211,12 @@ void tmetg_t::set_pg_zero(beat_t nbts) {
 
 	std::vector<pgcell> def_pgcol {};
 	for (int i=0; i<m_nvsph.size(); ++i) {
-		def_pgcol.push_back({i,static_cast<int>(m_nvsph[i].nbts/m_btres),0.0});
+		//def_pgcol.push_back({i,static_cast<int>(m_nvsph[i].nbts/m_btres),0.0});
+		def_pgcol.push_back({i,bt2step(m_nvsph[i].nbts),0.0});
 	}
 
-	auto pg_nsteps = static_cast<int>(nbts/m_btres);
+	//auto pg_nsteps = static_cast<int>(nbts/m_btres);
+	auto pg_nsteps = bt2step(nbts);
 	for (int i=0; i<pg_nsteps; ++i) {
 		m_pg.push_back(def_pgcol);
 	}
@@ -283,7 +290,7 @@ std::vector<d_t> tmetg_t::draw() const {
 // TODO:  bt may exceed m_pg2.size()... in this case, should "wrap"
 // bt as if m_pg extended to infinity
 std::vector<double> tmetg_t::nt_prob(beat_t bt) const {
-	auto pg_col_idx = static_cast<int>(bt/m_btres);
+	auto pg_col_idx = bt2step(bt); //static_cast<int>(bt/m_btres);
 	std::vector<double> probs {};
 	for (auto const& e : m_pg[pg_col_idx]) {
 		probs.push_back(e.lgp);
@@ -293,6 +300,8 @@ std::vector<double> tmetg_t::nt_prob(beat_t bt) const {
 
 
 // Factors the pg, if possible.  
+// To be factorable, the pg must contain one or more cols which no prior
+// elements point *over.*  
 // rp's generated from the members of the result can be concatenated to
 // produce rp's valid under the parent.  
 std::vector<tmetg_t> tmetg_t::split() const {
@@ -307,7 +316,7 @@ std::vector<tmetg_t> tmetg_t::split() const {
 		}
 	}
 
-	std::vector<int> cmn_ptrs = col_ptrs[0];
+	std::vector<int> cmn_ptrs = col_ptrs[0];  // "common pointers"
 	for (auto e : col_ptrs) {
 		auto temp_cmn_ptrs = cmn_ptrs;
 		cmn_ptrs.clear();
@@ -322,26 +331,26 @@ std::vector<tmetg_t> tmetg_t::split() const {
 		curr_bt += e*m_btres;
 	}
 	slices.push_back(get_slice(curr_bt,m_period));
-	//auto s1 = get_slice(0_bt,cmn_ptrs[0]*m_btres);
-	//auto s2 = get_slice(cmn_ptrs[0]*m_btres,m_period);
 
 	return slices;
 }
 
 
+// Slices the pg and returns a tmetg_t w/ a pg corresponding to cols
+// [from, to) of the parent pg.  
 // TODO:  range may exceed m_pg limits
 // TODO:  Extend the pg???
 // 
 tmetg_t tmetg_t::get_slice(beat_t bt_from, beat_t bt_to) const {
-	int idx_from = bt_from/m_btres;
-	int idx_to = bt_to/m_btres;
+	int idx_from = bt2step(bt_from); //bt_from/m_btres;
+	int idx_to = bt2step(bt_to); //bt_to/m_btres;
 
 	auto result = *this;
 
 	result.m_pg.clear();
 	std::copy(m_pg.begin()+idx_from,m_pg.begin()+idx_to,std::back_inserter(result.m_pg));
 	result.m_btstart = bt_from;
-
+	result.m_btend = bt_to;
 
 	return result;
 }
@@ -349,7 +358,7 @@ tmetg_t tmetg_t::get_slice(beat_t bt_from, beat_t bt_to) const {
 
 // Enumerate all variations over a single period
 std::vector<tmetg_t::rpp> tmetg_t::enumerate() const {
-	int ncols = static_cast<int>(m_period/m_btres);
+	int ncols = bt2step(m_period); //static_cast<int>(m_period/m_btres);
 
 	// g is derrived from m_pg:  
 	// 1)  Each col of g contains only the entries in the corresponding col of
@@ -460,7 +469,7 @@ std::string tmetg_t::print() const {
 	s += "\n\n";
 	for (auto const& e : m_nvsph) {
 		s += e.nv.print();
-		s += " (=> " + e.nbts.print() + " beats => " + std::to_string(e.nbts/m_btres) + " grid steps);  ";
+		s += " (=> " + e.nbts.print() + " beats => " + std::to_string(bt2step(e.nbts)) + " grid steps);  ";
 		s += "+ " + e.ph.print() + " beat shift\n";
 	}
 
@@ -533,9 +542,10 @@ bool tmetg_t::validate() const {
 	}
 	for (int i=0; i<m_nvsph.size(); ++i) {
 		if (!aprx_int(m_nvsph[i].nbts/m_btres)) {
+			// A check on m_btres, not m_nvsph
 			return false;
 		}
-		if (!aprx_eq(m_nvsph[i].nbts, nbeat(m_ts,m_nvsph[i].nv))) {
+		if (!aprx_eq(m_nvsph[i].nbts/1_bt, nbeat(m_ts,m_nvsph[i].nv)/1_bt)) {
 			return false;
 		}
 	}
@@ -614,6 +624,27 @@ d_t tmetg_t::gcd(const d_t& a, const d_t& b) const {
 beat_t tmetg_t::round(beat_t bt) const {
 	return beat_t{std::round(bt/(1_bt))};
 }
+
+
+bool tmetg_t::nvs_ph::operator==(const tmetg_t::nvs_ph& rhs) const {
+	//return ((nv == rhs.nv) && (nbts == rhs.nbts) && (ph == rhs.ph));
+	return ((nv == rhs.nv) && (nbts == rhs.nbts) &&
+		!aprx_int((ph-rhs.ph)/nbts));
+	// *Iff* the nv (and therefore) nbts is the same, the phases must
+	// be such that the two entries do not generate elements at the same
+	// position (beat) on the grid.  
+	// TODO:  The nv and nbts check is redundant.
+}
+
+// Operators <,> are needed for the call to sort() within the call 
+// to unique() in validate().  
+bool tmetg_t::nvs_ph::operator<(const tmetg_t::nvs_ph& rhs) const {
+	return nv < rhs.nv;
+}
+bool tmetg_t::nvs_ph::operator>(const tmetg_t::nvs_ph& rhs) const {
+	return nv > rhs.nv;
+}
+
 
 std::string autests::tests1() {
 	auto s = std::string();

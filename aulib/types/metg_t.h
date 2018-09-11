@@ -2,12 +2,12 @@
 #include "beat_bar_t.h"
 #include "ts_t.h"
 #include "nv_t.h"
-#include "rp_t.h";
+#include "rp_t.h"
 #include <vector>
 #include <string>
 
 
-
+//
 // Class tmetg_t
 //
 // Probabilistic representation of an rp _and_ a corresponding tg to which
@@ -18,9 +18,9 @@
 // beat that would otherwise be illegal can be made legal by including in in
 // the nvsph set with an appropriate phase offset.  
 // The tg is represented as m_ts, m_nvsph, m_btres and m_period.  
-//
-//
-//
+// Data members m_btstart, m_btend indicate tg beat-numbers for the cols of 
+// the pg.  These data members exist only to align the pg to the tg.  
+// TODO:  Then is m_btend redundant???
 //
 // pg properties
 // - For any beat (col), all nonzero entries point into different beats (a
@@ -52,11 +52,13 @@
 // Then, can implement rpmetg() as an external function.  
 //
 // TODO:
-// The user shoudl be able to set m_btstart, and, if set by the user, the
+// The user should be able to set m_btstart, and, if set by the user, the
 // tg calculation needs to take this into account
 //
-
-
+// TODO:  Should just make an int m_periodsteps to avoid all the int-casting
+// everywhere.  
+// TODO:  draw() ignores probabilities
+//
 
 struct tmetg_t_opts {
 	bool barspan {false};
@@ -78,6 +80,7 @@ public:
 	explicit tmetg_t(ts_t,std::vector<d_t>,std::vector<beat_t>);
 
 	tmetg_t get_slice(beat_t, beat_t) const;
+	std::vector<tmetg_t> split() const;
 
 	//  Random rp generation
 	void set_pg_random(int = 0);  // argument => mode
@@ -85,7 +88,6 @@ public:
 	std::vector<double> nt_prob(beat_t) const;  // => pg
 	std::vector<d_t> draw() const;  // Generate a random rp
 	std::vector<rpp> enumerate() const;  // Generate all possible rp's
-	std::vector<tmetg_t> split() const;
 
 	bool allowed_at(beat_t) const;  // => tg
 	bool allowed_next(beat_t,d_t) const;  // => tg
@@ -102,15 +104,9 @@ private:
 		d_t nv {};
 		beat_t nbts {};
 		beat_t ph {};
-		bool operator==(const nvs_ph& rhs) const {
-			//return ((nv == rhs.nv) && (nbts == rhs.nbts) && (ph == rhs.ph));
-			return ((nv == rhs.nv) && (nbts == rhs.nbts) &&
-				!aprx_int((ph-rhs.ph)/nbts));
-			// *Iff* the nv (and therefore) nbts is the same, the phases must
-			// be such that the two entries do not generate elements at the same
-			// position (beat) on the grid.  
-			// TODO:  The nv and nbts check is redundant.
-		};
+		bool operator==(const nvs_ph&) const;
+		bool operator<(const nvs_ph&) const;
+		bool operator>(const nvs_ph&) const;
 	};
 	std::vector<nvs_ph> m_nvsph {};
 
@@ -130,19 +126,11 @@ private:
 	beat_t m_btend {0.0};  // Constructor should default == m_period
 
 	// Probability grid m_pg
-	// m_pg.size() == m_period/m_btres; for all i,
-	// m_nvsph.size() <= m_pg[i].size() >= 0
-	// Cols for which there are no valid elements of m_nvsph may or may not be
-	// empty.  
-	// The purpose of m_pg is twofold
-	// 1)  If the metg object was created from a user-supplied rp or set of 
-	//     rp's, m_pg stores these input rp(s) in grid format.  
-	// 2)  When enumerating large numbers of rp's, it is convienient to not 
-	//     have to compute nbeat(m_ph,curr_nv)/m_btres (to get the number of
-	//     grid steps spanned by curr_nv) and log(probability) for each nv
-	//     under consideration.  m_pg associates this useful information 
-	//     with each grid point.  
-	// Note that m_ph does not store log-probability (despite the name of 
+	// m_pg.size() == m_period/m_btres, and, 
+	// m_pg[i].size() == m_nvsph.size() for all i.  
+	// If the tmetg_t object represents an rp or a set of possible rp's, m_pg
+	// stores it.  
+	// Note that m_pg does not store log-probability (despite the name of 
 	// field pgcell.lgp); it stores "normal" probabilities.  The rp enumerator
 	// creates its own special copy of m_pg which really does store 
 	// log-probability.  
@@ -152,7 +140,7 @@ private:
 		double lgp {0.0};
 	};
 	std::vector<std::vector<pgcell>> m_pg {};
-	bool m_f_pg_extends {true};
+	bool m_f_pg_extends {true};  
 
 	// "note-value pointer with probability"
 	// Data structure used by the rp enumerator.  
@@ -165,6 +153,9 @@ private:
 	// Methods
 	beat_t gres() const;  // Reads m_ts, m_nvsph
 	beat_t period() const;  // Reads m_ts, m_nvsph, m_btres
+
+	int bt2step(beat_t) const;
+	int nv2step(d_t) const;
 
 	bool pg_extends() const;  // Should == m_f_pg_extends, but does not set.  
 
@@ -184,6 +175,6 @@ private:
 
 namespace autests {
 	std::string tests1();
-}
+};
 
 
