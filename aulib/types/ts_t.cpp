@@ -6,6 +6,8 @@
 #include <string>
 #include <algorithm>
 #include <vector>  // cum_nbar()
+#include "..\util\au_algs_math.h"
+
 
 ts_t::ts_t(beat_t const& num, d_t const& denom, bool const& is_compound_in) {
 	au_assert(num > 0_bt);
@@ -114,4 +116,33 @@ std::vector<bar_t> cum_nbar(ts_t const& ts_in, std::vector<d_t> const& d_in) {
 		[&](d_t const& currnv){rp_cum.push_back(totnb+=nbar(ts_in,currnv));});
 
 	return rp_cum;
+}
+
+
+// Looks at the accumulation of "error" for repeated summing of a single nv_t
+// in calculating a number-of-bars.  This type of thing sometimes has to be
+// be done when working with rp's, ie, sequences of nv_t's.  
+// Calculte the error every record_every iterations.  Each record_every
+// iterations should add exactly nbars_every bars to the total.  
+err_accum err_nbeat_accum(ts_t ts, d_t nv, int niter, int record_every, bar_t nbars_every) {
+	std::vector<double> err_nbar {};
+	//std::vector<double> err_nbeat {};
+
+	ksum<bar_t> cum_nbar_ks {};
+	bar_t cum_nbar {0};
+	//beat_t cum_nbeat {0};
+	for (int i=1; i<niter; ++i) {
+		cum_nbar += nbar(ts,nv);
+		cum_nbar_ks += nbar(ts,nv);
+		//cum_nbeat += nbeat(ts,nv);
+
+		if (i%record_every == 0) {
+			double cum_nbar_exact = ((i/record_every)*nbars_every)/1_br;
+			//double cum_nbeat_exact = (i/record_every)*nbeat(ts,nbars_every)/1_bt;
+			err_nbar.push_back(cum_nbar_exact-(cum_nbar_ks.value)/1_br);
+			//err_nbeat.push_back(cum_nbeat_exact-cum_nbeat/1_bt);
+		}
+	}
+	//return {err_nbar,err_nbeat};
+	return {err_nbar};
 }

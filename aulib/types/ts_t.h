@@ -77,3 +77,8 @@ bar_t nbar(ts_t const&, beat_t const&);
 std::vector<bar_t> cum_nbar(ts_t const&, std::vector<d_t> const&);
 
 
+struct err_accum {
+	std::vector<double> nbar_err {};
+	//std::vector<double> nbeat_err {};
+};
+err_accum err_nbeat_accum(ts_t,d_t,int,int,bar_t);

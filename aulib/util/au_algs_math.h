@@ -18,6 +18,23 @@ bool isapproxint(double,int); // is approximately integer
 bool isapproxeq(double, double, int);
 bool ismultiple(double, double, int); // true if arg1/arg2 == integer
 
+// Kahan summation
+template<typename T>
+struct ksum {
+	T value {};
+	T c {};
+
+	ksum& operator+=(const T& rhs) {
+		T y = rhs - c;
+		T t = value + y;
+		c = (t - value) - y;
+		value = t;
+
+		return *this;
+	};
+};
+
+
 // Better version of isapproxeq()
 template<typename T>
 bool aprx_eq(T a, T b, int ulp=2) {

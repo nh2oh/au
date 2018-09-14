@@ -5,6 +5,27 @@
 #include <numeric>
 #include <limits>
 
+
+// Kahan summation
+// Copied from au_algs_math.h b/c googletest does not support a modern 
+// enough c++ to use <optional>
+template<typename T>
+struct ksum {
+	T value {};
+	T c {};
+
+	ksum& operator+=(const T& rhs) {
+		T y = rhs - c;
+		T t = value + y;
+		c = (t - value) - y;
+		value = t;
+
+		return *this;
+	};
+};
+
+
+
 // Default ts is 4/4 simple
 TEST(ts_t_tests, DefaultConstructor) {
 	ts_t def_ts {};
@@ -73,8 +94,20 @@ TEST(ts_t_tests, EquivDurationsThreeFourFourFour) {
 TEST(ts_t_tests, ThreeFourIterativeNbarCalculations) {
 	ts_t ts {3_bt,d::q,false};
 
-	bar_t cum_nbars {0};
+	//bar_t cum_nbars {0};
+	ksum<bar_t> cum_nbars {};
 	for (int i=1; i<100; ++i) {  // Note: starting at 1
+		cum_nbars += nbar(ts, d_t{d::q});
+
+		if (i%3==0) {
+			bool isex = cum_nbars.value.isexact(); EXPECT_TRUE(isex);
+			double frem = cum_nbars.value.fremain(); EXPECT_EQ(frem,1.0);
+			bar_t nfull = cum_nbars.value.full(); EXPECT_EQ(nfull,(i/3)*1_br);
+			bar_t nnext = cum_nbars.value.next(); EXPECT_EQ(nnext,(i/3)*1_br+1_br);
+			EXPECT_EQ(cum_nbars.value,(i/3)*(1_br));
+		}
+
+		/*
 		cum_nbars += nbar(ts, d_t{d::q});
 
 		if (cum_nbars.isexact()) {
@@ -84,14 +117,13 @@ TEST(ts_t_tests, ThreeFourIterativeNbarCalculations) {
 			// fixed.  
 			cum_nbars = cum_nbars.full();
 		}
-
 		if (i%3==0) {
 			bool isex = cum_nbars.isexact(); EXPECT_TRUE(isex);
 			double frem = cum_nbars.fremain(); EXPECT_EQ(frem,1.0);
 			bar_t nfull = cum_nbars.full(); EXPECT_EQ(nfull,(i/3)*1_br);
 			bar_t nnext = cum_nbars.next(); EXPECT_EQ(nnext,(i/3)*1_br+1_br);
 			EXPECT_EQ(cum_nbars,(i/3)*(1_br));
-		}
+		}*/
 	}
 
 }
