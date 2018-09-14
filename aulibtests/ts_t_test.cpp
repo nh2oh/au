@@ -78,6 +78,10 @@ TEST(ts_t_tests, ThreeFourIterativeNbarCalculations) {
 		cum_nbars += nbar(ts, d_t{d::q});
 
 		if (cum_nbars.isexact()) {
+			// TODO
+			// This is done to prevent error accumulation in the 
+			// repeated floating-point sum... it needs to eventually be
+			// fixed.  
 			cum_nbars = cum_nbars.full();
 		}
 
@@ -92,4 +96,91 @@ TEST(ts_t_tests, ThreeFourIterativeNbarCalculations) {
 
 }
 
+
+
+TEST(ts_t_tests, FourTwoFiveFourBeatCalcsForAssortedRPs) {
+	std::vector<std::vector<d_t>> rp {
+		{d::q,d::q,d::h},  //  4/4 => 1 bar
+		{d::e,d::e,d::q,d::h},  // 4/4 => 1 bar
+		{d::w,d::h,d::q,d::q},  // 4/4 => 2 bars
+		{d::h,d::q,d::q,d::w,d::e,d::e,d::e,d::e,d::e,d::e,d::e,d::e},  // 4/4 => 3 bars
+		{d::e,d::e,d::q,d::w,d::h,d::h,d::e,d::e,d::q,d::q,d::q,d::q,d::q}  // 4/4 => 4 bars
+	};
+
+	std::vector<ts_t> ts {
+		ts_t {4_bt,d::q,false},
+		ts_t {2_bt,d::q,false},
+		ts_t {5_bt,d::q,false}
+	};
+
+	std::vector<std::vector<beat_t>> ans_nbeat {
+		{4_bt,4_bt,8_bt,12_bt,16_bt},  // 4/4
+		{4_bt,4_bt,8_bt,12_bt,16_bt},  // 2/4
+		{4_bt,4_bt,8_bt,12_bt,16_bt}   // 5/4
+	};
+	std::vector<std::vector<bar_t>> ans_nbar {
+		{1_br,1_br,2_br,3_br,4_br},  // 4/4
+		{2_br,2_br,4_br,6_br,8_br},  // 2/4
+		{0.8_br,0.8_br,1.6_br,2.4_br,3.2_br}  // 5/4
+	};
+
+	for (int i=0; i<ts.size(); ++i) {
+		auto curr_ts = ts[i];
+		for (int j=0; j<rp.size(); ++j) {
+			auto curr_rp = rp[j];
+
+			beat_t cum_nbeats {0};
+			bar_t cum_nbars {0};
+			for (int k=0; k<curr_rp.size(); ++k) {
+				cum_nbeats += nbeat(curr_ts,curr_rp[k]);
+				cum_nbars += nbar(curr_ts,curr_rp[k]);
+			}
+			EXPECT_TRUE(cum_nbeats == ans_nbeat[i][j]);
+			EXPECT_TRUE(cum_nbars == ans_nbar[i][j]);
+
+			EXPECT_TRUE(nbeat(curr_ts,cum_nbars) == cum_nbeats);
+			EXPECT_TRUE(nbar(curr_ts,cum_nbeats) == cum_nbars);
+		}
+	}
+}
+
+
+TEST(ts_t_tests, ThreeFourBeatCalcsForAssortedRPs) {
+	std::vector<std::vector<d_t>> rp {
+		{d::sx,d::sx,d::sx,d::sx,d::sx,d::sx,d::sx,d::sx,d::sx,d::sx,d::sx,d::sx}, // 12 sx => 1 bar
+		{d::sx,d::sx,d::sx,d::sx,d::sx,d::sx,d::sx,d::sx}, // 8 sx => 2/3 bars 
+		{d::ote,d::sx,d::sx,d::sx,d::sx,d::sx,d::sx,d::sx,d::sx,d::sx,d::sx,d::sx,d::sx}
+			// 12(1/16)+1/128 => 1+1/96'th bar
+	};
+
+	std::vector<ts_t> ts {
+		ts_t {3_bt,d::q,false},
+	};
+
+	std::vector<std::vector<beat_t>> ans_nbeat {
+		{3_bt,2_bt, 3_bt+0.03125_bt} // There are 32 1/128'th notes in a 1/4 note; 1/32 == 0.03125
+	};
+	std::vector<std::vector<bar_t>> ans_nbar {
+		{1_br,bar_t{2.0/3.0}, 1_br + bar_t{1.0/96.0}}  // 3 1/4 notes per bar => 3x32==96 1/128 notes
+	};
+
+	for (int i=0; i<ts.size(); ++i) {
+		auto curr_ts = ts[i];
+		for (int j=0; j<rp.size(); ++j) {
+			auto curr_rp = rp[j];
+
+			beat_t cum_nbeats {0};
+			bar_t cum_nbars {0};
+			for (int k=0; k<curr_rp.size(); ++k) {
+				cum_nbeats += nbeat(curr_ts,curr_rp[k]);
+				cum_nbars += nbar(curr_ts,curr_rp[k]);
+			}
+			EXPECT_TRUE(cum_nbeats == ans_nbeat[i][j]);
+			EXPECT_TRUE(cum_nbars == ans_nbar[i][j]);
+
+			EXPECT_TRUE(nbeat(curr_ts,cum_nbars) == cum_nbeats);
+			EXPECT_TRUE(nbar(curr_ts,cum_nbeats) == cum_nbars);
+		}
+	}
+}
 

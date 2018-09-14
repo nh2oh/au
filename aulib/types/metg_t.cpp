@@ -222,7 +222,7 @@ void tmetg_t::set_pg_zero(beat_t nbts) {
 		m_pg.push_back(def_pgcol);
 	}
 
-	//validate();
+	validate();
 }
 
 
