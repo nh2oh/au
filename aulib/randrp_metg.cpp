@@ -16,7 +16,8 @@
 // TODO:  Assumes the pg can be extended
 // TODO:  Need to take a more careful look at the method used for dropping
 // low-probability rps
-
+// TODO:  Need to truncate the final segment otherwise can't do things like
+// 1 bar in 3/4 w/ h,q,e,sx since each segment is 0.3333.... bars
 
 
 
