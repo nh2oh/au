@@ -15,10 +15,14 @@
 #include <algorithm>
 
 
+// Constructor from an rp
 tmetg_t::tmetg_t(ts_t ts_in, rp_t rp_in) {
 	m_ts = ts_in;
 	auto vdt = rp_in.to_duration_seq();
 
+	// Construct m_nvsph
+	// A phase of 0 means that a given d_t element lies on a beat number that
+	// is an integer multiple of its length in beats.  
 	beat_t curr_bt {0};
 	for (const auto& e : vdt) {
 		double nr = std::round(curr_bt/nbeat(m_ts,e));
@@ -38,11 +42,16 @@ tmetg_t::tmetg_t(ts_t ts_in, rp_t rp_in) {
 	m_btend = curr_bt;
 	set_pg_zero(curr_bt);
 
+	// Set the probability of each element of the pg that corresponds to
+	// a note in the input rp to 1.0.  
+	// This should just index the row of the pg 
+	// Since a given col curr_spet of the pg, m_pg[curr_step], may have multiple
+	// rows corresponding to a given e (for example, if m_nvsph contains the 
+	// same e with different phases), the call to levels_allowed() is needed.  
 	curr_bt = 0_bt;
 	int curr_step = 0;
 	for (const auto& e : vdt) {
 		auto idx = levels_allowed(curr_bt);
-		//int stepsz = static_cast<int>(nbeat(m_ts,e)/m_btres);
 		for (auto i=0; i<idx.size(); ++i) {
 			if (m_nvsph[idx[i]].nv == e) {
 				m_pg[curr_step][idx[i]].lgp = 1.0;
@@ -57,7 +66,7 @@ tmetg_t::tmetg_t(ts_t ts_in, rp_t rp_in) {
 	validate();
 }
 
-
+// Constructor from a set of d_t and phases
 // TODO:  This should take an options type-arg to set if bar-spanning elements 
 // should be allowed... this then changes the gres and period calcs.  
 tmetg_t::tmetg_t(ts_t ts_in, std::vector<d_t> nvs_in, std::vector<beat_t> ph_in) {
@@ -67,6 +76,7 @@ tmetg_t::tmetg_t(ts_t ts_in, std::vector<d_t> nvs_in, std::vector<beat_t> ph_in)
 
 	m_ts = ts_in;
 
+	// TODO:  Need to make sure elements are unique
 	for (int i=0; i<nvs_in.size(); ++i) {
 		m_nvsph.push_back({nvs_in[i], nbeat(ts_in,nvs_in[i]), ph_in[i]});
 	}
@@ -126,6 +136,7 @@ int tmetg_t::nv2step(d_t nv_in) const {
 	return static_cast<int>(nbeat(m_ts,nv_in)/m_btres);
 }
 
+
 // True if there is at least one note of m_nvs that can occur at the 
 // given (beat + the given nv)
 // Used by validate() to check for zero-pointers
@@ -135,8 +146,8 @@ bool tmetg_t::allowed_next(beat_t beat, d_t nv) const {
 }
 
 
-// True if there is at least one member note-value that can occur at the 
-// given beat
+// True if there is at least one m_nvsph member note-value that can 
+// occur at the given beat.  
 bool tmetg_t::allowed_at(beat_t beat) const {
 	// aprx_int((cbt-e.ph)/e.nbts)  // TODO:  better
 	for (auto const& e : m_nvsph) {
@@ -210,13 +221,11 @@ void tmetg_t::set_pg_zero(beat_t nbts) {
 		nbts = m_btend-m_btstart;
 	}
 
-	std::vector<pgcell> def_pgcol {};
+	std::vector<pgcell> def_pgcol {};  // "Default pg col"
 	for (int i=0; i<m_nvsph.size(); ++i) {
-		//def_pgcol.push_back({i,static_cast<int>(m_nvsph[i].nbts/m_btres),0.0});
 		def_pgcol.push_back({i,bt2step(m_nvsph[i].nbts),0.0});
 	}
 
-	//auto pg_nsteps = static_cast<int>(nbts/m_btres);
 	auto pg_nsteps = bt2step(nbts);
 	for (int i=0; i<pg_nsteps; ++i) {
 		m_pg.push_back(def_pgcol);
@@ -307,13 +316,15 @@ std::vector<double> tmetg_t::nt_prob(beat_t bt) const {
 // produce rp's valid under the parent.  
 std::vector<tmetg_t> tmetg_t::split() const {
 	
+	// For each _row_ i in m_pg, col_ptrs[i] is a vector of col idxs
+	// pointed at by the elements of row i.  
 	std::vector<std::vector<int>> col_ptrs {};
 	for (int i=0; i<m_nvsph.size(); ++i) {
 		col_ptrs.push_back(std::vector<int>{});
-		for (int j = 0; i<m_pg.size(); ++j) {
-			if (aprx_eq(m_pg[j][i].lgp,0.0)) { continue; }
-			if (j+m_pg[j][i].stepsz >= m_pg.size()) {break;}
-			col_ptrs[i].push_back(j+m_pg[j][i].stepsz);
+		for (int j=0; j<m_pg.size(); ++j) {  // Each m_pg element j on row i
+			if (!aprx_eq(m_pg[j][i].lgp,0.0)) {
+				col_ptrs[i].push_back(j+m_pg[j][i].stepsz);
+			}
 		}
 	}
 
@@ -328,10 +339,12 @@ std::vector<tmetg_t> tmetg_t::split() const {
 	std::vector<tmetg_t> slices {};
 	beat_t curr_bt {0.0};
 	for (auto e : cmn_ptrs) {
-		slices.push_back(get_slice(curr_bt,curr_bt+e*m_btres));
-		curr_bt += e*m_btres;
+		if (e > m_pg.size()) { break; }
+		//slices.push_back(get_slice(curr_bt,curr_bt+e*m_btres));
+		slices.push_back(get_slice(curr_bt,e*m_btres));
+		curr_bt = e*m_btres;
 	}
-	slices.push_back(get_slice(curr_bt,m_period));
+	//slices.push_back(get_slice(curr_bt,m_period));
 
 	return slices;
 }
@@ -359,7 +372,7 @@ tmetg_t tmetg_t::get_slice(beat_t bt_from, beat_t bt_to) const {
 
 // Enumerate all variations over a single period
 std::vector<tmetg_t::rpp> tmetg_t::enumerate() const {
-	int ncols = bt2step(m_period); //static_cast<int>(m_period/m_btres);
+	int ncols = bt2step(m_period);
 
 	// g is derrived from m_pg:  
 	// 1)  Each col of g contains only the entries in the corresponding col of
@@ -400,7 +413,7 @@ std::vector<tmetg_t::rpp> tmetg_t::enumerate() const {
 				curr_rp.push_back(m_nvsph[rps_all[i].rp[j]].nv);
 			}
 		}
-		rps.push_back({curr_rp, rps_all[i].p});
+		rps.push_back({curr_rp, rps_all[i].p, curr_rp.size()});
 	}
 
 	return rps;
@@ -460,6 +473,13 @@ void tmetg_t::m_enumerator(std::vector<nvp_p>& rps,
 	}
 }
 
+
+bar_t tmetg_t::nbars() const {
+	return nbar(m_ts,m_btres*m_pg.size());
+}
+ts_t tmetg_t::ts() const {
+	return m_ts;
+}
 
 std::string tmetg_t::print() const {
 	std::string s {};

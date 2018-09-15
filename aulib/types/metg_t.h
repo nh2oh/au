@@ -7,6 +7,10 @@
 #include <string>
 
 
+
+
+
+
 //
 // Class tmetg_t
 //
@@ -42,7 +46,7 @@
 // TODO:  
 // To implement rdurmetg(), rp_b(), etc, need to draw a distinction between 
 // the "tg" and the rp the object possibly represents.  
-// At present, the tg is "virtual" ... it's members are m_btres, m_period, m_nvsph,
+// At present, the tg is "virtual" ... its members are m_btres, m_period, m_nvsph,
 // allowed_*(), levels_allowed().  
 //
 // TODO:
@@ -59,6 +63,14 @@
 // everywhere.  
 // TODO:  draw() ignores probabilities
 //
+// TODO:  enumerate() needs to take limits... niter, max rps, max-mem... something
+//
+// TODO:  The probabilities returned by enumerate() are *probably* wrong
+//
+
+
+
+
 
 struct tmetg_t_opts {
 	bool barspan {false};
@@ -72,6 +84,7 @@ public:
 	struct rpp {  // "rp with probability" return type of enumerate()
 		std::vector<d_t> rp {};
 		double p {1.0};
+		size_t n {0};
 	};
 
 	tmetg_t() = delete;
@@ -96,10 +109,14 @@ public:
 	std::string print_pg() const;
 	std::string print_tg() const;
 
+	bar_t nbars() const;
+	ts_t ts() const;
+
 	bool validate() const;
 private:
 	// m_nvsph:
 	// No two elements are the same!
+	// Sorted:  Long-duration elements occur first
 	struct nvs_ph {
 		d_t nv {};
 		beat_t nbts {};
@@ -170,18 +187,25 @@ private:
 	d_t gcd(const std::vector<d_t>&) const;  // greatest common divisor
 	d_t gcd(const d_t&, const d_t&) const;
 
-	friend class pg_t;
+	//friend class pg_t;
 };
 
 
 
+/*
 class pg_t {
 public:
 	pg_t(std::vector<tmetg_t::nvs_ph>*, size_t);
 	double operator()(size_t r, size_t c) {  //r,c
 		return m_e[r+nr()*(c%nc())];
 	};
-	double operator()(tmetg_t::nvs_ph, beat_t);  //r,c
+	double operator()(tmetg_t::nvs_ph, beat_t);  // Probability of element r,c
+
+	bool set(beat_t bt, std::vector<double> vp) {
+		if (vp.size() != nr()) { return false; }
+		//...
+	};
+
 
 	size_t nr();
 	size_t nc();
@@ -189,6 +213,9 @@ private:
 	std::vector<double> m_e {};
 	std::vector<tmetg_t::nvs_ph> *m_ridx;
 };
+*/
+
+
 
 
 

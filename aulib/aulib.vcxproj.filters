@@ -90,6 +90,9 @@
     <ClCompile Include="types\line_t.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="randrp_metg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="util\au_algs.h">
@@ -189,6 +192,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="types\line_t.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="randrp_metg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
