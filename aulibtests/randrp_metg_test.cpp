@@ -31,7 +31,7 @@ TEST(randrp_metg_tests, FourFourZeroPhaseQESxDefaultRandommg) {
 
 }
 
-
+/*
 TEST(randrp_metg_tests, ThreeFourZeroPhaseHQESxDefaultRandommg) {
 	ts_t ts {3_bt,d::q};
 	tmetg_t mg {ts,{d::h,d::q,d::e,d::sx},{0_bt,0_bt,0_bt,0_bt}};
@@ -50,4 +50,4 @@ TEST(randrp_metg_tests, ThreeFourZeroPhaseHQESxDefaultRandommg) {
 		EXPECT_TRUE(rrp.nbars()==bar_t{static_cast<int>(curr_nbars)});
 	}
 
-}
+}*/

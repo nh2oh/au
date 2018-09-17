@@ -105,25 +105,15 @@ beat_t tmetg_t::gres() const {
 }
 
 
-// Cancluates the minimum grid period from m_nvsph, m_ts, m_btres.  
+// Calcluates the minimum grid period from m_nvsph, m_ts, m_btres.  
 // NB: Depends on m_btres being correctly set!
 beat_t tmetg_t::period() const { 
-	// TODO:  Just do the whole thing in beat_t ?
-	auto nvgres = duration(m_ts,m_btres);
-	int n_gres_units = static_cast<int>(m_ts.bar_unit()/nvgres);
-	int ce = 0;
-	for (auto e : m_nvsph) {
-		ce = e.nv/nvgres;
-		n_gres_units = std::lcm(n_gres_units, ce);
-
-		ce = e.ph/nbeat(m_ts,nvgres);
-		if (ce > 0) {
-			// TODO:  should take the abs() of a -ph ?
-			n_gres_units = std::lcm(n_gres_units, ce);
-		}
+	auto gres_nv = duration(m_ts,m_btres);
+	int n_grid_steps = 1; // static_cast<int>(m_ts.bar_unit()/gres_nv);
+	for (const auto& e : m_nvsph) {
+		n_grid_steps = std::lcm(n_grid_steps, static_cast<int>(e.nv/gres_nv));
 	}
-	auto gperiod = n_gres_units*nvgres;
-	return beat_t{gperiod/m_ts.beat_unit()};
+	return m_btres*n_grid_steps;
 }
 
 int tmetg_t::bt2step(beat_t bt_in) const {
@@ -193,6 +183,13 @@ std::vector<int> tmetg_t::levels_allowed(beat_t beat) const {
 
 // Can the pg be concatenated repeatedly to itself to generate rp's always
 // aligning to the tg?
+// Even though for all valid metg's all nonzero m_pg elements align with the
+// corresponding tg, the pg may nevertheless be non-extendable.  For example,
+// consider a 3/4 metg containing a half-note w/ ph=0 and containing an m_pg
+// spanning exactly 1 bar w/ a nonzero probability for the half-note at beats
+// 0 and 2.  Naive extension of the m_pg would place a third half-note at 
+// beat 3, too close to the half-note at beat 2.  
+// 
 bool tmetg_t::pg_extends() const {
 	// If m_pg is shorter than a period, extend it to exactly 1 period; if
 	// longer by a factor N, extend to ceil(N).  
