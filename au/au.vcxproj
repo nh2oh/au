@@ -241,7 +241,6 @@
     <ClCompile Include="au.cpp" />
     <ClCompile Include="scr.cpp" />
     <ClCompile Include="scr2.cpp" />
-    <ClCompile Include="test.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="au.rc" />

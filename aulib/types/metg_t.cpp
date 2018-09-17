@@ -66,6 +66,7 @@ tmetg_t::tmetg_t(ts_t ts_in, rp_t rp_in) {
 	validate();
 }
 
+
 // Constructor from a set of d_t and phases
 // TODO:  This should take an options type-arg to set if bar-spanning elements 
 // should be allowed... this then changes the gres and period calcs.  
@@ -190,8 +191,8 @@ bool tmetg_t::allowed_at(d_t nv, beat_t beat) const {
 std::vector<int> tmetg_t::levels_allowed(beat_t beat) const {
 	std::vector<int> allowed {}; allowed.reserve(m_nvsph.size());
 	for (int i=0; i<m_nvsph.size(); ++i) {
-		// aprx_int((cbt-e.ph)/e.nbts)  // TODO:  better
-		if (beat==(std::round(beat/m_nvsph[i].nbts)*m_nvsph[i].nbts + m_nvsph[i].ph)) {
+		if (aprx_int((beat-m_nvsph[i].ph)/m_nvsph[i].nbts)) {  // TODO:  better
+		//if (beat==(std::round(beat/m_nvsph[i].nbts)*m_nvsph[i].nbts + m_nvsph[i].ph)) {
 			allowed.push_back(i);
 		}
 	}
@@ -394,7 +395,8 @@ tmetg_t tmetg_t::slice(beat_t bt_from, beat_t bt_to) const {
 
 
 // Extend the pg to span [from,to) where to >= from.  
-// Does _not_ check m_f_pg_extends
+// Does _not_ check m_f_pg_extends; external users access this through
+// slice(), which does make all the necessary checks.  
 std::vector<std::vector<tmetg_t::pgcell>> tmetg_t::extend_pg(beat_t from, beat_t to) const {
 	int idx_from = bt2step(from-m_btstart);
 	int idx_to = bt2step(to-m_btstart);
@@ -417,10 +419,8 @@ std::vector<std::vector<tmetg_t::pgcell>> tmetg_t::extend_pg(beat_t from, beat_t
 }
 
 
-// Enumerate all variations over a single period
+// Enumerate all variations represented by the pg.  
 std::vector<tmetg_t::rpp> tmetg_t::enumerate() const {
-	int ncols = bt2step(m_period);
-
 	// g is derrived from m_pg:  
 	// 1)  Each col of g contains only the entries in the corresponding col of
 	// m_pg where the probability is > 0.  Hence, each col of g in principle
@@ -436,7 +436,7 @@ std::vector<tmetg_t::rpp> tmetg_t::enumerate() const {
 			[](const pgcell& a, const pgcell& b){return a.lgp>b.lgp;});
 		std::vector<pgcell> e_nz {};  // "elements nonzero"
 		for (auto ee : e) {
-			if (ee.lgp == 0.0) { break;}
+			if (ee.lgp == 0.0) { break; }
 			e_nz.push_back(ee);
 			e_nz.back().lgp = std::log(e_nz.back().lgp);
 		}
@@ -444,7 +444,7 @@ std::vector<tmetg_t::rpp> tmetg_t::enumerate() const {
 		N_tot_guess *= std::max(g.back().size(),static_cast<size_t>(1));
 	}
 
-	int N_prealloc = std::min(100000,N_tot_guess);
+	int N_prealloc = std::min(100000,N_tot_guess)+1;  // TODO:  Gross + 1
 	nvp_p rpp_prototype {std::vector<int>(g.size(),-1),0.0};
 	std::vector<nvp_p> rps_all(N_prealloc,rpp_prototype);
 
@@ -470,7 +470,7 @@ std::vector<tmetg_t::rpp> tmetg_t::enumerate() const {
 void tmetg_t::m_enumerator(std::vector<nvp_p>& rps, 
 	std::vector<std::vector<pgcell>> const& g, int& N, int x) const {
 	if (N >= (rps.size()-1)) { return; }
-	
+
 	bool f_gspan_fatal {false};
 	bool f_gspan_complete {false};
 	bool f_gspan_continue {false};
@@ -663,6 +663,14 @@ bool tmetg_t::validate() const {
 	}
 
 	return true;
+}
+
+
+// Note that this does not check m_btstart == rhs.m_btstart.  
+// All that matters for equality is that enumerate() returns the same
+// set of rp's.  
+bool tmetg_t::operator==(const tmetg_t& rhs) const {
+	return (m_pg == rhs.m_pg && m_ts == rhs.m_ts && m_nvsph == rhs.m_nvsph);
 }
 
 

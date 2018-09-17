@@ -38,7 +38,7 @@
 //   beats may be extendable.  The pg may specify 0 for the probability of
 //   certain nvsph elements such that the period is less than calculated by
 //   the tg.  
-//   m_f_pg_extends, pg_extends() introspects this.  
+//   m_f_pg_extends, pg_extends() reads this.  
 //
 //
 
@@ -50,26 +50,15 @@
 // allowed_*(), levels_allowed().  
 //
 // TODO:
-// Add a split() method to implement the factorization of rpmetg(): returns
-// a std::vector of tmetg_t's s.t. appending a draw() call to each in order
-// yields an rp that *could* have been returned from the parent.  
-// Then, can implement rpmetg() as an external function.  
-//
-// TODO:
 // The user should be able to set m_btstart, and, if set by the user, the
 // tg calculation needs to take this into account
 //
-// TODO:  Should just make an int m_periodsteps to avoid all the int-casting
-// everywhere.  
 // TODO:  draw() ignores probabilities
 //
 // TODO:  enumerate() needs to take limits... niter, max rps, max-mem... something
 //
 // TODO:  The probabilities returned by enumerate() are *probably* wrong
 //
-
-
-
 
 
 struct tmetg_t_opts {
@@ -113,6 +102,8 @@ public:
 	ts_t ts() const;
 
 	bool validate() const;
+
+	bool operator==(const tmetg_t&) const;
 private:
 	// m_nvsph:
 	// No two elements are the same!
