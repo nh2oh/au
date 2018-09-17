@@ -92,8 +92,8 @@ public:
 	// ts, dp, phases
 	explicit tmetg_t(ts_t,std::vector<d_t>,std::vector<beat_t>);
 
-	tmetg_t get_slice(beat_t, beat_t) const;
-	std::vector<tmetg_t> split() const;
+	tmetg_t slice(beat_t, beat_t) const;
+	std::vector<tmetg_t> factor() const;
 
 	//  Random rp generation
 	void set_pg_random(int = 0);  // argument => mode
@@ -175,6 +175,7 @@ private:
 	int nv2step(d_t) const;
 
 	bool pg_extends() const;  // Should == m_f_pg_extends, but does not set.  
+	std::vector<std::vector<pgcell>> extend_pg(beat_t, beat_t) const;
 
 	std::vector<int> levels_allowed(beat_t) const;  // => tg
 		// idx to allowed nv's @ the given beat; these numerical

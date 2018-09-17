@@ -105,25 +105,42 @@ beat_t tmetg_t::gres() const {
 }
 
 
-// Calcluates the minimum grid period from m_nvsph, m_ts, m_btres.  
-// NB: Depends on m_btres being correctly set!
+// Calcluates the grid period from m_nvsph, m_ts, m_btres.  Depends on 
+// m_btres being correctly set!
+//
+// The period is the smallest tg segment which can be concatenated to
+// itself repeatedly to generate a tg of any size *AND* which spans an
+// integer number of bars.  This is usually larger than the smallest
+// repeating unit.  
+//
+// 
 beat_t tmetg_t::period() const { 
 	auto gres_nv = duration(m_ts,m_btres);
-	int n_grid_steps = 1; // static_cast<int>(m_ts.bar_unit()/gres_nv);
+	int n_grid_steps = static_cast<int>(m_ts.bar_unit()/gres_nv);
+	// If m_ts.bar_unit() is not included in the calculation, 
+	// the period will be the smallest repeating unit.  Not all
+	// traversals will be the same length.  
 	for (const auto& e : m_nvsph) {
 		n_grid_steps = std::lcm(n_grid_steps, static_cast<int>(e.nv/gres_nv));
 	}
 	return m_btres*n_grid_steps;
 }
 
+
+// Converts a number-of-beats to a number-of-grid-steps.  Note that this
+// is different from converting a "beat number" to a "step number" if
+// If m_btstart != 0.  
 int tmetg_t::bt2step(beat_t bt_in) const {
-	au_assert(aprx_int(bt_in/m_btres),"bt2step()");
-	return static_cast<int>(bt_in/m_btres);
+	//au_assert(aprx_int(bt_in/m_btres),"bt2step()");
+	//return static_cast<int>(bt_in/m_btres);
+	return static_cast<int>(std::floor(bt_in/m_btres));
 }
 
+
 int tmetg_t::nv2step(d_t nv_in) const {
-	au_assert(aprx_int(nbeat(m_ts,nv_in)/m_btres),"nv2step()");
-	return static_cast<int>(nbeat(m_ts,nv_in)/m_btres);
+	//au_assert(aprx_int(nbeat(m_ts,nv_in)/m_btres),"nv2step()");
+	//return static_cast<int>(nbeat(m_ts,nv_in)/m_btres);
+	return static_cast<int>(std::floor(nbeat(m_ts,nv_in)/m_btres));
 }
 
 
@@ -181,6 +198,7 @@ std::vector<int> tmetg_t::levels_allowed(beat_t beat) const {
 	return allowed;
 }
 
+
 // Can the pg be concatenated repeatedly to itself to generate rp's always
 // aligning to the tg?
 // Even though for all valid metg's all nonzero m_pg elements align with the
@@ -193,13 +211,12 @@ std::vector<int> tmetg_t::levels_allowed(beat_t beat) const {
 bool tmetg_t::pg_extends() const {
 	// If m_pg is shorter than a period, extend it to exactly 1 period; if
 	// longer by a factor N, extend to ceil(N).  
-	auto bt_span_pg = m_btend - m_btstart;
-	int ncols_extend = bt2step(m_period)*std::max(1.0,std::ceil((bt_span_pg/m_period)));
-	auto nrows = m_nvsph.size();
-	for (auto c=m_pg.size(); c<ncols_extend; ++c) {
-		auto curr_pg_col = m_pg[c-m_pg.size()];
-		for (auto r=0; r<nrows; ++r) {
-			if (curr_pg_col[r].lgp > 0.0 && 
+	auto nperiods_extend = std::max(1.0, std::ceil((m_btend-m_btstart)/m_period));
+	int ncols_extend = bt2step(m_period*nperiods_extend);
+
+	for (size_t c=0; c<ncols_extend; ++c) {
+		for (size_t r=0; r<m_pg[c%m_pg.size()].size(); ++r) {
+			if (m_pg[c%m_pg.size()][r].lgp > 0.0 && 
 				!allowed_at(m_nvsph[r].nv,c*m_btres+m_btstart)) {
 				return false;
 			}
@@ -208,6 +225,7 @@ bool tmetg_t::pg_extends() const {
 
 	return true;
 }
+
 
 // Clears the existing pg and creates a new one nbts long.  If nbts is
 // not specified or is ==0 , sets the size to correspond to 
@@ -297,7 +315,7 @@ std::vector<d_t> tmetg_t::draw() const {
 // TODO:  bt may exceed m_pg2.size()... in this case, should "wrap"
 // bt as if m_pg extended to infinity
 std::vector<double> tmetg_t::nt_prob(beat_t bt) const {
-	auto pg_col_idx = bt2step(bt); //static_cast<int>(bt/m_btres);
+	auto pg_col_idx = bt2step(bt);
 	std::vector<double> probs {};
 	for (auto const& e : m_pg[pg_col_idx]) {
 		probs.push_back(e.lgp);
@@ -311,22 +329,26 @@ std::vector<double> tmetg_t::nt_prob(beat_t bt) const {
 // elements point *over.*  
 // rp's generated from the members of the result can be concatenated to
 // produce rp's valid under the parent.  
-std::vector<tmetg_t> tmetg_t::split() const {
-	
+// TODO: Does not respect m_btstart
+std::vector<tmetg_t> tmetg_t::factor() const {
 	// For each _row_ i in m_pg, col_ptrs[i] is a vector of col idxs
 	// pointed at by the elements of row i.  
 	std::vector<std::vector<int>> col_ptrs {};
 	for (int i=0; i<m_nvsph.size(); ++i) {
 		col_ptrs.push_back(std::vector<int>{});
 		for (int j=0; j<m_pg.size(); ++j) {  // Each m_pg element j on row i
-			if (!aprx_eq(m_pg[j][i].lgp,0.0)) {
+			if (m_pg[j][i].lgp > 0.0) {
 				col_ptrs[i].push_back(j+m_pg[j][i].stepsz);
 			}
 		}
 	}
 
-	std::vector<int> cmn_ptrs = col_ptrs[0];  // "common pointers"
-	for (auto e : col_ptrs) {
+	// cmn ptrs => "common pointers"
+	// Col idxs that each row of m_pg contains an element pointing into.  Note 
+	// that the elements of std::vector<std::vector<int>> col_ptrs are the 
+	// _rows_ of the pg.  
+	std::vector<int> cmn_ptrs = col_ptrs[0];
+	for (const auto& e : col_ptrs) {  // For pg _row_ e...
 		auto temp_cmn_ptrs = cmn_ptrs;
 		cmn_ptrs.clear();
 		std::set_intersection(e.begin(),e.end(),temp_cmn_ptrs.begin(),temp_cmn_ptrs.end(),
@@ -337,33 +359,58 @@ std::vector<tmetg_t> tmetg_t::split() const {
 	beat_t curr_bt {0.0};
 	for (auto e : cmn_ptrs) {
 		if (e > m_pg.size()) { break; }
-		//slices.push_back(get_slice(curr_bt,curr_bt+e*m_btres));
-		slices.push_back(get_slice(curr_bt,e*m_btres));
+		slices.push_back(slice(curr_bt,e*m_btres));
 		curr_bt = e*m_btres;
 	}
-	//slices.push_back(get_slice(curr_bt,m_period));
 
 	return slices;
 }
 
 
-// Slices the pg and returns a tmetg_t w/ a pg corresponding to cols
-// [from, to) of the parent pg.  
-// TODO:  range may exceed m_pg limits
-// TODO:  Extend the pg???
-// 
-tmetg_t tmetg_t::get_slice(beat_t bt_from, beat_t bt_to) const {
-	int idx_from = bt2step(bt_from); //bt_from/m_btres;
-	int idx_to = bt2step(bt_to); //bt_to/m_btres;
+// Slices the pg and returns a metg_t w/ a pg corresponding to cols
+// [from, to) of the parent.  
+// bt_from, bt_to are beat _numbers_ 
+tmetg_t tmetg_t::slice(beat_t bt_from, beat_t bt_to) const {
+	int idx_from = bt2step(bt_from-m_btstart);
+	int idx_to = bt2step(bt_to-m_btstart);
+	if (idx_from >= m_pg.size() || idx_from < 0 || idx_to > m_pg.size() || idx_to < 0) {
+		au_assert(m_f_pg_extends,"!m_f_pg_extends but range exceeds m_pg");
+		// extend_pg() does not check m_f_pg_extends
+	}
 
 	auto result = *this;
-
-	result.m_pg.clear();
-	std::copy(m_pg.begin()+idx_from,m_pg.begin()+idx_to,std::back_inserter(result.m_pg));
+	//result.m_pg.clear();
+	//std::copy(m_pg.begin()+idx_from,m_pg.begin()+idx_to,std::back_inserter(result.m_pg));
+	result.m_pg = extend_pg(bt_from,bt_to);
 	result.m_btstart = bt_from;
 	result.m_btend = bt_to;
+	result.m_f_pg_extends = result.pg_extends();
 
 	return result;
+}
+
+
+// Extend the pg to span [from,to) where to >= from.  
+// Does _not_ check m_f_pg_extends
+std::vector<std::vector<tmetg_t::pgcell>> tmetg_t::extend_pg(beat_t from, beat_t to) const {
+	int idx_from = bt2step(from-m_btstart);
+	int idx_to = bt2step(to-m_btstart);
+	auto nsteps = idx_to-idx_from;
+	if (idx_from < 0) {
+		idx_from = std::abs(idx_from)%m_pg.size();
+		idx_to = idx_from+nsteps;
+	}
+	au_assert((idx_from >= 0 && idx_to >= idx_from),"!(idx_from >= 0 && idx_to >= idx_from)");
+	if (idx_from >= m_pg.size() || idx_to > m_pg.size()) {
+		au_assert(m_f_pg_extends,"!m_f_pg_extends but range exceeds m_pg");
+	}
+
+	std::vector<std::vector<tmetg_t::pgcell>> new_pg {};
+	for (size_t c=idx_from; c<idx_to; ++c) {
+		new_pg.push_back(m_pg[c%m_pg.size()]);
+	}
+
+	return new_pg;
 }
 
 
