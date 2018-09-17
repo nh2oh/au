@@ -24,6 +24,12 @@
 
 rp_t randrp_metg(tmetg_t mg, int nnts, bar_t nbars) {
 	
+	if (nbars > 0_br) {
+		// Extends, truncates, or extends and truncates the pg to be exactly
+		// the size of nbars.  
+		mg = mg.slice(0_bt,nbeat(mg.ts(),nbars));
+	}
+
 	// Factor the input mg via mg.split(), and store the result in rps
 	struct rpset_nbars {
 		bar_t nbars {};  

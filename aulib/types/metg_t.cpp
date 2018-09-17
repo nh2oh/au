@@ -362,6 +362,9 @@ std::vector<tmetg_t> tmetg_t::factor() const {
 		slices.push_back(slice(curr_bt,e*m_btres));
 		curr_bt = e*m_btres;
 	}
+	if (cmn_ptrs.back() < m_pg.size()) {
+		slices.push_back(slice(curr_bt,m_pg.size()*m_btres));
+	}
 
 	return slices;
 }
