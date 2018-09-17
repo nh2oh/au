@@ -110,7 +110,7 @@ private:
 	// Sorted:  Long-duration elements occur first
 	struct nvs_ph {
 		d_t nv {};
-		beat_t nbts {};
+		//beat_t nbts {};
 		beat_t ph {};
 		bool operator==(const nvs_ph&) const;
 		bool operator<(const nvs_ph&) const;
@@ -150,13 +150,6 @@ private:
 	std::vector<std::vector<pgcell>> m_pg {};
 	bool m_f_pg_extends {true};  
 
-	// "note-value pointer with probability"
-	// Data structure used by the rp enumerator.  
-	struct nvp_p {
-		std::vector<int> rp {};
-		double p {1.0};
-	};
-
 	//----------------------------------------------------------------------------
 	// Methods
 	beat_t gres() const;  // Reads m_ts, m_nvsph
@@ -173,7 +166,14 @@ private:
 		// indices mean nothing to an external caller, hence this
 		// method is private.  
 
+	// "note-value pointer with probability"
+	struct nvp_p {
+		std::vector<int> rp {};
+		double p {1.0};
+	};
 	void m_enumerator(std::vector<nvp_p>&, 
+		std::vector<std::vector<pgcell>> const&, int&, int) const;
+	void m_enumerator2(std::vector<nvp_p>&, 
 		std::vector<std::vector<pgcell>> const&, int&, int) const;
 	
 	d_t gcd(const std::vector<d_t>&) const;  // greatest common divisor

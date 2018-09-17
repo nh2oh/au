@@ -12,12 +12,12 @@ std::string bsprintf(const char *fmt, Ts... args) {
 	std::string s_out(size+1,'\0');
 	std::sprintf(&s_out[0], fmt, args...);
 	return s_out.substr(0,size);
-}
+};
 
 template<typename... Ts>
 std::string bsprintf(std::string const& fmt, Ts... args) {
 	return bsprintf(fmt.c_str(),args...);
-}
+};
 
 std::string int_suffix(int const&);
 

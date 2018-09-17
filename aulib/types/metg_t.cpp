@@ -27,7 +27,7 @@ tmetg_t::tmetg_t(ts_t ts_in, rp_t rp_in) {
 	for (const auto& e : vdt) {
 		double nr = std::round(curr_bt/nbeat(m_ts,e));
 		beat_t ph = curr_bt-nr*nbeat(m_ts,e);
-		nvs_ph curr_nvsph {e, nbeat(m_ts,e), ph};
+		nvs_ph curr_nvsph {e, /*nbeat(m_ts,e),*/ ph};
 		if (std::find(m_nvsph.begin(),m_nvsph.end(),curr_nvsph) == m_nvsph.end()) {
 			m_nvsph.push_back(curr_nvsph);
 		}
@@ -79,7 +79,7 @@ tmetg_t::tmetg_t(ts_t ts_in, std::vector<d_t> nvs_in, std::vector<beat_t> ph_in)
 
 	// TODO:  Need to make sure elements are unique
 	for (int i=0; i<nvs_in.size(); ++i) {
-		m_nvsph.push_back({nvs_in[i], nbeat(ts_in,nvs_in[i]), ph_in[i]});
+		m_nvsph.push_back({nvs_in[i], /*nbeat(ts_in,nvs_in[i]), */ph_in[i]});
 	}
 
 	m_btres = gres();
@@ -158,8 +158,9 @@ bool tmetg_t::allowed_next(beat_t beat, d_t nv) const {
 // occur at the given beat.  
 bool tmetg_t::allowed_at(beat_t beat) const {
 	// aprx_int((cbt-e.ph)/e.nbts)  // TODO:  better
-	for (auto const& e : m_nvsph) {
-		if (beat == (std::round(beat/e.nbts)*e.nbts + e.ph)) {
+	for (const auto& e : m_nvsph) {
+		//if (beat == (std::round(beat/e.nbts)*e.nbts + e.ph)) {
+		if (beat == (std::round(beat/nbeat(m_ts,e.nv))*nbeat(m_ts,e.nv) + e.ph)) {
 			return true;
 		}
 	}
@@ -172,9 +173,10 @@ bool tmetg_t::allowed_at(beat_t beat) const {
 // was made from a pg much more restricted than the tg, want to be able to
 // query the pg.  
 bool tmetg_t::allowed_at(d_t nv, beat_t beat) const {
-	for (auto const& e : m_nvsph) {
+	for (const auto& e : m_nvsph) {
 		if (e.nv != nv) {continue;}
-		if (aprx_int((beat-e.ph)/e.nbts)) {
+		//if (aprx_int((beat-e.ph)/e.nbts)) {
+		if (aprx_int((beat-e.ph)/nbeat(m_ts,e.nv))) {
 			return true;
 		}
 	}
@@ -191,7 +193,8 @@ bool tmetg_t::allowed_at(d_t nv, beat_t beat) const {
 std::vector<int> tmetg_t::levels_allowed(beat_t beat) const {
 	std::vector<int> allowed {}; allowed.reserve(m_nvsph.size());
 	for (int i=0; i<m_nvsph.size(); ++i) {
-		if (aprx_int((beat-m_nvsph[i].ph)/m_nvsph[i].nbts)) {  // TODO:  better
+		//if (aprx_int((beat-m_nvsph[i].ph)/m_nvsph[i].nbts)) {  // TODO:  better
+		if (aprx_int((beat-m_nvsph[i].ph)/nbeat(m_ts,m_nvsph[i].nv))) {  // TODO:  better
 		//if (beat==(std::round(beat/m_nvsph[i].nbts)*m_nvsph[i].nbts + m_nvsph[i].ph)) {
 			allowed.push_back(i);
 		}
@@ -239,7 +242,8 @@ void tmetg_t::set_pg_zero(beat_t nbts) {
 
 	std::vector<pgcell> def_pgcol {};  // "Default pg col"
 	for (int i=0; i<m_nvsph.size(); ++i) {
-		def_pgcol.push_back({i,bt2step(m_nvsph[i].nbts),0.0});
+		//def_pgcol.push_back({i,bt2step(m_nvsph[i].nbts),0.0});
+		def_pgcol.push_back({i,nv2step(m_nvsph[i].nv),0.0});
 	}
 
 	auto pg_nsteps = bt2step(nbts);
@@ -305,7 +309,8 @@ std::vector<d_t> tmetg_t::draw() const {
 		// Since m_pg[i].size() == m_nvsph.size() for all i, ridx[0] indexes
 		// both.  
 		rnts.push_back(m_nvsph[ridx[0]].nv);
-		curr_bt += m_nvsph[ridx[0]].nbts;
+		//curr_bt += m_nvsph[ridx[0]].nbts;
+		curr_bt += nbeat(m_ts,m_nvsph[ridx[0]].nv);
 		curr_step += m_pg[curr_step][ridx[0]].stepsz;
 	}
 	return rnts;
@@ -521,6 +526,30 @@ void tmetg_t::m_enumerator(std::vector<nvp_p>& rps,
 }
 
 
+void tmetg_t::m_enumerator2(std::vector<nvp_p>& rps, 
+	std::vector<std::vector<pgcell>> const& g, int& N, int x) const {
+	if (N >= (rps.size()-1)) { return; }
+	auto rp_init = rps[N];
+
+	for (int i=0; i<g[x].size(); ++i) {
+		rps[N].rp[x] = g[x][i].ix_nvsph;
+		rps[N].p += g[x][i].lgp;
+		int nx = x + g[x][i].stepsz;
+
+		if (nx < g.size()) {
+			// Re-enter, passing nx in place of x.  Note x does not change; when the
+			// call returns, it will have the same value as before the call.  
+			m_enumerator(rps,g,N,nx);
+		} else if (nx == g.size()) { // rps[N] spans the grid exactly
+			++N;
+		}
+
+		// If f_gspan_fatal, N is not incremented
+		rps[N] = rp_init;
+	}
+}
+
+
 bar_t tmetg_t::nbars() const {
 	return nbar(m_ts,m_btres*m_pg.size());
 }
@@ -657,7 +686,7 @@ bool tmetg_t::validate() const {
 		}
 	}
 
-	// m_f_pg_sextends is set correctly
+	// m_f_pg_extends is set correctly
 	if (pg_extends() != m_f_pg_extends) {
 		return false;
 	}
@@ -669,8 +698,10 @@ bool tmetg_t::validate() const {
 // Note that this does not check m_btstart == rhs.m_btstart.  
 // All that matters for equality is that enumerate() returns the same
 // set of rp's.  
+// TODO:  Fix me
 bool tmetg_t::operator==(const tmetg_t& rhs) const {
-	return (m_pg == rhs.m_pg && m_ts == rhs.m_ts && m_nvsph == rhs.m_nvsph);
+	//return (m_pg == rhs.m_pg && m_ts == rhs.m_ts && m_nvsph == rhs.m_nvsph);
+	return true;
 }
 
 
