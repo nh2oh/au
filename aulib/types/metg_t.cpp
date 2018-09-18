@@ -1,6 +1,6 @@
 #include "metg_t.h"
 #include "ts_t.h"
-#include "nv_t.h";
+#include "nv_t.h"
 #include "beat_bar_t.h"
 #include "rp_t.h"
 #include "..\util\au_error.h"
@@ -566,7 +566,7 @@ std::string tmetg_t::print() const {
 	s += "\n\n";
 	for (auto const& e : m_nvsph) {
 		s += e.nv.print();
-		s += " (=> " + e.nbts.print() + " beats => " + std::to_string(bt2step(e.nbts)) + " grid steps);  ";
+		s += " (=> " + nbeat(m_ts,e.nv).print() + " beats => " + std::to_string(nv2step(e.nv)) + " grid steps);  ";
 		s += "+ " + e.ph.print() + " beat shift\n";
 	}
 
@@ -583,7 +583,7 @@ std::string tmetg_t::print_tg() const {
 			if (aprx_int(cbt/m_ts.beats_per_bar())) {
 				s += "| ";
 			}
-			s += bsprintf("%d ",aprx_int((cbt-e.ph)/e.nbts));
+			s += bsprintf("%d ",aprx_int((cbt-e.ph)/nbeat(m_ts,e.nv)));
 		}
 		s += "\n";
 	}
@@ -638,11 +638,8 @@ bool tmetg_t::validate() const {
 		return false;
 	}
 	for (int i=0; i<m_nvsph.size(); ++i) {
-		if (!aprx_int(m_nvsph[i].nbts/m_btres)) {
+		if (!aprx_int(nbeat(m_ts,m_nvsph[i].nv)/m_btres)) {
 			// A check on m_btres, not m_nvsph
-			return false;
-		}
-		if (!aprx_eq(m_nvsph[i].nbts/1_bt, nbeat(m_ts,m_nvsph[i].nv)/1_bt)) {
 			return false;
 		}
 	}
@@ -657,7 +654,7 @@ bool tmetg_t::validate() const {
 		}
 		double curr_prob_sum {0.0};
 		for (int r=0; r<m_pg[c].size(); ++r) {
-			if ((m_pg[c][r].stepsz)*m_btres != m_nvsph[r].nbts) {
+			if ((m_pg[c][r].stepsz)*m_btres != nbeat(m_ts,m_nvsph[r].nv)) {
 				// Stepsize is not calculated correctly...
 				return false;
 			}
@@ -698,9 +695,44 @@ bool tmetg_t::validate() const {
 // Note that this does not check m_btstart == rhs.m_btstart.  
 // All that matters for equality is that enumerate() returns the same
 // set of rp's.  
-// TODO:  Fix me
+// There are two bugs here:
+// 1)  The elements in m_nvsph are sorted by nv.  Two tmetg_t objects
+//     each containing two entries of the same nv but different ph
+//     may put these entries in different order.  In this case, 
+//     lhs.m_nvsph[i].nv == rhs.m_nvsph[i].nv, lhs.m_nvsph[i].ph != rhs.m_nvsph[i].ph
+//     lhs.m_nvsph[i+1].nv == rhs.m_nvsph[i+1].nv, lhs.m_nvsph[i+1].ph != rhs.m_nvsph[i+1].ph
+//     Even though:
+//     lhs.m_nvsph[i].ph != rhs.m_nvsph[i+1].ph
+//     lhs.m_nvsph[i+1].ph != rhs.m_nvsph[i].ph
+//
+// 2) Maybe one tmetg_t object contains an entry in m_nvsph for which the corresponding
+//    row in m_pg is all 0.  
+//    The two objects would compare != but would generate the same rp's by enumerate()
+//
 bool tmetg_t::operator==(const tmetg_t& rhs) const {
-	//return (m_pg == rhs.m_pg && m_ts == rhs.m_ts && m_nvsph == rhs.m_nvsph);
+	if (m_ts != rhs.m_ts) { return false; }
+
+	if (m_nvsph.size() != rhs.m_nvsph.size()) { return false; }
+	for (int i=0; i<m_nvsph.size(); ++i) {
+		if (m_nvsph[i].nv != rhs.m_nvsph[i].nv ||
+			aprx_int((m_nvsph[i].ph-rhs.m_nvsph[i].ph)/nbeat(m_ts,m_nvsph[i].nv))) {
+			// If the nv is the same, the corresponding phases must be such that 
+			// the two entries place their generate elements at the same position
+			// on the grid.  
+			// m_nvsph is sorted first by nv then by ph
+			return false;
+		}
+	}
+
+	if (m_pg.size() != rhs.m_pg.size()) { return false; }
+	for (int c=0; c<m_pg.size(); ++c) {
+		for (int r=0; r<m_pg[c].size(); ++r) {
+			if (m_pg[c][r].lgp != rhs.m_pg[c][r].lgp) {
+				return false;
+			}
+		}
+	}
+
 	return true;
 }
 
@@ -730,22 +762,24 @@ d_t tmetg_t::gcd(const d_t& a, const d_t& b) const {
 
 
 bool tmetg_t::nvs_ph::operator==(const tmetg_t::nvs_ph& rhs) const {
-	//return ((nv == rhs.nv) && (nbts == rhs.nbts) && (ph == rhs.ph));
-	return ((nv == rhs.nv) && (nbts == rhs.nbts) &&
-		aprx_int((ph-rhs.ph)/nbts));
-	// *Iff* the nv (and therefore) nbts is the same, the phases must
-	// be such that the two entries do not generate elements at the same
-	// position (beat) on the grid.  
-	// TODO:  The nv and nbts check is redundant.
+	return (nv==rhs.nv && ph==rhs.ph);
 }
 
 // Operators <,> are needed for the call to sort() within the call 
 // to unique() in validate().  
 bool tmetg_t::nvs_ph::operator<(const tmetg_t::nvs_ph& rhs) const {
-	return nv < rhs.nv;
+	if (nv != rhs.nv) {
+		return nv < rhs.nv;
+	} else {
+		return (ph < rhs.ph);
+	}
 }
 bool tmetg_t::nvs_ph::operator>(const tmetg_t::nvs_ph& rhs) const {
-	return nv > rhs.nv;
+	if (nv != rhs.nv) {
+		return nv > rhs.nv;
+	} else {
+		return (ph > rhs.ph);
+	}
 }
 
 
