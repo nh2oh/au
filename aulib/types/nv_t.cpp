@@ -33,6 +33,9 @@ d_t::d_t(double d) {
 }
 
 d_t::ab d_t::dbl2ab(double d) const {
+	bool is_neg = (d<0);
+	if (is_neg) { d = -1*d; }
+
 	// For any note of duration d > 0 w/ 0-dots:  
 	// frexp(d) => f == 0.5, exp ~ integer, where m = -(exp-1).
 	// For a d>0 _with_ dots, 0.5 < f < 1.0, exp ~ integer, where 
@@ -51,6 +54,8 @@ d_t::ab d_t::dbl2ab(double d) const {
 		res = res + t;
 		d -= 0.5*std::pow(2,exp);
 	}
+
+	if (is_neg) { res = ab{0,0}-res; }
 	return res;
 }
 

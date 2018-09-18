@@ -110,8 +110,8 @@ private:
 	// Sorted:  Long-duration elements occur first
 	struct nvs_ph {
 		d_t nv {};
-		//beat_t nbts {};
-		beat_t ph {};
+		//beat_t ph {};
+		d_t ph {0};
 		bool operator==(const nvs_ph&) const;
 		bool operator<(const nvs_ph&) const;
 		bool operator>(const nvs_ph&) const;

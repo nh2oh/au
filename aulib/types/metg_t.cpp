@@ -27,7 +27,7 @@ tmetg_t::tmetg_t(ts_t ts_in, rp_t rp_in) {
 	for (const auto& e : vdt) {
 		double nr = std::round(curr_bt/nbeat(m_ts,e));
 		beat_t ph = curr_bt-nr*nbeat(m_ts,e);
-		nvs_ph curr_nvsph {e, /*nbeat(m_ts,e),*/ ph};
+		nvs_ph curr_nvsph {e, duration(m_ts,ph)};
 		if (std::find(m_nvsph.begin(),m_nvsph.end(),curr_nvsph) == m_nvsph.end()) {
 			m_nvsph.push_back(curr_nvsph);
 		}
@@ -79,7 +79,12 @@ tmetg_t::tmetg_t(ts_t ts_in, std::vector<d_t> nvs_in, std::vector<beat_t> ph_in)
 
 	// TODO:  Need to make sure elements are unique
 	for (int i=0; i<nvs_in.size(); ++i) {
-		m_nvsph.push_back({nvs_in[i], /*nbeat(ts_in,nvs_in[i]), */ph_in[i]});
+		auto curr_ph = duration(m_ts,ph_in[i]);
+		nvs_ph curr_nvsph = {nvs_in[i], curr_ph-std::floor(curr_ph/nvs_in[i])*nvs_in[i]};
+
+		if (std::find(m_nvsph.begin(),m_nvsph.end(),curr_nvsph) == m_nvsph.end()) {
+			m_nvsph.push_back(curr_nvsph);
+		}
 	}
 
 	m_btres = gres();
@@ -100,7 +105,7 @@ beat_t tmetg_t::gres() const {
 	d_t gres = gcd(d_t{0.0}, m_ts.bar_unit());
 	for (auto const& e : m_nvsph) {
 		gres = gcd(gres, e.nv);
-		gres = gcd(gres, duration(m_ts,e.ph));
+		gres = gcd(gres, e.ph);
 	}
 	return nbeat(m_ts,gres);
 }
@@ -160,7 +165,7 @@ bool tmetg_t::allowed_at(beat_t beat) const {
 	// aprx_int((cbt-e.ph)/e.nbts)  // TODO:  better
 	for (const auto& e : m_nvsph) {
 		//if (beat == (std::round(beat/e.nbts)*e.nbts + e.ph)) {
-		if (beat == (std::round(beat/nbeat(m_ts,e.nv))*nbeat(m_ts,e.nv) + e.ph)) {
+		if (beat == (std::round(beat/nbeat(m_ts,e.nv))*nbeat(m_ts,e.nv) + nbeat(m_ts,e.ph))) {
 			return true;
 		}
 	}
@@ -174,9 +179,8 @@ bool tmetg_t::allowed_at(beat_t beat) const {
 // query the pg.  
 bool tmetg_t::allowed_at(d_t nv, beat_t beat) const {
 	for (const auto& e : m_nvsph) {
-		if (e.nv != nv) {continue;}
-		//if (aprx_int((beat-e.ph)/e.nbts)) {
-		if (aprx_int((beat-e.ph)/nbeat(m_ts,e.nv))) {
+		if (e.nv != nv) { continue; }
+		if (aprx_int((beat-nbeat(m_ts,e.ph))/nbeat(m_ts,e.nv))) {
 			return true;
 		}
 	}
@@ -193,9 +197,7 @@ bool tmetg_t::allowed_at(d_t nv, beat_t beat) const {
 std::vector<int> tmetg_t::levels_allowed(beat_t beat) const {
 	std::vector<int> allowed {}; allowed.reserve(m_nvsph.size());
 	for (int i=0; i<m_nvsph.size(); ++i) {
-		//if (aprx_int((beat-m_nvsph[i].ph)/m_nvsph[i].nbts)) {  // TODO:  better
-		if (aprx_int((beat-m_nvsph[i].ph)/nbeat(m_ts,m_nvsph[i].nv))) {  // TODO:  better
-		//if (beat==(std::round(beat/m_nvsph[i].nbts)*m_nvsph[i].nbts + m_nvsph[i].ph)) {
+		if (aprx_int((beat-nbeat(m_ts,m_nvsph[i].ph))/nbeat(m_ts,m_nvsph[i].nv))) {
 			allowed.push_back(i);
 		}
 	}
@@ -583,7 +585,7 @@ std::string tmetg_t::print_tg() const {
 			if (aprx_int(cbt/m_ts.beats_per_bar())) {
 				s += "| ";
 			}
-			s += bsprintf("%d ",aprx_int((cbt-e.ph)/nbeat(m_ts,e.nv)));
+			s += bsprintf("%d ",aprx_int((cbt-nbeat(m_ts,e.ph))/nbeat(m_ts,e.nv)));
 		}
 		s += "\n";
 	}
@@ -695,19 +697,13 @@ bool tmetg_t::validate() const {
 // Note that this does not check m_btstart == rhs.m_btstart.  
 // All that matters for equality is that enumerate() returns the same
 // set of rp's.  
-// There are two bugs here:
-// 1)  The elements in m_nvsph are sorted by nv.  Two tmetg_t objects
-//     each containing two entries of the same nv but different ph
-//     may put these entries in different order.  In this case, 
-//     lhs.m_nvsph[i].nv == rhs.m_nvsph[i].nv, lhs.m_nvsph[i].ph != rhs.m_nvsph[i].ph
-//     lhs.m_nvsph[i+1].nv == rhs.m_nvsph[i+1].nv, lhs.m_nvsph[i+1].ph != rhs.m_nvsph[i+1].ph
-//     Even though:
-//     lhs.m_nvsph[i].ph != rhs.m_nvsph[i+1].ph
-//     lhs.m_nvsph[i+1].ph != rhs.m_nvsph[i].ph
+// There is a big here:
+// If one tmetg_t object contains an entry in m_nvsph for which the 
+// corresponding row in m_pg is all 0, the two objects would compare != but
+// would generate the same rp's by enumerate().  
 //
-// 2) Maybe one tmetg_t object contains an entry in m_nvsph for which the corresponding
-//    row in m_pg is all 0.  
-//    The two objects would compare != but would generate the same rp's by enumerate()
+// It is critical that the elements in m_nvsph be sorted by nv, then by ph,
+// since the comparison loop just goes through both structures in order.  
 //
 bool tmetg_t::operator==(const tmetg_t& rhs) const {
 	if (m_ts != rhs.m_ts) { return false; }
@@ -715,7 +711,7 @@ bool tmetg_t::operator==(const tmetg_t& rhs) const {
 	if (m_nvsph.size() != rhs.m_nvsph.size()) { return false; }
 	for (int i=0; i<m_nvsph.size(); ++i) {
 		if (m_nvsph[i].nv != rhs.m_nvsph[i].nv ||
-			aprx_int((m_nvsph[i].ph-rhs.m_nvsph[i].ph)/nbeat(m_ts,m_nvsph[i].nv))) {
+			aprx_int((m_nvsph[i].ph-rhs.m_nvsph[i].ph)/m_nvsph[i].nv)) {
 			// If the nv is the same, the corresponding phases must be such that 
 			// the two entries place their generate elements at the same position
 			// on the grid.  
@@ -762,7 +758,7 @@ d_t tmetg_t::gcd(const d_t& a, const d_t& b) const {
 
 
 bool tmetg_t::nvs_ph::operator==(const tmetg_t::nvs_ph& rhs) const {
-	return (nv==rhs.nv && ph==rhs.ph);
+	return (nv==rhs.nv && aprx_int((ph-rhs.ph)/nv));
 }
 
 // Operators <,> are needed for the call to sort() within the call 
@@ -785,14 +781,21 @@ bool tmetg_t::nvs_ph::operator>(const tmetg_t::nvs_ph& rhs) const {
 
 std::string autests::tests1() {
 	auto s = std::string();
-	std::vector<d_t> dt1 {d::h,d::q,d::ed,d::e};
-	std::vector<beat_t> ph1(dt1.size(),0_bt);
-	std::vector<beat_t> ph2 {0_bt,0_bt,0_bt};
-
 	auto ts = ts_t{4_bt,d::q};
-	auto mg = tmetg_t(ts,dt1,ph1);
+	std::vector<d_t> dt1    {d::h,d::q,d::q,  d::q,d::q,  d::q,d::e};
+	std::vector<beat_t> ph2 {0_bt,0_bt,beat_t{-1.5},1_bt,0.5_bt,2_bt,0_bt};
+	auto mg = tmetg_t(ts,dt1,ph2);
 	std::cout << mg.print() <<std::endl<<std::endl<<std::endl;
 	std::cout << mg.print_pg() <<std::endl<<std::endl<<std::endl;
+	
+	std::vector<d_t> dt2 {d::q,d::q,d::q,d::q,
+		d::e,d::q,d::q,d::q,d::e,
+		d::e,d::e,d::q,d::q,d::q,
+		d::e,d::e,d::e,d::q,d::q,d::e};
+	auto mg2 = tmetg_t{ts,rp_t{ts,dt2}};
+	std::cout << mg2.print() <<std::endl<<std::endl<<std::endl;
+	std::cout << mg2.print_pg() <<std::endl<<std::endl<<std::endl;
+
 
 	mg.set_pg_random();
 	auto all_rps = mg.enumerate();
@@ -820,9 +823,9 @@ std::string autests::tests1() {
 
 	wait();
 
-	tmetg_t mg2 {ts_t{3_bt,d::q},big_rp};
-	std::cout << mg2.print_pg() <<std::endl<<std::endl<<std::endl;
-	std::cout << mg2.print() <<std::endl<<std::endl<<std::endl;
+	tmetg_t mg3 {ts_t{3_bt,d::q},big_rp};
+	std::cout << mg3.print_pg() <<std::endl<<std::endl<<std::endl;
+	std::cout << mg3.print() <<std::endl<<std::endl<<std::endl;
 	
 
 	wait();

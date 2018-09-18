@@ -27,6 +27,8 @@ enum class common_duration_t {
 
 using d = common_duration_t;
 
+// TODO:  BUG:  -double's do not result in - nv_T's
+
 //
 // Implements duration math
 // The "public interface" to a d_t is an nv_t, which implements calculations
