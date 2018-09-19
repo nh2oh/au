@@ -128,18 +128,15 @@ private:
 	// m_period:  The smallest number of beats able to contain an integer
 	// number of each element of m_nvsph and an integer number of bars 
 	// (m_ts.bar_unit(), m_ts.beats_per_bar()).  
-	beat_t m_btres {0.0};  // grid resolution; beats/step
-	beat_t m_period {0.0}; // The shortest repeating unit
+	beat_t m_btres {0.0};
+	beat_t m_period {0.0};
 
 	// If representing a sub-rp...
 	beat_t m_btstart {0.0};
 	beat_t m_btend {0.0};  // Constructor should default == m_period
 
 	// Probability grid m_pg
-	// m_pg.size() == m_period/m_btres, and, 
-	// m_pg[i].size() == m_nvsph.size() for all i.  
-	// If the tmetg_t object represents an rp or a set of possible rp's, m_pg
-	// stores it.  
+	// m_pg.size() == whatever, m_pg[i].size() == m_nvsph.size() for all i.  
 	// Note that m_pg does not store log-probability (despite the name of 
 	// field pgcell.lgp); it stores "normal" probabilities.  The rp enumerator
 	// creates its own special copy of m_pg which really does store 

@@ -144,3 +144,50 @@ TEST(d_t_tests, DivisionAndConstructFromDouble) {
 	}
 }
 
+
+// 
+TEST(d_t_tests, gcd) {
+	std::vector<d_t> vdt {};
+	d_t cgcd {};
+	d_t ans {};
+
+	// Set 1
+	vdt = {d::q,d::h,3*(d::e),d::edd,d::sx};
+	cgcd = d_t{d::z};
+	for (int i=0; i<vdt.size(); ++i) {
+		cgcd = gcd(cgcd, vdt[i]);
+	}
+	EXPECT_TRUE(cgcd == d_t{d::t});
+
+	// Set 2
+	vdt = {d::q,d::h,2*(d::e),8*(d::e)};
+	cgcd = d_t{d::z};
+	for (int i=0; i<vdt.size(); ++i) {
+		cgcd = gcd(cgcd, vdt[i]);
+	}
+	EXPECT_TRUE(cgcd == d_t{d::q});
+
+	// Set 3
+	vdt = {d::q,d::h,3*(d::e),d::ed,d::qd};
+	cgcd = d_t{d::z};
+	for (int i=0; i<vdt.size(); ++i) {
+		cgcd = gcd(cgcd, vdt[i]);
+	}
+	EXPECT_TRUE(cgcd == d_t{d::sx});
+
+	// Set 4
+	vdt = {d::q,d::sx,d::ttwfd};
+	cgcd = d_t{d::z}; ans = d_t{d::twfe};
+	for (int i=0; i<vdt.size(); ++i) {
+		cgcd = gcd(cgcd, vdt[i]);
+	}
+	EXPECT_TRUE(cgcd == ans);
+	
+	vdt.back() = 2*vdt.back();
+	cgcd = d_t{d::z}; ans = d_t{d::ttwf};
+	for (int i=0; i<vdt.size(); ++i) {
+		cgcd = gcd(cgcd, vdt[i]);
+	}
+	EXPECT_TRUE(cgcd == ans);
+}
+
