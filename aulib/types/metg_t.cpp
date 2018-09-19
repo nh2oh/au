@@ -574,7 +574,7 @@ std::string tmetg_t::print() const {
 	for (auto const& e : m_nvsph) {
 		s += e.nv.print();
 		s += " (=> " + nbeat(m_ts,e.nv).print() + " beats => " + std::to_string(nv2step(e.nv)) + " grid steps);  ";
-		s += "+ " + e.ph.print() + " beat shift\n";
+		s += "+ " + nbeat(m_ts,e.ph).print() + " beat shift\n";
 	}
 
 	s += print_tg();

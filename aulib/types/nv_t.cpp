@@ -15,6 +15,7 @@ const double d_t::min_duration = 1.0/std::pow(2,12);
 
 d_t::d_t(common_duration_t d) {
 	auto dint = static_cast<int>(d);
+	// -9999 is a special value signaling d::z
 	if (dint != -9999) {
 		int n = std::abs(dint)%10;
 		int m = -1*(dint/10);

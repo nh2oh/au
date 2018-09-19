@@ -21,6 +21,9 @@ beat_t operator""_bt(const char *lit) {
 	return beat_t{std::stod(lit)};
 }
 std::string beat_t::print() const {
+	if (aprx_eq(std::round(m_beats),m_beats)) {
+		return bsprintf("%.0f",m_beats);
+	}
 	return bsprintf("%.3f",m_beats);
 }
 
@@ -96,6 +99,9 @@ bar_t operator""_br(const char *lit) {
 	return bar_t{std::stod(lit)};
 }
 std::string bar_t::print() const {
+	if (isexact()) {
+		return bsprintf("%.0f",m_bars);
+	}
 	return bsprintf("%.3f",m_bars);
 }
 bar_t bar_t::full() const {

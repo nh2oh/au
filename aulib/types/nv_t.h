@@ -23,12 +23,10 @@ enum class common_duration_t {
 	ttwf = -100, ttwfd = -101, ttwfdd = -102, ttwfddd = -103,   //  1/1024
 	twfe = -110, twfed = -111, twfedd = -112, twfeddd = -113,  //  1/2048
 	fnsx = -120, fnsxd = -121, fnsxdd = -122, fnsxddd = -123,  //  1/4096
-	z = -9999
+	z = -9999  // Note the special value for a zero-duration note
 };
-
 using d = common_duration_t;
 
-// TODO:  BUG:  -double's do not result in - nv_T's
 
 //
 // Implements duration math
@@ -106,7 +104,6 @@ public:
 		// divisible into s s_i-element subsequences m->m+s_i each exactly == 
 		// arg2, except the final subsequence, which may be <= arg2.
 
-
 	bool weird() const;
 	int ndot() const;
 		// If the object has no singlet representation, ndot == 0, even if
@@ -160,7 +157,7 @@ private:
 	static const double min_duration;
 
 	ab dbl2ab(double) const;
-		// This is implemented here, and not as a constructor of class ab, because
+		// This is implemented here and not as a constructor of class ab because
 		// it reads min_duration.  I could make it an ab constructor with the addnl
 		// min-duration argument.  
 };

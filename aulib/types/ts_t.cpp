@@ -72,7 +72,7 @@ beat_t ts_t::beats_per_bar() const {
 }
 
 std::string ts_t::print() const {
-	std::string s = m_bpb.print() + "/" + m_beat_unit.print();
+	std::string s = m_bpb.print() + "/(" + m_beat_unit.print() + ")";
 	if (m_compound) { s += "c"; }
 	return s;
 }
