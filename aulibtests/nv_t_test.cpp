@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <cmath>
+#include <numeric>
 
 // 
 TEST(d_t_tests, AssortedConstructorTests) {
@@ -16,6 +17,48 @@ TEST(d_t_tests, AssortedConstructorTests) {
 	EXPECT_TRUE(d_t{0.125} == d_t{d::e});
 	EXPECT_TRUE(d_t{0.25+0.125} == d_t{d::qd});
 }
+
+
+// 
+TEST(d_t_tests, CommonDurationTConstructorTests) {
+	std::vector<d_t> all_cdts {
+	d::ow, d::owd, d::owdd, d::owddd,
+	d::qw, d::qwd, d::qwdd, d::qwddd,
+	d::dw, d::dwd, d::dwdd, d::dwddd,
+	d::w, d::wd, d::wdd, d::wddd,
+	d::h, d::hd, d::hdd, d::hddd,
+	d::q, d::qd, d::qdd, d::qddd,
+	d::e, d::ed, d::edd, d::eddd,
+	d::sx, d::sxd, d::sxdd, d::sxddd,
+	d::t, d::td, d::tdd, d::tddd,
+	d::sf, d::sfd, d::dfdd, d::sfddd,
+	d::ote, d::oted, d::otedd, d::oteddd,
+	d::tfs, d::tfsd, d::tfsdd, d::tfsddd,
+	d::ftw, d::ftwd, d::ftwdd, d::ftwddd,
+	d::ttwf, d::ttwfd, d::ttwfdd, d::ttwfddd,
+	d::twfe, d::twfed, d::twfedd, d::twfeddd,
+	d::fnsx, d::fnsxd, d::fnsxdd, d::fnsxddd
+	};
+
+	int i=0;
+	for (int m=3; m>-13; --m) {
+		for (int n=0; n<4; ++n) {
+			double val = std::pow(2,m)*(2.0 - std::pow(2,-n));
+			d_t nv {val};
+			EXPECT_TRUE(nv == all_cdts[i]);
+			EXPECT_TRUE(nv.base() == -1*m);
+			EXPECT_TRUE(nv.ndot() == n);
+
+			// For - nv_t's, base() and ndot() don't work.  
+			nv = d_t{-1*val};
+			EXPECT_TRUE(nv == (d_t{0} - all_cdts[i]));
+			++i;
+		}
+	}
+
+	EXPECT_TRUE(d_t{d::z} == d_t{0.0});
+}
+
 
 // Tests operators <, >, ==, etc
 TEST(d_t_tests, OperatorsGtLtEqNeqEtc) {

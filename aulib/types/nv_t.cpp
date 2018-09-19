@@ -15,10 +15,13 @@ const double d_t::min_duration = 1.0/std::pow(2,12);
 
 d_t::d_t(common_duration_t d) {
 	auto dint = static_cast<int>(d);
-	int n = std::abs(dint)%10;
-	int m = -1*(dint/10);
-	
-	m_ab = ab{d_t::mn{m,n}};
+	if (dint != -9999) {
+		int n = std::abs(dint)%10;
+		int m = -1*(dint/10);
+		m_ab = ab{d_t::mn{m,n}};
+	} else {
+		m_ab = ab{0,0};
+	}
 }
 
 d_t::d_t(const mn& mn_in) {

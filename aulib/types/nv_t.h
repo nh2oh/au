@@ -7,7 +7,7 @@
 enum class common_duration_t {
 	// The final digit is the number of dots, the leading digits are the
 	// exponent of the base-value (m).  
-	ow = 8, owd = 81, owdd = 82, owddd = 83,
+	ow = 30, owd = 31, owdd = 32, owddd = 33,
 	qw = 20, qwd = 21, qwdd = 22, qwddd = 23,
 	dw = 10, dwd = 11, dwdd = 12, dwddd = 13,
 	w = 00, wd = 01, wdd = 02, wddd = 03,
@@ -23,7 +23,7 @@ enum class common_duration_t {
 	ttwf = -100, ttwfd = -101, ttwfdd = -102, ttwfddd = -103,   //  1/1024
 	twfe = -110, twfed = -111, twfedd = -112, twfeddd = -113,  //  1/2048
 	fnsx = -120, fnsxd = -121, fnsxdd = -122, fnsxddd = -123,  //  1/4096
-	z = 0
+	z = -9999
 };
 
 using d = common_duration_t;
