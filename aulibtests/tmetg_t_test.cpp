@@ -4,6 +4,7 @@
 #include <string>
 #include <cmath>
 #include <limits>
+#include <algorithm> // random_shuffle 
 
 // Googletest does not support c++17, so i can't include my 
 // header defining these functions.  
@@ -19,6 +20,7 @@ bool aprx_int_gtest(double a, int ulp=2) {
 	double ra {std::round(a)};
 	return aprx_eq_gtest(a, ra, ulp);
 };
+
 
 // No phase shift
 TEST(metg_t_tests, ThreeFourZeroPhaseHQEdE) {
@@ -42,6 +44,7 @@ TEST(metg_t_tests, ThreeFourZeroPhaseHQEdE) {
 		}
 	}
 }
+
 
 // The (1/8). note is shifted _backwards_ by (1/32)'nd, which is half
 // the duration of its dot, and forces the grid resolution to increase.  
@@ -67,6 +70,7 @@ TEST(metg_t_tests, ThreeFourNegSixteenthPhaseHQEdE) {
 	}
 }
 
+
 // All the notes have some sort of >= 0 shift
 TEST(metg_t_tests, ThreeFourMultiPhaseShiftHQEdE) {
 	std::vector<d_t> dt {d::h,d::q,d::ed,d::e};
@@ -89,8 +93,6 @@ TEST(metg_t_tests, ThreeFourMultiPhaseShiftHQEdE) {
 		}
 	}
 }
-
-
 
 
 // Creates an mg w/ all component nv's having ph = 0, then draw()'s an
@@ -157,3 +159,95 @@ TEST(metg_t_tests, ZeroPhaseBuildFromExistingRPSmallDurations) {
 		EXPECT_TRUE(rp[i]==rp2[i]);
 	}
 }
+
+
+// Testing the ability of the rp ctor to calculate note-phases
+TEST(metg_t_tests, FromRpWithNonzeroPhases1) {
+	ts_t ts {4_bt,d::q};
+	std::vector<d_t> vdt {
+		d::sx,d::q,d::q,d::q,d::sx,d::e,  // ph d::q == d::sx
+		d::sx,d::sx,d::q,d::q,d::q,d::e,  // ph d::q == d::e
+		d::sx,d::sx,d::sx,d::q,d::q,d::q,d::sx,  // ph d::q == d::ed
+		d::sx,d::sx,d::sx,d::sx,d::q,d::q,d::q};  // ph d::q == 0
+	std::vector<tmetg_t::nvs_ph> allowed_levels {
+		{d::q,d_t{0}},{d::q,d::sx},{d::q,d::e},{d::q,d::ed},
+		{d::e,d_t{0}},
+		{d::sx,d_t{0}}};
+
+	// For an mg created w/ an rp constructed from vdt above, m_nvsph
+	// (retruned by levels()) should be exactly allowed_levels (same elements
+	// in the same order).  
+	tmetg_t mg {ts,rp_t{ts,vdt}};
+	bool tf = mg.validate(); EXPECT_TRUE(tf);
+	tf = (mg.nbars() == 4_br); EXPECT_TRUE(tf);
+	auto mg_lvls = mg.levels();
+	EXPECT_TRUE(mg_lvls.size() == allowed_levels.size());
+	for (int i=0; i<mg_lvls.size(); ++i) {
+		tf = (mg_lvls[i].nv == allowed_levels[i].nv); EXPECT_TRUE(tf);
+		tf = (mg_lvls[i].ph == allowed_levels[i].ph); EXPECT_TRUE(tf);
+	}
+	
+	// Randomized versions of vdt may not contain all the phases of the q note
+	// however, levels() should still be correctly sorted, and can't contain
+	// _more_ q note phases than in allowed_levels.  
+	// It might contain an e-note level w/ a sx-note phase, hence, not comparing
+	// element-wise w/ levels_allowed.  
+	for (int i=0; i<10; ++i) {
+		std::random_shuffle(vdt.begin(),vdt.end());
+		tmetg_t mgrand {ts,rp_t{ts,vdt}};
+		tf = mgrand.validate();	EXPECT_TRUE(tf);
+		tf =(mgrand.nbars() == 4_br); EXPECT_TRUE(tf);
+
+		auto mgrand_lvls = mgrand.levels();
+		//  Check the sorting
+		for (int j=1; j<mgrand_lvls.size(); ++j) {  // Note:  Starts @ 1
+			tf = (mgrand_lvls[j].nv <= mgrand_lvls[j-1].nv); EXPECT_TRUE(tf);
+			if (mgrand_lvls[j].nv == mgrand_lvls[j-1].nv) {
+				tf = (mgrand_lvls[j].ph > mgrand_lvls[j-1].ph);	EXPECT_TRUE(tf);
+			}
+		}
+	}
+}
+
+
+// Testing the ability of the nv,ph ctor to calculate note-phases
+TEST(metg_t_tests, FromRpWithNonzeroPhases2) {
+	auto ts = ts_t{4_bt,d::q};
+	std::vector<d_t> vdt     {d::h,d::q,d::q,        d::q,d::q,  d::q,d::e};
+	std::vector<beat_t> ph1  {0_bt,0_bt,beat_t{-1.5},1_bt,0.5_bt,2_bt,0_bt};
+
+	// The smallest nv is d::e and the phases all divide evenly into some 
+	// number of 1/2 -beats => d::e, so the only phase values for the q-note
+	// are 0 and d::e.  
+	std::vector<tmetg_t::nvs_ph> allowed_levels {
+		{d::h,d_t{0}},
+		{d::q,d_t{0}},{d::q,d::e},
+		{d::e,d_t{0}}};
+
+	// Phase-set 1
+	auto mg = tmetg_t(ts,vdt,ph1);
+	bool tf = mg.validate(); EXPECT_TRUE(tf);
+	auto mg_lvls = mg.levels();
+	EXPECT_TRUE(mg_lvls.size() == allowed_levels.size());
+	for (int i=0; i<mg_lvls.size(); ++i) {
+		tf = (mg_lvls[i].nv == allowed_levels[i].nv); EXPECT_TRUE(tf);
+		tf = (mg_lvls[i].ph == allowed_levels[i].ph); EXPECT_TRUE(tf);
+	}
+
+	// Phase set 2
+	//               vdt     {d::h, d::q,         d::q,         d::q,   d::q,  d::q,   d::e};
+	std::vector<beat_t> ph2  {0_bt, beat_t{-800}, beat_t{-1.5}, 100_bt, 0_bt,  0.5_bt, 0_bt};
+	mg = tmetg_t(ts,vdt,ph2);
+	tf = mg.validate(); EXPECT_TRUE(tf);
+	mg_lvls = mg.levels();
+	EXPECT_TRUE(mg_lvls.size() == allowed_levels.size());
+	for (int i=0; i<mg_lvls.size(); ++i) {
+		tf = (mg_lvls[i].nv == allowed_levels[i].nv); EXPECT_TRUE(tf);
+		tf = (mg_lvls[i].ph == allowed_levels[i].ph); EXPECT_TRUE(tf);
+	}
+
+
+
+}
+
+

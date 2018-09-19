@@ -25,16 +25,18 @@ tmetg_t::tmetg_t(ts_t ts_in, rp_t rp_in) {
 	// is an integer multiple of its length in beats.  
 	beat_t curr_bt {0};
 	for (const auto& e : vdt) {
-		double nr = std::round(curr_bt/nbeat(m_ts,e));
-		beat_t ph = curr_bt-nr*nbeat(m_ts,e);
-		nvs_ph curr_nvsph {e, duration(m_ts,ph)};
+		//double nr = std::round(curr_bt/nbeat(m_ts,e));
+		//beat_t ph = curr_bt-nr*nbeat(m_ts,e);
+		//nvs_ph curr_nvsph {e, duration(m_ts,ph)};
+		d_t offset = duration(m_ts,curr_bt);
+		nvs_ph curr_nvsph {e, offset-std::floor(offset/e)*e};
 		if (std::find(m_nvsph.begin(),m_nvsph.end(),curr_nvsph) == m_nvsph.end()) {
 			m_nvsph.push_back(curr_nvsph);
 		}
 		curr_bt += nbeat(m_ts,e);
-	}
+	}  //ph = offset-std::floor(offset/nv)*nv
 	std::sort(m_nvsph.begin(),m_nvsph.end(),
-		[](const nvs_ph& a, const nvs_ph& b){return a.nv>b.nv;});
+		[](const nvs_ph& a, const nvs_ph& b){return a>b;});
 
 	m_btres = gres();
 	m_period = period();
@@ -558,6 +560,9 @@ bar_t tmetg_t::nbars() const {
 ts_t tmetg_t::ts() const {
 	return m_ts;
 }
+std::vector<tmetg_t::nvs_ph> tmetg_t::levels() const {
+	return m_nvsph;
+}
 
 std::string tmetg_t::print() const {
 	std::string s {};
@@ -626,6 +631,16 @@ bool tmetg_t::validate() const {
 	auto uq_nvsph = unique(m_nvsph);
 	if (uq_nvsph.size() != m_nvsph.size()) {
 		return false;
+	}
+	for (const auto& e : m_nvsph) {
+		if (e.ph-std::floor(e.ph/e.nv)*(e.nv) != e.ph) {
+			// e.ph is not in "reduced" form
+			return false;
+		}
+		if (e.ph < d_t{0} || e.ph > e.nv) {
+			// This check *should* be redundant w/ the check above
+			return false;
+		}
 	}
 
 	// m_btres, m_period, m_btstart, m_btend are correctly calculated & have 
@@ -757,78 +772,47 @@ d_t tmetg_t::gcd(const d_t& a, const d_t& b) const {
 }
 
 
-bool tmetg_t::nvs_ph::operator==(const tmetg_t::nvs_ph& rhs) const {
-	return (nv==rhs.nv && aprx_int((ph-rhs.ph)/nv));
-}
 
-// Operators <,> are needed for the call to sort() within the call 
-// to unique() in validate().  
+
+// Operators <,> are needed for sorting m_mvsph.  
+// Note the weird dependence on the ph.  Elements w/ larger-duration nv_t's
+// compare > element's w/ smaller duration nv_t's, however, for elements w/
+// the same nv_t, the element w/ the smaller duration phase compares >.  Note
+// that a phase value is always >= 0 && < the paired nv_t.  
+// 
+// I do not define a proper constructor for the nvs_ph.  See 
+// nvs_ph::validate() for the invariant.  
 bool tmetg_t::nvs_ph::operator<(const tmetg_t::nvs_ph& rhs) const {
 	if (nv != rhs.nv) {
 		return nv < rhs.nv;
 	} else {
-		return (ph < rhs.ph);
+		return (ph > rhs.ph);
 	}
 }
 bool tmetg_t::nvs_ph::operator>(const tmetg_t::nvs_ph& rhs) const {
 	if (nv != rhs.nv) {
 		return nv > rhs.nv;
 	} else {
-		return (ph > rhs.ph);
+		return (ph < rhs.ph);
 	}
+}
+bool tmetg_t::nvs_ph::operator==(const tmetg_t::nvs_ph& rhs) const {
+	return (nv==rhs.nv && aprx_int((ph-rhs.ph)/nv));
+	// If the element validate()s, it should be possible to compare 
+	// the phases directly w/ ==.  
+}
+bool tmetg_t::nvs_ph::validate() const {
+	return (nv > d_t{0.0} && ph >= d_t{0.0} && ph < nv);
 }
 
 
 std::string autests::tests1() {
 	auto s = std::string();
-	auto ts = ts_t{4_bt,d::q};
-	std::vector<d_t> dt1    {d::h,d::q,d::q,  d::q,d::q,  d::q,d::e};
-	std::vector<beat_t> ph2 {0_bt,0_bt,beat_t{-1.5},1_bt,0.5_bt,2_bt,0_bt};
-	auto mg = tmetg_t(ts,dt1,ph2);
-	std::cout << mg.print() <<std::endl<<std::endl<<std::endl;
-	std::cout << mg.print_pg() <<std::endl<<std::endl<<std::endl;
-	
-	std::vector<d_t> dt2 {d::q,d::q,d::q,d::q,
-		d::e,d::q,d::q,d::q,d::e,
-		d::e,d::e,d::q,d::q,d::q,
-		d::e,d::e,d::e,d::q,d::q,d::e};
-	auto mg2 = tmetg_t{ts,rp_t{ts,dt2}};
-	std::cout << mg2.print() <<std::endl<<std::endl<<std::endl;
-	std::cout << mg2.print_pg() <<std::endl<<std::endl<<std::endl;
+	auto ts1 = ts_t{4_bt,d::q};
+	//tmetg_t mg1 {ts1,big_rp};
+	//std::cout << mg1.print_pg() <<std::endl<<std::endl<<std::endl;
+	//std::cout << mg1.print() <<std::endl<<std::endl<<std::endl;
 
-
-	mg.set_pg_random();
-	auto all_rps = mg.enumerate();
-	
-	for (auto e : all_rps) {
-		//rp_t curr_rp {ts,e.rp};
-		//std::cout << bsprintf("%6.3f:  ", e.p) << curr_rp.print() <<std::endl;
-	}
-	
-	wait();
-	std::vector<d_t> big_vdt {};
-	for (int i=0; i < 10; ++i) {
-		auto vdt = mg.draw();
-		for (auto e : vdt) {
-			big_vdt.push_back(e);
-		}
-		rp_t rp {ts_t{3_bt,d::q},vdt};
-		std::cout <<rp.print() <<std::endl<<std::endl;
-	}
-	//mg.enumerate();
-	//wait();
-	//auto vdt = mg.draw();
-	rp_t big_rp {ts_t{3_bt,d::q},big_vdt};
-	std::cout << big_rp.print() <<std::endl<<std::endl<<std::endl;
-
-	wait();
-
-	tmetg_t mg3 {ts_t{3_bt,d::q},big_rp};
-	std::cout << mg3.print_pg() <<std::endl<<std::endl<<std::endl;
-	std::cout << mg3.print() <<std::endl<<std::endl<<std::endl;
-	
-
-	wait();
 	return s;
 }
 

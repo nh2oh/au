@@ -75,6 +75,14 @@ public:
 		double p {1.0};
 		size_t n {0};
 	};
+	struct nvs_ph {
+		d_t nv {};
+		d_t ph {0};  // ph = offset-std::floor(offset/nv)*nv
+		bool operator==(const nvs_ph&) const;
+		bool operator<(const nvs_ph&) const;
+		bool operator>(const nvs_ph&) const;
+		bool validate() const;
+	};
 
 	tmetg_t() = delete;
 	tmetg_t(ts_t, rp_t);
@@ -100,25 +108,17 @@ public:
 
 	bar_t nbars() const;
 	ts_t ts() const;
+	std::vector<nvs_ph> levels() const;
 
 	bool validate() const;
 
 	bool operator==(const tmetg_t&) const;
 private:
-	// m_nvsph:
-	// No two elements are the same!
-	// Sorted:  Long-duration elements occur first
-	struct nvs_ph {
-		d_t nv {};
-		//beat_t ph {};
-		d_t ph {0};
-		bool operator==(const nvs_ph&) const;
-		bool operator<(const nvs_ph&) const;
-		bool operator>(const nvs_ph&) const;
-	};
-	std::vector<nvs_ph> m_nvsph {};
-
 	ts_t m_ts {4_bt,d_t{d::q}};
+
+	// No two elements are the same.  Elements are sorted in order of decreasing 
+	// duration, then by increasing phase.  phase is always >= 0 && < nv
+	std::vector<nvs_ph> m_nvsph {};
 
 	// m_btres:  The largest number of beats such that all beat-numbers
 	// corresponding to a bar or a note-value can be reached as an integer 

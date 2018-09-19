@@ -22,7 +22,8 @@ enum class common_duration_t {
 	ftw = -90, ftwd = -91, ftwdd = -92, ftwddd = -93,  //  1/512
 	ttwf = -100, ttwfd = -101, ttwfdd = -102, ttwfddd = -103,   //  1/1024
 	twfe = -110, twfed = -111, twfedd = -112, twfeddd = -113,  //  1/2048
-	fnsx = -120, fnsxd = -121, fnsxdd = -122, fnsxddd = -123  //  1/4096
+	fnsx = -120, fnsxd = -121, fnsxdd = -122, fnsxddd = -123,  //  1/4096
+	z = 0
 };
 
 using d = common_duration_t;
