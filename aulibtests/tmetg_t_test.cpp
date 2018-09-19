@@ -28,12 +28,12 @@ TEST(metg_t_tests, ThreeFourZeroPhaseHQEdE) {
 	std::vector<beat_t> ph(dt.size(),beat_t{0});
 	ts_t ts {beat_t{3},d::q};
 	auto mg = tmetg_t(ts,dt,ph);
-	EXPECT_TRUE(mg.validate());
+	bool tf_validates = mg.validate(); EXPECT_TRUE(tf_validates);
 	// => m_btres = 0.25, m_period = 6 beats (2 bars)
 
 	for (int i=0; i<48; ++i) {  // 48 => 12 beats => 2 bars
 		for (const auto& e : dt) {
-			bool tf = mg.allowed_at(e,beat_t{i*0.25});
+			bool tf = mg.member_allowed_at(e,beat_t{i*0.25});
 			// A note of duration e should be allowed at any beat i where 
 			// nbeat(ts,e)/i is an integer.  
 			if (aprx_int_gtest(beat_t{i*0.25}/nbeat(ts,e))) {
@@ -58,7 +58,7 @@ TEST(metg_t_tests, ThreeFourNegSixteenthPhaseHQEdE) {
 
 	for (int i=0; i<48; ++i) {  // 48 => 12 beats => 2 bars
 		for (int j=0; j<dt.size(); ++j) {
-			bool tf = mg.allowed_at(dt[j],beat_t{i*0.25});
+			bool tf = mg.member_allowed_at(dt[j],beat_t{i*0.25});
 			// A note of duration e should be allowed at any beat i where 
 			// nbeat(ts,e)/i is an integer.  
 			if (aprx_int_gtest((beat_t{i*0.25}-ph[j])/nbeat(ts,dt[j]))) {
@@ -82,7 +82,7 @@ TEST(metg_t_tests, ThreeFourMultiPhaseShiftHQEdE) {
 
 	for (int i=0; i<48; ++i) {  // 48 => 12 beats => 2 bars
 		for (int j=0; j<dt.size(); ++j) {
-			bool tf = mg.allowed_at(dt[j],beat_t{i*0.25});
+			bool tf = mg.member_allowed_at(dt[j],beat_t{i*0.25});
 			// A note of duration e should be allowed at any beat i where 
 			// nbeat(ts,e)/i is an integer.  
 			if (aprx_int_gtest((beat_t{i*0.25}-ph[j])/nbeat(ts,dt[j]))) {
@@ -211,7 +211,7 @@ TEST(metg_t_tests, FromRpWithNonzeroPhases1) {
 
 
 // Testing the ability of the nv,ph ctor to calculate note-phases
-TEST(metg_t_tests, FromRpWithNonzeroPhases2) {
+TEST(metg_t_tests, FromNvPhWithNonzeroPhases) {
 	auto ts = ts_t{4_bt,d::q};
 	std::vector<d_t> vdt     {d::h,d::q,d::q,        d::q,d::q,  d::q,d::e};
 	std::vector<beat_t> ph1  {0_bt,0_bt,beat_t{-1.5},1_bt,0.5_bt,2_bt,0_bt};
@@ -225,28 +225,34 @@ TEST(metg_t_tests, FromRpWithNonzeroPhases2) {
 		{d::e,d_t{0}}};
 
 	// Phase-set 1
-	auto mg = tmetg_t(ts,vdt,ph1);
-	bool tf = mg.validate(); EXPECT_TRUE(tf);
-	auto mg_lvls = mg.levels();
-	EXPECT_TRUE(mg_lvls.size() == allowed_levels.size());
-	for (int i=0; i<mg_lvls.size(); ++i) {
-		tf = (mg_lvls[i].nv == allowed_levels[i].nv); EXPECT_TRUE(tf);
-		tf = (mg_lvls[i].ph == allowed_levels[i].ph); EXPECT_TRUE(tf);
+	for (int i=0; i<10; ++i) {
+		auto mg = tmetg_t(ts,vdt,ph1);
+		bool tf = mg.validate(); EXPECT_TRUE(tf);
+		auto mg_lvls = mg.levels();
+		EXPECT_TRUE(mg_lvls.size() == allowed_levels.size());
+		for (int j=0; j<mg_lvls.size(); ++j) {
+			tf = (mg_lvls[j].nv == allowed_levels[j].nv); EXPECT_TRUE(tf);
+			tf = (mg_lvls[j].ph == allowed_levels[j].ph); EXPECT_TRUE(tf);
+		}
+		std::random_shuffle(ph1.begin()+1,ph1.end()-1);
+		// Note the +1, -1; need to exclude the h and e nts
 	}
 
 	// Phase set 2
 	//               vdt     {d::h, d::q,         d::q,         d::q,   d::q,  d::q,   d::e};
 	std::vector<beat_t> ph2  {0_bt, beat_t{-800}, beat_t{-1.5}, 100_bt, 0_bt,  0.5_bt, 0_bt};
-	mg = tmetg_t(ts,vdt,ph2);
-	tf = mg.validate(); EXPECT_TRUE(tf);
-	mg_lvls = mg.levels();
-	EXPECT_TRUE(mg_lvls.size() == allowed_levels.size());
-	for (int i=0; i<mg_lvls.size(); ++i) {
-		tf = (mg_lvls[i].nv == allowed_levels[i].nv); EXPECT_TRUE(tf);
-		tf = (mg_lvls[i].ph == allowed_levels[i].ph); EXPECT_TRUE(tf);
+	for (int i=0; i<10; ++i) {
+		auto mg = tmetg_t(ts,vdt,ph2);
+		bool tf = mg.validate(); EXPECT_TRUE(tf);
+		auto mg_lvls = mg.levels();
+		EXPECT_TRUE(mg_lvls.size() == allowed_levels.size());
+		for (int j=0; j<mg_lvls.size(); ++j) {
+			tf = (mg_lvls[j].nv == allowed_levels[j].nv); EXPECT_TRUE(tf);
+			tf = (mg_lvls[j].ph == allowed_levels[j].ph); EXPECT_TRUE(tf);
+		}
+		std::random_shuffle(ph2.begin()+1,ph2.end()-1);
+		// Note the +1, -1; need to exclude the h and e nts
 	}
-
-
 
 }
 

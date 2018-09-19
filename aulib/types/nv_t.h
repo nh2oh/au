@@ -105,6 +105,7 @@ public:
 		// arg2, except the final subsequence, which may be <= arg2.
 
 	bool weird() const;
+
 	int ndot() const;
 		// If the object has no singlet representation, ndot == 0, even if
 		// there is a tuplet representation where one or more or all the
@@ -129,6 +130,8 @@ public:
 	bool operator<(const d_t&) const;
 	bool operator>(const d_t&) const;
 	bool operator==(const d_t&) const;
+
+	friend d_t gcd(const d_t, const d_t);
 private:
 	class ab {
 		// a,b-form:  a/(2^b)

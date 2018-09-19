@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <cmath>  // std::pow(), std::log2, std::round
+#include <numeric>  // std::gcd()
 
 
 const int d_t::max_nplet {5};
@@ -321,6 +322,12 @@ d_t operator*(d_t lhs, const double& rhs) {
 }
 d_t operator/(d_t n, const double& d) {
 	return n /= d;
+}
+
+d_t gcd(const d_t first, const d_t second) {
+	auto a = std::gcd(first.m_ab.get_a(),second.m_ab.get_a());
+	auto b = std::pow(2,std::max(first.m_ab.get_b(),second.m_ab.get_b()));
+	return d_t {a/b};
 }
 
 d_t::ab::ab(const d_t::mn& mn_in) {

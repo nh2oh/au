@@ -99,9 +99,11 @@ public:
 	std::vector<d_t> draw() const;  // Generate a random rp
 	std::vector<rpp> enumerate() const;  // Generate all possible rp's
 
-	bool allowed_at(beat_t) const;  // => tg
-	bool allowed_next(beat_t,d_t) const;  // => tg
-	bool allowed_at(d_t, beat_t) const;  // => tg
+	bool member_allowed_at(beat_t) const;  // => tg
+	bool member_allowed_at(d_t, beat_t) const;  // => tg
+	bool member_allowed_next(beat_t,d_t) const;  // => tg
+	
+
 	std::string print() const;
 	std::string print_pg() const;
 	std::string print_tg() const;
@@ -147,11 +149,13 @@ private:
 		int stepsz {0};
 		double lgp {0.0};
 	};
-	std::vector<std::vector<pgcell>> m_pg {};
+	std::vector<std::vector<pgcell>> m_pg {};  // m_pg[col][row]
 	bool m_f_pg_extends {true};  
 
 	//----------------------------------------------------------------------------
 	// Methods
+	bool tg(d_t, d_t, beat_t) const;
+
 	beat_t gres() const;  // Reads m_ts, m_nvsph
 	beat_t period() const;  // Reads m_ts, m_nvsph, m_btres
 
@@ -161,7 +165,7 @@ private:
 	bool pg_extends() const;  // Should == m_f_pg_extends, but does not set.  
 	std::vector<std::vector<pgcell>> extend_pg(beat_t, beat_t) const;
 
-	std::vector<int> levels_allowed(beat_t) const;  // => tg
+	std::vector<int> which_members_allowed(beat_t) const;  // => tg
 		// idx to allowed nv's @ the given beat; these numerical
 		// indices mean nothing to an external caller, hence this
 		// method is private.  
@@ -175,40 +179,8 @@ private:
 		std::vector<std::vector<pgcell>> const&, int&, int) const;
 	void m_enumerator2(std::vector<nvp_p>&, 
 		std::vector<std::vector<pgcell>> const&, int&, int) const;
-	
-	d_t gcd(const std::vector<d_t>&) const;  // greatest common divisor
-	d_t gcd(const d_t&, const d_t&) const;
 
-	//friend class pg_t;
 };
-
-
-
-/*
-class pg_t {
-public:
-	pg_t(std::vector<tmetg_t::nvs_ph>*, size_t);
-	double operator()(size_t r, size_t c) {  //r,c
-		return m_e[r+nr()*(c%nc())];
-	};
-	double operator()(tmetg_t::nvs_ph, beat_t);  // Probability of element r,c
-
-	bool set(beat_t bt, std::vector<double> vp) {
-		if (vp.size() != nr()) { return false; }
-		//...
-	};
-
-
-	size_t nr();
-	size_t nc();
-private:
-	std::vector<double> m_e {};
-	std::vector<tmetg_t::nvs_ph> *m_ridx;
-};
-*/
-
-
-
 
 
 namespace autests {
