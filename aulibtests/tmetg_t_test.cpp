@@ -253,7 +253,72 @@ TEST(metg_t_tests, FromNvPhWithNonzeroPhases) {
 		std::random_shuffle(ph2.begin()+1,ph2.end()-1);
 		// Note the +1, -1; need to exclude the h and e nts
 	}
-
 }
+
+
+TEST(metg_t_tests, SpanPossibleThreeFourSet1) {
+	ts_t ts {3_bt,d::q};
+	std::vector<d_t> vdt {d::w,d::h,d::q};
+	std::vector<beat_t> ph(vdt.size(),0_bt);
+	tmetg_t mg {ts,vdt,ph};
+	bool tf_validates = mg.validate(); EXPECT_TRUE(tf_validates);
+
+	// The smallest member of m_nvsph is the q-nt => 1 beat, thus all
+	// even numbers of beats should be possible, and any fractional number
+	// of beats should not.  
+	std::vector<beat_t> expect_possible {
+		0_bt,1_bt,2_bt,3_bt,100_bt,1000_bt,731_bt};
+	for (auto e : expect_possible) {
+		EXPECT_TRUE(mg.span_possible(e));
+		EXPECT_TRUE(mg.span_possible(nbar(ts,e)));
+	}
+
+	std::vector<beat_t> expect_impossible {
+		0.125_bt,0.375_bt,0.625_bt,0.875_bt,100.125_bt,1000.375_bt,731.875_bt,
+		100.625_bt,731.625_bt,1000.125_bt,
+		0.25_bt, 0.5_bt, 0.75_bt,100.25_bt,731.75_bt,1000.5_bt};
+	for (auto e : expect_impossible) {
+		EXPECT_FALSE(mg.span_possible(e));
+		EXPECT_FALSE(mg.span_possible(nbar(ts,e)));
+	}
+}
+
+
+TEST(metg_t_tests, SpanPossibleThreeFourSet2) {
+	ts_t ts {3_bt,d::q};
+	std::vector<d_t> vdt {d::w,d::h};
+	std::vector<beat_t> ph(vdt.size(),0_bt);
+	tmetg_t mg {ts,vdt,ph};
+	bool tf_validates = mg.validate(); EXPECT_TRUE(tf_validates);
+
+	// The smallest member of m_nvsph is the h-nt => 2 beats => 2/3 bars.
+	// Thus, all beats numbers that are multiples of 2 should be possible
+	// and any odd number of beats should not.  
+	std::vector<beat_t> expect_possible {
+		0_bt,2_bt,4_bt,6_bt,100_bt,1000_bt,732_bt};
+	for (auto e : expect_possible) {
+		EXPECT_TRUE(mg.span_possible(e));
+		EXPECT_TRUE(mg.span_possible(nbar(ts,e)));
+	}
+
+	std::vector<beat_t> expect_impossible {
+		0.125_bt,0.375_bt,0.625_bt,0.875_bt,100.125_bt,1000.375_bt,731.875_bt,
+		100.625_bt,731.625_bt,1000.125_bt,
+		0.25_bt, 0.5_bt, 0.75_bt,100.25_bt,731.75_bt,1000.5_bt,
+		1_bt,3_bt,5_bt,9_bt,11_bt,101_bt};
+	for (auto e : expect_impossible) {
+		EXPECT_FALSE(mg.span_possible(e));
+		EXPECT_FALSE(mg.span_possible(nbar(ts,e)));
+	}
+}
+
+
+
+
+
+
+
+
+
 
 

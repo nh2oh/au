@@ -59,6 +59,7 @@
 //
 // TODO:  The probabilities returned by enumerate() are *probably* wrong
 //
+// TODO:  Operator== is probably broken:  the m_pg comparison loop won't work
 
 
 struct tmetg_t_opts {
@@ -102,7 +103,8 @@ public:
 	bool member_allowed_at(beat_t) const;  // => tg
 	bool member_allowed_at(d_t, beat_t) const;  // => tg
 	bool member_allowed_next(beat_t,d_t) const;  // => tg
-	
+	bool span_possible(bar_t) const;
+	bool span_possible(beat_t) const;
 
 	std::string print() const;
 	std::string print_pg() const;

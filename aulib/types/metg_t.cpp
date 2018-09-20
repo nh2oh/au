@@ -552,6 +552,33 @@ ts_t tmetg_t::ts() const {
 std::vector<tmetg_t::nvs_ph> tmetg_t::levels() const {
 	return m_nvsph;
 }
+bool tmetg_t::span_possible(bar_t nbars_target) const {
+	return span_possible(nbeat(m_ts,nbars_target));
+}
+bool tmetg_t::span_possible(beat_t nbeats_target) const {
+	if (!aprx_int(nbeats_target/m_btres)) {
+		return false;
+	}
+
+	int step_target = bt2step(nbeats_target);
+	if (step_target > m_pg.size() && !m_f_pg_extends) {
+		return false;
+	}
+
+	// If in the m_pg col corresponding to nbars_target/nbeat_target/step_target 
+	// there is a nonzero p, nbars_target is reachable by the present object.  
+	// This assumes that m_pg has no zero pointers.  I am assuming that a nonzero
+	// p => pervious cols pointing into nbars_target.  
+	int c = step_target%m_pg.size();
+	for (int r=0; r<m_nvsph.size(); ++r) {
+		if (m_pg[c][r].lgp > 0.0) { 
+			return true; 
+		}
+	}
+
+	return false;
+}
+
 
 std::string tmetg_t::print() const {
 	std::string s {};
