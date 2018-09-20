@@ -37,6 +37,7 @@
     <ClCompile Include="types\nv_t.cpp" />
     <ClCompile Include="types\rp_t.cpp" />
     <ClCompile Include="types\scd_t.cpp" />
+    <ClCompile Include="types\teejee.cpp" />
     <ClCompile Include="types\ts_t.cpp" />
     <ClCompile Include="types\ts_t_uih.cpp" />
     <ClCompile Include="util\au_algs.cpp" />
@@ -69,6 +70,7 @@
     <ClInclude Include="types\nv_t.h" />
     <ClInclude Include="types\rp_t.h" />
     <ClInclude Include="types\scd_t.h" />
+    <ClInclude Include="types\teejee.h" />
     <ClInclude Include="types\ts_t.h" />
     <ClInclude Include="types\ts_t_uih.h" />
     <ClInclude Include="types\types_all.h" />

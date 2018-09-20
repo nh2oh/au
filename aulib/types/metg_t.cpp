@@ -3,6 +3,7 @@
 #include "nv_t.h"
 #include "beat_bar_t.h"
 #include "rp_t.h"
+#include "teejee.h"
 #include "..\util\au_error.h"
 #include "..\util\au_random.h"
 #include "..\util\au_algs_math.h"
@@ -76,7 +77,8 @@ tmetg_t::tmetg_t(ts_t ts_in, std::vector<d_t> nvs_in, std::vector<beat_t> ph_in)
 
 	for (int i=0; i<nvs_in.size(); ++i) {
 		auto curr_ph = duration(m_ts,ph_in[i]);
-		nvs_ph curr_nvsph = {nvs_in[i], curr_ph-std::floor(curr_ph/nvs_in[i])*nvs_in[i]};
+		//nvs_ph curr_nvsph = {nvs_in[i], curr_ph-std::floor(curr_ph/nvs_in[i])*nvs_in[i]};
+		nvs_ph curr_nvsph {nvs_in[i],curr_ph};
 
 		if (std::find(m_nvsph.begin(),m_nvsph.end(),curr_nvsph) == m_nvsph.end()) {
 			m_nvsph.push_back(curr_nvsph);
@@ -785,7 +787,7 @@ bool tmetg_t::operator==(const tmetg_t& rhs) const {
 	return true;
 }
 
-
+/*
 // Operators <,> are needed for sorting m_mvsph.  
 // Note the weird dependence on the ph.  Elements w/ larger-duration nv_t's
 // compare > element's w/ smaller duration nv_t's, however, for elements w/
@@ -816,7 +818,7 @@ bool tmetg_t::nvs_ph::operator==(const tmetg_t::nvs_ph& rhs) const {
 bool tmetg_t::nvs_ph::validate() const {
 	return (nv > d_t{0.0} && ph >= d_t{0.0} && ph < nv);
 }
-
+*/
 
 std::string autests::tests1() {
 	auto s = std::string();

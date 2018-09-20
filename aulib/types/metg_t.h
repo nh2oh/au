@@ -3,6 +3,7 @@
 #include "ts_t.h"
 #include "nv_t.h"
 #include "rp_t.h"
+#include "teejee.h"
 #include <vector>
 #include <string>
 
@@ -76,14 +77,16 @@ public:
 		double p {1.0};
 		size_t n {0};
 	};
-	struct nvs_ph {
+	using nvs_ph = teejee::nv_ph;
+	/*struct nvs_ph {
 		d_t nv {};
 		d_t ph {0};  // ph = offset-std::floor(offset/nv)*nv
 		bool operator==(const nvs_ph&) const;
 		bool operator<(const nvs_ph&) const;
 		bool operator>(const nvs_ph&) const;
 		bool validate() const;
-	};
+	};*/
+
 
 	tmetg_t() = delete;
 	tmetg_t(ts_t, rp_t);
