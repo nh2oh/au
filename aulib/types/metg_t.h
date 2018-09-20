@@ -101,6 +101,7 @@ public:
 	std::vector<rpp> enumerate() const;  // Generate all possible rp's
 
 	bool member_allowed_at(beat_t) const;  // => tg
+	bool pg_member_allowed_at(beat_t) const;  // => pg
 	bool member_allowed_at(d_t, beat_t) const;  // => tg
 	bool member_allowed_next(beat_t,d_t) const;  // => tg
 	bool span_possible(bar_t) const;
@@ -162,6 +163,7 @@ private:
 	int nv2step(d_t) const;
 
 	bool pg_extends() const;  // Should == m_f_pg_extends, but does not set.  
+	std::vector<std::vector<int>> zero_pointers() const;  // [c,r] of zp's in m_pg
 	std::vector<std::vector<pgcell>> extend_pg(beat_t, beat_t) const;
 
 	std::vector<int> which_members_allowed(beat_t) const;  // => tg

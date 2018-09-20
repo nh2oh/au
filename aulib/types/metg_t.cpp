@@ -161,7 +161,20 @@ bool tmetg_t::member_allowed_at(beat_t beat) const {
 	}
 	return false;
 }
+// True if there is at least one m_nvsph member note-value that can 
+// occur at the given beat.  
+bool tmetg_t::pg_member_allowed_at(beat_t beat) const {
+	int c = bt2step(beat);
+	if (c >= m_pg.size()) { return false; }
 
+	for (int r=0; r<m_pg[c].size(); ++r) {
+		if (m_pg[c][r].lgp > 0.0) {
+			return true;
+		}
+	}
+
+	return false;
+}
 
 // True if nv is a member of m_nvsph and can occur at the given beat
 bool tmetg_t::member_allowed_at(d_t nv, beat_t beat) const {
@@ -228,6 +241,26 @@ bool tmetg_t::pg_extends() const {
 	}
 
 	return true;
+}
+
+
+std::vector<std::vector<int>> tmetg_t::zero_pointers() const {
+	std::vector<std::vector<int>> zps {};
+
+	for (int c=0; c<m_pg.size(); ++c) {
+		for (int r=0; r<m_pg[c].size(); ++r) {
+			if (m_pg[c][r].lgp == 0.0) { continue; }
+
+			int nxtc = c + bt2step(nbeat(m_ts,m_nvsph[r].nv));
+			if (nxtc >= m_pg.size()) { continue; }
+
+			if (!pg_member_allowed_at(m_btres*nxtc)) {
+				zps.push_back({c,r});
+			}
+		} // to next row in c
+	} // to next c
+
+	return zps;
 }
 
 
@@ -374,6 +407,7 @@ std::vector<tmetg_t> tmetg_t::factor() const {
 // Slices the pg and returns a metg_t w/ a pg corresponding to cols
 // [from, to) of the parent.  
 // bt_from, bt_to are beat _numbers_ 
+// Callers should check span_possible() first.  
 tmetg_t tmetg_t::slice(beat_t bt_from, beat_t bt_to) const {
 	int idx_from = bt2step(bt_from-m_btstart);
 	int idx_to = bt2step(bt_to-m_btstart);
@@ -689,15 +723,7 @@ bool tmetg_t::validate() const {
 				return false;
 			}
 
-			if (!member_allowed_next(c*m_btres+m_btstart,m_nvsph[r].nv)) {
-				// Element c,r is a zero-pointer.
-				// TODO:  Not really: allowed_next() checks the tg, but c,r could
-				// point into a col where all probabilities are 0 in the pg.  It 
-				// could also point off the end of my "extended pg" ... I need
-				// to extend the pg for at least 2 cols.  
 
-				//return false;
-			}
 
 			curr_prob_sum += m_pg[c][r].lgp;
 		}
@@ -705,6 +731,11 @@ bool tmetg_t::validate() const {
 			// Probabilities for the col are not correctly normalized
 			return false;
 		}
+	}
+
+	auto zps = zero_pointers();
+	if (zps.size() > 0) {
+		return false;
 	}
 
 	// m_f_pg_extends is set correctly
