@@ -43,6 +43,7 @@ public:
 
 	bool factors_at(const beat_t) const;
 	int count() const;  // Count number of possible rp's
+	std::vector<nv_ph> which_allowed_at(const beat_t) const;
 	bool onset_allowed_at(const beat_t) const;  // is there @ least 1 member allowed at beat?
 	bool onset_allowed_at(const nv_ph, const beat_t) const; // nv_ph need not be a member
 	bool spans_bar(const beat_t, const d_t) const;  // d_t need not be a member

@@ -161,7 +161,15 @@ int teejee::count() const {
 	return 0;
 }
 
-
+std::vector<teejee::nv_ph> teejee::which_allowed_at(const beat_t beat) const {
+	std::vector<teejee::nv_ph> members_allowed {};
+	for (const auto& e : m_levels) {
+		if (onset_allowed_at(e,beat)) {
+			members_allowed.push_back(e);
+		}
+	}
+	return members_allowed;
+}
 // Is any member of m_levels allowed at beat_in?
 bool teejee::onset_allowed_at(const beat_t beat_in) const {
 	for (const auto& e : m_levels) {

@@ -138,15 +138,11 @@ private:
 
 	int bt2step(beat_t) const;
 	int nv2step(d_t) const;
+	int nvph2level(const teejee::nv_ph&) const;
 
 	bool pg_extends() const;  // Should == m_f_pg_extends, but does not set.  
 	std::vector<std::vector<int>> zero_pointers() const;  // [c,r] of zp's in m_pg
 	std::vector<std::vector<pgcell>> extend_pg(beat_t, beat_t) const;
-
-	std::vector<int> which_members_allowed(beat_t) const;  // => tg
-		// idx to allowed nv's @ the given beat; these numerical
-		// indices mean nothing to an external caller, hence this
-		// method is private.  
 
 	// "note-value pointer with probability"
 	struct nvp_p {

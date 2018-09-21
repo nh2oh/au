@@ -32,16 +32,16 @@ tmetg_t::tmetg_t(ts_t ts_in, rp_t rp_in) {
 	// rows corresponding to a given e (for example, if m_nvsph contains the 
 	// same e with different phases), the call to levels_allowed() is needed.  
 	auto curr_bt = 0_bt;
-	int curr_step = 0;
+	//int curr_step = 0;
 	for (const auto& e : vdt) {
-		auto idx = which_members_allowed(curr_bt);
-		for (auto i=0; i<idx.size(); ++i) {
-			if (m_tg.levels()[idx[i]].nv == e) {
-				m_pg[curr_step][idx[i]].lgp = 1.0;
-			}
+		teejee::nv_ph curr_nvph {e,duration(m_tg.ts(),curr_bt)};
+		if (m_tg.onset_allowed_at(curr_nvph,curr_bt)) {
+			auto ridx = nvph2level(curr_nvph);
+			m_pg[bt2step(curr_bt)][ridx].lgp = 1.0;
+		} else {
+			au_assert(false,"what");
 		}
-		curr_bt += nbeat(m_ts,e);
-		curr_step += nv2step(e);
+		curr_bt += nbeat(m_tg.ts(),e);
 	}
 
 	m_f_pg_extends = pg_extends();
@@ -66,7 +66,11 @@ tmetg_t::tmetg_t(ts_t ts_in, std::vector<d_t> nvs_in, std::vector<beat_t> ph_in)
 	m_f_pg_extends = pg_extends();  // Expect true...
 }
 
-
+int tmetg_t::nvph2level(const teejee::nv_ph& nvph) const {
+	auto lvls = m_tg.levels();
+	auto it = std::find(lvls.begin(),lvls.end(),nvph);
+	return it-lvls.begin();
+}
 // Converts a number-of-beats to a number-of-grid-steps.  Note that this
 // is different from converting a "beat number" to a "step number" if
 // If m_btstart != 0.  
@@ -99,7 +103,7 @@ bool tmetg_t::pg_member_allowed_at(beat_t beat) const {
 	return false;
 }
 
-
+// TODO:  This is stupid.  Rewrite the tests to not use this.  
 // True if nv is a member of m_nvsph and can occur at the given beat
 bool tmetg_t::member_allowed_at(d_t nv, beat_t beat) const {
 	auto levs = m_tg.levels();
@@ -113,23 +117,6 @@ bool tmetg_t::member_allowed_at(d_t nv, beat_t beat) const {
 		}
 	}
 	return false;
-}
-
-
-// Which levels of the grid are allowed at the given beat?
-// TODO:  This essentially queries the "tg," not the pg... if the object
-// was made from a pg much more restricted than the tg, want to be able to
-// query the pg.  
-// This is used to construct a random pg when not creating from an rp;
-// it can not rely on being able to read the pg.  
-std::vector<int> tmetg_t::which_members_allowed(beat_t beat) const {
-	std::vector<int> allowed {}; allowed.reserve(m_tg.levels().size());
-	for (int i=0; i<m_tg.levels().size(); ++i) {
-		if (m_tg.onset_allowed_at(m_tg.levels()[i],beat)) {
-			allowed.push_back(i);
-		}
-	}
-	return allowed;
 }
 
 
@@ -218,7 +205,7 @@ void tmetg_t::set_pg_random(int mode) {
 	// m_pg[i].size() == m_nvsph.size() for all i.  
 	auto re = new_randeng(true);
 	for (auto i=0; i < m_pg.size(); ++i) { // for each col in g...
-		auto curr_allowed = which_members_allowed(i*m_tg.gres());
+		auto curr_allowed = m_tg.which_allowed_at(i*m_tg.gres());
 		std::vector<double> curr_probs {};
 		if (mode == 0) {
 			// Probabilty of all allowed elements is the same
@@ -232,7 +219,7 @@ void tmetg_t::set_pg_random(int mode) {
 
 		for (auto j=0; j<curr_allowed.size(); ++j) { 
 			// for each row were a note is allowed...
-			m_pg[i][curr_allowed[j]].lgp = curr_probs[j];
+			m_pg[i][nvph2level(curr_allowed[j])].lgp = curr_probs[j];
 			// Note that the only elements of m_pg[i] being assigned are those
 			// which are allowed at position i in g.  For the other elements
 			// in m_pg[i] the default .lgp == 0, set by the call to set_pg_zero().  
