@@ -232,7 +232,8 @@ TEST(metg_t_tests, FromNvPhWithNonzeroPhases) {
 		EXPECT_TRUE(mg_lvls.size() == allowed_levels.size());
 		for (int j=0; j<mg_lvls.size(); ++j) {
 			tf = (mg_lvls[j].nv == allowed_levels[j].nv); EXPECT_TRUE(tf);
-			tf = (mg_lvls[j].ph == allowed_levels[j].ph); EXPECT_TRUE(tf);
+			tf = (mg_lvls[j].ph == allowed_levels[j].ph); 
+			EXPECT_TRUE(tf);
 		}
 		std::random_shuffle(ph1.begin()+1,ph1.end()-1);
 		// Note the +1, -1; need to exclude the h and e nts

@@ -18,29 +18,12 @@
 
 // Constructor from an rp
 tmetg_t::tmetg_t(ts_t ts_in, rp_t rp_in) {
+	m_tg = teejee {rp_in};
 	m_ts = ts_in;
 	auto vdt = rp_in.to_duration_seq();
-
-	// Construct m_nvsph
-	// A phase of 0 means that a given d_t element lies on a beat number that
-	// is an integer multiple of its length in beats.  
-	beat_t curr_bt {0};
-	for (const auto& e : vdt) {
-		d_t offset = duration(m_ts,curr_bt);
-		nvs_ph curr_nvsph {e, offset-std::floor(offset/e)*e};
-		if (std::find(m_nvsph.begin(),m_nvsph.end(),curr_nvsph) == m_nvsph.end()) {
-			m_nvsph.push_back(curr_nvsph);
-		}
-		curr_bt += nbeat(m_ts,e);
-	}  //ph = offset-std::floor(offset/nv)*nv
-	std::sort(m_nvsph.begin(),m_nvsph.end(),
-		[](const nvs_ph& a, const nvs_ph& b){return a>b;});
-
-	m_btres = gres();
-	m_period = period();
 	m_btstart = 0_bt;
-	m_btend = curr_bt;
-	set_pg_zero(curr_bt);
+	m_btend = rp_in.nbeats();
+	set_pg_zero(rp_in.nbeats());
 
 	// Set the probability of each element of the pg that corresponds to
 	// a note in the input rp to 1.0.  
@@ -48,12 +31,12 @@ tmetg_t::tmetg_t(ts_t ts_in, rp_t rp_in) {
 	// Since a given col curr_step of the pg, m_pg[curr_step], may have multiple
 	// rows corresponding to a given e (for example, if m_nvsph contains the 
 	// same e with different phases), the call to levels_allowed() is needed.  
-	curr_bt = 0_bt;
+	auto curr_bt = 0_bt;
 	int curr_step = 0;
 	for (const auto& e : vdt) {
 		auto idx = which_members_allowed(curr_bt);
 		for (auto i=0; i<idx.size(); ++i) {
-			if (m_nvsph[idx[i]].nv == e) {
+			if (m_tg.levels()[idx[i]].nv == e) {
 				m_pg[curr_step][idx[i]].lgp = 1.0;
 			}
 		}
@@ -74,59 +57,13 @@ tmetg_t::tmetg_t(ts_t ts_in, std::vector<d_t> nvs_in, std::vector<beat_t> ph_in)
 	}
 
 	m_ts = ts_in;
+	m_tg = teejee {ts_in,nvs_in,ph_in};
 
-	for (int i=0; i<nvs_in.size(); ++i) {
-		auto curr_ph = duration(m_ts,ph_in[i]);
-		//nvs_ph curr_nvsph = {nvs_in[i], curr_ph-std::floor(curr_ph/nvs_in[i])*nvs_in[i]};
-		nvs_ph curr_nvsph {nvs_in[i],curr_ph};
-
-		if (std::find(m_nvsph.begin(),m_nvsph.end(),curr_nvsph) == m_nvsph.end()) {
-			m_nvsph.push_back(curr_nvsph);
-		}
-	}
-	std::sort(m_nvsph.begin(),m_nvsph.end(),
-		[](const nvs_ph& a, const nvs_ph& b){return a>b;});
-
-	m_btres = gres();
-	m_period = period();
 	m_btstart = 0_bt;
-	m_btend = m_period;
+	m_btend = nbeat(m_ts,m_tg.period()); //period;
 
 	set_pg_random();
 	m_f_pg_extends = pg_extends();  // Expect true...
-}
-
-
-// Calculates the minimum grid resolution from m_nvsph, m_ts
-beat_t tmetg_t::gres() const {
-	d_t gres = gcd(d_t{0.0}, m_ts.bar_unit());
-	for (auto const& e : m_nvsph) {
-		gres = gcd(gres, e.nv);
-		gres = gcd(gres, e.ph);
-	}
-	return nbeat(m_ts,gres);
-}
-
-
-// Calcluates the grid period from m_nvsph, m_ts, m_btres.  Depends on 
-// m_btres being correctly set!
-//
-// The period is the smallest tg segment which can be concatenated to
-// itself repeatedly to generate a tg of any size *AND* which spans an
-// integer number of bars.  This is usually larger than the smallest
-// repeating unit.  
-// 
-// 
-beat_t tmetg_t::period() const { 
-	auto gres_nv = duration(m_ts,m_btres);
-	int n_grid_steps = static_cast<int>(m_ts.bar_unit()/gres_nv);
-	// If m_ts.bar_unit() is not included in the calculation, 
-	// the period will be the smallest repeating unit.  Not all
-	// traversals will be the same length.  
-	for (const auto& e : m_nvsph) {
-		n_grid_steps = std::lcm(n_grid_steps, static_cast<int>(e.nv/gres_nv));
-	}
-	return m_btres*n_grid_steps;
 }
 
 
@@ -136,33 +73,17 @@ beat_t tmetg_t::period() const {
 int tmetg_t::bt2step(beat_t bt_in) const {
 	//au_assert(aprx_int(bt_in/m_btres),"bt2step()");
 	//return static_cast<int>(bt_in/m_btres);
-	return static_cast<int>(std::floor(bt_in/m_btres));
+	return static_cast<int>(std::floor(bt_in/m_tg.gres()));
 }
 
 
 int tmetg_t::nv2step(d_t nv_in) const {
 	//au_assert(aprx_int(nbeat(m_ts,nv_in)/m_btres),"nv2step()");
 	//return static_cast<int>(nbeat(m_ts,nv_in)/m_btres);
-	return static_cast<int>(std::floor(nbeat(m_ts,nv_in)/m_btres));
+	return static_cast<int>(std::floor(nbeat(m_ts,nv_in)/m_tg.gres()));
 }
 
 
-// True if there is at least one member of m_nvsph that can occur at the 
-// given (beat + the given nv).  
-// Used by validate() to check for zero-pointers
-bool tmetg_t::member_allowed_next(beat_t beat, d_t nv) const {
-	return member_allowed_at(beat+nbeat(m_ts,nv));
-}
-
-
-// True if there is at least one m_nvsph member note-value that can 
-// occur at the given beat.  
-bool tmetg_t::member_allowed_at(beat_t beat) const {
-	for (const auto& e : m_nvsph) {
-		if (tg(e.nv,e.ph,beat)) { return true; }
-	}
-	return false;
-}
 // True if there is at least one m_nvsph member note-value that can 
 // occur at the given beat.  
 bool tmetg_t::pg_member_allowed_at(beat_t beat) const {
@@ -178,11 +99,13 @@ bool tmetg_t::pg_member_allowed_at(beat_t beat) const {
 	return false;
 }
 
+
 // True if nv is a member of m_nvsph and can occur at the given beat
 bool tmetg_t::member_allowed_at(d_t nv, beat_t beat) const {
-	for (const auto& e : m_nvsph) {
+	auto levs = m_tg.levels();
+	for (const auto& e : levs) {
 		if (e.nv == nv) { 
-			if (tg(e.nv,e.ph,beat)) { return true; }
+			if (m_tg.onset_allowed_at(teejee::nv_ph{e.nv,e.ph},beat)) { return true; }
 		} else if (e.nv < nv) {
 			// Since m_nvsph is sorted from large to small nv_t's, as soon as the 
 			// m_nvsph member e becomes smaller than nv, we know nv is not a member
@@ -193,14 +116,6 @@ bool tmetg_t::member_allowed_at(d_t nv, beat_t beat) const {
 }
 
 
-// True if nv w/the given phase can occur at the given beat.
-// Does not require nv be a member of m_nvsph; simply checks for consistency
-// of the three args.  
-bool tmetg_t::tg(d_t nv, d_t ph, beat_t beat) const {
-	return aprx_int((beat-nbeat(m_ts,ph))/nbeat(m_ts,nv));
-}
-
-
 // Which levels of the grid are allowed at the given beat?
 // TODO:  This essentially queries the "tg," not the pg... if the object
 // was made from a pg much more restricted than the tg, want to be able to
@@ -208,9 +123,9 @@ bool tmetg_t::tg(d_t nv, d_t ph, beat_t beat) const {
 // This is used to construct a random pg when not creating from an rp;
 // it can not rely on being able to read the pg.  
 std::vector<int> tmetg_t::which_members_allowed(beat_t beat) const {
-	std::vector<int> allowed {}; allowed.reserve(m_nvsph.size());
-	for (int i=0; i<m_nvsph.size(); ++i) {
-		if (tg(m_nvsph[i].nv,m_nvsph[i].ph,beat)) {
+	std::vector<int> allowed {}; allowed.reserve(m_tg.levels().size());
+	for (int i=0; i<m_tg.levels().size(); ++i) {
+		if (m_tg.onset_allowed_at(m_tg.levels()[i],beat)) {
 			allowed.push_back(i);
 		}
 	}
@@ -230,13 +145,13 @@ std::vector<int> tmetg_t::which_members_allowed(beat_t beat) const {
 bool tmetg_t::pg_extends() const {
 	// If m_pg is shorter than a period, extend it to exactly 1 period; if
 	// longer by a factor N, extend to ceil(N).  
-	auto nperiods_extend = std::max(1.0, std::ceil((m_btend-m_btstart)/m_period));
-	int ncols_extend = bt2step(m_period*nperiods_extend);
+	auto nperiods_extend = std::max(1.0, std::ceil((m_btend-m_btstart)/nbeat(m_ts,m_tg.period())));
+	int ncols_extend = bt2step(nbeat(m_ts,m_tg.period())*nperiods_extend);
 
 	for (size_t c=0; c<ncols_extend; ++c) {
 		for (size_t r=0; r<m_pg[c%m_pg.size()].size(); ++r) {
 			if (m_pg[c%m_pg.size()][r].lgp > 0.0 && 
-				!tg(m_nvsph[r].nv,m_nvsph[r].ph,c*m_btres+m_btstart)) {
+				!(m_tg.onset_allowed_at(m_tg.levels()[r],m_btstart))) {
 				return false;
 			}
 		}
@@ -253,10 +168,10 @@ std::vector<std::vector<int>> tmetg_t::zero_pointers() const {
 		for (int r=0; r<m_pg[c].size(); ++r) {
 			if (m_pg[c][r].lgp == 0.0) { continue; }
 
-			int nxtc = c + bt2step(nbeat(m_ts,m_nvsph[r].nv));
+			int nxtc = c + bt2step(nbeat(m_ts,m_tg.levels()[r].nv));
 			if (nxtc >= m_pg.size()) { continue; }
 
-			if (!pg_member_allowed_at(m_btres*nxtc)) {
+			if (!pg_member_allowed_at(m_tg.gres()*nxtc)) {
 				zps.push_back({c,r});
 			}
 		} // to next row in c
@@ -276,8 +191,8 @@ void tmetg_t::set_pg_zero(beat_t nbts) {
 	}
 
 	std::vector<pgcell> def_pgcol {};  // "Default pg col"
-	for (int i=0; i<m_nvsph.size(); ++i) {
-		def_pgcol.push_back({i,nv2step(m_nvsph[i].nv),0.0});
+	for (int i=0; i<m_tg.levels().size(); ++i) {
+		def_pgcol.push_back({i,nv2step(m_tg.levels()[i].nv),0.0});
 	}
 
 	auto pg_nsteps = bt2step(nbts);
@@ -294,7 +209,7 @@ void tmetg_t::set_pg_zero(beat_t nbts) {
 // is lost.  
 // Does _not_ resize m_pg.  
 void tmetg_t::set_pg_random(int mode) {
-	set_pg_zero(m_pg.size()*m_btres);
+	set_pg_zero(m_pg.size()*m_tg.gres());
 
 	// For each col i in g, compute a probability value for the elements 
 	// returned by levels_allowed() and assign to the corresponding element
@@ -303,7 +218,7 @@ void tmetg_t::set_pg_random(int mode) {
 	// m_pg[i].size() == m_nvsph.size() for all i.  
 	auto re = new_randeng(true);
 	for (auto i=0; i < m_pg.size(); ++i) { // for each col in g...
-		auto curr_allowed = which_members_allowed(i*m_btres);
+		auto curr_allowed = which_members_allowed(i*m_tg.gres());
 		std::vector<double> curr_probs {};
 		if (mode == 0) {
 			// Probabilty of all allowed elements is the same
@@ -339,8 +254,8 @@ std::vector<d_t> tmetg_t::draw() const {
 		// nt_prob(curr_bt).size() == m_pg[i] where i corresponds to curr_step.  
 		// Since m_pg[i].size() == m_nvsph.size() for all i, ridx[0] indexes
 		// both.  
-		rnts.push_back(m_nvsph[ridx[0]].nv);
-		curr_bt += nbeat(m_ts,m_nvsph[ridx[0]].nv);
+		rnts.push_back(m_tg.levels()[ridx[0]].nv);
+		curr_bt += nbeat(m_ts,m_tg.levels()[ridx[0]].nv);
 		curr_step += m_pg[curr_step][ridx[0]].stepsz;
 	}
 	return rnts;
@@ -370,7 +285,7 @@ std::vector<tmetg_t> tmetg_t::factor() const {
 	// For each _row_ i in m_pg, col_ptrs[i] is a vector of col idxs
 	// pointed at by the elements of row i.  
 	std::vector<std::vector<int>> col_ptrs {};
-	for (int i=0; i<m_nvsph.size(); ++i) {
+	for (int i=0; i<m_tg.levels().size(); ++i) {
 		col_ptrs.push_back(std::vector<int>{});
 		for (int j=0; j<m_pg.size(); ++j) {  // Each m_pg element j on row i
 			if (m_pg[j][i].lgp > 0.0) {
@@ -395,11 +310,11 @@ std::vector<tmetg_t> tmetg_t::factor() const {
 	beat_t curr_bt {0.0};
 	for (auto e : cmn_ptrs) {
 		if (e > m_pg.size()) { break; }
-		slices.push_back(slice(curr_bt,e*m_btres));
-		curr_bt = e*m_btres;
+		slices.push_back(slice(curr_bt,e*m_tg.gres()));
+		curr_bt = e*m_tg.gres();
 	}
 	if (cmn_ptrs.back() < m_pg.size()) {
-		slices.push_back(slice(curr_bt,m_pg.size()*m_btres));
+		slices.push_back(slice(curr_bt,m_pg.size()*m_tg.gres()));
 	}
 
 	return slices;
@@ -491,7 +406,7 @@ std::vector<tmetg_t::rpp> tmetg_t::enumerate() const {
 		std::vector<d_t> curr_rp {};
 		for (int j=0; j<rps_all[i].rp.size(); ++j) {
 			if (rps_all[i].rp[j] != -1) {
-				curr_rp.push_back(m_nvsph[rps_all[i].rp[j]].nv);
+				curr_rp.push_back(m_tg.levels()[rps_all[i].rp[j]].nv);
 			}
 		}
 		rps.push_back({curr_rp, rps_all[i].p, curr_rp.size()});
@@ -580,19 +495,19 @@ void tmetg_t::m_enumerator2(std::vector<nvp_p>& rps,
 
 
 bar_t tmetg_t::nbars() const {
-	return nbar(m_ts,m_btres*m_pg.size());
+	return nbar(m_ts,m_tg.gres()*m_pg.size());
 }
 ts_t tmetg_t::ts() const {
-	return m_ts;
+	return m_tg.ts();
 }
 std::vector<tmetg_t::nvs_ph> tmetg_t::levels() const {
-	return m_nvsph;
+	return m_tg.levels();
 }
 bool tmetg_t::span_possible(bar_t nbars_target) const {
 	return span_possible(nbeat(m_ts,nbars_target));
 }
 bool tmetg_t::span_possible(beat_t nbeats_target) const {
-	if (!aprx_int(nbeats_target/m_btres)) {
+	if (!aprx_int(nbeats_target/m_tg.gres())) {
 		return false;
 	}
 
@@ -606,7 +521,7 @@ bool tmetg_t::span_possible(beat_t nbeats_target) const {
 	// This assumes that m_pg has no zero pointers.  I am assuming that a nonzero
 	// p => pervious cols pointing into nbars_target.  
 	int c = step_target%m_pg.size();
-	for (int r=0; r<m_nvsph.size(); ++r) {
+	for (int r=0; r<m_tg.levels().size(); ++r) {
 		if (m_pg[c][r].lgp > 0.0) { 
 			return true; 
 		}
@@ -618,18 +533,7 @@ bool tmetg_t::span_possible(beat_t nbeats_target) const {
 
 std::string tmetg_t::print() const {
 	std::string s {};
-	s += "tmetg.print():\n";
-	s += "ts == " + m_ts.print() + "\n";
-	s += "Grid resolution: " + m_btres.print() + " beats\n";
-	s += "Period:          " + m_period.print() + " beats\n";
-	s += "\n\n";
-	for (auto const& e : m_nvsph) {
-		s += e.nv.print();
-		s += " (=> " + nbeat(m_ts,e.nv).print() + " beats => " + std::to_string(nv2step(e.nv)) + " grid steps);  ";
-		s += "+ " + nbeat(m_ts,e.ph).print() + " beat shift\n";
-	}
-
-	s += print_tg();
+	s += m_tg.print();
 	s += print_pg();
 
 	return s;
@@ -637,24 +541,13 @@ std::string tmetg_t::print() const {
 
 
 std::string tmetg_t::print_tg() const {
-	std::string s {};
-	for (const auto& e : m_nvsph) {
-		for (beat_t cbt {0.0}; cbt<m_period; cbt += m_btres) {
-			if (tg(m_ts.bar_unit(),d::z,cbt)) {
-				s += "| ";
-			}
-			s += bsprintf("%d ", tg(e.nv,e.ph,cbt));
-		}
-		s += "\n";
-	}
-	s += "\n";
-	return s;
+	return m_tg.print_g();
 }
 
 
 std::string tmetg_t::print_pg() const {
 	std::string s {};
-	for (int r=0; r<m_nvsph.size(); ++r) {
+	for (int r=0; r<m_tg.levels().size(); ++r) {
 		for (int c=0; c<m_pg.size(); ++c) {
 			s += bsprintf("%5.3f   ",m_pg[c][r].lgp);
 		}
@@ -668,14 +561,14 @@ std::string tmetg_t::print_pg() const {
 bool tmetg_t::validate() const {
 	// m_nvsph can't be empty
 	// All members are unique
-	if (m_nvsph.size() == 0) {
+	if (m_tg.levels().size() == 0) {
 		return false;
 	}
-	auto uq_nvsph = unique(m_nvsph);
-	if (uq_nvsph.size() != m_nvsph.size()) {
+	auto uq_nvsph = unique(m_tg.levels());
+	if (uq_nvsph.size() != m_tg.levels().size()) {
 		return false;
 	}
-	for (const auto& e : m_nvsph) {
+	for (const auto& e : m_tg.levels()) {
 		if (e.ph-std::floor(e.ph/e.nv)*(e.nv) != e.ph) {
 			// e.ph is not in "reduced" form
 			return false;
@@ -688,17 +581,17 @@ bool tmetg_t::validate() const {
 
 	// m_btres, m_period, m_btstart, m_btend are correctly calculated & have 
 	// been updated for any additions or deletions to m_nvsph or the pg.  
-	if (m_btres != gres() || m_period != period()) {
+	if (nbeat(m_ts,m_tg.period()) !=  nbeat(m_tg.ts(),m_tg.period())) {
 		return false;
 	}
-	if ((m_btend-m_btstart) != m_btres*m_pg.size()) {
+	if ((m_btend-m_btstart) != m_tg.gres()*m_pg.size()) {
 		return false;
 	}
-	if (!aprx_int(m_period/m_btres)) {
+	if (!aprx_int(nbeat(m_ts,m_tg.period())/m_tg.gres())) {
 		return false;
 	}
-	for (int i=0; i<m_nvsph.size(); ++i) {
-		if (!aprx_int(nbeat(m_ts,m_nvsph[i].nv)/m_btres)) {
+	for (int i=0; i<m_tg.levels().size(); ++i) {
+		if (!aprx_int(nbeat(m_ts,m_tg.levels()[i].nv)/m_tg.gres())) {
 			// A check on m_btres, not m_nvsph
 			return false;
 		}
@@ -709,24 +602,21 @@ bool tmetg_t::validate() const {
 	//    All probability entries in a given col must sum to 1.0 or 0.0
 	// Nonzero elements in m_pg align to the tg
 	for (int c=0; c<m_pg.size(); ++c) {
-		if (m_pg[c].size() != m_nvsph.size()) {
+		if (m_pg[c].size() != m_tg.levels().size()) {
 			return false;
 		}
 		double curr_prob_sum {0.0};
 		for (int r=0; r<m_pg[c].size(); ++r) {
-			if ((m_pg[c][r].stepsz)*m_btres != nbeat(m_ts,m_nvsph[r].nv)) {
+			if ((m_pg[c][r].stepsz)*m_tg.gres() != nbeat(m_ts,m_tg.levels()[r].nv)) {
 				// Stepsize is not calculated correctly...
 				return false;
 			}
 			if (m_pg[c][r].lgp < 0.0) {
 				return false;
 			}
-			if (m_pg[c][r].lgp > 0.0 && !member_allowed_at(m_nvsph[r].nv,c*m_btres+m_btstart)) {
+			if (m_pg[c][r].lgp > 0.0 && !m_tg.onset_allowed_at(m_tg.levels()[r],c*m_tg.gres()+m_btstart)) {
 				return false;
 			}
-
-
-
 			curr_prob_sum += m_pg[c][r].lgp;
 		}
 		if (!(aprx_eq(curr_prob_sum,0.0) || aprx_eq(curr_prob_sum,1.0))) {
@@ -761,19 +651,7 @@ bool tmetg_t::validate() const {
 // since the comparison loop just goes through both structures in order.  
 //
 bool tmetg_t::operator==(const tmetg_t& rhs) const {
-	if (m_ts != rhs.m_ts) { return false; }
-
-	if (m_nvsph.size() != rhs.m_nvsph.size()) { return false; }
-	for (int i=0; i<m_nvsph.size(); ++i) {
-		if (m_nvsph[i].nv != rhs.m_nvsph[i].nv ||
-			aprx_int((m_nvsph[i].ph-rhs.m_nvsph[i].ph)/m_nvsph[i].nv)) {
-			// If the nv is the same, the corresponding phases must be such that 
-			// the two entries place their generate elements at the same position
-			// on the grid.  
-			// m_nvsph is sorted first by nv then by ph
-			return false;
-		}
-	}
+	if (!(m_tg == rhs.m_tg)) { return false; }
 
 	if (m_pg.size() != rhs.m_pg.size()) { return false; }
 	for (int c=0; c<m_pg.size(); ++c) {
@@ -787,38 +665,6 @@ bool tmetg_t::operator==(const tmetg_t& rhs) const {
 	return true;
 }
 
-/*
-// Operators <,> are needed for sorting m_mvsph.  
-// Note the weird dependence on the ph.  Elements w/ larger-duration nv_t's
-// compare > element's w/ smaller duration nv_t's, however, for elements w/
-// the same nv_t, the element w/ the smaller duration phase compares >.  Note
-// that a phase value is always >= 0 && < the paired nv_t.  
-// 
-// I do not define a proper constructor for the nvs_ph.  See 
-// nvs_ph::validate() for the invariant.  
-bool tmetg_t::nvs_ph::operator<(const tmetg_t::nvs_ph& rhs) const {
-	if (nv != rhs.nv) {
-		return nv < rhs.nv;
-	} else {
-		return (ph > rhs.ph);
-	}
-}
-bool tmetg_t::nvs_ph::operator>(const tmetg_t::nvs_ph& rhs) const {
-	if (nv != rhs.nv) {
-		return nv > rhs.nv;
-	} else {
-		return (ph < rhs.ph);
-	}
-}
-bool tmetg_t::nvs_ph::operator==(const tmetg_t::nvs_ph& rhs) const {
-	return (nv==rhs.nv && aprx_int((ph-rhs.ph)/nv));
-	// If the element validate()s, it should be possible to compare 
-	// the phases directly w/ ==.  
-}
-bool tmetg_t::nvs_ph::validate() const {
-	return (nv > d_t{0.0} && ph >= d_t{0.0} && ph < nv);
-}
-*/
 
 std::string autests::tests1() {
 	auto s = std::string();

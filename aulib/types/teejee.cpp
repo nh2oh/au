@@ -76,8 +76,8 @@ teejee::teejee(const ts_t& ts, const std::vector<d_t>& nv,
 		insert_level(nv[i],duration(m_ts,ph[i]));
 	}
 
-	m_btres = gres();
-	m_period = nbeat(m_ts,period());
+	m_btres = calc_gres();
+	m_period = calc_period();
 }
 
 teejee::teejee(const rp_t& rp) {
@@ -93,8 +93,8 @@ teejee::teejee(const rp_t& rp) {
 		insert_level(e,offset);
 		curr_bt += nbeat(m_ts,e);
 	}
-	m_btres = gres();
-	m_period = nbeat(m_ts,period());
+	m_btres = calc_gres();
+	m_period = calc_period();
 }
 
 // Adds an element to m_levels and sorts the container.  Returns true if the
@@ -174,7 +174,6 @@ bool teejee::onset_allowed_at(const beat_t beat_in) const {
 // nvph need not be a member
 bool teejee::onset_allowed_at(const nv_ph nvph, const beat_t beat) const {
 	return aprx_int((beat-nbeat(m_ts,nvph.ph))/nbeat(m_ts,nvph.nv));
-
 }
 // Does an nv located at the given beat span a bar break?
 // nv need not be a member of m_levels
@@ -183,6 +182,30 @@ bool teejee::spans_bar(const beat_t beat, const d_t nv) const {
 	if (btnum_nxt_bar == beat) {btnum_nxt_bar += m_ts.beats_per_bar(); }
 
 	return (btnum_nxt_bar >= beat+nbeat(m_ts,nv));
+}
+bool teejee::ismember(const d_t nv) const {
+	for (const auto& e : m_levels) {
+		if (e.nv == nv) { 
+			return true;
+		} else if (e.nv < nv) {
+			// Since m_levels is sorted from large to small nv_t's, as soon as the 
+			// m_levels member e becomes smaller than nv, we know nv is not a member
+			return false;
+		}
+	}
+	return false;
+}
+bool teejee::ismember(const nv_ph nvph) const {
+	for (const auto& e : m_levels) {
+		if (e == nvph) { 
+			return true;
+		} else if (e.nv < nvph.nv) {
+			// Since m_levels is sorted from large to small nv_t's, as soon as the 
+			// m_levels member e becomes smaller than nv, we know nv is not a member
+			return false;
+		}
+	}
+	return false;
 }
 
 
@@ -239,13 +262,16 @@ bool teejee::operator==(const teejee& rhs) const {
 // Calculates the grid resolution from m_levels, m_ts.
 // The grid resolution is the coarsest possible step size such that all
 // members of m_levels _and_ m_ts.bar_unit() fall exactly on a grid point.  
-beat_t teejee::gres() const {
+beat_t teejee::calc_gres() const {
 	d_t gres = gcd(d_t{0.0}, m_ts.bar_unit());
 	for (auto const& e : m_levels) {
 		gres = gcd(gres, e.nv);
 		gres = gcd(gres, e.ph);
 	}
 	return nbeat(m_ts,gres);
+}
+beat_t teejee::gres() const {
+	return m_btres;
 }
 
 
@@ -259,7 +285,7 @@ beat_t teejee::gres() const {
 // the smallest repeating unit is 2 beats, but m_period == 4 beats, since
 // 2 beats do not span a full bar.  
 //
-bar_t teejee::period() const { 
+beat_t teejee::calc_period() const { 
 	auto gres_nv = duration(m_ts,m_btres);
 	int n_grid_steps = static_cast<int>(m_ts.bar_unit()/gres_nv);
 	// If m_ts.bar_unit() is not included in the calculation, 
@@ -268,7 +294,10 @@ bar_t teejee::period() const {
 	for (const auto& e : m_levels) {
 		n_grid_steps = std::lcm(n_grid_steps, static_cast<int>(e.nv/gres_nv));
 	}
-	return nbar(m_ts,m_btres*n_grid_steps);
+	return m_btres*n_grid_steps;
+}
+bar_t teejee::period() const { 
+	return nbar(m_ts,m_period);
 }
 
 

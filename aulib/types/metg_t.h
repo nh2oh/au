@@ -78,15 +78,8 @@ public:
 		size_t n {0};
 	};
 	using nvs_ph = teejee::nv_ph;
-	/*struct nvs_ph {
-		d_t nv {};
-		d_t ph {0};  // ph = offset-std::floor(offset/nv)*nv
-		bool operator==(const nvs_ph&) const;
-		bool operator<(const nvs_ph&) const;
-		bool operator>(const nvs_ph&) const;
-		bool validate() const;
-	};*/
 
+	teejee m_tg {};
 
 	tmetg_t() = delete;
 	tmetg_t(ts_t, rp_t);
@@ -103,10 +96,8 @@ public:
 	std::vector<d_t> draw() const;  // Generate a random rp
 	std::vector<rpp> enumerate() const;  // Generate all possible rp's
 
-	bool member_allowed_at(beat_t) const;  // => tg
 	bool pg_member_allowed_at(beat_t) const;  // => pg
 	bool member_allowed_at(d_t, beat_t) const;  // => tg
-	bool member_allowed_next(beat_t,d_t) const;  // => tg
 	bool span_possible(bar_t) const;
 	bool span_possible(beat_t) const;
 
@@ -123,19 +114,6 @@ public:
 	bool operator==(const tmetg_t&) const;
 private:
 	ts_t m_ts {4_bt,d_t{d::q}};
-
-	// No two elements are the same.  Elements are sorted in order of decreasing 
-	// duration, then by increasing phase.  phase is always >= 0 && < nv
-	std::vector<nvs_ph> m_nvsph {};
-
-	// m_btres:  The largest number of beats such that all beat-numbers
-	// corresponding to a bar or a note-value can be reached as an integer 
-	// number of m_btres-sized increments.  
-	// m_period:  The smallest number of beats able to contain an integer
-	// number of each element of m_nvsph and an integer number of bars 
-	// (m_ts.bar_unit(), m_ts.beats_per_bar()).  
-	beat_t m_btres {0.0};
-	beat_t m_period {0.0};
 
 	// If representing a sub-rp...
 	beat_t m_btstart {0.0};
@@ -157,10 +135,6 @@ private:
 
 	//----------------------------------------------------------------------------
 	// Methods
-	bool tg(d_t, d_t, beat_t) const;
-
-	beat_t gres() const;  // Reads m_ts, m_nvsph
-	beat_t period() const;  // Reads m_ts, m_nvsph, m_btres
 
 	int bt2step(beat_t) const;
 	int nv2step(d_t) const;

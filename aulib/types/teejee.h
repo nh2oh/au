@@ -12,8 +12,11 @@
 //
 class teejee {
 public:
-	struct nv_ph {  // Must be public b/c returned by levels()
-		explicit nv_ph(const d_t, const d_t);
+	class nv_ph {  // Must be public b/c returned by levels()
+	public:
+		nv_ph(const d_t, const d_t);
+		//d_t nv() const;  TODO ... 
+		//d_t ph() const;
 
 		d_t nv {d::q};
 		d_t ph {d::z};  // Phase is always >= 0 && < nv.  
@@ -28,19 +31,23 @@ public:
 		bool validate() const;
 	};
 
+	explicit teejee() = default;
 	explicit teejee(const ts_t&, const std::vector<d_t>&, 
 		const std::vector<beat_t>&); // ts, dp, phases, allow barspan
 	explicit teejee(const rp_t&);
 
 	ts_t ts() const;
 	std::vector<nv_ph> levels() const;
-	bar_t period() const; // Reads m_ts, m_levels, m_btres
+	bar_t period() const;
+	beat_t gres() const;
 
 	bool factors_at(const beat_t) const;
 	int count() const;  // Count number of possible rp's
 	bool onset_allowed_at(const beat_t) const;  // is there @ least 1 member allowed at beat?
 	bool onset_allowed_at(const nv_ph, const beat_t) const; // nv_ph need not be a member
-	bool spans_bar(const beat_t, const d_t) const;
+	bool spans_bar(const beat_t, const d_t) const;  // d_t need not be a member
+	bool ismember(const d_t) const;
+	bool ismember(const nv_ph) const;
 
 	std::string print() const;
 	std::string print_g() const;
@@ -59,8 +66,8 @@ private:
 	bool insert_level(const d_t&, const d_t&);  // nv, ph
 		// Inserts into m_levels, but does _not_ recalc the resolution or period.
 
-	beat_t gres() const;
-		// Computes the grid resolution in beats for the current m_ts, m_nvsph.
+	beat_t calc_gres() const;
+	beat_t calc_period() const; // Reads m_ts, m_levels, m_btres
 
 	int bt2step(const beat_t) const;
 	beat_t step2bt(const int) const;
