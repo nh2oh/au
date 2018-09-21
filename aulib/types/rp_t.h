@@ -99,6 +99,7 @@ public:
 	bar_t nbars() const;
 	beat_t nbeats() const;
 	size_t nelems() const;
+	ts_t ts() const;
 	
 	std::vector<d_t> to_duration_seq() const;
 	// TODO:  Should take options, for example, maybe:  

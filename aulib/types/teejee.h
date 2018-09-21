@@ -18,6 +18,7 @@ public:
 		d_t nv {d::q};
 		d_t ph {d::z};  // Phase is always >= 0 && < nv.  
 		bool operator==(const nv_ph&) const;
+		bool operator!=(const nv_ph&) const;
 		bool operator<(const nv_ph&) const;
 		bool operator>(const nv_ph&) const;
 		// These operators sort by decreasing duration then 
@@ -28,21 +29,18 @@ public:
 	};
 
 	explicit teejee(const ts_t&, const std::vector<d_t>&, 
-		const std::vector<beat_t>&, bool); // ts, dp, phases, allow barspan
-	explicit teejee(const ts_t&, const rp_t&);
+		const std::vector<beat_t>&); // ts, dp, phases, allow barspan
+	explicit teejee(const rp_t&);
 
 	ts_t ts() const;
 	std::vector<nv_ph> levels() const;
-	bar_t period() const; // Reads m_ts, m_nvsph, m_btres
-		// Will always convert to an integer number of all m_nvsph elements (???)
-	bool f_barspan();
+	bar_t period() const; // Reads m_ts, m_levels, m_btres
 
-	std::vector<beat_t> factors_at() const;
+	bool factors_at(const beat_t) const;
 	int count() const;  // Count number of possible rp's
 	bool onset_allowed_at(const beat_t) const;  // is there @ least 1 member allowed at beat?
 	bool onset_allowed_at(const nv_ph, const beat_t) const; // nv_ph need not be a member
-	bool span_possible(const bar_t) const;
-	bool span_possible(const beat_t) const;
+	bool spans_bar(const beat_t, const d_t) const;
 
 	std::string print() const;
 	std::string print_g() const;
@@ -52,28 +50,19 @@ private:
 	//----------------------------------------------------------------------------
 	// Data
 	ts_t m_ts {4_bt,d_t{d::q}};
-	std::vector<nv_ph> m_levels {};
-		// All elements unique & sorted by decreasing duration then 
-		// increasing phase.  Phase is always >= 0 && < nv.  
-
+	std::vector<nv_ph> m_levels {};  // All elements unique & sorted
 	beat_t m_btres {0.0};
 	beat_t m_period {0.0};
-	bool m_f_barspan {false};
 
 	//----------------------------------------------------------------------------
 	// Methods
 	bool insert_level(const d_t&, const d_t&);  // nv, ph
 		// Inserts into m_levels, but does _not_ recalc the resolution or period.
 
-
-	bool tg(d_t, d_t, beat_t) const;
-
 	beat_t gres() const;
 		// Computes the grid resolution in beats for the current m_ts, m_nvsph.
 
 	int bt2step(const beat_t) const;
-	int nv2step(const d_t&) const;
 	beat_t step2bt(const int) const;
-	d_t step2nv(const int) const;
-
+	beat_t bt2reducedbt(const beat_t) const;
 };

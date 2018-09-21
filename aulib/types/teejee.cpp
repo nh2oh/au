@@ -56,6 +56,10 @@ bool teejee::nv_ph::operator==(const teejee::nv_ph& rhs) const {
 	// A weaker equality condition on ph is: aprx_int((ph-rhs.ph)/nv
 	// If the elements validate(), the strict equality must hold.  
 }
+bool teejee::nv_ph::operator!=(const teejee::nv_ph& rhs) const {
+	return (nv!=rhs.nv || ph!=rhs.ph);
+	// See the notes in operator==()
+}
 
 
 //
@@ -63,11 +67,10 @@ bool teejee::nv_ph::operator==(const teejee::nv_ph& rhs) const {
 // teejee
 //
 teejee::teejee(const ts_t& ts, const std::vector<d_t>& nv, 
-		const std::vector<beat_t>& ph, bool tf_barspan) {
+		const std::vector<beat_t>& ph) {
 	au_assert(ph.size()==nv.size(), "ph.size() != nv.size()");
 	
 	m_ts = ts;
-	m_f_barspan = tf_barspan;
 
 	for (int i=0; i<nv.size(); ++i) {
 		insert_level(nv[i],duration(m_ts,ph[i]));
@@ -77,6 +80,22 @@ teejee::teejee(const ts_t& ts, const std::vector<d_t>& nv,
 	m_period = nbeat(m_ts,period());
 }
 
+teejee::teejee(const rp_t& rp) {
+	m_ts = rp.ts();
+	auto vdt = rp.to_duration_seq();
+
+	// insert_level() ignores d_t, ph elements that are already members of 
+	// m_levels.  
+	// Note the use of Kahan summation to keep track of the cumulative offset.  
+	ksum<beat_t> curr_bt {};
+	for (const auto& e : vdt) {
+		d_t offset = duration(m_ts,curr_bt.value);
+		insert_level(e,offset);
+		curr_bt += nbeat(m_ts,e);
+	}
+	m_btres = gres();
+	m_period = nbeat(m_ts,period());
+}
 
 // Adds an element to m_levels and sorts the container.  Returns true if the
 // element was successfully added. 
@@ -84,7 +103,7 @@ teejee::teejee(const ts_t& ts, const std::vector<d_t>& nv,
 // in loops (for example, when constructing from an rp_t), and there is no
 // need to calculate the resolution & period until the end.  
 //
-// Also checks that nv is > d::z, which is not really an invariant of nv_ph
+// Also checks that nv is > d::z, which is not an invariant of nv_ph.  
 bool teejee::insert_level(const d_t& nv, const d_t& ph) {
 	if (nv <= d_t{d::z}) { return false; }
 	nv_ph new_lvl {nv,ph};
@@ -98,31 +117,72 @@ bool teejee::insert_level(const d_t& nv, const d_t& ph) {
 	return false;
 }
 
+ts_t teejee::ts() const {
+	return m_ts;
+}
+std::vector<teejee::nv_ph> teejee::levels() const {
+	return m_levels;
+}
+int teejee::bt2step(const beat_t beat) const {
+	return static_cast<int>(beat/m_btres);
+}
+beat_t teejee::step2bt(const int step) const {
+	return beat_t {step*m_btres};
+}
+
+// True => the grid can be sliced [some_initial_beat, beat)
+bool teejee::factors_at(const beat_t beat) const {
+	int n = 0;
+	for (const auto& e : m_levels) {
+		n += onset_allowed_at(bt2reducedbt(beat));
+	}
+	return (n == m_levels.size());
+}
+
+// Note that if the input does not lie on the grid (that is, is not a
+// multiple of m_btres), neither will the return value.  
+beat_t teejee::bt2reducedbt(const beat_t beat) const {
+	return (beat - std::floor(beat/m_period)*m_period);
+}
+
+// The number of possible rp's spanning 1 period
+// TODO:  Wrong, probably.  
+int teejee::count() const {
+	int ncols = m_period/m_btres;
+	int n_tot = 0;
+	for (int i=0; i<ncols; ++i) {
+		int n = 0;
+		for (int j=0; j<m_levels.size(); ++j) {
+			if (onset_allowed_at(m_levels[j],i*m_btres)) { n +=1; }
+		}
+		n_tot *= std::max(n,1);
+	}
+
+	return 0;
+}
+
+
 // Is any member of m_levels allowed at beat_in?
 bool teejee::onset_allowed_at(const beat_t beat_in) const {
 	for (const auto& e : m_levels) {
-		if (onset_allowed_at(nv_ph{m_ts.bar_unit(),d::z},beat_in)) {
+		if (onset_allowed_at(e,bt2reducedbt(beat_in))) {
 			return true;
 		}
 	}
 	return false;
 }
-
-// nvph_in need not be a member
+// nvph need not be a member
 bool teejee::onset_allowed_at(const nv_ph nvph, const beat_t beat) const {
-	bool tf = aprx_int((beat-nbeat(m_ts,nvph.ph))/nbeat(m_ts,nvph.nv));
-	if (m_f_barspan || !tf) {
-		return tf;
-	}
-	// Necessary to check if the element spans a bar
+	return aprx_int((beat-nbeat(m_ts,nvph.ph))/nbeat(m_ts,nvph.nv));
+
+}
+// Does an nv located at the given beat span a bar break?
+// nv need not be a member of m_levels
+bool teejee::spans_bar(const beat_t beat, const d_t nv) const {
 	beat_t btnum_nxt_bar = std::ceil(beat/m_ts.beats_per_bar())*m_ts.beats_per_bar();
 	if (btnum_nxt_bar == beat) {btnum_nxt_bar += m_ts.beats_per_bar(); }
 
-	if (btnum_nxt_bar >= beat+nbeat(m_ts,nvph.nv)) {
-		return true;
-	}
-
-	return false;
+	return (btnum_nxt_bar >= beat+nbeat(m_ts,nv));
 }
 
 
@@ -132,10 +192,8 @@ std::string teejee::print() const {
 	s += "ts == " + m_ts.print() + "\n";
 	s += "Grid resolution: " + m_btres.print() + " beats\n";
 	s += "Period:          " + m_period.print() + " beats\n";
-	s += "Permit Bar-spanning:  ";
-	if (m_f_barspan) {  s+= "True\n"; } else { s += "False\n"; }
-
 	s += "\n\n";
+
 	for (auto const& e : m_levels) {
 		s += e.nv.print();
 		s += " (=> " + nbeat(m_ts,e.nv).print() + " beats ";
@@ -163,7 +221,24 @@ std::string teejee::print_g() const {
 }
 
 
-// Calculates the minimum grid resolution from m_levels, m_ts
+// It is critical that the elements in m_levels be sorted.  
+bool teejee::operator==(const teejee& rhs) const {
+	if (m_ts != rhs.m_ts) { return false; }
+
+	if (m_levels.size() != rhs.m_levels.size()) { return false; }
+	for (int i=0; i<m_levels.size(); ++i) {
+		if (m_levels[i] != rhs.m_levels[i]) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+
+// Calculates the grid resolution from m_levels, m_ts.
+// The grid resolution is the coarsest possible step size such that all
+// members of m_levels _and_ m_ts.bar_unit() fall exactly on a grid point.  
 beat_t teejee::gres() const {
 	d_t gres = gcd(d_t{0.0}, m_ts.bar_unit());
 	for (auto const& e : m_levels) {
@@ -177,12 +252,13 @@ beat_t teejee::gres() const {
 // Calcluates the grid period from m_levels, m_ts, m_btres.  Depends on 
 // m_btres being correctly set!
 //
-// The period is the smallest tg segment which can be concatenated to
-// itself repeatedly to generate a tg of any size *AND* which spans an
-// integer number of bars.  This is usually larger than the smallest
-// repeating unit.  
-// 
-// 
+// The period is the smallest number of beats able to contain an integer 
+// number of all emmbers of m_levels as well as m_ts.bar_unit().  This 
+// will usually larger than the smallest repeating subunit of the grid.  
+// For example, for m_levels containing d::h and d::q both w/ zero phase,
+// the smallest repeating unit is 2 beats, but m_period == 4 beats, since
+// 2 beats do not span a full bar.  
+//
 bar_t teejee::period() const { 
 	auto gres_nv = duration(m_ts,m_btres);
 	int n_grid_steps = static_cast<int>(m_ts.bar_unit()/gres_nv);
@@ -194,3 +270,6 @@ bar_t teejee::period() const {
 	}
 	return nbar(m_ts,m_btres*n_grid_steps);
 }
+
+
+

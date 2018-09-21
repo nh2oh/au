@@ -150,6 +150,9 @@ beat_t rp_t::nbeats() const {
 size_t rp_t::nelems() const {
 	return m_usridx;
 }
+ts_t rp_t::ts() const {
+	return m_ts;
+}
 
 std::vector<d_t> rp_t::to_duration_seq() const {
 	// TODO:  Possibly there is some overlap here w/ operator[]
