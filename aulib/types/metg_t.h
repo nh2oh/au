@@ -92,7 +92,6 @@ public:
 	//  Random rp generation
 	void set_pg_random(int = 0);  // argument => mode
 	void set_pg_zero(beat_t = 0_bt);
-	std::vector<double> nt_prob(beat_t) const;  // => pg
 	std::vector<d_t> draw() const;  // Generate a random rp
 	std::vector<rpp> enumerate() const;  // Generate all possible rp's
 
@@ -113,46 +112,43 @@ public:
 
 	bool operator==(const tmetg_t&) const;
 private:
-	ts_t m_ts {4_bt,d_t{d::q}};
-
 	// If representing a sub-rp...
 	beat_t m_btstart {0.0};
 	beat_t m_btend {0.0};  // Constructor should default == m_period
 
 	// Probability grid m_pg
 	// m_pg.size() == whatever, m_pg[i].size() == m_nvsph.size() for all i.  
-	// Note that m_pg does not store log-probability (despite the name of 
-	// field pgcell.lgp); it stores "normal" probabilities.  The rp enumerator
-	// creates its own special copy of m_pg which really does store 
-	// log-probability.  
-	struct pgcell {
-		int ix_nvsph {0};  // Idx of m_nvsph
-		int stepsz {0};
-		double lgp {0.0};
-	};
-	std::vector<std::vector<pgcell>> m_pg {};  // m_pg[col][row]
+	std::vector<std::vector<double>> m_pg {};  // m_pg[col][row]
 	bool m_f_pg_extends {true};  
 
 	//----------------------------------------------------------------------------
 	// Methods
 
+	// TODO:  Rename "step" -> "Stride" to disambiguate position from distance
 	int bt2step(beat_t) const;
-	int nv2step(d_t) const;
+	int bt2stride(beat_t) const;
+	int nv2stride(d_t) const;
+	int level2stride(int) const;
 	int nvph2level(const teejee::nv_ph&) const;
 
 	bool pg_extends() const;  // Should == m_f_pg_extends, but does not set.  
 	std::vector<std::vector<int>> zero_pointers() const;  // [c,r] of zp's in m_pg
-	std::vector<std::vector<pgcell>> extend_pg(beat_t, beat_t) const;
+	std::vector<std::vector<double>> extend_pg(beat_t, beat_t) const;
 
 	// "note-value pointer with probability"
+	struct enumerator_pgcell {
+		int level {0};  // Idx of m_tg.levels()
+		int stride {0};
+		double lgp {0.0};
+	};
 	struct nvp_p {
 		std::vector<int> rp {};
 		double p {1.0};
 	};
 	void m_enumerator(std::vector<nvp_p>&, 
-		std::vector<std::vector<pgcell>> const&, int&, int) const;
+		std::vector<std::vector<enumerator_pgcell>> const&, int&, int) const;
 	void m_enumerator2(std::vector<nvp_p>&, 
-		std::vector<std::vector<pgcell>> const&, int&, int) const;
+		std::vector<std::vector<enumerator_pgcell>> const&, int&, int) const;
 
 };
 

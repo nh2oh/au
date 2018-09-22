@@ -19,7 +19,6 @@
 // Constructor from an rp
 tmetg_t::tmetg_t(ts_t ts_in, rp_t rp_in) {
 	m_tg = teejee {rp_in};
-	m_ts = ts_in;
 	auto vdt = rp_in.to_duration_seq();
 	m_btstart = 0_bt;
 	m_btend = rp_in.nbeats();
@@ -31,17 +30,15 @@ tmetg_t::tmetg_t(ts_t ts_in, rp_t rp_in) {
 	// Since a given col curr_step of the pg, m_pg[curr_step], may have multiple
 	// rows corresponding to a given e (for example, if m_nvsph contains the 
 	// same e with different phases), the call to levels_allowed() is needed.  
-	auto curr_bt = 0_bt;
-	//int curr_step = 0;
+
+	beat_t curr_beat = 0_bt; int curr_step = 0;
 	for (const auto& e : vdt) {
-		teejee::nv_ph curr_nvph {e,duration(m_tg.ts(),curr_bt)};
-		if (m_tg.onset_allowed_at(curr_nvph,curr_bt)) {
-			auto ridx = nvph2level(curr_nvph);
-			m_pg[bt2step(curr_bt)][ridx].lgp = 1.0;
-		} else {
-			au_assert(false,"what");
-		}
-		curr_bt += nbeat(m_tg.ts(),e);
+		teejee::nv_ph curr_nvph {e,duration(m_tg.ts(),curr_beat)};
+		au_assert(m_tg.onset_allowed_at(curr_nvph,curr_beat),"what");
+		auto r = nvph2level(curr_nvph);
+		m_pg[curr_step][r] = 1.0;
+		curr_step += level2stride(r);
+		curr_beat += nbeat(m_tg.ts(),e);
 	}
 
 	m_f_pg_extends = pg_extends();
@@ -56,11 +53,10 @@ tmetg_t::tmetg_t(ts_t ts_in, std::vector<d_t> nvs_in, std::vector<beat_t> ph_in)
 		au_error("ph_in.size() != nv_ts_in.size()");
 	}
 
-	m_ts = ts_in;
 	m_tg = teejee {ts_in,nvs_in,ph_in};
 
 	m_btstart = 0_bt;
-	m_btend = nbeat(m_ts,m_tg.period()); //period;
+	m_btend = nbeat(m_tg.ts(),m_tg.period()); //period;
 
 	set_pg_random();
 	m_f_pg_extends = pg_extends();  // Expect true...
@@ -71,20 +67,23 @@ int tmetg_t::nvph2level(const teejee::nv_ph& nvph) const {
 	auto it = std::find(lvls.begin(),lvls.end(),nvph);
 	return it-lvls.begin();
 }
-// Converts a number-of-beats to a number-of-grid-steps.  Note that this
-// is different from converting a "beat number" to a "step number" if
-// If m_btstart != 0.  
-int tmetg_t::bt2step(beat_t bt_in) const {
-	//au_assert(aprx_int(bt_in/m_btres),"bt2step()");
-	//return static_cast<int>(bt_in/m_btres);
-	return static_cast<int>(std::floor(bt_in/m_tg.gres()));
+// Converts an absolute beat-number to a col idx of m_pg
+int tmetg_t::bt2step(beat_t beat_number) const {
+	//au_assert(aprx_int((beat_number-m_btstart)/m_tg.gres()),"bt2step()");
+	return static_cast<int>(std::floor((beat_number-m_btstart)/m_tg.gres()));
 }
 
-
-int tmetg_t::nv2step(d_t nv_in) const {
-	//au_assert(aprx_int(nbeat(m_ts,nv_in)/m_btres),"nv2step()");
-	//return static_cast<int>(nbeat(m_ts,nv_in)/m_btres);
-	return static_cast<int>(std::floor(nbeat(m_ts,nv_in)/m_tg.gres()));
+int tmetg_t::bt2stride(beat_t nbeats) const {
+	//au_assert(aprx_int(nbeats/m_tg.gres()),"bt2stride()");
+	return static_cast<int>(std::floor(nbeats/m_tg.gres()));
+}
+int tmetg_t::nv2stride(d_t nv_in) const {
+	//au_assert(aprx_int(nbeat(m_tg.ts(),nv_in)/m_btres),"nv2stride()");
+	//return static_cast<int>(nbeat(m_tg.ts(),nv_in)/m_btres);
+	return static_cast<int>(std::floor(nbeat(m_tg.ts(),nv_in)/m_tg.gres()));
+}
+int tmetg_t::level2stride(int lvl) const {
+	return nv2step(m_tg.levels()[lvl].nv);
 }
 
 
@@ -95,7 +94,7 @@ bool tmetg_t::pg_member_allowed_at(beat_t beat) const {
 	if (c >= m_pg.size()) { return false; }
 
 	for (int r=0; r<m_pg[c].size(); ++r) {
-		if (m_pg[c][r].lgp > 0.0) {
+		if (m_pg[c][r] > 0.0) {
 			return true;
 		}
 	}
@@ -132,12 +131,14 @@ bool tmetg_t::member_allowed_at(d_t nv, beat_t beat) const {
 bool tmetg_t::pg_extends() const {
 	// If m_pg is shorter than a period, extend it to exactly 1 period; if
 	// longer by a factor N, extend to ceil(N).  
-	auto nperiods_extend = std::max(1.0, std::ceil((m_btend-m_btstart)/nbeat(m_ts,m_tg.period())));
-	int ncols_extend = bt2step(nbeat(m_ts,m_tg.period())*nperiods_extend);
+	auto beats_period = nbeat(m_tg.ts(),m_tg.period());  // beats per period
+	auto nperiods_curr = std::ceil((m_btend-m_btstart)/beats_period);
+	auto nperiods_extend = std::max(1.0, nperiods_curr);
+	int ncols_extend = bt2stride(beats_period*nperiods_extend);
 
 	for (size_t c=0; c<ncols_extend; ++c) {
 		for (size_t r=0; r<m_pg[c%m_pg.size()].size(); ++r) {
-			if (m_pg[c%m_pg.size()][r].lgp > 0.0 && 
+			if (m_pg[c%m_pg.size()][r] > 0.0 && 
 				!(m_tg.onset_allowed_at(m_tg.levels()[r],m_btstart))) {
 				return false;
 			}
@@ -153,9 +154,9 @@ std::vector<std::vector<int>> tmetg_t::zero_pointers() const {
 
 	for (int c=0; c<m_pg.size(); ++c) {
 		for (int r=0; r<m_pg[c].size(); ++r) {
-			if (m_pg[c][r].lgp == 0.0) { continue; }
+			if (m_pg[c][r] == 0.0) { continue; }
 
-			int nxtc = c + bt2step(nbeat(m_ts,m_tg.levels()[r].nv));
+			int nxtc = c + level2stride(r);
 			if (nxtc >= m_pg.size()) { continue; }
 
 			if (!pg_member_allowed_at(m_tg.gres()*nxtc)) {
@@ -177,12 +178,8 @@ void tmetg_t::set_pg_zero(beat_t nbts) {
 		nbts = m_btend-m_btstart;
 	}
 
-	std::vector<pgcell> def_pgcol {};  // "Default pg col"
-	for (int i=0; i<m_tg.levels().size(); ++i) {
-		def_pgcol.push_back({i,nv2step(m_tg.levels()[i].nv),0.0});
-	}
-
-	auto pg_nsteps = bt2step(nbts);
+	std::vector<double> def_pgcol(m_tg.levels().size(),0.0);  // "Default pg col"
+	auto pg_nsteps = bt2stride(nbts);
 	for (int i=0; i<pg_nsteps; ++i) {
 		m_pg.push_back(def_pgcol);
 	}
@@ -219,7 +216,7 @@ void tmetg_t::set_pg_random(int mode) {
 
 		for (auto j=0; j<curr_allowed.size(); ++j) { 
 			// for each row were a note is allowed...
-			m_pg[i][nvph2level(curr_allowed[j])].lgp = curr_probs[j];
+			m_pg[i][nvph2level(curr_allowed[j])] = curr_probs[j];
 			// Note that the only elements of m_pg[i] being assigned are those
 			// which are allowed at position i in g.  For the other elements
 			// in m_pg[i] the default .lgp == 0, set by the call to set_pg_zero().  
@@ -232,33 +229,15 @@ void tmetg_t::set_pg_random(int mode) {
 // Generate a random rp from the pg
 // TODO:  Return an rpp?
 std::vector<d_t> tmetg_t::draw() const {
-	std::vector<d_t> rnts {};
 	auto re = new_randeng(true);
-	beat_t curr_bt {0};
-	int curr_step {0};
-	while (curr_step < m_pg.size()) {
-		auto ridx = randset(1,nt_prob(curr_bt),re);
-		// nt_prob(curr_bt).size() == m_pg[i] where i corresponds to curr_step.  
-		// Since m_pg[i].size() == m_nvsph.size() for all i, ridx[0] indexes
-		// both.  
+	std::vector<d_t> rnts {};
+	int curr_step=0;
+	while (curr_step<m_pg.size()) {
+		auto ridx = randset(1,m_pg[curr_step],re);
 		rnts.push_back(m_tg.levels()[ridx[0]].nv);
-		curr_bt += nbeat(m_ts,m_tg.levels()[ridx[0]].nv);
-		curr_step += m_pg[curr_step][ridx[0]].stepsz;
+		curr_step += level2stride(ridx[0]);
 	}
 	return rnts;
-}
-
-
-// Read the note-probability vector at the given beat
-// TODO:  bt may exceed m_pg2.size()... in this case, should "wrap"
-// bt as if m_pg extended to infinity
-std::vector<double> tmetg_t::nt_prob(beat_t bt) const {
-	auto pg_col_idx = bt2step(bt);
-	std::vector<double> probs {};
-	for (auto const& e : m_pg[pg_col_idx]) {
-		probs.push_back(e.lgp);
-	}
-	return probs;
 }
 
 
@@ -272,11 +251,11 @@ std::vector<tmetg_t> tmetg_t::factor() const {
 	// For each _row_ i in m_pg, col_ptrs[i] is a vector of col idxs
 	// pointed at by the elements of row i.  
 	std::vector<std::vector<int>> col_ptrs {};
-	for (int i=0; i<m_tg.levels().size(); ++i) {
+	for (int r=0; r<m_tg.levels().size(); ++r) {
 		col_ptrs.push_back(std::vector<int>{});
-		for (int j=0; j<m_pg.size(); ++j) {  // Each m_pg element j on row i
-			if (m_pg[j][i].lgp > 0.0) {
-				col_ptrs[i].push_back(j+m_pg[j][i].stepsz);
+		for (int c=0; c<m_pg.size(); ++c) {
+			if (m_pg[c][r] > 0.0) {
+				col_ptrs[r].push_back(c+level2stride(r));
 			}
 		}
 	}
@@ -313,8 +292,8 @@ std::vector<tmetg_t> tmetg_t::factor() const {
 // bt_from, bt_to are beat _numbers_ 
 // Callers should check span_possible() first.  
 tmetg_t tmetg_t::slice(beat_t bt_from, beat_t bt_to) const {
-	int idx_from = bt2step(bt_from-m_btstart);
-	int idx_to = bt2step(bt_to-m_btstart);
+	int idx_from = bt2step(bt_from);
+	int idx_to = bt2step(bt_to);
 	if (idx_from >= m_pg.size() || idx_from < 0 || idx_to > m_pg.size() || idx_to < 0) {
 		au_assert(m_f_pg_extends,"!m_f_pg_extends but range exceeds m_pg");
 		// extend_pg() does not check m_f_pg_extends
@@ -333,7 +312,7 @@ tmetg_t tmetg_t::slice(beat_t bt_from, beat_t bt_to) const {
 // Extend the pg to span [from,to) where to >= from.  
 // Does _not_ check m_f_pg_extends; external users access this through
 // slice(), which does make all the necessary checks.  
-std::vector<std::vector<tmetg_t::pgcell>> tmetg_t::extend_pg(beat_t from, beat_t to) const {
+std::vector<std::vector<double>> tmetg_t::extend_pg(beat_t from, beat_t to) const {
 	int idx_from = bt2step(from-m_btstart);
 	int idx_to = bt2step(to-m_btstart);
 	auto nsteps = idx_to-idx_from;
@@ -346,7 +325,7 @@ std::vector<std::vector<tmetg_t::pgcell>> tmetg_t::extend_pg(beat_t from, beat_t
 		au_assert(m_f_pg_extends,"!m_f_pg_extends but range exceeds m_pg");
 	}
 
-	std::vector<std::vector<tmetg_t::pgcell>> new_pg {};
+	std::vector<std::vector<double>> new_pg {};
 	for (size_t c=idx_from; c<idx_to; ++c) {
 		new_pg.push_back(m_pg[c%m_pg.size()]);
 	}
@@ -358,25 +337,24 @@ std::vector<std::vector<tmetg_t::pgcell>> tmetg_t::extend_pg(beat_t from, beat_t
 // Enumerate all variations represented by the pg.  
 std::vector<tmetg_t::rpp> tmetg_t::enumerate() const {
 	// g is derrived from m_pg:  
-	// 1)  Each col of g contains only the entries in the corresponding col of
-	// m_pg where the probability is > 0.  Hence, each col of g in principle
-	// contains a different number of rows.  
+	// 1)  Each col of g contains only the entries in the corresponding 
+	// col of m_pg where the probability is > 0.  Hence, each col of g may
+	// contain a different number of rows.  
 	// 2)  Entries appear in each col of g appear in order of _decreasing_ 
-	// probability, not in order of idx in m_nvsph.  
-	// 3)  g[i][j].lgp is the std::log() of the probability of the corresponding
-	// element in m_pg.  
+	// probability, not in order of m_tg.levels()
+	// 3)  g[i][j].lgp is the std::log() of the probability of the  
+	// corresponding element in m_pg.  
 	int N_tot_guess = 1;  // A crude guess @ the tot. # of rp's
-	std::vector<std::vector<pgcell>> g {};
+	std::vector<std::vector<enumerator_pgcell>> g {};
 	for (auto e : m_pg) {
-		std::sort(e.begin(),e.end(),
-			[](const pgcell& a, const pgcell& b){return a.lgp>b.lgp;});
-		std::vector<pgcell> e_nz {};  // "elements nonzero"
-		for (auto ee : e) {
-			if (ee.lgp == 0.0) { break; }
-			e_nz.push_back(ee);
-			e_nz.back().lgp = std::log(e_nz.back().lgp);
+		std::vector<enumerator_pgcell> c_nz {};  // "col nonzero"
+		for (int i=0; i<e.size(); ++i) { //auto ee : e) {
+			if (e[i] == 0.0) { continue; }
+			c_nz.push_back({i,level2stride(i),std::log(e[i])});
 		}
-		g.push_back(e_nz);
+		std::sort(c_nz.begin(),c_nz.end(),
+			[](const enumerator_pgcell& a, const enumerator_pgcell& b){return a.lgp>b.lgp;});
+		g.push_back(c_nz);
 		N_tot_guess *= std::max(g.back().size(),static_cast<size_t>(1));
 	}
 
@@ -404,7 +382,7 @@ std::vector<tmetg_t::rpp> tmetg_t::enumerate() const {
 
 
 void tmetg_t::m_enumerator(std::vector<nvp_p>& rps, 
-	std::vector<std::vector<pgcell>> const& g, int& N, int x) const {
+	std::vector<std::vector<enumerator_pgcell>> const& g, int& N, int x) const {
 	if (N >= (rps.size()-1)) { return; }
 
 	bool f_gspan_fatal {false};
@@ -414,9 +392,9 @@ void tmetg_t::m_enumerator(std::vector<nvp_p>& rps,
 	auto rp_init = rps[N];
 
 	for (int i=0; i<g[x].size(); ++i) {
-		rps[N].rp[x] = g[x][i].ix_nvsph;
+		rps[N].rp[x] = g[x][i].level;
 		rps[N].p += g[x][i].lgp;
-		int nx = x + g[x][i].stepsz;
+		int nx = x + g[x][i].stride;
 
 		if (nx < g.size()) {
 			f_gspan_fatal = false; f_gspan_complete = false; f_gspan_continue = true;
@@ -458,14 +436,14 @@ void tmetg_t::m_enumerator(std::vector<nvp_p>& rps,
 
 
 void tmetg_t::m_enumerator2(std::vector<nvp_p>& rps, 
-	std::vector<std::vector<pgcell>> const& g, int& N, int x) const {
+	std::vector<std::vector<enumerator_pgcell>> const& g, int& N, int x) const {
 	if (N >= (rps.size()-1)) { return; }
 	auto rp_init = rps[N];
 
 	for (int i=0; i<g[x].size(); ++i) {
-		rps[N].rp[x] = g[x][i].ix_nvsph;
+		rps[N].rp[x] = g[x][i].level;
 		rps[N].p += g[x][i].lgp;
-		int nx = x + g[x][i].stepsz;
+		int nx = x + g[x][i].stride;
 
 		if (nx < g.size()) {
 			// Re-enter, passing nx in place of x.  Note x does not change; when the
@@ -482,7 +460,7 @@ void tmetg_t::m_enumerator2(std::vector<nvp_p>& rps,
 
 
 bar_t tmetg_t::nbars() const {
-	return nbar(m_ts,m_tg.gres()*m_pg.size());
+	return nbar(m_tg.ts(),m_tg.gres()*m_pg.size());
 }
 ts_t tmetg_t::ts() const {
 	return m_tg.ts();
@@ -491,14 +469,14 @@ std::vector<tmetg_t::nvs_ph> tmetg_t::levels() const {
 	return m_tg.levels();
 }
 bool tmetg_t::span_possible(bar_t nbars_target) const {
-	return span_possible(nbeat(m_ts,nbars_target));
+	return span_possible(nbeat(m_tg.ts(),nbars_target));
 }
 bool tmetg_t::span_possible(beat_t nbeats_target) const {
 	if (!aprx_int(nbeats_target/m_tg.gres())) {
 		return false;
 	}
 
-	int step_target = bt2step(nbeats_target);
+	int step_target = bt2stride(nbeats_target);
 	if (step_target > m_pg.size() && !m_f_pg_extends) {
 		return false;
 	}
@@ -509,7 +487,7 @@ bool tmetg_t::span_possible(beat_t nbeats_target) const {
 	// p => pervious cols pointing into nbars_target.  
 	int c = step_target%m_pg.size();
 	for (int r=0; r<m_tg.levels().size(); ++r) {
-		if (m_pg[c][r].lgp > 0.0) { 
+		if (m_pg[c][r] > 0.0) { 
 			return true; 
 		}
 	}
@@ -536,7 +514,7 @@ std::string tmetg_t::print_pg() const {
 	std::string s {};
 	for (int r=0; r<m_tg.levels().size(); ++r) {
 		for (int c=0; c<m_pg.size(); ++c) {
-			s += bsprintf("%5.3f   ",m_pg[c][r].lgp);
+			s += bsprintf("%5.3f   ",m_pg[c][r]);
 		}
 		s += "\n";
 	}
@@ -568,17 +546,17 @@ bool tmetg_t::validate() const {
 
 	// m_btres, m_period, m_btstart, m_btend are correctly calculated & have 
 	// been updated for any additions or deletions to m_nvsph or the pg.  
-	if (nbeat(m_ts,m_tg.period()) !=  nbeat(m_tg.ts(),m_tg.period())) {
+	if (nbeat(m_tg.ts(),m_tg.period()) !=  nbeat(m_tg.ts(),m_tg.period())) {
 		return false;
 	}
 	if ((m_btend-m_btstart) != m_tg.gres()*m_pg.size()) {
 		return false;
 	}
-	if (!aprx_int(nbeat(m_ts,m_tg.period())/m_tg.gres())) {
+	if (!aprx_int(nbeat(m_tg.ts(),m_tg.period())/m_tg.gres())) {
 		return false;
 	}
 	for (int i=0; i<m_tg.levels().size(); ++i) {
-		if (!aprx_int(nbeat(m_ts,m_tg.levels()[i].nv)/m_tg.gres())) {
+		if (!aprx_int(nbeat(m_tg.ts(),m_tg.levels()[i].nv)/m_tg.gres())) {
 			// A check on m_btres, not m_nvsph
 			return false;
 		}
@@ -594,17 +572,17 @@ bool tmetg_t::validate() const {
 		}
 		double curr_prob_sum {0.0};
 		for (int r=0; r<m_pg[c].size(); ++r) {
-			if ((m_pg[c][r].stepsz)*m_tg.gres() != nbeat(m_ts,m_tg.levels()[r].nv)) {
+			if (level2stride(r)*m_tg.gres() != nbeat(m_tg.ts(),m_tg.levels()[r].nv)) {
 				// Stepsize is not calculated correctly...
 				return false;
 			}
-			if (m_pg[c][r].lgp < 0.0) {
+			if (m_pg[c][r] < 0.0) {
 				return false;
 			}
-			if (m_pg[c][r].lgp > 0.0 && !m_tg.onset_allowed_at(m_tg.levels()[r],c*m_tg.gres()+m_btstart)) {
+			if (m_pg[c][r] > 0.0 && !m_tg.onset_allowed_at(m_tg.levels()[r],c*m_tg.gres()+m_btstart)) {
 				return false;
 			}
-			curr_prob_sum += m_pg[c][r].lgp;
+			curr_prob_sum += m_pg[c][r];
 		}
 		if (!(aprx_eq(curr_prob_sum,0.0) || aprx_eq(curr_prob_sum,1.0))) {
 			// Probabilities for the col are not correctly normalized
@@ -643,7 +621,7 @@ bool tmetg_t::operator==(const tmetg_t& rhs) const {
 	if (m_pg.size() != rhs.m_pg.size()) { return false; }
 	for (int c=0; c<m_pg.size(); ++c) {
 		for (int r=0; r<m_pg[c].size(); ++r) {
-			if (m_pg[c][r].lgp != rhs.m_pg[c][r].lgp) {
+			if (m_pg[c][r] != rhs.m_pg[c][r]) {
 				return false;
 			}
 		}

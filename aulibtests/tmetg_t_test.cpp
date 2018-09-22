@@ -104,7 +104,7 @@ TEST(metg_t_tests, ZeroPhaseBuildFromExistingRP) {
 	std::vector<beat_t> ph {0_bt,0_bt,0_bt,0_bt};
 	ts_t ts {beat_t{3},d::q};
 	auto mg = tmetg_t(ts,dt,ph);
-	EXPECT_TRUE(mg.validate());
+	bool tf = mg.validate(); EXPECT_TRUE(tf);
 	// => m_btres = 0.25, m_period = 6bts = 2 bars
 	
 	// Generate a big random rp by repeatedly draw()ing from the mg
