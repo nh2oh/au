@@ -4,6 +4,7 @@
 #include "nv_t.h"
 #include "rp_t.h"
 #include "..\util\au_algs_math.h"
+#include "..\util\au_algs.h"
 #include "..\util\au_error.h"
 #include "..\util\au_util.h"
 #include <vector>
@@ -308,5 +309,30 @@ bar_t teejee::period() const {
 	return nbar(m_ts,m_period);
 }
 
+
+
+bool teejee::validate() const {
+	// m_levels can't be empty; all members must be unique
+	if (m_levels.size() == 0) {
+		return false;
+	}
+	auto uq_nvsph = unique(m_levels);
+	if (uq_nvsph.size() != m_levels.size()) {
+		return false;
+	}
+	for (const auto& e : m_levels) {
+		if (e.ph-std::floor(e.ph/e.nv)*(e.nv) != e.ph) {
+			return false; // e.ph is not in "reduced" form
+		}
+		if (e.ph < d_t{0} || e.ph > e.nv) {
+			// This check *should* be redundant w/ the check above
+			return false;
+		}
+	}
+
+	if (!aprx_int(m_period/m_btres)) {
+		return false;
+	}
+}
 
 

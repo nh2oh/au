@@ -33,7 +33,7 @@ TEST(metg_t_tests, ThreeFourZeroPhaseHQEdE) {
 
 	for (int i=0; i<48; ++i) {  // 48 => 12 beats => 2 bars
 		for (const auto& e : dt) {
-			bool tf = mg.member_allowed_at(e,beat_t{i*0.25});
+			bool tf = mg.onset_allowed_at(e,beat_t{i*0.25});
 			// A note of duration e should be allowed at any beat i where 
 			// nbeat(ts,e)/i is an integer.  
 			if (aprx_int_gtest(beat_t{i*0.25}/nbeat(ts,e))) {
@@ -58,7 +58,7 @@ TEST(metg_t_tests, ThreeFourNegSixteenthPhaseHQEdE) {
 
 	for (int i=0; i<48; ++i) {  // 48 => 12 beats => 2 bars
 		for (int j=0; j<dt.size(); ++j) {
-			bool tf = mg.member_allowed_at(dt[j],beat_t{i*0.25});
+			bool tf = mg.onset_allowed_at(dt[j],beat_t{i*0.25});
 			// A note of duration e should be allowed at any beat i where 
 			// nbeat(ts,e)/i is an integer.  
 			if (aprx_int_gtest((beat_t{i*0.25}-ph[j])/nbeat(ts,dt[j]))) {
@@ -77,18 +77,24 @@ TEST(metg_t_tests, ThreeFourMultiPhaseShiftHQEdE) {
 	std::vector<beat_t> ph {0_bt,0.25_bt,0.5_bt,0.75_bt};
 	ts_t ts {beat_t{3},d::q};
 	auto mg = tmetg_t(ts,dt,ph);
-	EXPECT_TRUE(mg.validate());
+	bool tf = mg.validate(); EXPECT_TRUE(tf);
 	// => m_btres = 0.25
 
 	for (int i=0; i<48; ++i) {  // 48 => 12 beats => 2 bars
 		for (int j=0; j<dt.size(); ++j) {
-			bool tf = mg.member_allowed_at(dt[j],beat_t{i*0.25});
+			tf = mg.onset_allowed_at(dt[j],beat_t{i*0.25});
 			// A note of duration e should be allowed at any beat i where 
 			// nbeat(ts,e)/i is an integer.  
 			if (aprx_int_gtest((beat_t{i*0.25}-ph[j])/nbeat(ts,dt[j]))) {
 				EXPECT_TRUE(tf);
+				if (!tf) {
+					auto z  =1+1;
+				}
 			} else {
 				EXPECT_FALSE(tf);
+				if (tf) {
+					auto z  =1+1;
+				}
 			}
 		}
 	}

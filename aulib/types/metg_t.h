@@ -79,31 +79,29 @@ public:
 	};
 	using nvs_ph = teejee::nv_ph;
 
-	teejee m_tg {};
+	
 
 	tmetg_t() = delete;
 	tmetg_t(ts_t, rp_t);
-	// ts, dp, phases
-	explicit tmetg_t(ts_t,std::vector<d_t>,std::vector<beat_t>);
+	explicit tmetg_t(ts_t,std::vector<d_t>,std::vector<beat_t>); // ts, dp, ph
 
 	tmetg_t slice(beat_t, beat_t) const;
 	std::vector<tmetg_t> factor() const;
 
 	//  Random rp generation
 	void set_pg_random(int = 0);  // argument => mode
-	void set_pg_zero(beat_t = 0_bt);
+	void set_pg_zero(beat_t);
 	std::vector<d_t> draw() const;  // Generate a random rp
 	std::vector<rpp> enumerate() const;  // Generate all possible rp's
 
-	bool pg_member_allowed_at(beat_t) const;  // => pg
-	bool member_allowed_at(d_t, beat_t) const;  // => tg
+	bool onset_allowed_at(beat_t) const;  // => pg
+	bool onset_allowed_at(d_t, beat_t) const;  // => pg
 	bool span_possible(bar_t) const;
 	bool span_possible(beat_t) const;
 
 	std::string print() const;
 	std::string print_pg() const;
 	std::string print_tg() const;
-
 	bar_t nbars() const;
 	ts_t ts() const;
 	std::vector<nvs_ph> levels() const;
@@ -112,36 +110,35 @@ public:
 
 	bool operator==(const tmetg_t&) const;
 private:
-	// If representing a sub-rp...
-	beat_t m_btstart {0.0};
-	beat_t m_btend {0.0};  // Constructor should default == m_period
+	teejee m_tg {};
+	
+	beat_t m_btstart {0.0};  // If representing a sub-rp...
 
 	// Probability grid m_pg
-	// m_pg.size() == whatever, m_pg[i].size() == m_nvsph.size() for all i.  
 	std::vector<std::vector<double>> m_pg {};  // m_pg[col][row]
+		// m_pg.size() == whatever, m_pg[c].size() == m_nvsph.size() for all c.  
 	bool m_f_pg_extends {true};  
 
 	//----------------------------------------------------------------------------
 	// Methods
 
-	// TODO:  Rename "step" -> "Stride" to disambiguate position from distance
-	int bt2step(beat_t) const;
-	int bt2stride(beat_t) const;
-	int nv2stride(d_t) const;
-	int level2stride(int) const;
+	int bt2step(beat_t) const;  // bt number -> m_pg col idx
+	beat_t step2bt(int) const;  // m_pg col idx -> bt number
+	int bt2stride(beat_t) const;  // number-of-bts -> number-of-steps
+	int nv2stride(d_t) const;    // nv_t -> number-of-steps
+	int level2stride(int) const;  // number-of-steps per unit of given level idx
 	int nvph2level(const teejee::nv_ph&) const;
 
 	bool pg_extends() const;  // Should == m_f_pg_extends, but does not set.  
 	std::vector<std::vector<int>> zero_pointers() const;  // [c,r] of zp's in m_pg
 	std::vector<std::vector<double>> extend_pg(beat_t, beat_t) const;
 
-	// "note-value pointer with probability"
-	struct enumerator_pgcell {
+	struct enumerator_pgcell {  // Used internally by m_enumerator()
 		int level {0};  // Idx of m_tg.levels()
 		int stride {0};
 		double lgp {0.0};
 	};
-	struct nvp_p {
+	struct nvp_p { // "note-value pointer with probability"
 		std::vector<int> rp {};
 		double p {1.0};
 	};
@@ -149,7 +146,6 @@ private:
 		std::vector<std::vector<enumerator_pgcell>> const&, int&, int) const;
 	void m_enumerator2(std::vector<nvp_p>&, 
 		std::vector<std::vector<enumerator_pgcell>> const&, int&, int) const;
-
 };
 
 

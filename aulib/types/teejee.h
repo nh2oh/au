@@ -39,7 +39,7 @@ public:
 	ts_t ts() const;
 	std::vector<nv_ph> levels() const;
 	bar_t period() const;
-	beat_t gres() const;
+	beat_t gres() const;  // beats-per-col
 
 	bool factors_at(const beat_t) const;
 	int count() const;  // Count number of possible rp's
@@ -54,6 +54,8 @@ public:
 	std::string print_g() const;
 
 	bool operator==(const teejee&) const;
+
+	bool validate() const;
 private:
 	//----------------------------------------------------------------------------
 	// Data
