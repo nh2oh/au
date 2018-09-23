@@ -320,8 +320,6 @@ TEST(metg_t_tests, SpanPossibleThreeFourSet2) {
 	}
 }
 
-
-
 TEST(metg_t_tests, SetPgSet1) {
 	ts_t ts {3_bt,d::q};
 	std::vector<d_t> vdt {d::h,d::q,d::e};
@@ -348,8 +346,22 @@ TEST(metg_t_tests, SetPgSet1) {
 }
 
 
+TEST(metg_t_tests, SetPgByRowAllZeroSet1) {
+	ts_t ts {3_bt,d::q};
+	std::vector<d_t> vdt {d::w,d::hd,d::h,d::qd,d::q,d::ed,d::e};
+	std::vector<beat_t> vph {0_bt,0_bt,0_bt,0_bt,0_bt,0_bt,0_bt};
+	teejee tg {ts,vdt,vph};
+	tmetg_t mg {ts,vdt,vph};
 
+	int ncols = nbeat(tg.ts(),tg.period())/tg.gres();
+	for (int i=0; i<mg.levels().size(); ++i) {
+		auto zero_row = std::vector<double>(ncols,0.0);
+		auto curr_lvl = mg.levels()[i];
 
+		EXPECT_TRUE(mg.set_pg(curr_lvl,zero_row));
+		EXPECT_TRUE(mg.validate());
+	}
+}
 
 
 

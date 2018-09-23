@@ -119,6 +119,31 @@ bool tmetg_t::set_pg(teejee::nv_ph nvph, beat_t beat, double p) {
 
 	return true;
 }
+// Set a whole row
+// Prevents the caller from creating zero pointers and orphans
+bool tmetg_t::set_pg(teejee::nv_ph nvph, std::vector<double> p) {
+	au_assert(m_tg.ismember(nvph) && p.size()==m_pg.size() ,"oops");
+	for (int i=0; i<p.size(); ++i) { au_assert(p[i]>=0.0); }
+
+	auto r = nvph2level(nvph);
+	auto old_pg = m_pg;
+	for (int c=0; c<m_pg.size(); ++c) {
+		m_pg[c][r] = p[c];
+		m_pg[c] = normalize_probvec(m_pg[c]);
+	}
+
+	// Illegal to create a zero pointer or an orphan within the range of m_pg,
+	// however, a change that creates an orphan or zero pointer off the end 
+	// of m_pg is possible, since m_f_pg_extends can be set to false to reflect 
+	// this state.  
+	if (internal_zero_pointers(m_pg) || internal_orphans(m_pg)) {
+		m_pg=old_pg;
+		return false;
+	}
+	m_f_pg_extends=pg_extends();
+
+	return true;
+}
 
 int tmetg_t::nvph2level(const teejee::nv_ph& nvph) const {
 	auto lvls = m_tg.levels();

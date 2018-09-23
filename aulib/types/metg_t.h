@@ -97,7 +97,8 @@ public:
 	void set_pg_random(int = 0);  // argument => mode
 	void set_pg_zero();
 	bool set_pg(teejee::nv_ph,beat_t,double);
-	bool set_pg(teejee::nv_ph,beat_t,std::vector<double>);
+	bool set_pg(beat_t,std::vector<double>);  // Set a whole col
+	bool set_pg(teejee::nv_ph,std::vector<double>);  // Set a whole row
 
 	// Operators
 	bool operator==(const tmetg_t&) const;
