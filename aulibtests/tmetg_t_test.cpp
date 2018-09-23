@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "..\aulib\types\metg_t.h"
+#include "..\aulib\util\au_random.h"
 #include <vector>
 #include <string>
 #include <cmath>
@@ -175,7 +176,7 @@ TEST(metg_t_tests, FromRpWithNonzeroPhases1) {
 		d::sx,d::sx,d::q,d::q,d::q,d::e,  // ph d::q == d::e
 		d::sx,d::sx,d::sx,d::q,d::q,d::q,d::sx,  // ph d::q == d::ed
 		d::sx,d::sx,d::sx,d::sx,d::q,d::q,d::q};  // ph d::q == 0
-	std::vector<tmetg_t::nvs_ph> allowed_levels {
+	std::vector<teejee::nv_ph> allowed_levels {
 		{d::q,d_t{0}},{d::q,d::sx},{d::q,d::e},{d::q,d::ed},
 		{d::e,d_t{0}},
 		{d::sx,d_t{0}}};
@@ -225,7 +226,7 @@ TEST(metg_t_tests, FromNvPhWithNonzeroPhases) {
 	// The smallest nv is d::e and the phases all divide evenly into some 
 	// number of 1/2 -beats => d::e, so the only phase values for the q-note
 	// are 0 and d::e.  
-	std::vector<tmetg_t::nvs_ph> allowed_levels {
+	std::vector<teejee::nv_ph> allowed_levels {
 		{d::h,d_t{0}},
 		{d::q,d_t{0}},{d::q,d::e},
 		{d::e,d_t{0}}};
@@ -321,6 +322,30 @@ TEST(metg_t_tests, SpanPossibleThreeFourSet2) {
 
 
 
+TEST(metg_t_tests, SetPgSet1) {
+	ts_t ts {3_bt,d::q};
+	std::vector<d_t> vdt {d::h,d::q,d::e};
+	std::vector<beat_t> vph {0_bt,0_bt,0_bt};
+	teejee tg {ts,vdt,vph};
+	tmetg_t mg {ts,vdt,vph};
+
+	int Ntest = 100;
+	auto newp = urandd(Ntest,0,2);
+	auto btidx = urandi(Ntest,0,nbeat(tg.ts(),tg.period())/tg.gres()-1);
+	auto rowidx = urandi(Ntest,0,mg.levels().size()-1);
+	for (int i=0; i<btidx.size(); ++i) {
+		auto curr_bt = tg.gres()*btidx[i];
+		auto curr_lvl = mg.levels()[rowidx[i]];
+		if (newp[i] < 1) {newp[i] = 0.0;}
+		auto tf = mg.set_pg(curr_lvl,curr_bt,newp[i]);
+		EXPECT_TRUE(mg.validate());
+		if (!tf) { continue; }
+
+		if (newp[i] == 0.0) {
+			EXPECT_FALSE(mg.onset_allowed_at(curr_lvl.nv, curr_bt));
+		}
+	}
+}
 
 
 

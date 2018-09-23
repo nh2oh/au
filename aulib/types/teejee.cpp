@@ -133,11 +133,12 @@ beat_t teejee::step2bt(const int step) const {
 
 // True => the grid can be sliced [some_initial_beat, beat)
 bool teejee::factors_at(const beat_t beat) const {
-	int n = 0;
 	for (const auto& e : m_levels) {
-		n += onset_allowed_at(bt2reducedbt(beat));
+		if (!onset_allowed_at(e,bt2reducedbt(beat))) {
+			return false;
+		}
 	}
-	return (n == m_levels.size());
+	return true;
 }
 
 // Note that if the input does not lie on the grid (that is, is not a
@@ -190,7 +191,7 @@ bool teejee::spans_bar(const beat_t beat, const d_t nv) const {
 	beat_t btnum_nxt_bar = std::ceil(beat/m_ts.beats_per_bar())*m_ts.beats_per_bar();
 	if (btnum_nxt_bar == beat) {btnum_nxt_bar += m_ts.beats_per_bar(); }
 
-	return (btnum_nxt_bar >= beat+nbeat(m_ts,nv));
+	return (btnum_nxt_bar < beat+nbeat(m_ts,nv));
 }
 bool teejee::ismember(const d_t nv) const {
 	for (const auto& e : m_levels) {

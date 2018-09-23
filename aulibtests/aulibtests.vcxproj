@@ -45,6 +45,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="randrp_metg_test.cpp" />
+    <ClCompile Include="tg_t_test.cpp" />
     <ClCompile Include="tmetg_t_test.cpp" />
     <ClCompile Include="ts_t_test.cpp" />
   </ItemGroup>

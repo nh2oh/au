@@ -7,60 +7,52 @@
 #include <vector>
 #include <string>
 
-
-
-
-
-
 //
-// Class tmetg_t
+// Class metg_t
 //
 // Probabilistic representation of an rp _and_ a corresponding tg to which
-// it must align.  The tg is a function only of the ts and set of nv_t's and
-// phases.  It is not represented explictly in the object.  The rp is
-// represented by a pg which must align to the tg.  This is not actually that
-// severe a constraint, since an nv_t of a given duration occuring at a
-// beat that would otherwise be illegal can be made legal by including in in
-// the nvsph set with an appropriate phase offset.  
-// The tg is represented as m_ts, m_nvsph, m_btres and m_period.  
-// Data members m_btstart, m_btend indicate tg beat-numbers for the cols of 
-// the pg.  These data members exist only to align the pg to the tg.  
-// TODO:  Then is m_btend redundant???
+// it must align.  The tg is a function only of the ts and the set of nv_t's
+// and phases.  
 //
-// pg properties
-// - For any beat (col), all nonzero entries point into different beats (a
-//   consequence of the uniqueness of the elements of m_nvsph).  
-//   -- Probabilities are normalized, each col has the same number of rows 
-//      as m_nvsph, ...
-// - A pg may or may not be extendable:  There is no requirement that full
-//   or partial concatenations to itself align to the tg.  For example, the
-//   object may be representing only a segment of an rp.  
-// - It is also possible that a pg spanning a noninteger number of m_peroid
-//   beats may be extendable.  The pg may specify 0 for the probability of
-//   certain nvsph elements such that the period is less than calculated by
-//   the tg.  
-//   m_f_pg_extends, pg_extends() reads this.  
+// The rp is represented by m_pg, an m_tg.levels().size()xn array of doubles 
+// which represent the probability of finding element m_tg.levels()[r] at 
+// beat-number c over the other elements in m_tg.levels() elligible to occur 
+// at c.  Nonzero elements r* in m_pg[c-bt2step(m_btstart)] must belong to the 
+// set m_tg.which_allowed_at(step2bt(c)).  
+// That is, for all c, r* for which:
+//     m_pg[c-bt2step(m_btstart)][r*] > 0,
+//     m_tg.onset_allowed_at(m_tg.levels()[r*],step2bt(c)) == true
+//
+// Although the tg is extendable, m_pg may not be.  A default constructed 
+// metg_t has a random pg spanning exactly 1 m_tg.period() and is therefore
+// extendable (and factorable wherever m_tg is factorable), however, a metg_t
+// can represent segments of otherwise extendable metg_t's, so may not be.  
+// For example, any indivdual metg_t's returned by factor() can not be
+// repeatedly concatenated to itself to generate a valid (m_tg-aligning) 
+// metg_t.  
+// Note that an m_pg need not span an integer number of m_tg.period()s to be
+// extendable.  An m_pg may be "simpler" than its m_tg, since it can specify
+// a probabiltiy of 0 for "troublesome" elements of m_tg.  
+//
+// m_pg properties
+// - For all c, m_pg[c].size() == m_tg.levels().size()
+// - For any c, all entries r*_i > 0 point into a c'_i > c, with no two c'_i
+//   the same (a consequence of the constraint that all members of m_tg must 
+//   be > d::z and unique).  
+// - For all c, the sum of m_pg[c][r] for 0 >= r > n == 0 or == 1.  
 //
 //
 
 
 // TODO:  
-// To implement rdurmetg(), rp_b(), etc, need to draw a distinction between 
-// the "tg" and the rp the object possibly represents.  
-// At present, the tg is "virtual" ... its members are m_btres, m_period, m_nvsph,
-// allowed_*(), levels_allowed().  
-//
-// TODO:
-// The user should be able to set m_btstart, and, if set by the user, the
-// tg calculation needs to take this into account
-//
-// TODO:  draw() ignores probabilities
+// TODO:  m_tg.period() might be > < the period applicable to m_pg.  Need to
+// calc and store this period.  
 //
 // TODO:  enumerate() needs to take limits... niter, max rps, max-mem... something
 //
 // TODO:  The probabilities returned by enumerate() are *probably* wrong
 //
-// TODO:  Operator== is probably broken:  the m_pg comparison loop won't work
+// 
 
 
 struct tmetg_t_opts {
@@ -77,51 +69,46 @@ public:
 		double p {1.0};
 		size_t n {0};
 	};
-	using nvs_ph = teejee::nv_ph;
-
-	
 
 	tmetg_t() = delete;
 	tmetg_t(ts_t, rp_t);
 	explicit tmetg_t(ts_t,std::vector<d_t>,std::vector<beat_t>); // ts, dp, ph
 
-	tmetg_t slice(beat_t, beat_t) const;
-	std::vector<tmetg_t> factor() const;
-
-	//  Random rp generation
-	void set_pg_random(int = 0);  // argument => mode
-	void set_pg_zero(beat_t);
-	std::vector<d_t> draw() const;  // Generate a random rp
-	std::vector<rpp> enumerate() const;  // Generate all possible rp's
-
-	bool onset_allowed_at(beat_t) const;  // => pg
-	bool onset_allowed_at(d_t, beat_t) const;  // => pg
-	bool span_possible(bar_t) const;
-	bool span_possible(beat_t) const;
-
+	// Getters
+	bar_t nbars() const;
+	ts_t ts() const;
+	std::vector<teejee::nv_ph> levels() const;  // passthrough to m_tg.levels()
+	bool onset_allowed_at(beat_t) const;  // beat-number, not number-of-beats
+	bool onset_allowed_at(d_t, beat_t) const;  // d_t must be a member @ beat-number
+	bool span_possible(beat_t) const;  // number-of-beats, not beat-number
+	bool span_possible(bar_t) const;  // number-of-bars, not bar-number
 	std::string print() const;
 	std::string print_pg() const;
 	std::string print_tg() const;
-	bar_t nbars() const;
-	ts_t ts() const;
-	std::vector<nvs_ph> levels() const;
-
 	bool validate() const;
 
+	tmetg_t slice(beat_t, beat_t) const;  // Extends and/or truncates
+	std::vector<tmetg_t> factor() const;
+
+	std::vector<d_t> draw() const;  // Generate a random rp
+	std::vector<rpp> enumerate() const;  // Generate all possible rp's
+
+	// Setters
+	void set_pg_random(int = 0);  // argument => mode
+	void set_pg_zero();
+	bool set_pg(teejee::nv_ph,beat_t,double);
+	bool set_pg(teejee::nv_ph,beat_t,std::vector<double>);
+
+	// Operators
 	bool operator==(const tmetg_t&) const;
 private:
+	// Data
 	teejee m_tg {};
-	
-	beat_t m_btstart {0.0};  // If representing a sub-rp...
-
-	// Probability grid m_pg
 	std::vector<std::vector<double>> m_pg {};  // m_pg[col][row]
-		// m_pg.size() == whatever, m_pg[c].size() == m_nvsph.size() for all c.  
-	bool m_f_pg_extends {true};  
+	beat_t m_btstart {0.0};
+	bool m_f_pg_extends {true};
 
-	//----------------------------------------------------------------------------
 	// Methods
-
 	int bt2step(beat_t) const;  // bt number -> m_pg col idx
 	beat_t step2bt(int) const;  // m_pg col idx -> bt number
 	int bt2stride(beat_t) const;  // number-of-bts -> number-of-steps
@@ -129,8 +116,12 @@ private:
 	int level2stride(int) const;  // number-of-steps per unit of given level idx
 	int nvph2level(const teejee::nv_ph&) const;
 
-	bool pg_extends() const;  // Should == m_f_pg_extends, but does not set.  
-	std::vector<std::vector<int>> zero_pointers() const;  // [c,r] of zp's in m_pg
+	void init_pg(beat_t);
+
+	bool pg_extends() const;  // Does not set m_f_pg_extends.  
+	int pg_min_period() const;
+	bool internal_zero_pointers(const std::vector<std::vector<double>>&) const;
+	bool internal_orphans(const std::vector<std::vector<double>>&) const;
 	std::vector<std::vector<double>> extend_pg(beat_t, beat_t) const;
 
 	struct enumerator_pgcell {  // Used internally by m_enumerator()
@@ -139,7 +130,7 @@ private:
 		double lgp {0.0};
 	};
 	struct nvp_p { // "note-value pointer with probability"
-		std::vector<int> rp {};
+		std::vector<int> rp {};  // Idxs of m_tg.levels()
 		double p {1.0};
 	};
 	void m_enumerator(std::vector<nvp_p>&, 
