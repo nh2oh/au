@@ -364,5 +364,243 @@ TEST(metg_t_tests, SetPgByRowAllZeroSet1) {
 }
 
 
+// 4/4, w,h,q => Period = 1 bar
+// Tests of functionality that does not involve modifying the pg
+TEST(metg_t_tests, FourFourW0H0Q0Z0) {
+	ts_t ts {4_bt,d::q};
+	std::vector<d_t> vdt {d::w,d::h,d::q};
+	std::vector<beat_t> vph {0_bt,0_bt,0_bt};
+	tmetg_t mg {ts,vdt,vph};
+	EXPECT_TRUE(mg.validate());
+	EXPECT_TRUE(mg.nbars()==1_br);
+	EXPECT_TRUE(mg.ts()==ts);
 
+	// Slice() and factor()
+	EXPECT_TRUE(mg.factor().size() == 1);  // Does not factor
+		EXPECT_TRUE(mg.factor()[0] == mg);
+	auto mg2x = mg.slice(0_bt,8_bt);  // Exactly 2 periods
+	EXPECT_TRUE(mg2x.validate());
+	EXPECT_TRUE(mg2x.nbars()==2_br);
+	EXPECT_TRUE(mg2x.ts()==ts);
+	EXPECT_TRUE(mg2x.factor().size() == 2);  // Expect will factor into 2 mg's
+		EXPECT_TRUE(mg2x.factor()[0] == mg);
+		EXPECT_FALSE(mg2x.factor()[1] == mg);  // [i].m_btstart==4, mg.m_btstart==0
+
+	// Onsets are allowed @ every beat, but not between beats (=> tg.gres()==1bt)
+	for (int i=-50; i<50; ++i) {
+		beat_t curr_bt {0.5*i};
+		bar_t curr_bar = nbar(ts,curr_bt);
+		// .onset_allowed_at(beat-number) and .onset_allowed_at(d_t,beat-number)
+		if (aprx_int_gtest(curr_bt/1_bt)) {
+			EXPECT_TRUE(mg.onset_allowed_at(curr_bt));
+			EXPECT_TRUE(mg.onset_allowed_at(d_t{d::q},curr_bt));
+		} else {
+			EXPECT_FALSE(mg.onset_allowed_at(curr_bt));
+			EXPECT_FALSE(mg.onset_allowed_at(d_t{d::q},curr_bt));
+		}
+		if (aprx_int_gtest(curr_bar/1_br)) {
+			EXPECT_TRUE(mg.onset_allowed_at(d_t{d::w},curr_bt));
+		} else {
+			EXPECT_FALSE(mg.onset_allowed_at(d_t{d::w},curr_bt));
+		}
+		if (aprx_int_gtest(curr_bt/2_bt)) {
+			EXPECT_TRUE(mg.onset_allowed_at(d_t{d::h},curr_bt));
+		} else {
+			EXPECT_FALSE(mg.onset_allowed_at(d_t{d::h},curr_bt));
+		}
+
+		// .span_possible(number-of-beats) and .span_possible(number-of-bars)
+		if (curr_bt < 0_bt) {
+			EXPECT_FALSE(mg.span_possible(curr_bt));
+			EXPECT_FALSE(mg.span_possible(curr_bar));
+		} else if (curr_bt >= 0_bt && aprx_int_gtest(curr_bt/1_bt)) {
+			EXPECT_TRUE(mg.span_possible(curr_bt));
+			EXPECT_TRUE(mg.span_possible(curr_bar));
+		}
+	}
+
+	// enumerate()
+	// 5 rp's total:  w; h,h; h,q,q; q,q,h; q,q,q,q
+	auto allrps_rpp = mg.enumerate();
+	std::vector<std::vector<d_t>> allrps_rp {};
+	for (int i=0; i<allrps_rpp.size(); ++i) {
+		allrps_rp.push_back(allrps_rpp[i].rp);
+	}
+	std::vector<std::vector<d_t>> allrps_ans {{d::w},{d::h,d::h},{d::q,d::q,d::h},
+		{d::h,d::q,d::q},{d::q,d::q,d::q,d::q}};
+	EXPECT_TRUE(allrps_rp.size() == allrps_ans.size());
+	for (int i=0; i<allrps_ans.size(); ++i) {
+		EXPECT_TRUE(std::find(allrps_rp.begin(),allrps_rp.end(),allrps_ans[i]) != allrps_rp.end());
+	}
+
+	// draw() should always pull from the allrps_ans set
+	for (int i=0; i<50; ++i) {
+		auto curr_rrp = mg.draw();
+		EXPECT_TRUE(std::find(allrps_ans.begin(),allrps_ans.end(),curr_rrp) != allrps_ans.end());
+	}
+}
+
+
+
+// 4/4; w,h,q; 1 bt phase shift applied to w => Period = 1 bar, but the
+// rp containing the w note == 1.25 bars and is longer than all the others.  
+// Tests of functionality that does not involve modifying the pg
+TEST(metg_t_tests, FourFourW1H0Q0) {
+	ts_t ts {4_bt,d::q};
+	std::vector<d_t> vdt {d::w,d::h,d::q};
+	std::vector<beat_t> vph {1_bt,0_bt,0_bt};
+	tmetg_t mg {ts,vdt,vph};
+	EXPECT_TRUE(mg.validate());
+	// EXPECT_TRUE(mg.nbars()==1_br);  // Not true for all enumerations
+	EXPECT_TRUE(mg.ts()==ts);
+
+	// Slice() and factor()
+	EXPECT_TRUE(mg.factor().size() == 1);  // Does not factor
+		EXPECT_TRUE(mg.factor()[0] == mg);
+	auto mg2x = mg.slice(0_bt,8_bt);  // Exactly 2 periods
+	EXPECT_TRUE(mg2x.validate());
+	// EXPECT_TRUE(mg2x.nbars()==2_br);  // Not true for all enumerations
+	EXPECT_TRUE(mg2x.ts()==ts);
+	EXPECT_TRUE(mg2x.factor().size() == 1);  // Should not factor
+		EXPECT_TRUE(mg2x.factor()[0] == mg2x);
+
+	// Onsets are allowed @ every beat, but not between beats (=> tg.gres()==1bt)
+	for (int i=-50; i<50; ++i) {
+		beat_t curr_bt {0.5*i};
+		bar_t curr_bar = nbar(ts,curr_bt);
+		// .onset_allowed_at(beat-number) and .onset_allowed_at(d_t,beat-number)
+		if (aprx_int_gtest(curr_bt/1_bt)) {
+			EXPECT_TRUE(mg.onset_allowed_at(curr_bt));
+			EXPECT_TRUE(mg.onset_allowed_at(d_t{d::q},curr_bt));
+		} else {
+			EXPECT_FALSE(mg.onset_allowed_at(curr_bt));
+			EXPECT_FALSE(mg.onset_allowed_at(d_t{d::q},curr_bt));
+		}
+		if (aprx_int_gtest((curr_bar-0.25_br)/1_br)) {
+			EXPECT_TRUE(mg.onset_allowed_at(d_t{d::w},curr_bt));
+		} else {
+			EXPECT_FALSE(mg.onset_allowed_at(d_t{d::w},curr_bt));
+		}
+		if (aprx_int_gtest(curr_bt/2_bt)) {
+			EXPECT_TRUE(mg.onset_allowed_at(d_t{d::h},curr_bt));
+		} else {
+			EXPECT_FALSE(mg.onset_allowed_at(d_t{d::h},curr_bt));
+		}
+
+		// .span_possible(number-of-beats) and .span_possible(number-of-bars)
+		if (curr_bt < 0_bt) {
+			EXPECT_FALSE(mg.span_possible(curr_bt));
+			EXPECT_FALSE(mg.span_possible(curr_bar));
+		} else if (curr_bt >= 0_bt && aprx_int_gtest(curr_bt/1_bt)) {
+			EXPECT_TRUE(mg.span_possible(curr_bt));
+			EXPECT_TRUE(mg.span_possible(curr_bar));
+		}
+	}
+
+	// enumerate()
+	// 5 rp's total:  h,h; h,q,q; q,q,h; q,w; q,q,q,q
+	auto allrps_rpp = mg.enumerate();
+	std::vector<std::vector<d_t>> allrps_rp {};
+	for (int i=0; i<allrps_rpp.size(); ++i) {
+		allrps_rp.push_back(allrps_rpp[i].rp);
+	}
+	std::vector<std::vector<d_t>> allrps_ans {{d::q,d::w},{d::h,d::h},{d::q,d::q,d::h},
+		{d::h,d::q,d::q},{d::q,d::q,d::q,d::q}};
+	EXPECT_TRUE(allrps_rp.size() == allrps_ans.size());
+	for (int i=0; i<allrps_ans.size(); ++i) {
+		EXPECT_TRUE(std::find(allrps_rp.begin(),allrps_rp.end(),allrps_ans[i]) != allrps_rp.end());
+	}
+
+	// draw() should always pull from the allrps_ans set
+	for (int i=0; i<50; ++i) {
+		auto curr_rrp = mg.draw();
+		EXPECT_TRUE(std::find(allrps_ans.begin(),allrps_ans.end(),curr_rrp) != allrps_ans.end());
+	}
+}
+
+
+// 4/4; w,h,q; 0.5 bt phase shift applied to w => Period = 1 bar, but the
+// rp containing the w note == 1.125 bars and is longer than all the others.  
+// This w note is an orphan and will never appear in an rp.  
+// Tests of functionality that does not involve modifying the pg
+TEST(metg_t_tests, FourFourW05H0Q0) {
+	ts_t ts {4_bt,d::q};
+	std::vector<d_t> vdt {d::w,d::h,d::q};
+	std::vector<beat_t> vph {0.5_bt,0_bt,0_bt};
+	tmetg_t mg {ts,vdt,vph};
+	EXPECT_TRUE(mg.validate());
+	// EXPECT_TRUE(mg.nbars()==1_br);  // Not true for all enumerations
+	EXPECT_TRUE(mg.ts()==ts);
+
+	// Slice() and factor()
+	EXPECT_TRUE(mg.factor().size() == 1);  // Does not factor
+		EXPECT_TRUE(mg.factor()[0] == mg);
+	auto mg2x = mg.slice(0_bt,8_bt);  // Exactly 2 periods
+	EXPECT_TRUE(mg2x.validate());
+	// EXPECT_TRUE(mg2x.nbars()==2_br);  // Not true for all enumerations
+	EXPECT_TRUE(mg2x.ts()==ts);
+	EXPECT_TRUE(mg2x.factor().size() == 1);  // Should not factor
+		EXPECT_TRUE(mg2x.factor()[0] == mg2x);
+
+	// Onsets are allowed @ every beat and at every beat that is a multiple of
+	// nbeat(ts,d::w)+0.5_bt, which is where the w note occurs.  
+	for (int i=-50; i<50; ++i) {
+		beat_t curr_bt {0.25*i};  // Note:  Smaller than usual step-resolution of 0.25
+		bar_t curr_bar = nbar(ts,curr_bt);
+		// .onset_allowed_at(beat-number) and .onset_allowed_at(d_t,beat-number)
+		//curr_bt=4.5_bt;
+		bool tf = mg.onset_allowed_at(curr_bt);
+		if (aprx_int_gtest(curr_bt/1_bt) || aprx_int_gtest((curr_bt-0.5_bt)/nbeat(ts,d_t{d::w}))) {
+			EXPECT_TRUE(mg.onset_allowed_at(curr_bt));
+		} else {
+			EXPECT_FALSE(mg.onset_allowed_at(curr_bt));
+		}
+
+		tf = mg.onset_allowed_at(d_t{d::w},curr_bt);
+		if (aprx_int_gtest((curr_bt-0.5_bt)/nbeat(ts,d_t{d::w}))) {
+			EXPECT_TRUE(mg.onset_allowed_at(d_t{d::w},curr_bt));
+		} else {
+			EXPECT_FALSE(mg.onset_allowed_at(d_t{d::w},curr_bt));
+		}
+		if (aprx_int_gtest(curr_bt/2_bt)) {
+			EXPECT_TRUE(mg.onset_allowed_at(d_t{d::h},curr_bt));
+		} else {
+			EXPECT_FALSE(mg.onset_allowed_at(d_t{d::h},curr_bt));
+		}
+		if (aprx_int_gtest(curr_bt/1_bt)) {
+			EXPECT_TRUE(mg.onset_allowed_at(d_t{d::q},curr_bt));
+		} else {
+			EXPECT_FALSE(mg.onset_allowed_at(d_t{d::q},curr_bt));
+		}
+
+		// .span_possible(number-of-beats) and .span_possible(number-of-bars)
+		if (curr_bt < 0_bt) {
+			EXPECT_FALSE(mg.span_possible(curr_bt));
+			EXPECT_FALSE(mg.span_possible(curr_bar));
+		} else if (curr_bt >= 0_bt && aprx_int_gtest(curr_bt/1_bt)) {
+			EXPECT_TRUE(mg.span_possible(curr_bt));
+			EXPECT_TRUE(mg.span_possible(curr_bar));
+		}
+	}
+
+	// enumerate()
+	// 4 rp's total:  h,h; h,q,q; q,q,h; q,q,q,q
+	auto allrps_rpp = mg.enumerate();
+	std::vector<std::vector<d_t>> allrps_rp {};
+	for (int i=0; i<allrps_rpp.size(); ++i) {
+		allrps_rp.push_back(allrps_rpp[i].rp);
+	}
+	std::vector<std::vector<d_t>> allrps_ans {{d::h,d::h},{d::q,d::q,d::h},
+		{d::h,d::q,d::q},{d::q,d::q,d::q,d::q}};
+	EXPECT_TRUE(allrps_rp.size() == allrps_ans.size());
+	for (int i=0; i<allrps_ans.size(); ++i) {
+		EXPECT_TRUE(std::find(allrps_rp.begin(),allrps_rp.end(),allrps_ans[i]) != allrps_rp.end());
+	}
+
+	// draw() should always pull from the allrps_ans set
+	for (int i=0; i<50; ++i) {
+		auto curr_rrp = mg.draw();
+		EXPECT_TRUE(std::find(allrps_ans.begin(),allrps_ans.end(),curr_rrp) != allrps_ans.end());
+	}
+}
 

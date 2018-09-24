@@ -174,6 +174,9 @@ int tmetg_t::level2stride(int lvl) const {
 // True if at least one m_tg.level() that can occur at beat_number.  If
 // m_f_pg_extends==true, m_pg is interpreted as being infinitely long.  
 bool tmetg_t::onset_allowed_at(beat_t beat_number) const {
+	if (!aprx_int(beat_number/m_tg.gres())) {
+		return false;
+	}
 	int c = bt2step(beat_number);
 	if (c >= m_pg.size() && !m_f_pg_extends) { return false; }
 
@@ -189,6 +192,9 @@ bool tmetg_t::onset_allowed_at(beat_t beat_number) const {
 // True if nv is a member (with any phase) and can occur at the given beat.  
 // If m_f_pg_extends==true, m_pg is interpreted as being infinitely long.  
 bool tmetg_t::onset_allowed_at(d_t nv, beat_t beat_number) const {
+	if (!aprx_int(beat_number/m_tg.gres())) {
+		return false;
+	}
 	int c = bt2step(beat_number);
 	if (c >= m_pg.size() && !m_f_pg_extends) { return false; }
 
@@ -310,9 +316,16 @@ std::vector<d_t> tmetg_t::draw() const {
 
 
 // Factors the pg, if possible.  
+//
 // To be factorable, the pg must contain one or more cols which no prior
 // elements point *over.*  rp's generated from the members of the result 
 // can be concatenated to produce rp's valid under the parent.  
+// It follows that all rp's generated from the first elements returned will
+// all be exactly the same length.  However, since the end of the pg is tacked 
+// on as the last element, factor().back().enumerate() may contain rps of
+// varying length if the pg cotnains elements pointing off the end.  
+// Example:  tmetg_t(ts_t{4_bt,d::q},{d::w,d::h,d::q},{1_bt,0_bt,0_bt});
+//
 std::vector<tmetg_t> tmetg_t::factor() const {
 	std::vector<std::vector<int>> col_ptrs {};  // col idxs pointed at by all elements of row r. 
 	std::vector<int> cmn_ptrs {}; // "common pointers;" col_ptrs common between all rows
@@ -331,6 +344,9 @@ std::vector<tmetg_t> tmetg_t::factor() const {
 				temp_cmn_ptrs.begin(),temp_cmn_ptrs.end(), std::back_inserter(cmn_ptrs));
 		}
 	}
+	if (cmn_ptrs.size() == 0) {
+		return std::vector<tmetg_t> {*this};
+	}
 
 	std::vector<tmetg_t> slices {};
 	beat_t curr_bt = m_btstart;
@@ -340,6 +356,7 @@ std::vector<tmetg_t> tmetg_t::factor() const {
 		curr_bt = step2bt(e);
 	}
 	if (cmn_ptrs.back() < m_pg.size()) {
+		// Append the last segment of the pg even if not spanned by a cmn_ptr
 		slices.push_back(slice(curr_bt,m_pg.size()*m_tg.gres()));
 	}
 
@@ -407,11 +424,14 @@ std::vector<tmetg_t::rpp> tmetg_t::enumerate() const {
 	// corresponding element in m_pg.  
 	int N_tot_guess = 1;  // A crude guess @ the tot. # of rp's
 	std::vector<std::vector<enumerator_pgcell>> g {};
-	for (auto e : m_pg) {
+	for (int c=0; c<m_pg.size(); ++c) {
 		std::vector<enumerator_pgcell> c_nz {};  // "col nonzero"
-		for (int i=0; i<e.size(); ++i) { //auto ee : e) {
-			if (e[i] == 0.0) { continue; }
-			c_nz.push_back({i,level2stride(i),std::log(e[i])});
+		for (int r=0; r<m_pg[c].size(); ++r) {
+			if (m_pg[c][r] == 0.0) { continue; }
+			// if (m_tg.spans_bar(step2bt(c),m_tg.levels()[r].nv)) { continue; }
+			// if (c+level2stride(r) > m_pg.size()) { continue; }
+				// Both could create 0-pointers, orphans, etc
+			c_nz.push_back({r,level2stride(r),std::log(m_pg[c][r])});
 		}
 		std::sort(c_nz.begin(),c_nz.end(),
 			[](const enumerator_pgcell& a, const enumerator_pgcell& b){return a.lgp>b.lgp;});
@@ -425,7 +445,7 @@ std::vector<tmetg_t::rpp> tmetg_t::enumerate() const {
 
 	int N = 0;  // The # of rps actually generated
 	int x = 0;
-	m_enumerator(rps_all,g,N,x);
+	m_enumerator2(rps_all,g,N,x);
 
 	auto levels = m_tg.levels();
 	std::vector<rpp> rps {};
@@ -442,7 +462,8 @@ std::vector<tmetg_t::rpp> tmetg_t::enumerate() const {
 	return rps;
 }
 
-
+// Does _not_ allow terminal rp elements to point beyond the grid.  See also 
+// m_enumerator2(), which is probably a better choice of implementation.  
 void tmetg_t::m_enumerator(std::vector<nvp_p>& rps, 
 	std::vector<std::vector<enumerator_pgcell>> const& g, int& N, int x) const {
 	if (N >= (rps.size()-1)) { return; }
@@ -496,7 +517,9 @@ void tmetg_t::m_enumerator(std::vector<nvp_p>& rps,
 	}
 }
 
-
+// Naive walker.  Allows terminal rp elements to point beyond the grid.  This
+// is probably the correct way to implement the enumerator:  If "overpointers"
+// are to be avoided, this can be done in the prep phase where g is constructed.  
 void tmetg_t::m_enumerator2(std::vector<nvp_p>& rps, 
 	std::vector<std::vector<enumerator_pgcell>> const& g, int& N, int x) const {
 	if (N >= (rps.size()-1)) { return; }
@@ -510,12 +533,10 @@ void tmetg_t::m_enumerator2(std::vector<nvp_p>& rps,
 		if (nx < g.size()) {
 			// Re-enter, passing nx in place of x.  Note x does not change; when the
 			// call returns, it will have the same value as before the call.  
-			m_enumerator(rps,g,N,nx);
-		} else if (nx == g.size()) { // rps[N] spans the grid exactly
+			m_enumerator2(rps,g,N,nx);
+		} else if (nx >= g.size()) { // rps[N] spans the grid exactly
 			++N;
 		}
-
-		// If f_gspan_fatal, N is not incremented
 		rps[N] = rp_init;
 	}
 }
@@ -532,7 +553,7 @@ std::vector<teejee::nv_ph> tmetg_t::levels() const {
 }
 // A number-of-beats, not a beat-number.  
 bool tmetg_t::span_possible(beat_t nbeats) const {
-	if (!aprx_int(nbeats/m_tg.gres())) {
+	if (nbeats < 0_bt || !aprx_int(nbeats/m_tg.gres())) {
 		return false;
 	}
 
@@ -621,7 +642,9 @@ bool tmetg_t::validate() const {
 	return true;
 }
 
-
+// mg's w/ identical m_pg and m_tg but different m_btstarts *could* compare
+// == if m_btstart in both cases is a multiple of the span of the pg... presently
+// however, such cases will compate !=.  
 bool tmetg_t::operator==(const tmetg_t& rhs) const {
 	if (!(m_tg == rhs.m_tg)) { return false; }
 	if (m_btstart != rhs.m_btstart) { return false; }

@@ -10,6 +10,17 @@
 //
 // Class teejee
 //
+// Note that in general not all traversals of the grid will yield rp's of the
+// same length.  For example, d_t = {d::w, d::h, d::q}; ph = {1_bt, 0_bt, 0_bt}
+// yields a grid like:
+//     0 1 0 0 |
+//     1 0 1 0 |
+//     1 1 1 1 |
+// The single rp containing the w note, {q,w}, spans the bar, but all other rp's
+// are exactly 1 bar long.  
+// 
+//
+//
 class teejee {
 public:
 	class nv_ph {  // Must be public b/c returned by levels()

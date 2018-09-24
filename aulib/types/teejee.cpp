@@ -148,10 +148,10 @@ beat_t teejee::bt2reducedbt(const beat_t beat) const {
 }
 
 // The number of possible rp's spanning 1 period
-// TODO:  Wrong, probably.  
+// TODO:  Wrong  
 int teejee::count() const {
 	int ncols = m_period/m_btres;
-	int n_tot = 0;
+	int n_tot = 1;
 	for (int i=0; i<ncols; ++i) {
 		int n = 0;
 		for (int j=0; j<m_levels.size(); ++j) {
@@ -160,7 +160,7 @@ int teejee::count() const {
 		n_tot *= std::max(n,1);
 	}
 
-	return 0;
+	return n_tot;
 }
 
 std::vector<teejee::nv_ph> teejee::which_allowed_at(const beat_t beat) const {
@@ -289,7 +289,7 @@ beat_t teejee::gres() const {
 // m_btres being correctly set!
 //
 // The period is the smallest number of beats able to contain an integer 
-// number of all emmbers of m_levels as well as m_ts.bar_unit().  This 
+// number of all members of m_levels as well as m_ts.bar_unit().  This 
 // will usually larger than the smallest repeating subunit of the grid.  
 // For example, for m_levels containing d::h and d::q both w/ zero phase,
 // the smallest repeating unit is 2 beats, but m_period == 4 beats, since

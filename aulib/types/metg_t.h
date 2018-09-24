@@ -50,8 +50,8 @@
 //
 // TODO:  enumerate() needs to take limits... niter, max rps, max-mem... something
 //
-// TODO:  The probabilities returned by enumerate() are *probably* wrong
-//
+// TODO:  Where ph's !=0 bar spanning elements mean nbars() is not correct for all
+// rps
 // 
 
 
