@@ -37,7 +37,8 @@ rp_t randrp_metg(tmetg_t mg, int nnts, bar_t nbars) {
 		size_t max_nnts {};
 		std::vector<tmetg_t::rpp> rpp {};  // Holds the result of enumerate()
 	};
-	auto mgsplit = mg.factor();
+	auto mgexact = mg; mgexact.set_length_exact(nbeat(mg.ts(),nbars));
+	auto mgsplit = mgexact.factor();
 
 	std::vector<rpset_nbars> rps {};
 	for (size_t i=0; i<mgsplit.size(); ++i) {

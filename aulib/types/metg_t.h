@@ -52,8 +52,16 @@
 //
 // TODO:  Where ph's !=0 bar spanning elements mean nbars() is not correct for all
 // rps
+//
+// TODO:  Does validate() check for zero-pointers??  orphans??
 // 
-
+// TODO:  
+// Some of:
+//   bool pg_extends() const;  // Does not set m_f_pg_extends.  
+//   pg_min_period(), internal_zero_pointers(), internal_orphans(),
+//   extend_pg(beat_t, beat_t), set_pg_length_exact(), normalize_pg();
+// modify m_pg, others take a vec<vec<double>> and return a vec<vec<double>>, others
+// just return bool... it's inconsistent.  
 
 struct tmetg_t_opts {
 	bool barspan {false};
@@ -73,6 +81,9 @@ public:
 	tmetg_t() = delete;
 	tmetg_t(ts_t, rp_t);
 	explicit tmetg_t(ts_t,std::vector<d_t>,std::vector<beat_t>); // ts, dp, ph
+	explicit tmetg_t(ts_t,std::vector<teejee::nv_ph>,
+		std::vector<std::vector<double>>);
+		// Manually specify the whole pg
 
 	// Getters
 	bar_t nbars() const;
@@ -87,9 +98,12 @@ public:
 	std::string print_tg() const;
 	bool validate() const;
 
+	// Setters
 	tmetg_t slice(beat_t, beat_t) const;  // Extends and/or truncates
 	std::vector<tmetg_t> factor() const;
+	bool set_length_exact(beat_t);
 
+	// Samplers
 	std::vector<d_t> draw() const;  // Generate a random rp
 	std::vector<rpp> enumerate() const;  // Generate all possible rp's
 
@@ -99,6 +113,7 @@ public:
 	bool set_pg(teejee::nv_ph,beat_t,double);
 	bool set_pg(beat_t,std::vector<double>);  // Set a whole col
 	bool set_pg(teejee::nv_ph,std::vector<double>);  // Set a whole row
+	
 
 	// Operators
 	bool operator==(const tmetg_t&) const;
@@ -123,7 +138,10 @@ private:
 	int pg_min_period() const;
 	bool internal_zero_pointers(const std::vector<std::vector<double>>&) const;
 	bool internal_orphans(const std::vector<std::vector<double>>&) const;
+	
 	std::vector<std::vector<double>> extend_pg(beat_t, beat_t) const;
+	std::vector<std::vector<double>> set_pg_length_exact(std::vector<std::vector<double>>, beat_t) const;
+	bool normalize_pg();
 
 	struct enumerator_pgcell {  // Used internally by m_enumerator()
 		int level {0};  // Idx of m_tg.levels()

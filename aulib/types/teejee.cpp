@@ -81,6 +81,15 @@ teejee::teejee(const ts_t& ts, const std::vector<d_t>& nv,
 	m_period = calc_period();
 }
 
+//  TODO:  Unit tests for this constructor
+teejee::teejee(ts_t ts, std::vector<teejee::nv_ph> nvph) {
+	m_ts = ts;
+	m_levels = nvph;
+
+	m_btres = calc_gres();
+	m_period = calc_period();
+}
+
 teejee::teejee(const rp_t& rp) {
 	m_ts = rp.ts();
 	auto vdt = rp.to_duration_seq();

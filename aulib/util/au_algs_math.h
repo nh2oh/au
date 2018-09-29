@@ -162,3 +162,28 @@ int nearest_idx(T const& subject, std::vector<T> const& set) {
 	}
 	return nearest_elem_idx;
 };
+
+
+template <typename T>
+std::vector<std::vector<T>> transpose(const std::vector<std::vector<T>>& m) {
+	if (m.size() == 0) {
+		return std::vector<std::vector<T>> {};
+	}
+	auto n1 = m.size();  // 1 => "dimension 1"
+	auto n2 = m[0].size();  // 2 => "dimension 2"
+
+	std::vector<std::vector<T>> res(n2,std::vector<T>(n1, T{}));
+	for (auto i=0; i<n1; ++i) {
+		if (m[i].size() != n2) {
+			return std::vector<std::vector<T>> {};
+		}
+		for (auto j=0; j<n2; ++j) {
+			res[j][i] = m[i][j];
+		}
+	}
+
+	return res;
+}
+
+
+

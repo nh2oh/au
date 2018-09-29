@@ -44,7 +44,8 @@ public:
 
 	explicit teejee() = default;
 	explicit teejee(const ts_t&, const std::vector<d_t>&, 
-		const std::vector<beat_t>&); // ts, dp, phases, allow barspan
+		const std::vector<beat_t>&); // ts, dp, phases
+	explicit teejee(ts_t, std::vector<teejee::nv_ph>); // ts, nvph
 	explicit teejee(const rp_t&);
 
 	ts_t ts() const;

@@ -22,6 +22,22 @@ bool aprx_int_gtest(double a, int ulp=2) {
 	return aprx_eq_gtest(a, ra, ulp);
 };
 
+std::vector<std::vector<double>> transpose_gtest(const std::vector<std::vector<double>>& m) {
+	if (m.size() == 0) { return std::vector<std::vector<double>> {}; }
+	auto n1 = m.size();  // 1 => "dimension 1"
+	auto n2 = m[0].size();  // 2 => "dimension 2"
+
+	std::vector<std::vector<double>> res(n2,std::vector<double>(n1, 0.0));
+	for (auto i=0; i<n1; ++i) {
+		if (m[i].size() != n2) { return std::vector<std::vector<double>> {}; }
+		for (auto j=0; j<n2; ++j) {
+			res[j][i] = m[i][j];
+		}
+	}
+
+	return res;
+}
+
 
 // No phase shift
 TEST(metg_t_tests, ThreeFourZeroPhaseHQEdE) {
@@ -364,6 +380,73 @@ TEST(metg_t_tests, SetPgByRowAllZeroSet1) {
 }
 
 
+TEST(metg_t_tests, ConstructFromPgFourFourWHQThenSliceTo6bts) {
+	ts_t ts1 {4_bt,d::q};
+	teejee tg1 {ts1,{d::w,d::h,d::q},{0_bt,0_bt,0_bt}};
+
+	std::vector<std::vector<double>> pg1 {
+		{1,0,0,0},
+		{1,0,1,0},
+		{1,1,1,1}
+	};
+	auto pg1t = transpose_gtest(pg1);
+
+	tmetg_t mg1 {ts1,tg1.levels(),pg1t};
+	auto tf1 = mg1.validate();  EXPECT_TRUE(tf1);
+	EXPECT_TRUE(mg1.nbars() == 1_br);
+	EXPECT_TRUE(mg1.ts() == ts1);
+
+	auto mg2 = mg1.slice(0_bt,6_bt);
+	mg2.set_length_exact(6_bt);
+	auto tf2 = mg2.validate();  EXPECT_TRUE(tf2);
+	auto nb2 = mg2.nbars(); EXPECT_TRUE(nb2 == 1.5_br);
+	EXPECT_TRUE(mg2.ts() == ts1);
+
+	auto mg3=mg1; mg3.set_length_exact(6_bt);
+	auto tf3 = mg3.validate();  EXPECT_TRUE(tf3);
+	auto nb3 = mg3.nbars(); EXPECT_TRUE(nb3 == 1.5_br);
+	EXPECT_TRUE(mg3.ts() == ts1);
+
+	// Extension w/ slice(), then calling set_length_exact() should yield the same
+	// result as a single call to set_length_exact() (which calls slice() if the m_pg
+	// is too short).  
+	EXPECT_TRUE(mg2==mg3);
+}
+
+
+TEST(metg_t_tests, ConstructFromPgFourFourWHQThenSliceTo7bts) {
+	ts_t ts1 {4_bt,d::q};
+	teejee tg1 {ts1,{d::w,d::h,d::q},{0_bt,0_bt,0_bt}};
+
+	std::vector<std::vector<double>> pg1 {
+		{1,0,0,0},
+		{1,0,1,0},
+		{1,1,1,1}
+	};
+	auto pg1t = transpose_gtest(pg1);
+
+	tmetg_t mg1 {ts1,tg1.levels(),pg1t};
+	auto tf1 = mg1.validate();  EXPECT_TRUE(tf1);
+	EXPECT_TRUE(mg1.nbars() == 1_br);
+	EXPECT_TRUE(mg1.ts() == ts1);
+
+	auto mg2 = mg1.slice(0_bt,6_bt);
+	mg2.set_length_exact(6_bt);
+	auto tf2 = mg2.validate();  EXPECT_TRUE(tf2);
+	auto nb2 = mg2.nbars(); EXPECT_TRUE(nb2 == 1.5_br);
+	EXPECT_TRUE(mg2.ts() == ts1);
+
+	auto mg3=mg1; mg3.set_length_exact(6_bt);
+	auto tf3 = mg3.validate();  EXPECT_TRUE(tf3);
+	auto nb3 = mg3.nbars(); EXPECT_TRUE(nb3 == 1.5_br);
+	EXPECT_TRUE(mg3.ts() == ts1);
+
+	// Extension w/ slice(), then calling set_length_exact() should yield the same
+	// result as a single call to set_length_exact() (which calls slice() if the m_pg
+	// is too short).  
+	EXPECT_TRUE(mg2==mg3);
+}
+
 // Tests of functionality that does not involve modifying the pg
 TEST(metg_t_tests, FourFourWHQVaryingPhases) {
 	
@@ -491,134 +574,6 @@ TEST(metg_t_tests, FourFourWHQVaryingPhases) {
 	} // To next set in vector tsts
 }
 
-
-
-// Tests of functionality that does not involve modifying the pg
-TEST(metg_t_tests, FourFourWHQVaryingPhases) {
-
-	struct test_set {
-		ts_t ts {};
-		std::vector<d_t> vdt {};
-		std::vector<beat_t> vph {};
-
-		beat_t slice_to_beat {};
-		int beat_iter_start {};
-		int beat_iter_end {};
-		beat_t beat_iter_step {};
-		int niter_draw {};
-
-		int ans_factor_size {};
-		int ans_slice_factor_size {};
-		std::vector<std::vector<d_t>> ans_all_rps {};
-	};
-
-	std::vector<test_set> tsts {
-		{
-			ts_t {3_bt,d::q}, {d::w,d::h,d::q}, {0_bt,0_bt,0_bt},
-			8_bt, -50, 50, 0.25_bt, 50,
-			1, 2, {{d::w},{d::h,d::h},{d::q,d::q,d::h},{d::h,d::q,d::q},{d::q,d::q,d::q,d::q}}
-		},
-		{
-			// 4/4; w,h,q; 0.5 bt phase shift applied to w => Period = 1 bar, but the
-			// rp containing the w note == 1.125 bars and is longer than all the others.  
-			// This w note is an orphan and will never appear in an rp.  
-			ts_t {3_bt,d::q}, {d::w,d::h,d::q}, {0.5_bt,0_bt,0_bt},
-			16_bt, -50, 50, 0.25_bt, 50,
-			1, 1, {{d::h,d::h},{d::q,d::q,d::h},{d::h,d::q,d::q},{d::q,d::q,d::q,d::q}}
-		},
-		{
-			ts_t {3_bt,d::q}, {d::w,d::h,d::q}, {1_bt,0_bt,0_bt},
-			8_bt, -50, 50, 0.5_bt, 50, 
-			1, 1, {{d::q,d::w},{d::h,d::h},{d::q,d::q,d::h},{d::h,d::q,d::q},{d::q,d::q,d::q,d::q}}
-		},
-		{
-			// Shifting the w note _back_ by 3 bts should be the same as shifting it _forward_
-			// by 1 bt.  
-			ts_t {3_bt,d::q}, {d::w,d::h,d::q}, {-1*3_bt,0_bt,0_bt},
-			8_bt, -50, 50, 0.5_bt, 50, 
-			1, 1, {{d::q,d::w},{d::h,d::h},{d::q,d::q,d::h},{d::h,d::q,d::q},{d::q,d::q,d::q,d::q}}
-		},
-		{
-			// Shifting the w note _back_ by 16 bts should be the same as not shifting it
-			ts_t {4_bt,d::q}, {d::w,d::h,d::q}, {-1*16_bt,0_bt,0_bt},
-			8_bt, -50, 50, 0.25_bt, 50,
-			1, 2, {{d::w},{d::h,d::h},{d::q,d::q,d::h},{d::h,d::q,d::q},{d::q,d::q,d::q,d::q}}
-		}
-	};
-
-	for (int t=0; t<tsts.size(); ++t) {
-		auto ts = tsts[t].ts;
-		auto vdt = tsts[t].vdt;
-		auto vph = tsts[t].vph;
-		tmetg_t mg {ts,vdt,vph};
-		EXPECT_TRUE(mg.validate());
-
-		EXPECT_TRUE(mg.ts()==ts);
-
-		// Slice() and factor()
-		EXPECT_TRUE(mg.factor().size() == tsts[t].ans_factor_size);  
-		if (tsts[t].ans_factor_size == 1) { // Does not factor
-			EXPECT_TRUE(mg.factor()[0] == mg);
-		}
-		auto mgsl = mg.slice(0_bt,tsts[t].slice_to_beat);
-		EXPECT_TRUE(mgsl.validate());
-		EXPECT_TRUE(mgsl.ts()==ts);
-		EXPECT_TRUE(mgsl.factor().size() == tsts[t].ans_slice_factor_size);
-		if (tsts[t].ans_slice_factor_size == 1) { // Does not factor
-			EXPECT_TRUE(mgsl.factor()[0] == mgsl);
-		}
-
-		// Onsets are allowed @ every beat that is a multiple of (curr_bt-ph)/d_t
-		for (int i=tsts[t].beat_iter_start; i<tsts[t].beat_iter_end; ++i) {
-			auto curr_bt = tsts[t].beat_iter_step*i;
-			bar_t curr_bar = nbar(ts,curr_bt);
-
-			// .onset_allowed_at(beat-number) and .onset_allowed_at(d_t,beat-number)
-			bool tf_any_nv_onset_allowed = false;
-			for (int j=0; j<vdt.size(); ++j) {
-				bool tf = aprx_int_gtest((curr_bt-vph[j])/nbeat(ts,vdt[j]));
-				if (tf) {
-					EXPECT_TRUE(mg.onset_allowed_at(vdt[j],curr_bt));
-				} else {
-					EXPECT_FALSE(mg.onset_allowed_at(vdt[j],curr_bt));
-				}
-				tf_any_nv_onset_allowed = tf_any_nv_onset_allowed || tf;
-			}
-			if (tf_any_nv_onset_allowed) {
-				EXPECT_TRUE(mg.onset_allowed_at(curr_bt));
-			} else {
-				EXPECT_FALSE(mg.onset_allowed_at(curr_bt));
-			}
-
-			// .span_possible(number-of-beats) and .span_possible(number-of-bars)
-			if (curr_bt < 0_bt) {
-				EXPECT_FALSE(mg.span_possible(curr_bt));
-				EXPECT_FALSE(mg.span_possible(curr_bar));
-			} else if (curr_bt >= 0_bt && aprx_int_gtest(curr_bt/1_bt)) {
-				EXPECT_TRUE(mg.span_possible(curr_bt));
-				EXPECT_TRUE(mg.span_possible(curr_bar));
-			}
-		}
-
-		// enumerate()
-		auto allrps_rpp = mg.enumerate();
-		std::vector<std::vector<d_t>> allrps_rp {};
-		for (int i=0; i<allrps_rpp.size(); ++i) {
-			allrps_rp.push_back(allrps_rpp[i].rp);
-		}
-		auto allrps_ans = tsts[t].ans_all_rps; 
-		EXPECT_TRUE(allrps_rp.size() == allrps_ans.size());
-		for (int i=0; i<allrps_ans.size(); ++i) {
-			EXPECT_TRUE(std::find(allrps_rp.begin(),allrps_rp.end(),allrps_ans[i]) != allrps_rp.end());
-		}
-
-		// draw() should always pull from the allrps_ans set
-		for (int i=0; i<tsts[t].niter_draw; ++i) {
-			auto curr_rrp = mg.draw();
-			EXPECT_TRUE(std::find(allrps_ans.begin(),allrps_ans.end(),curr_rrp) != allrps_ans.end());
-		}
-	} // To next set in vector tsts
-}
 
 
 
