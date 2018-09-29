@@ -104,14 +104,8 @@ TEST(metg_t_tests, ThreeFourMultiPhaseShiftHQEdE) {
 			// nbeat(ts,e)/i is an integer.  
 			if (aprx_int_gtest((beat_t{i*0.25}-ph[j])/nbeat(ts,dt[j]))) {
 				EXPECT_TRUE(tf);
-				if (!tf) {
-					auto z  =1+1;
-				}
 			} else {
 				EXPECT_FALSE(tf);
-				if (tf) {
-					auto z  =1+1;
-				}
 			}
 		}
 	}
@@ -119,7 +113,7 @@ TEST(metg_t_tests, ThreeFourMultiPhaseShiftHQEdE) {
 
 
 // Creates an mg w/ all component nv's having ph = 0, then draw()'s an
-// rp 10x.  Each rp is concatenated and a new mg is created from this huge
+// rp 10x.  Each rp is concatenated and a new mg is created from this "huge"
 // rp.  draw() is called on the new mg, which should return an rp exactly
 // the same as the rp which created it.  
 TEST(metg_t_tests, ZeroPhaseBuildFromExistingRP) {
@@ -131,31 +125,41 @@ TEST(metg_t_tests, ZeroPhaseBuildFromExistingRP) {
 	// => m_btres = 0.25, m_period = 6bts = 2 bars
 	
 	// Generate a big random rp by repeatedly draw()ing from the mg
-	std::vector<d_t> rp {};
+	std::vector<d_t> vdt {};
 	for (int i=0; i<10; ++i) {  // 10 reps => 20 bars
 		auto curr_rp = mg.draw();
 		for (auto e : curr_rp) {
-			rp.push_back(e);
+			vdt.push_back(e);
 		}
 	}
 
-	// An mg created from an rp has a pg where element corresponding to the
-	// rp == 1.  Drawing an rp from the mg shoudl yield the same rp as 
-	// created it.  
-	tmetg_t mg2 {ts,rp_t{ts,rp}};
+	// An mg created from an rp has a pg where each element corresponding to the
+	// rp == 1.  Drawing an rp from the mg should therefore yield the same rp 
+	// as that which created it.  
+	// The new mg should also have the same levels() as the parent mg from which
+	// the rp was drawn().  This is a consequence of the fact that default-constructed
+	// mg's are extendable (that is, rp's can be concatenated).  Were this not true, 
+	// the mg generated from the rp could contain phase-shifted levels() of the
+	// parent mg.  
+	tmetg_t mg2 {ts,rp_t{ts,vdt}};
 	EXPECT_TRUE(mg2.validate());
-	auto rp2 = mg2.draw();
+	auto vdt2 = mg2.draw();
 
-	EXPECT_TRUE(rp.size() == rp2.size());
-	for (int i=0; i<rp.size(); ++i) {
-		EXPECT_TRUE(rp[i]==rp2[i]);
+	EXPECT_TRUE(vdt.size() == vdt2.size());
+	for (int i=0; i<vdt.size(); ++i) {
+		EXPECT_TRUE(vdt[i]==vdt2[i]);
 	}
+
+	EXPECT_TRUE(mg2!=mg); // mg2.m_pg is much larger than mg.m_pg
+	EXPECT_TRUE(mg2.levels()==mg.levels());
+
 }
 
 
-// Same as the test above, but the note durations are much smaller:
+// Same as the test above ("ZeroPhaseBuildFromExistingRP"), but the note durations
+// are much smaller:
 // 1/16 - 1/128.  The random rp is also much longer.  
-// Meant as a test of the floating-point ops that count bars, beats,
+// Meant as both a test of tmetg_t, but also the floating-point ops that count bars, beats,
 // etc.  
 TEST(metg_t_tests, ZeroPhaseBuildFromExistingRPSmallDurations) {
 	std::vector<d_t> dt {d::sx,d::t,d::sf,d::ote};
@@ -165,22 +169,25 @@ TEST(metg_t_tests, ZeroPhaseBuildFromExistingRPSmallDurations) {
 	EXPECT_TRUE(mg.validate());
 	// => m_btres = 0.25, m_period = 6bts = 2 bars
 	
-	std::vector<d_t> rp {};
+	std::vector<d_t> vdt {};
 	for (int i=0; i<100; ++i) {  // 100 reps => 200 bars
 		auto curr_rp = mg.draw();
 		for (auto e : curr_rp) {
-			rp.push_back(e);
+			vdt.push_back(e);
 		}
 	}
 
-	tmetg_t mg2 {ts,rp_t{ts,rp}};
+	tmetg_t mg2 {ts,rp_t{ts,vdt}};
 	EXPECT_TRUE(mg2.validate());
-	auto rp2 = mg2.draw();
-	EXPECT_TRUE(rp.size() == rp2.size());
+	auto vdt2 = mg2.draw();
+	EXPECT_TRUE(vdt.size() == vdt2.size());
 
-	for (int i=0; i<rp.size(); ++i) {
-		EXPECT_TRUE(rp[i]==rp2[i]);
+	for (int i=0; i<vdt.size(); ++i) {
+		EXPECT_TRUE(vdt[i]==vdt2[i]);
 	}
+
+	EXPECT_TRUE(mg2!=mg); // mg2.m_pg is much larger than mg.m_pg
+	EXPECT_TRUE(mg2.levels()==mg.levels());
 }
 
 
@@ -279,8 +286,9 @@ TEST(metg_t_tests, FromNvPhWithNonzeroPhases) {
 	}
 }
 
-
-TEST(metg_t_tests, SpanPossibleThreeFourSet1) {
+// Tests span_possible() for various beat_t and bar_t numbers
+// 3/4, w,h,q w/ 0-phase
+TEST(metg_t_tests, WhichRpSpansPossibleThreeFourSet1) {
 	ts_t ts {3_bt,d::q};
 	std::vector<d_t> vdt {d::w,d::h,d::q};
 	std::vector<beat_t> ph(vdt.size(),0_bt);
@@ -307,8 +315,9 @@ TEST(metg_t_tests, SpanPossibleThreeFourSet1) {
 	}
 }
 
-
-TEST(metg_t_tests, SpanPossibleThreeFourSet2) {
+// Tests span_possible() for various beat_t and bar_t numbers
+// 3/4, w,h w/ 0-phase
+TEST(metg_t_tests, WhichRpSpansPossibleThreeFourSet2) {
 	ts_t ts {3_bt,d::q};
 	std::vector<d_t> vdt {d::w,d::h};
 	std::vector<beat_t> ph(vdt.size(),0_bt);
@@ -336,6 +345,7 @@ TEST(metg_t_tests, SpanPossibleThreeFourSet2) {
 	}
 }
 
+// Tests set_pg(level,beat)
 TEST(metg_t_tests, SetPgSet1) {
 	ts_t ts {3_bt,d::q};
 	std::vector<d_t> vdt {d::h,d::q,d::e};
@@ -362,12 +372,20 @@ TEST(metg_t_tests, SetPgSet1) {
 }
 
 
+// Tests set_pg(level,row) by setting entire rows to zero
+// It should be possible to zero out the pg by setting entire rows to 0.  It is
+// not possible to do this element by element via set_pg(level,beat) because doing so 
+// will create zero pointers and orphans; zero-pointers will cause validate()
+// to fail.  
+// This changes the effective period of the tmetg_t, making it different from 
+// that of m_tg.  
 TEST(metg_t_tests, SetPgByRowAllZeroSet1) {
 	ts_t ts {3_bt,d::q};
 	std::vector<d_t> vdt {d::w,d::hd,d::h,d::qd,d::q,d::ed,d::e};
 	std::vector<beat_t> vph {0_bt,0_bt,0_bt,0_bt,0_bt,0_bt,0_bt};
 	teejee tg {ts,vdt,vph};
 	tmetg_t mg {ts,vdt,vph};
+	EXPECT_TRUE(mg.validate());
 
 	int ncols = nbeat(tg.ts(),tg.period())/tg.gres();
 	for (int i=0; i<mg.levels().size(); ++i) {
@@ -380,7 +398,12 @@ TEST(metg_t_tests, SetPgByRowAllZeroSet1) {
 }
 
 
+// Tests the ctor that creates the tmetg_t from a user-specified pg.  
+// The test then uses set_exact_length to extend the pg to 1.5 bars, and remove
+// the second w-note (occuring @ beat 4), bhich points beyond 6 beats.  
 TEST(metg_t_tests, ConstructFromPgFourFourWHQThenSliceTo6bts) {
+	beat_t target_bts {6};
+	bar_t target_brs {1.5};
 	ts_t ts1 {4_bt,d::q};
 	teejee tg1 {ts1,{d::w,d::h,d::q},{0_bt,0_bt,0_bt}};
 
@@ -396,25 +419,40 @@ TEST(metg_t_tests, ConstructFromPgFourFourWHQThenSliceTo6bts) {
 	EXPECT_TRUE(mg1.nbars() == 1_br);
 	EXPECT_TRUE(mg1.ts() == ts1);
 
-	auto mg2 = mg1.slice(0_bt,6_bt);
-	mg2.set_length_exact(6_bt);
+	auto mg2 = mg1.slice(0_bt,target_bts);
+	mg2.set_length_exact(target_bts);
 	auto tf2 = mg2.validate();  EXPECT_TRUE(tf2);
-	auto nb2 = mg2.nbars(); EXPECT_TRUE(nb2 == 1.5_br);
+	auto nb2 = mg2.nbars(); EXPECT_TRUE(nb2 == target_brs);
 	EXPECT_TRUE(mg2.ts() == ts1);
 
-	auto mg3=mg1; mg3.set_length_exact(6_bt);
+	auto mg3=mg1; mg3.set_length_exact(target_bts);
 	auto tf3 = mg3.validate();  EXPECT_TRUE(tf3);
-	auto nb3 = mg3.nbars(); EXPECT_TRUE(nb3 == 1.5_br);
+	auto nb3 = mg3.nbars(); EXPECT_TRUE(nb3 == target_brs);
 	EXPECT_TRUE(mg3.ts() == ts1);
 
 	// Extension w/ slice(), then calling set_length_exact() should yield the same
 	// result as a single call to set_length_exact() (which calls slice() if the m_pg
 	// is too short).  
 	EXPECT_TRUE(mg2==mg3);
+
+	auto allrps3 = mg3.enumerate();
+	EXPECT_TRUE(allrps3.size() == 10);  // 5 possibilities for bar 1, 2 for partial bar 2 (h,q)
+	for (int i=0; i<allrps3.size(); ++i) {
+		auto curr_tot_nbts = nbeat(mg3.ts(),allrps3[i].rp);
+		auto curr_tot_nbars = nbar(mg3.ts(),allrps3[i].rp);
+		bool tf_nbt = curr_tot_nbts == target_bts; EXPECT_TRUE(tf_nbt);
+		bool tf_nbr = curr_tot_nbars == target_brs; EXPECT_TRUE(tf_nbr);
+	}
 }
 
 
+// Tests the ctor that creates the tmetg_t from a user-specified pg.  
+// The test then uses set_exact_length to extend the pg to 1.5 bars, and remove
+// the second w-note (occuring @ beat 4), and the 4'th h-note, both of which 
+// point beyond 7 beats.  
 TEST(metg_t_tests, ConstructFromPgFourFourWHQThenSliceTo7bts) {
+	beat_t target_bts {7};
+	bar_t target_brs {1.75};
 	ts_t ts1 {4_bt,d::q};
 	teejee tg1 {ts1,{d::w,d::h,d::q},{0_bt,0_bt,0_bt}};
 
@@ -430,25 +468,38 @@ TEST(metg_t_tests, ConstructFromPgFourFourWHQThenSliceTo7bts) {
 	EXPECT_TRUE(mg1.nbars() == 1_br);
 	EXPECT_TRUE(mg1.ts() == ts1);
 
-	auto mg2 = mg1.slice(0_bt,6_bt);
-	mg2.set_length_exact(6_bt);
+	auto mg2 = mg1.slice(0_bt,target_bts);
+	mg2.set_length_exact(target_bts);
 	auto tf2 = mg2.validate();  EXPECT_TRUE(tf2);
-	auto nb2 = mg2.nbars(); EXPECT_TRUE(nb2 == 1.5_br);
+	auto nb2 = mg2.nbars(); EXPECT_TRUE(nb2 == target_brs);
 	EXPECT_TRUE(mg2.ts() == ts1);
 
-	auto mg3=mg1; mg3.set_length_exact(6_bt);
+	auto mg3=mg1; mg3.set_length_exact(target_bts);
 	auto tf3 = mg3.validate();  EXPECT_TRUE(tf3);
-	auto nb3 = mg3.nbars(); EXPECT_TRUE(nb3 == 1.5_br);
+	auto nb3 = mg3.nbars(); EXPECT_TRUE(nb3 == target_brs);
 	EXPECT_TRUE(mg3.ts() == ts1);
 
 	// Extension w/ slice(), then calling set_length_exact() should yield the same
 	// result as a single call to set_length_exact() (which calls slice() if the m_pg
 	// is too short).  
 	EXPECT_TRUE(mg2==mg3);
+
+	auto allrps3 = mg3.enumerate();
+	EXPECT_TRUE(allrps3.size() == 10);  // 5 possibilities for bar 1, 2 for partial bar 2 (qqq,hqq)
+	for (int i=0; i<allrps3.size(); ++i) {
+		auto curr_tot_nbts = nbeat(mg3.ts(),allrps3[i].rp);
+		auto curr_tot_nbars = nbar(mg3.ts(),allrps3[i].rp);
+		bool tf_nbt = curr_tot_nbts == target_bts; EXPECT_TRUE(tf_nbt);
+		bool tf_nbr = curr_tot_nbars == target_brs; EXPECT_TRUE(tf_nbr);
+	}
 }
 
 // Tests of functionality that does not involve modifying the pg
-TEST(metg_t_tests, FourFourWHQVaryingPhases) {
+// Mostly tests of span_possible()/onset_allowed_at() and enumerate()/draw()
+// for short mg's w/ varying levels and phases.  "Short" means small enough 
+// that i can manually enter all possible rps.  
+// 
+TEST(metg_t_tests, AssortedTestsShortMgsVaryingTsNvsPhases) {
 	
 	struct test_set {
 		ts_t ts {};

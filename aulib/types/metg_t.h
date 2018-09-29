@@ -40,7 +40,8 @@
 //   the same (a consequence of the constraint that all members of m_tg must 
 //   be > d::z and unique).  
 // - For all c, the sum of m_pg[c][r] for 0 >= r > n == 0 or == 1.  
-//
+// - Contains no _internal_ zero-pointers, but may contain external 
+//   zero-pointers.  May contain orphans.  
 //
 
 
@@ -84,6 +85,7 @@ public:
 	explicit tmetg_t(ts_t,std::vector<teejee::nv_ph>,
 		std::vector<std::vector<double>>);
 		// Manually specify the whole pg
+	explicit tmetg_t(teejee);
 
 	// Getters
 	bar_t nbars() const;
@@ -117,6 +119,7 @@ public:
 
 	// Operators
 	bool operator==(const tmetg_t&) const;
+	bool operator!=(const tmetg_t&) const;
 private:
 	// Data
 	teejee m_tg {};

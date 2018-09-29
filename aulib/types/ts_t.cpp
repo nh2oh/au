@@ -96,6 +96,14 @@ beat_t nbeat(ts_t const& ts_in, d_t const& d_in) {
 beat_t nbeat(ts_t const& ts_in, bar_t const& nbars_in) {
 	return (ts_in.beats_per_bar())*(nbars_in.to_double());
 }
+// Return the _total_ number of beats spanned by the rp
+beat_t nbeat(const ts_t& ts_in, const std::vector<d_t>& vdt_in) {
+	d_t tot_duration {};
+	for (const auto& e : vdt_in) {
+		tot_duration += e;
+	}
+	return nbeat(ts_in,tot_duration);
+}
 
 d_t duration(const ts_t& ts_in, beat_t nbeats_in) {
 	return d_t {ts_in.beat_unit()*(nbeats_in/(1_bt))};
@@ -107,6 +115,14 @@ bar_t nbar(ts_t const& ts_in, d_t const& d_in) {
 }
 bar_t nbar(ts_t const& ts_in, beat_t const& nbts_in) {
 	return bar_t {nbts_in/ts_in.beats_per_bar()};
+}
+// Return the _total_ number of bars spanned by the rp
+bar_t nbar(const ts_t& ts_in, const std::vector<d_t>& vdt_in) {
+	d_t tot_duration {};
+	for (const auto& e : vdt_in) {
+		tot_duration += e;
+	}
+	return nbar(ts_in,tot_duration);
 }
 
 std::vector<bar_t> cum_nbar(ts_t const& ts_in, std::vector<d_t> const& d_in) {

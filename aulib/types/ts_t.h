@@ -70,10 +70,12 @@ bool operator!=(ts_t const&, ts_t const&);
 // Number of beats spanned by a given nv_t or bar_t.  
 beat_t nbeat(ts_t const&, d_t const&);
 beat_t nbeat(ts_t const&, bar_t const&);
+beat_t nbeat(const ts_t&, const std::vector<d_t>&);
 d_t duration(const ts_t&, beat_t);
-// Number of bars spanned by a given nv_t or d_t.  
+// _Total_ number of bars spanned by a given beat_t, d_t or vector<d_t>.  
 bar_t nbar(ts_t const&, d_t const&);
 bar_t nbar(ts_t const&, beat_t const&);
+bar_t nbar(const ts_t&, const std::vector<d_t>&);
 std::vector<bar_t> cum_nbar(ts_t const&, std::vector<d_t> const&);
 
 

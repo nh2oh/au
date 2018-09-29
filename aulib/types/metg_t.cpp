@@ -54,6 +54,27 @@ tmetg_t::tmetg_t(ts_t ts_in, std::vector<d_t> nvs_in, std::vector<beat_t> ph_in)
 	m_f_pg_extends = pg_extends();  // Expect true...
 }
 
+// Constructor from a tg
+// The pg spans exactly 1 period as calcuated by m_tg & m_btstart == 0_bt
+tmetg_t::tmetg_t(teejee tg) {
+	m_tg = tg;
+	m_btstart = 0_bt;
+
+	int ncols = bt2stride(nbeat(m_tg.ts(),m_tg.period()));
+	int nrows = m_tg.levels().size();
+	std::vector<std::vector<double>> pg(ncols,std::vector<double>(nrows,0.0));
+	for (int c=0; c<ncols; ++c) {
+		auto curr_allowed_lvls = m_tg.which_allowed_at(step2bt(c));
+		for (int r=0; r<curr_allowed_lvls.size(); ++r) {
+			pg[c][nvph2level(curr_allowed_lvls[r])] = 1.0/curr_allowed_lvls.size();
+		}
+	}
+	au_assert(!(internal_zero_pointers(pg) || internal_orphans(pg)),
+		"No internal zero-pointers or orphans.");
+	m_pg = pg;
+	m_f_pg_extends=pg_extends();
+}
+
 // Constructor from a manually-specified pg
 tmetg_t::tmetg_t(ts_t ts, std::vector<teejee::nv_ph> nvph, 
 	std::vector<std::vector<double>> pg) {
@@ -76,7 +97,6 @@ tmetg_t::tmetg_t(ts_t ts, std::vector<teejee::nv_ph> nvph,
 		"No internal zero-pointers or orphans.");
 	m_pg = pg;
 	m_f_pg_extends=pg_extends();
-
 }
 
 // Initializes m_pg to span nbts beats.  All probabilities are set to 0.  
@@ -735,7 +755,11 @@ bool tmetg_t::validate() const {
 	// m_f_pg_extends is set correctly
 	if (pg_extends() != m_f_pg_extends) { return false; }
 
-	// TODO:  Check for internal zero pointers?
+	//  There are no internal zero pointers
+	auto tf_zp = internal_zero_pointers(m_pg);
+	if (tf_zp) {
+		return false;
+	}
 
 	return true;
 }
@@ -756,6 +780,9 @@ bool tmetg_t::operator==(const tmetg_t& rhs) const {
 	}
 
 	return true;
+}
+bool tmetg_t::operator!=(const tmetg_t& rhs) const {
+	return !(*this==rhs);
 }
 
 
