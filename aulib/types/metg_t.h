@@ -52,17 +52,21 @@
 // TODO:  enumerate() needs to take limits... niter, max rps, max-mem... something
 //
 // TODO:  Where ph's !=0 bar spanning elements mean nbars() is not correct for all
-// rps
+// rps.  Also often the case where slice()'d not on a period boundry.  
 //
 // TODO:  Does validate() check for zero-pointers??  orphans??
 // 
 // TODO:  
 // Some of:
-//   bool pg_extends() const;  // Does not set m_f_pg_extends.  
+//   bool pg_extends(),
 //   pg_min_period(), internal_zero_pointers(), internal_orphans(),
 //   extend_pg(beat_t, beat_t), set_pg_length_exact(), normalize_pg();
 // modify m_pg, others take a vec<vec<double>> and return a vec<vec<double>>, others
 // just return bool... it's inconsistent.  
+//
+// TODO:  Make a custom 1d vector to accumulate the results of m_enumerator()
+// 
+//
 
 struct tmetg_t_opts {
 	bool barspan {false};

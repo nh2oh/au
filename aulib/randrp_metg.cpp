@@ -93,6 +93,9 @@ rp_t randrp_metg(tmetg_t mg, int nnts, bar_t nbars) {
 				min_nnts += rps[i%rps.size()].min_nnts;
 				max_nnts += rps[i%rps.size()].max_nnts;
 			}
+			if (!(max_nnts>=nnts && min_nnts<=nnts)) {
+				wait();
+			}
 			au_assert((max_nnts>=nnts && min_nnts<=nnts),
 				"Impossible:  No way to do "+std::to_string(nnts)+" notes in " + 
 				nbars.print() + " bars.");

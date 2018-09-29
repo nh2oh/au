@@ -4,7 +4,7 @@
 #include "..\util\au_error.h"
 #include "..\util\au_util.h"
 #include <string>
-#include <algorithm>
+#include <numeric> // accumulate()
 #include <vector>  // cum_nbar()
 #include "..\util\au_algs_math.h"
 
@@ -99,9 +99,7 @@ beat_t nbeat(ts_t const& ts_in, bar_t const& nbars_in) {
 // Return the _total_ number of beats spanned by the rp
 beat_t nbeat(const ts_t& ts_in, const std::vector<d_t>& vdt_in) {
 	d_t tot_duration {};
-	for (const auto& e : vdt_in) {
-		tot_duration += e;
-	}
+	tot_duration = std::accumulate(vdt_in.begin(),vdt_in.end(),d_t{0.0});
 	return nbeat(ts_in,tot_duration);
 }
 
@@ -119,19 +117,20 @@ bar_t nbar(ts_t const& ts_in, beat_t const& nbts_in) {
 // Return the _total_ number of bars spanned by the rp
 bar_t nbar(const ts_t& ts_in, const std::vector<d_t>& vdt_in) {
 	d_t tot_duration {};
-	for (const auto& e : vdt_in) {
-		tot_duration += e;
-	}
+	tot_duration = std::accumulate(vdt_in.begin(),vdt_in.end(),d_t{0.0});
 	return nbar(ts_in,tot_duration);
 }
 
-std::vector<bar_t> cum_nbar(ts_t const& ts_in, std::vector<d_t> const& d_in) {
-	std::vector<bar_t> rp_cum {}; rp_cum.reserve(d_in.size());
-	bar_t totnb {0.0};  // Only used by the lambda
-	std::for_each(d_in.begin(),d_in.end(),
-		[&](d_t const& currnv){rp_cum.push_back(totnb+=nbar(ts_in,currnv));});
-
-	return rp_cum;
+std::vector<bar_t> cum_nbar(ts_t const& ts_in, std::vector<d_t> const& vdt_in) {
+	std::vector<bar_t> nbar_cum {}; nbar_cum.reserve(vdt_in.size());
+	d_t curr_tot_duration {0};
+	// The assumption here is that d_t's summ more accurately than bar_t's.  Otherwise,
+	// I could: curr += nbar(ts,d_t); push_back(curr);
+	for (const auto& e : vdt_in) {
+		curr_tot_duration += e;
+		nbar_cum.push_back(nbar(ts_in,curr_tot_duration));
+	}
+	return nbar_cum;
 }
 
 

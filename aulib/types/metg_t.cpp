@@ -491,6 +491,7 @@ tmetg_t tmetg_t::slice(beat_t bt_from, beat_t bt_to) const {
 	return result;
 }
 
+// Removes elements of the pg that point beyond target_nbeats
 // Note the function is called "set _length_"; the tmetg_t is modified to extend from
 // m_btstart to m_btstart+target_nbeats, if possible.  
 bool tmetg_t::set_length_exact(beat_t target_nbeats) {
