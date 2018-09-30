@@ -34,6 +34,16 @@
 // extendable.  An m_pg may be "simpler" than its m_tg, since it can specify
 // a probabiltiy of 0 for "troublesome" elements of m_tg.  
 //
+// Related to issues of extendability are issues of "span."  Enumerations of a
+// tmetg_t may generate rp's of different length.  This will happen whenever one
+// or more phases are != 0, where a tmetg_t has been constructed by calling 
+// slice() on some parent tmetg_t object, or where a special m_pg has been provided 
+// to the constructor.  nbars() lists all lengths to be expected from a call to
+// enumerate() or draw().  Following a call to set_length_exactbeat_t), all members 
+// of nbars() are the same and == whatever was provided to set_lemgth_exact(beat_t).
+// This is also true of the elements returned by factor().  
+//
+//
 // m_pg properties
 // - For all c, m_pg[c].size() == m_tg.levels().size()
 // - For any c, all entries r*_i > 0 point into a c'_i > c, with no two c'_i
@@ -44,21 +54,13 @@
 //   zero-pointers.  May contain orphans.  
 //
 
-
-// TODO:  
-// TODO:  m_tg.period() might be > < the period applicable to m_pg.  Need to
-// calc and store this period.  
+// 
+// TODO:  m_tg.period() might be > < the period applicable to m_pg.
 //
 // TODO:  enumerate() needs to take limits... niter, max rps, max-mem... something
 //
-// TODO:  Where ph's !=0 bar spanning elements mean nbars() is not correct for all
-// rps.  Also often the case where slice()'d not on a period boundry.  
-//
-// TODO:  Does validate() check for zero-pointers??  orphans??
-//
 // TODO:  Make a custom 1d vector to accumulate the results of m_enumerator()
 // 
-//
 
 struct tmetg_t_opts {
 	bool barspan {false};
@@ -106,6 +108,7 @@ public:
 	std::vector<rpp> enumerate() const;  // Generate all possible rp's
 
 	// Setters
+	// TODO:  Should these be public???
 	void set_pg_random(int = 0);  // argument => mode
 	void set_pg_zero();
 	bool set_pg(teejee::nv_ph,beat_t,double);

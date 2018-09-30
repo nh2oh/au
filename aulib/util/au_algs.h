@@ -32,6 +32,27 @@ std::vector<T> unique(std::vector<T> s) {
     return s;
 };
 
+// Returns the unique elements in s.  
+// Works even if s can't be sorted
+template<typename T>
+std::vector<T> unique_nosort(std::vector<T> s) {
+	std::vector<T> res {};
+	for (auto i=0; i<s.size(); ++i) {
+		bool exists_in_res = false;
+		for (auto j=0; j<res.size(); ++j) {
+			if (res[j] == s[i]) {
+				exists_in_res = true;
+				break;
+			}
+		}
+
+		if (!exists_in_res) {
+			res.push_back(s[i]);
+		}
+	}
+    return res;
+};
+
 // n_unique():  Counts the # of unique elements in s
 template<typename T>
 size_t n_unique(std::vector<T> s) {

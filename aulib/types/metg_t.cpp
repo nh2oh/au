@@ -546,9 +546,12 @@ bool tmetg_t::set_length_exact(beat_t target_nbeats) {
 }
 
 // Extend the pg to span [from,to) where to >= from.  
-// Does _not_ check m_f_pg_extends; external users access this through
-// slice(), which does make all the necessary checks.  
-std::vector<std::vector<double>> tmetg_t::extend_pg(std::vector<std::vector<double>> pg, beat_t from, beat_t to) const {
+// Does _not_ check if the pg actually *can* be extended, ie, if the extended version
+// will align with a tg.  This function is called by silce() and set_length_exact(),
+// both of which pass in a copy of m_pg.  These functions both assume the respondibility 
+// of checking m_f_pg_extends first.  
+std::vector<std::vector<double>>
+tmetg_t::extend_pg(std::vector<std::vector<double>> pg, beat_t from, beat_t to) const {
 	int idx_from = bt2step(from);
 	int idx_to = bt2step(to);
 	auto nsteps = idx_to-idx_from;
@@ -822,12 +825,11 @@ bool tmetg_t::validate() const {
 	return true;
 }
 
-// mg's w/ identical m_pg and m_tg but different m_btstarts *could* compare
-// == if m_btstart in both cases is a multiple of the span of the pg... presently
-// however, such cases will compate !=.  
+// mg's w/ identical m_pg and m_tg compare ==, even if m_btstart !=, because
+// calls to enumerate() generate the same set of rps for both objects.  
 bool tmetg_t::operator==(const tmetg_t& rhs) const {
 	if (!(m_tg == rhs.m_tg)) { return false; }
-	if (m_btstart != rhs.m_btstart) { return false; }
+	//if (m_btstart != rhs.m_btstart) { return false; }
 	if (m_pg.size() != rhs.m_pg.size()) { return false; }
 	for (int c=0; c<m_pg.size(); ++c) {
 		for (int r=0; r<m_pg[c].size(); ++r) {
