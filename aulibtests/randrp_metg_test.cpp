@@ -81,7 +81,7 @@ TEST(randrp_metg_tests, FourFourQESxZeroPhDefMgConstrainNnotes) {
 		auto rrp = randrp_metg(mg,tests[i].num_nts,tests[i].num_bars);
 		EXPECT_TRUE(rrp.nelems()==tests[i].num_nts);
 		EXPECT_TRUE(rrp.nbars() >= rrp.nelems()*nbar(mg.ts(),mg.levels().back().nv));
-		EXPECT_TRUE(rrp.nbars() < rrp.nelems()*nbar(mg.ts(),mg.levels().front().nv));
+		EXPECT_TRUE(rrp.nbars() <= rrp.nelems()*nbar(mg.ts(),mg.levels().front().nv));
 	}
 }
 

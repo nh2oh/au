@@ -239,7 +239,10 @@ TEST(metg_t_tests, FromRpWithNonzeroPhases1) {
 	// in the same order).  
 	tmetg_t mg {ts,rp_t{ts,vdt}};
 	bool tf = mg.validate(); EXPECT_TRUE(tf);
-	tf = (mg.nbars() == 4_br); EXPECT_TRUE(tf);
+	auto all_nbars_mg = mg.nbars();
+	for (auto e : all_nbars_mg) {
+		tf = (e == 4_br); EXPECT_TRUE(tf);
+	}
 	auto mg_lvls = mg.levels();
 	EXPECT_TRUE(mg_lvls.size() == allowed_levels.size());
 	for (int i=0; i<mg_lvls.size(); ++i) {
@@ -256,7 +259,10 @@ TEST(metg_t_tests, FromRpWithNonzeroPhases1) {
 		std::random_shuffle(vdt.begin(),vdt.end());
 		tmetg_t mgrand {ts,rp_t{ts,vdt}};
 		tf = mgrand.validate();	EXPECT_TRUE(tf);
-		tf =(mgrand.nbars() == 4_br); EXPECT_TRUE(tf);
+		auto all_nbars_mgr = mgrand.nbars();
+		for (auto e : all_nbars_mgr) {
+			tf = (e == 4_br); EXPECT_TRUE(tf);
+		}
 
 		auto mgrand_lvls = mgrand.levels();
 		//  Check the sorting
@@ -446,18 +452,29 @@ TEST(metg_t_tests, ConstructFromPgFourFourWHQThenSliceTo6bts) {
 
 	tmetg_t mg1 {ts1,tg1.levels(),pg1t};
 	auto tf1 = mg1.validate();  EXPECT_TRUE(tf1);
-	EXPECT_TRUE(mg1.nbars() == 1_br);
+	auto all_nbars1 = mg1.nbars();
+	for (auto e : all_nbars1) {
+		bool tf_bars = (e == 1_br); EXPECT_TRUE(tf_bars);
+	}
 	EXPECT_TRUE(mg1.ts() == ts1);
 
 	auto mg2 = mg1.slice(0_bt,target_bts);
 	mg2.set_length_exact(target_bts);
 	auto tf2 = mg2.validate();  EXPECT_TRUE(tf2);
-	auto nb2 = mg2.nbars(); EXPECT_TRUE(nb2 == target_brs);
+	//auto nb2 = mg2.nbars(); EXPECT_TRUE(nb2 == target_brs);
+	auto all_nbars2 = mg2.nbars();
+	for (auto e : all_nbars2) {
+		bool tf_bars = (e == target_brs); EXPECT_TRUE(tf_bars);
+	}
 	EXPECT_TRUE(mg2.ts() == ts1);
 
 	auto mg3=mg1; mg3.set_length_exact(target_bts);
 	auto tf3 = mg3.validate();  EXPECT_TRUE(tf3);
-	auto nb3 = mg3.nbars(); EXPECT_TRUE(nb3 == target_brs);
+	//auto nb3 = mg3.nbars(); EXPECT_TRUE(nb3 == target_brs);
+	auto all_nbars3 = mg3.nbars();
+	for (auto e : all_nbars3) {
+		bool tf_bars = (e == target_brs); EXPECT_TRUE(tf_bars);
+	}
 	EXPECT_TRUE(mg3.ts() == ts1);
 
 	// Extension w/ slice(), then calling set_length_exact() should yield the same
@@ -495,18 +512,30 @@ TEST(metg_t_tests, ConstructFromPgFourFourWHQThenSliceTo7bts) {
 
 	tmetg_t mg1 {ts1,tg1.levels(),pg1t};
 	auto tf1 = mg1.validate();  EXPECT_TRUE(tf1);
-	EXPECT_TRUE(mg1.nbars() == 1_br);
+	//EXPECT_TRUE(mg1.nbars() == 1_br);
+	auto all_nbars1 = mg1.nbars();
+	for (auto e : all_nbars1) {
+		bool tf_bars = (e == 1_br); EXPECT_TRUE(tf_bars);
+	}
 	EXPECT_TRUE(mg1.ts() == ts1);
 
 	auto mg2 = mg1.slice(0_bt,target_bts);
 	mg2.set_length_exact(target_bts);
 	auto tf2 = mg2.validate();  EXPECT_TRUE(tf2);
-	auto nb2 = mg2.nbars(); EXPECT_TRUE(nb2 == target_brs);
+	//auto nb2 = mg2.nbars(); EXPECT_TRUE(nb2 == target_brs);
+	auto all_nbars2 = mg2.nbars();
+	for (auto e : all_nbars2) {
+		bool tf_bars = (e == target_brs); EXPECT_TRUE(tf_bars);
+	}
 	EXPECT_TRUE(mg2.ts() == ts1);
 
 	auto mg3=mg1; mg3.set_length_exact(target_bts);
 	auto tf3 = mg3.validate();  EXPECT_TRUE(tf3);
-	auto nb3 = mg3.nbars(); EXPECT_TRUE(nb3 == target_brs);
+	//auto nb3 = mg3.nbars(); EXPECT_TRUE(nb3 == target_brs);
+	auto all_nbars3 = mg3.nbars();
+	for (auto e : all_nbars3) {
+		bool tf_bars = (e == target_brs); EXPECT_TRUE(tf_bars);
+	}
 	EXPECT_TRUE(mg3.ts() == ts1);
 
 	// Extension w/ slice(), then calling set_length_exact() should yield the same

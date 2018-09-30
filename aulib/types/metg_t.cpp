@@ -36,7 +36,7 @@ tmetg_t::tmetg_t(ts_t ts_in, rp_t rp_in) {
 		curr_beat += nbeat(m_tg.ts(),e);
 	}
 
-	m_f_pg_extends = pg_extends();
+	m_f_pg_extends = pg_extends(m_pg);
 }
 
 
@@ -51,7 +51,7 @@ tmetg_t::tmetg_t(ts_t ts_in, std::vector<d_t> nvs_in, std::vector<beat_t> ph_in)
 
 	init_pg(nbeat(m_tg.ts(),m_tg.period()));
 	set_pg_random();
-	m_f_pg_extends = pg_extends();  // Expect true...
+	m_f_pg_extends = pg_extends(m_pg);  // Expect true...
 }
 
 // Constructor from a tg
@@ -72,7 +72,7 @@ tmetg_t::tmetg_t(teejee tg) {
 	au_assert(!(internal_zero_pointers(pg) || internal_orphans(pg)),
 		"No internal zero-pointers or orphans.");
 	m_pg = pg;
-	m_f_pg_extends=pg_extends();
+	m_f_pg_extends=pg_extends(m_pg);
 }
 
 // Constructor from a manually-specified pg
@@ -96,7 +96,7 @@ tmetg_t::tmetg_t(ts_t ts, std::vector<teejee::nv_ph> nvph,
 	au_assert(!(internal_zero_pointers(pg) || internal_orphans(pg)),
 		"No internal zero-pointers or orphans.");
 	m_pg = pg;
-	m_f_pg_extends=pg_extends();
+	m_f_pg_extends=pg_extends(m_pg);
 }
 
 // Initializes m_pg to span nbts beats.  All probabilities are set to 0.  
@@ -160,7 +160,7 @@ bool tmetg_t::set_pg(teejee::nv_ph nvph, beat_t beat, double p) {
 	}
 	m_pg[c] = normalize_probvec(m_pg[c]);
 	
-	m_f_pg_extends=pg_extends();
+	m_f_pg_extends=pg_extends(m_pg);
 
 	return true;
 }
@@ -185,7 +185,7 @@ bool tmetg_t::set_pg(teejee::nv_ph nvph, std::vector<double> p) {
 		m_pg=old_pg;
 		return false;
 	}
-	m_f_pg_extends=pg_extends();
+	m_f_pg_extends=pg_extends(m_pg);
 
 	return true;
 }
@@ -253,15 +253,15 @@ bool tmetg_t::onset_allowed_at(d_t nv, beat_t beat_number) const {
 	return false;
 }
 
-// Can the pg be concatenated repeatedly to itself to generate rp's always
+// Can the input pg be concatenated repeatedly to itself to generate rp's always
 // aligning to the tg?
 // True iff:
-// 1)  Repeated concatenation produces an m_pg aligning to m_tg.  
-// 2)  The extended m_pg contains no zero-pointers.  
+// 1)  Repeated concatenation produces a pg aligning to m_tg.  
+// 2)  The extended pg contains no internal zero-pointers.  
 // 
 //
 // Even though for all valid metg's, all nonzero m_pg elements align with their
-// corresponding tg, the pg may nevertheless be non-extendable.  For example,
+// corresponding tg, the m_pg may nevertheless be non-extendable.  For example,
 // consider a 3/4 metg containing a half-note w/ ph=0 and containing an m_pg
 // spanning exactly 1 bar w/ a nonzero probability for the half-note at beat-
 // numbers 0 and 2.  Naive extension of the m_pg would place a third half-note 
@@ -272,27 +272,30 @@ bool tmetg_t::onset_allowed_at(d_t nv, beat_t beat_number) const {
 // half note has 0 probability at beat-number 0, this becomes a zero-pointer
 // if the segment is extended.  
 //
-bool tmetg_t::pg_extends() const {
-	// If m_pg spans f periods, extend to ceil(f)+1; there is always at least 
+// These situations arise when a metg_t object is constructed from a slice() of
+// an otherwise "perfect" metg_t, or when one or more phases are != 0.  
+//
+bool tmetg_t::pg_extends(const std::vector<std::vector<double>>& pg) const {
+	// If the input pg spans f periods, extend to ceil(f)+1; there is always at least 
 	// one extra full period at the end.  
 	auto bpp = nbeat(m_tg.ts(),m_tg.period());  // beats per period
-	auto nperiods_ext = std::ceil((m_pg.size()*m_tg.gres())/bpp) + 1.0;
+	auto nperiods_ext = std::ceil((pg.size()*m_tg.gres())/bpp) + 1.0;
 	int ncols_ext = bt2stride(bpp*nperiods_ext);
 
 	for (size_t c=0; c<ncols_ext; ++c) {
-		for (size_t r=0; r<m_pg[c%m_pg.size()].size(); ++r) {
+		for (size_t r=0; r<pg[c%pg.size()].size(); ++r) {
 			// All elements w/ > 0 probability must align w/ an element in the tg
-			if (m_pg[c%m_pg.size()][r] > 0.0 && 
+			if (pg[c%pg.size()][r] > 0.0 && 
 				!(m_tg.onset_allowed_at(m_tg.levels()[r],step2bt(c)))) {
 				return false;
 			}
 
 			// All elements with > 0 probability must point into a col cptr containing
 			// at least one element w/ nonzero probability.  Don't bother to test elements
-			// pointing beyond the extra period tacked onto the end of m_pg.  
+			// pointing beyond the extra period tacked onto the end of pg.  
 			auto cptr = c+level2stride(r);
-			if (m_pg[c%m_pg.size()][r] > 0.0 && cptr < ncols_ext) {
-				if (!m_tg.onset_allowed_at(step2bt(cptr%m_pg.size()))) {
+			if (pg[c%pg.size()][r] > 0.0 && cptr < ncols_ext) {
+				if (!m_tg.onset_allowed_at(step2bt(cptr%pg.size()))) {
 					// In the call to step2bt() I mod cptr by m_pg.size().  step2bt() checks
 					// m_f_pg_extends and only considers arguments beyond m_pg.size() if
 					// m_f_pg_extends == true.  
@@ -310,23 +313,56 @@ int tmetg_t::pg_min_period() const {
 	return 0;
 }
 
-// True if pg contains an internal zero pointer, false otherwise
+// c,r of all internal zero-pointers.
+std::vector<std::vector<int>> 
+tmetg_t::find_internal_zero_pointers(const std::vector<std::vector<double>>& pg) const {
+	std::vector<int> zero_cols {};  // Col idxs where all elements have probability == 0.0
+	for (int c=0; c<pg.size(); ++c) {
+		if (is_zero_col(c,pg)) {
+			zero_cols.push_back(c);
+		}
+	}
+
+	std::vector<std::vector<int>> zero_ptrs {};
+	if (zero_cols.size() == 0) {
+		return zero_ptrs;
+	}
+
+	for (int c=0; c<pg.size(); ++c) {
+		for (int r=0; r<pg[c].size(); ++r) {
+			auto cptr = c+level2stride(r);
+			if (pg[c][r]>0.0 && cptr<pg.size() && ismember(cptr,zero_cols)) {
+				zero_ptrs.push_back({c,r});
+			}
+		}  // to next r in c
+	} // to next c
+	
+	return zero_ptrs;
+}
+
+// True if all elements of col c have probability == 0, false otherwise
+bool tmetg_t::is_zero_col(const int& c, const std::vector<std::vector<double>>& pg) const {
+	return (std::find_if(pg[c].begin(),pg[c].end(),
+			[](const double& cellprob){ return cellprob > 0.0; }) == pg[c].end());
+}
+
+// True if pg contains one or more internal zero pointers, false otherwise
 bool tmetg_t::internal_zero_pointers(const std::vector<std::vector<double>>& pg) const {
 	for (int c=0; c<pg.size(); ++c) {
 		for (int r=0; r<pg[c].size(); ++r) {
 			auto cptr = c+level2stride(r);
-			if (pg[c][r]>0.0 && cptr<pg.size() &&
-				aprx_eq(std::accumulate(pg[cptr].begin(),pg[cptr].end(),0.0),0.0)) {
+			if (pg[c][r]>0.0 && cptr<pg.size() && is_zero_col(cptr,pg)) {
 				return true;
-				// TODO:  Some sort of find(>0) would be way better than accumulate
 			}
 		}  // to next r in c
 	} // to next c
 	return false;
+	// Alternative:  return find_internal_zero_pointers(pg).size() > 0;
 }
-// True if pg contains an internal orphan, false otherwise
+
+// True if pg contains one or more internal orphans, false otherwise
 bool tmetg_t::internal_orphans(const std::vector<std::vector<double>>& pg) const {
-	std::vector<int> col_ptrs {};  // col idxs pointed at by all elements of row r. 
+	std::vector<int> col_ptrs {};  // idxs of all cols which are pointed at
 	for (int c=0; c<pg.size(); ++c) {
 		for (int r=0; r<pg[c].size(); ++r) {
 			if (pg[c][r]>0.0) {
@@ -334,8 +370,12 @@ bool tmetg_t::internal_orphans(const std::vector<std::vector<double>>& pg) const
 			}
 		}
 	}
-
-	for (int c=1; c<pg.size(); ++c) {  // Skipping col 1 !
+	
+	// Better:  List cols not pointed at via set_difference w/ the result of
+	// the first loop.  Go through these looking for nonzero probs.  Any such c
+	// containing a nonzero prob is an internal orphan if its beat-number is
+	// too large to be accessed by an element off the lhs of the pg.  
+	for (int c=1; c<pg.size(); ++c) {  // Skipping col 0 !
 		for (int r=0; r<pg[c].size(); ++r) {
 			if (pg[c][r]>0.0 && !ismember(c,col_ptrs)) {
 				return true; // c is an orphan
@@ -351,13 +391,13 @@ bool tmetg_t::internal_orphans(const std::vector<std::vector<double>>& pg) const
 // reachable on the input pg.  External callers access this method through 
 // set_length_exact(), which does make these checks.  
 //
-// The pg returned contains no zero-pointers, but may contain orphans.  
+// The pg returned contains no internal zero-pointers, but may contain orphans.  
 //
 std::vector<std::vector<double>> 
 tmetg_t::set_pg_length_exact(std::vector<std::vector<double>> pg, beat_t target) const {
-	// Force the target col to be >= pg.size()
+	// The target col must be >= pg.size()
 	auto target_col = bt2stride(target);
-	au_assert(target_col>=pg.size(),"The target col should b e>= pg.size().");
+	au_assert(target_col>=pg.size(),"The target col should be >= pg.size().");
 
 	bool tf_modified_pg = false;
 	for (int c=0; c<pg.size(); ++c) {
@@ -394,12 +434,12 @@ tmetg_t::set_pg_length_exact(std::vector<std::vector<double>> pg, beat_t target)
 	return pg;
 }
 
-bool tmetg_t::normalize_pg() {
-	for (int c=0; c<m_pg.size(); ++c) {
-		m_pg[c] = normalize_probvec(m_pg[c]);
+std::vector<std::vector<double>> tmetg_t::normalize_pg(std::vector<std::vector<double>> pg) const {
+	for (int c=0; c<pg.size(); ++c) {
+		pg[c] = normalize_probvec(pg[c]);
 	}
 
-	return true;
+	return pg;
 }
 
 // Generate a random rp from the pg
@@ -483,10 +523,10 @@ tmetg_t tmetg_t::slice(beat_t bt_from, beat_t bt_to) const {
 	}
 
 	auto result = *this;
-	result.m_pg = extend_pg(bt_from,bt_to);
+	result.m_pg = extend_pg(result.m_pg,bt_from,bt_to);
 	result.m_btstart = bt_from;
-	result.normalize_pg();
-	result.m_f_pg_extends = result.pg_extends();
+	result.normalize_pg(result.m_pg);
+	result.m_f_pg_extends = result.pg_extends(result.m_pg);
 
 	return result;
 }
@@ -499,31 +539,28 @@ bool tmetg_t::set_length_exact(beat_t target_nbeats) {
 		return false;
 	}
 
-	auto new_pg = extend_pg(m_btstart,m_btstart+target_nbeats);
+	auto new_pg = extend_pg(m_pg,m_btstart,m_btstart+target_nbeats);
 	m_pg = set_pg_length_exact(new_pg,target_nbeats);
-	normalize_pg();
-	m_f_pg_extends = pg_extends();
+	m_pg = normalize_pg(m_pg);
+	m_f_pg_extends = pg_extends(m_pg);
 }
 
 // Extend the pg to span [from,to) where to >= from.  
 // Does _not_ check m_f_pg_extends; external users access this through
 // slice(), which does make all the necessary checks.  
-std::vector<std::vector<double>> tmetg_t::extend_pg(beat_t from, beat_t to) const {
+std::vector<std::vector<double>> tmetg_t::extend_pg(std::vector<std::vector<double>> pg, beat_t from, beat_t to) const {
 	int idx_from = bt2step(from);
 	int idx_to = bt2step(to);
 	auto nsteps = idx_to-idx_from;
 	if (idx_from < 0) {
-		idx_from = std::abs(idx_from)%m_pg.size();
+		idx_from = std::abs(idx_from)%pg.size();
 		idx_to = idx_from+nsteps;
 	}
 	au_assert((idx_from >= 0 && idx_to >= idx_from),"!(idx_from >= 0 && idx_to >= idx_from)");
-	if (idx_from >= m_pg.size() || idx_to > m_pg.size()) {
-		au_assert(m_f_pg_extends,"!m_f_pg_extends but range exceeds m_pg");
-	}
 
 	std::vector<std::vector<double>> new_pg {};
 	for (size_t c=idx_from; c<idx_to; ++c) {
-		new_pg.push_back(m_pg[c%m_pg.size()]);
+		new_pg.push_back(pg[c%pg.size()]);
 	}
 
 	return new_pg;
@@ -658,17 +695,35 @@ void tmetg_t::m_enumerator2(std::vector<nvp_p>& rps,
 	}
 }
 
+// A number-of-bars, not a bar-number (ie, ignores m_btstart)
+std::vector<bar_t> tmetg_t::nbars() const {
+	//return nbar(m_tg.ts(),m_tg.gres()*m_pg.size());
+	std::vector<bar_t> nbars_span {};
+	for (int r=0; r<m_tg.levels().size(); ++r) {
+		for (int c=m_pg.size()-1; c>-1; --c) {
+			int cptr = c+level2stride(r);
+			if (m_pg[c][r] > 0.0 && cptr >= m_pg.size()) {
+				// If cptr is < m_pg.size() then it must point into a col w/ @ least one nonzero
+				// member, lest it be a zero-pointer, which is not allowed.  The "terminal" 
+				// elements of the pg are those pointing off the end.  
+				nbars_span.push_back(nbar(m_tg.ts(),step2bt(cptr)-m_btstart));  // NB: -m_btstart
+				break;
+			}
+		}
+	}
 
-bar_t tmetg_t::nbars() const {
-	return nbar(m_tg.ts(),m_tg.gres()*m_pg.size());
+	return nbars_span;
 }
+
 ts_t tmetg_t::ts() const {
 	return m_tg.ts();
 }
 std::vector<teejee::nv_ph> tmetg_t::levels() const {
 	return m_tg.levels();
 }
-// A number-of-beats, not a beat-number.  
+
+// A number-of-beats, not a beat-number (ie, ignores m_btstart).  
+// If nbeats > m_pg.size(), extends m_pg if m_f_pg_extends==true.  
 bool tmetg_t::span_possible(beat_t nbeats) const {
 	if (nbeats < 0_bt || !aprx_int(nbeats/m_tg.gres())) {
 		return false;
@@ -682,8 +737,6 @@ bool tmetg_t::span_possible(beat_t nbeats) const {
 
 	// If, in the m_pg col corresponding to nbeats (=> nsteps), there is at 
 	// least 1 nonzero p, the present object can generate rp's spanning nbeats.  
-	// This assumes that m_pg has no zero pointers.  I am assuming that a nonzero
-	// p => pervious cols pointing into nbars_target.  TODO:  !!
 	for (int r=0; r<m_tg.levels().size(); ++r) {
 		if (m_pg[c][r] > 0.0) { 
 			return true; 
@@ -692,6 +745,8 @@ bool tmetg_t::span_possible(beat_t nbeats) const {
 
 	return false;
 }
+// A number-of-bars, not a bar-number (ie, ignores m_btstart).  
+// If nbars > m_pg.size(), extends m_pg if m_f_pg_extends==true.  
 bool tmetg_t::span_possible(bar_t nbars_target) const {
 	return span_possible(nbeat(m_tg.ts(),nbars_target));
 }
@@ -754,7 +809,9 @@ bool tmetg_t::validate() const {
 	}
 
 	// m_f_pg_extends is set correctly
-	if (pg_extends() != m_f_pg_extends) { return false; }
+	if (pg_extends(m_pg) != m_f_pg_extends) { 
+		return false;
+	}
 
 	//  There are no internal zero pointers
 	auto tf_zp = internal_zero_pointers(m_pg);

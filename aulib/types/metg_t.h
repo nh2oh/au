@@ -55,14 +55,6 @@
 // rps.  Also often the case where slice()'d not on a period boundry.  
 //
 // TODO:  Does validate() check for zero-pointers??  orphans??
-// 
-// TODO:  
-// Some of:
-//   bool pg_extends(),
-//   pg_min_period(), internal_zero_pointers(), internal_orphans(),
-//   extend_pg(beat_t, beat_t), set_pg_length_exact(), normalize_pg();
-// modify m_pg, others take a vec<vec<double>> and return a vec<vec<double>>, others
-// just return bool... it's inconsistent.  
 //
 // TODO:  Make a custom 1d vector to accumulate the results of m_enumerator()
 // 
@@ -92,7 +84,7 @@ public:
 	explicit tmetg_t(teejee);
 
 	// Getters
-	bar_t nbars() const;
+	std::vector<bar_t> nbars() const;
 	ts_t ts() const;
 	std::vector<teejee::nv_ph> levels() const;  // passthrough to m_tg.levels()
 	bool onset_allowed_at(beat_t) const;  // beat-number, not number-of-beats
@@ -107,7 +99,7 @@ public:
 	// Setters
 	tmetg_t slice(beat_t, beat_t) const;  // Extends and/or truncates
 	std::vector<tmetg_t> factor() const;
-	bool set_length_exact(beat_t);
+	bool set_length_exact(beat_t);  // Also extends/truncates as necessary
 
 	// Samplers
 	std::vector<d_t> draw() const;  // Generate a random rp
@@ -141,14 +133,16 @@ private:
 
 	void init_pg(beat_t);
 
-	bool pg_extends() const;  // Does not set m_f_pg_extends.  
-	int pg_min_period() const;
+	bool pg_extends(const std::vector<std::vector<double>>&) const;
+	int pg_min_period() const;  // Not implemented
 	bool internal_zero_pointers(const std::vector<std::vector<double>>&) const;
 	bool internal_orphans(const std::vector<std::vector<double>>&) const;
-	
-	std::vector<std::vector<double>> extend_pg(beat_t, beat_t) const;
+	std::vector<std::vector<int>> find_internal_zero_pointers(const std::vector<std::vector<double>>&) const;
+	bool is_zero_col(const int&, const std::vector<std::vector<double>>&) const;
+
+	std::vector<std::vector<double>> extend_pg(std::vector<std::vector<double>>,beat_t, beat_t) const;
 	std::vector<std::vector<double>> set_pg_length_exact(std::vector<std::vector<double>>, beat_t) const;
-	bool normalize_pg();
+	std::vector<std::vector<double>> normalize_pg(std::vector<std::vector<double>>) const;
 
 	struct enumerator_pgcell {  // Used internally by m_enumerator()
 		int level {0};  // Idx of m_tg.levels()

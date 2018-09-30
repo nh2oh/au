@@ -27,10 +27,9 @@ rp_t randrp_metg(tmetg_t mg, int nnts, bar_t nbars) {
 	
 	auto mgexact = mg;
 	if (nbars > 0_br) {
-		// Extends, truncates, or extends and truncates the pg to be exactly
-		// the size of nbars.  
+		// Extends, truncates, or extends /and/ truncates the pg such that all rps will be
+		// exactly nbars.  
 		mgexact.set_length_exact(nbeat(mg.ts(),nbars));
-		//mg = mg.slice(0_bt,nbeat(mg.ts(),nbars));
 	}
 	auto mgsplit = mgexact.factor();
 
@@ -71,7 +70,9 @@ rp_t randrp_metg(tmetg_t mg, int nnts, bar_t nbars) {
 			e.p /= curr_p_tot;
 		}
 
-		rps.push_back({mgsplit[i].nbars(),curr_min_nnts,curr_max_nnts,curr_rps_highprob});
+		rps.push_back({mgsplit[i].nbars()[0],curr_min_nnts,curr_max_nnts,curr_rps_highprob});
+		// Note the 0 idx on mgsplit[i].nbars()[0]:  The call to factor() ensures all members of
+		// mgsplit[i].nbars() are the same.  TODO:  Unit tests!
 	}
 
 	// If the number of bars is constrained, the value of nbars determines 
