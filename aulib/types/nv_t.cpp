@@ -296,10 +296,10 @@ double operator/(const d_t& n, const d_t& d) {
 	//return (n.m_ab.val() / d.m_ab.val());
 }
 bool d_t::operator<(const d_t& rhs) const {
-	return (m_ab.val() < rhs.m_ab.val());
+	return aprx_lt(m_ab.val(),rhs.m_ab.val()); // (m_ab.val() < rhs.m_ab.val());
 }
 bool d_t::operator>(const d_t& rhs) const {
-	return (m_ab.val() > rhs.m_ab.val());
+	return aprx_gt(m_ab.val(),rhs.m_ab.val()); // (m_ab.val() > rhs.m_ab.val());
 }
 bool d_t::operator==(const d_t& rhs) const {
 	return aprx_eq(m_ab.val(), rhs.m_ab.val());

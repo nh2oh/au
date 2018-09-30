@@ -66,10 +66,10 @@ frq_t& frq_t::operator-=(frq_t const& rhs) {
 	return *this;
 }
 bool frq_t::operator==(frq_t const& rhs) const {
-	return isapproxeq(m_frq, rhs.m_frq, m_prec);
+	return aprx_eq(m_frq,rhs.m_frq); //isapproxeq(m_frq, rhs.m_frq, m_prec);
 }
 bool frq_t::operator>(frq_t const& rhs) const {
-	return m_frq > rhs.m_frq;
+	return aprx_gt(m_frq,rhs.m_frq); // m_frq > rhs.m_frq;
 }
 
 

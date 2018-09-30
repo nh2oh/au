@@ -5,6 +5,7 @@
 #include "util/au_random.h"
 #include "util/au_error.h"
 #include "util/au_util.h"
+//#include "util/au_algs_math.h"
 #include <vector>
 #include <algorithm> // std::max()
 #include <numeric> // iota()
@@ -80,7 +81,7 @@ rp_t randrp_metg(tmetg_t mg, int nnts, bar_t nbars) {
 	size_t required_n_appends {0};
 	if (nbars > 0_br) {
 		bar_t cum_nbars {0};
-		while (cum_nbars < nbars) {
+		while (cum_nbars < nbars){// && nbars!=cum_nbars) {
 			cum_nbars += rps[required_n_appends%rps.size()].nbars;
 			++required_n_appends;
 		}

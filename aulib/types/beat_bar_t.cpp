@@ -47,10 +47,10 @@ double operator/(const beat_t& num, const beat_t& denom) {
 	return num.m_beats/denom.m_beats;
 }
 bool beat_t::operator<(const beat_t& rhs) const {
-	return m_beats < rhs.m_beats;
+	return aprx_lt(m_beats,rhs.m_beats); //m_beats < rhs.m_beats;
 }
 bool beat_t::operator>(const beat_t& rhs) const {
-	return m_beats > rhs.m_beats;
+	return aprx_gt(m_beats,rhs.m_beats); //m_beats > rhs.m_beats;
 }
 bool beat_t::operator==(const beat_t& rhs) const {
 	return aprx_eq(m_beats,rhs.m_beats);
@@ -143,10 +143,10 @@ double operator/(const bar_t& num, const bar_t& denom) {
 	return num.m_bars/denom.m_bars;
 }
 bool bar_t::operator<(const bar_t& rhs) const {
-	return m_bars < rhs.m_bars;
+	return aprx_lt(m_bars,rhs.m_bars); //m_bars < rhs.m_bars;
 }
 bool bar_t::operator>(const bar_t& rhs) const {
-	return m_bars > rhs.m_bars;
+	return aprx_gt(m_bars,rhs.m_bars); //m_bars > rhs.m_bars;
 }
 bool bar_t::operator==(const bar_t& rhs) const {
 	return aprx_eq(m_bars,rhs.m_bars);

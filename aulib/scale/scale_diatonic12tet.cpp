@@ -91,7 +91,7 @@ std::optional<frq_t> scale_diatonic12tet::to_frq(ntstr_t ntstr_in) {  // wrapper
 std::optional<scd_t> scale_diatonic12tet::to_scd(frq_t frq_in) {  //  Calls n_eqt() directly
 	for (auto i=0; i<m_n; ++i) {
 		auto n_approx = std::log2(frq_in/m_frqs[i]);
-		if (isapproxint(n_approx,6)) {
+		if (!aprx_int(n_approx)) {//(isapproxint(n_approx,6)) {
 			auto oct = static_cast<int>(n_approx);
 			//rscdoctn_t ro {scd_t{i},octn_t{oct},m_n};
 			//return scd_t {ro};
@@ -136,7 +136,7 @@ std::optional<octn_t> scale_diatonic12tet::to_octn(ntstr_t ntstr_in) {
 bool scale_diatonic12tet::isinsc(frq_t frq_in) {
 	for (auto i=0; i<m_n; ++i) {
 		auto n_approx = std::log2(frq_in/m_frqs[i]);
-		if (isapproxint(n_approx,6)) {
+		if (aprx_int(n_approx)) {//(isapproxint(n_approx,6)) {
 			return true;
 		}
 	}

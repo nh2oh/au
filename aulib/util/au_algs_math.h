@@ -14,9 +14,9 @@ std::optional<linreg_result> linreg(std::vector<double> const&, std::vector<doub
 
 
 // Floating point equality
-bool isapproxint(double,int); // is approximately integer
-bool isapproxeq(double, double, int);
-bool ismultiple(double, double, int); // true if arg1/arg2 == integer
+//bool isapproxint(double,int); // is approximately integer
+//bool isapproxeq(double, double, int);
+//bool ismultiple(double, double, int); // true if arg1/arg2 == integer
 
 // Kahan summation
 template<typename T>
@@ -44,6 +44,27 @@ bool aprx_eq(T a, T b, int ulp=2) {
 	auto s = std::abs(a+b);
 	return (d <= e*s*ulp || d < m);
 };
+
+// a > b
+template<typename T>
+bool aprx_gt(T a, T b, int ulp=2) {
+	auto e = std::numeric_limits<T>::epsilon();
+	auto d = a-b;
+	auto s = std::abs(a+b);
+	return (d > 0 && d > e*s*ulp);
+};
+
+// a < b
+template<typename T>
+bool aprx_lt(T a, T b, int ulp=2) {
+	auto e = std::numeric_limits<T>::epsilon();
+	auto m = std::numeric_limits<T>::min();
+	auto d = a-b;
+	auto ad = std::abs(a-b);
+	auto s = std::abs(a+b);
+	return (d < 0 && ad > e*s*ulp);
+};
+
 
 // Better version of isapproxint()
 template<typename T>

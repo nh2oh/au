@@ -151,7 +151,22 @@ TEST(metg_t_tests, ZeroPhaseBuildFromExistingRP) {
 	}
 
 	EXPECT_TRUE(mg2!=mg); // mg2.m_pg is much larger than mg.m_pg
-	EXPECT_TRUE(mg2.levels()==mg.levels());
+
+	// Any level appearing in mg2 should also appear in mg1.  
+	// *Probably* mg2.levels()==mg.levels(), but occasionally 10 calls to draw()
+	// will not include one or more levels.  
+	auto mg1_lvls = mg.levels();
+	auto mg2_lvls = mg2.levels();
+	for (auto lvl2 : mg2_lvls) {
+		bool found_in_mg1 = false;
+		for (auto lvl1 : mg1_lvls) {
+			if (lvl2 == lvl1) {
+				found_in_mg1 = true;
+				break;
+			}
+		}
+		EXPECT_TRUE(found_in_mg1);
+	}
 
 }
 
@@ -187,7 +202,22 @@ TEST(metg_t_tests, ZeroPhaseBuildFromExistingRPSmallDurations) {
 	}
 
 	EXPECT_TRUE(mg2!=mg); // mg2.m_pg is much larger than mg.m_pg
-	EXPECT_TRUE(mg2.levels()==mg.levels());
+
+	// Any level appearing in mg2 should also appear in mg1.  
+	// *Probably* mg2.levels()==mg.levels(), but occasionally 10 calls to draw()
+	// will not include one or more levels.  
+	auto mg1_lvls = mg.levels();
+	auto mg2_lvls = mg2.levels();
+	for (auto lvl2 : mg2_lvls) {
+		bool found_in_mg1 = false;
+		for (auto lvl1 : mg1_lvls) {
+			if (lvl2 == lvl1) {
+				found_in_mg1 = true;
+				break;
+			}
+		}
+		EXPECT_TRUE(found_in_mg1);
+	}
 }
 
 

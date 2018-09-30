@@ -88,7 +88,7 @@ std::optional<frq_t> scale_12tet::to_frq(ntstr_t ntstr_in) {  // wrapper
 }
 std::optional<scd_t> scale_12tet::to_scd(frq_t frq_in) {  //  Calls n_eqt() directly
 	auto dn_approx = n_eqt(frq_in, m_ref_frq, m_n, m_gint);
-	if (!isapproxint(dn_approx,6)) {
+	if (!aprx_int(dn_approx)) {//(!isapproxint(dn_approx,6)) {
 		return {};
 	}
 	auto dn = static_cast<int>(std::round(dn_approx));
@@ -132,7 +132,7 @@ std::optional<octn_t> scale_12tet::to_octn(ntstr_t ntstr_in) {
 
 bool scale_12tet::isinsc(frq_t frq_in) {
 	double dn_approx = n_eqt(frq_in, m_ref_frq, m_n, m_gint);
-	return (isapproxint(dn_approx,6)); 
+	return aprx_int(dn_approx); //(isapproxint(dn_approx,6)); 
 }
 bool scale_12tet::isinsc(ntl_t ntl_in) {
 	return ismember(ntl_in,m_default_valid_ntls);
