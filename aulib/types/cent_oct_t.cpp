@@ -110,21 +110,19 @@ std::string cent_t::print(int prefer_name) const {
 
 
 bool operator==(cent_t const& lhs, cent_t const& rhs) {
-	return aprx_eq(lhs.to_double(),rhs.to_double()); //(isapproxeq(lhs.to_double(),rhs.to_double(),6));
+	return aprx_eq(lhs.to_double(),rhs.to_double());
 }
 bool operator<(cent_t const& lhs, cent_t const& rhs) {
-	return aprx_lt(lhs.to_double(),rhs.to_double()); //(lhs.to_double() < rhs.to_double());
+	return aprx_lt(lhs.to_double(),rhs.to_double());
 }
 bool operator>(cent_t const& lhs, cent_t const& rhs) {
-	return aprx_gt(lhs.to_double(),rhs.to_double()); //(lhs.to_double() > rhs.to_double());
+	return aprx_gt(lhs.to_double(),rhs.to_double());
 }
 bool operator>=(cent_t const& lhs, cent_t const& rhs) {
 	return lhs.to_double() > rhs.to_double() || lhs.to_double() == rhs.to_double();
-	//(lhs.to_double() >= rhs.to_double());
 }
 bool operator<=(cent_t const& lhs, cent_t const& rhs) {
 	return lhs.to_double() < rhs.to_double() || lhs.to_double() == rhs.to_double();
-	//return (lhs.to_double() <= rhs.to_double());
 }
 cent_t operator+(cent_t const& lhs, cent_t const& rhs) {
 	return cent_t {lhs.to_double() + rhs.to_double()};

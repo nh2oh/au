@@ -10,8 +10,27 @@
 #include <limits>
 
 
+std::vector<std::vector<double>> transpose_randrpmetg_gtest(const std::vector<std::vector<double>>& m) {
+	if (m.size() == 0) { return std::vector<std::vector<double>> {}; }
+	auto n1 = m.size();  // 1 => "dimension 1"
+	auto n2 = m[0].size();  // 2 => "dimension 2"
+
+	std::vector<std::vector<double>> res(n2,std::vector<double>(n1, 0.0));
+	for (auto i=0; i<n1; ++i) {
+		if (m[i].size() != n2) { return std::vector<std::vector<double>> {}; }
+		for (auto j=0; j<n2; ++j) {
+			res[j][i] = m[i][j];
+		}
+	}
+
+	return res;
+}
+
+
+
 // A simple mg in 4/4; all phases zero
-TEST(randrp_metg_tests, FourFourZeroPhaseQESxDefaultRandommg) {
+// Constraining nnts and nbars
+TEST(randrp_metg_tests, FourFourQESxZeroPhDefMgConstrainNbarsNnts) {
 	ts_t ts {4_bt,d::q};
 	tmetg_t mg {ts,{d::q,d::e,d::sx},{0_bt,0_bt,0_bt}};
 
@@ -40,6 +59,154 @@ TEST(randrp_metg_tests, FourFourZeroPhaseQESxDefaultRandommg) {
 		EXPECT_TRUE(tf_nb);
 	}
 }
+
+// A simple mg in 4/4; all phases zero; q,e,sx
+// Constraining nnts only
+TEST(randrp_metg_tests, FourFourQESxZeroPhDefMgConstrainNnotes) {
+	ts_t ts {4_bt,d::q};
+	tmetg_t mg {ts,{d::q,d::e,d::sx},{0_bt,0_bt,0_bt}};
+
+	struct test_set {
+		int num_nts {0};
+		bar_t num_bars {0};
+	};
+
+	// tests.size() == 24
+	std::vector<test_set> tests {};
+	for (int i=1; i<50; i+=2) {  // NB:  Starts @ 1
+		tests.push_back({3*i,0_br});
+	}
+
+	for (int i=0; i<tests.size(); ++i) {
+		auto rrp = randrp_metg(mg,tests[i].num_nts,tests[i].num_bars);
+		EXPECT_TRUE(rrp.nelems()==tests[i].num_nts);
+		EXPECT_TRUE(rrp.nbars() >= rrp.nelems()*nbar(mg.ts(),mg.levels().back().nv));
+		EXPECT_TRUE(rrp.nbars() < rrp.nelems()*nbar(mg.ts(),mg.levels().front().nv));
+	}
+}
+
+
+// A simple mg in 4/4; all phases zero; q,e,sx
+// Constraining nbars only; noninteger nbars
+TEST(randrp_metg_tests, FourFourQESxZeroPhDefMgConstrainNbars) {
+	ts_t ts {4_bt,d::q};
+	tmetg_t mg {ts,{d::q,d::e,d::sx},{0_bt,0_bt,0_bt}};
+
+	struct test_set {
+		int num_nts {0};
+		bar_t num_bars {0};
+	};
+	// tests.size() == 24; d::sx => 0.0625 bars, 49*d::sx => 3.0625 bars
+	std::vector<test_set> tests {};
+	for (int i=1; i<50; i+=2) {  // NB:  Starts @ 1
+		bar_t curr_nbars {i*nbar(mg.ts(),mg.levels().back().nv)};
+		tests.push_back({0,curr_nbars});
+	}
+
+	for (int i=0; i<tests.size(); ++i) {
+		auto rrp = randrp_metg(mg,tests[i].num_nts,tests[i].num_bars);
+		
+		EXPECT_TRUE(rrp.nelems() > 0);
+		auto nb = rrp.nbars();
+		auto tf_nb = (nb==tests[i].num_bars);
+		EXPECT_TRUE(tf_nb);
+	}
+}
+
+
+// A simple mg in 4/4; all phases zero; dw,w,q,e (the dw note always spans a bar)
+// Constraining nbars only; noninteger nbars
+TEST(randrp_metg_tests, FourFourDwWQEZeroPhDefMgConstrainNbars) {
+	ts_t ts {4_bt,d::q};
+	tmetg_t mg {ts,{d::dw,d::w,d::q,d::e},{0_bt,0_bt,0_bt,0_bt}};
+
+	struct test_set {
+		int num_nts {0};
+		bar_t num_bars {0};
+	};
+
+	// tests.size() == 24; d::e => 0.125 bars, *d::e => 12.125 bars
+	std::vector<test_set> tests {};
+	for (int i=1; i<100; i+=4) {  // NB:  Starts @ 1
+		bar_t curr_nbars {i*nbar(mg.ts(),mg.levels().back().nv)};
+		tests.push_back({0,curr_nbars});
+	}
+
+	for (int i=0; i<tests.size(); ++i) {
+		auto rrp = randrp_metg(mg,tests[i].num_nts,tests[i].num_bars);
+		
+		EXPECT_TRUE(rrp.nelems() > 0);
+		auto nb = rrp.nbars();
+		auto tf_nb = (nb==tests[i].num_bars);
+		EXPECT_TRUE(tf_nb);
+	}
+}
+
+
+// A simple mg in 4/4; all phases zero; w,h,q; pg manually set to only allow
+// a specific, small set of rps
+// Constraining nbars only, nnts only, and both
+TEST(randrp_metg_tests, FourFourWHQZeroPhManualPg) {
+	struct test_set {
+		int num_nts {0};
+		bar_t num_bars {0};
+	};
+	ts_t ts {4_bt,d::q};
+	teejee tg {ts,{d::w,d::h,d::q},{0_bt,0_bt,0_bt}};
+
+	std::vector<std::vector<double>> pg {
+		{1,0,0,0},
+		{1,0,1,0},
+		{1,1,0,0}
+	};
+	// 1 bar:  w; h,h; q,q,h
+	// 1.5 bars:  w,h; w,q,q; h,h,h; h,h,q,q; q,q,h,h; q,q,h,q,q
+	auto pgt = transpose_randrpmetg_gtest(pg);
+	tmetg_t mg {ts,tg.levels(),pgt};
+	auto tfval = mg.validate();  EXPECT_TRUE(tfval);
+
+	// 1 bar exactly
+	std::vector<test_set> tests1 {{1,1_br},{2,1_br},{3,1_br}};
+	std::vector<std::vector<d_t>> rp_ans_set1 {{d::w},{d::h,d::h},{d::q,d::q,d::h}};
+	int Ntests1 = 10*tests1.size();
+	for (int i=0; i<Ntests1; ++i) {
+		auto rrp = randrp_metg(mg,tests1[i%tests1.size()].num_nts,tests1[i%tests1.size()].num_bars);
+
+		EXPECT_TRUE(rrp.nelems()==tests1[i%tests1.size()].num_nts);
+		auto nb = rrp.nbars();
+		auto tf_nb = (nb==tests1[i%tests1.size()].num_bars);
+		EXPECT_TRUE(tf_nb);
+
+		rp_t curr_rp_ans {mg.ts(),rp_ans_set1[i%tests1.size()]};
+		bool tf_rp_ans = curr_rp_ans.to_duration_seq() == rrp.to_duration_seq();
+		EXPECT_TRUE(tf_rp_ans);
+	}
+	
+	// 1.5 bars exactly
+	std::vector<test_set> tests2 {{2,1.5_br},{3,1.5_br},{4,1.5_br}};
+	std::vector<std::vector<d_t>> rp_ans_set {{d::w,d::h},{d::w,d::q,d::q},
+		{d::h,d::h,d::h}, {d::h,d::h,d::q,d::q}, {d::q,d::q,d::h,d::h},
+		{d::q,d::q,d::h,d::q,d::q}};
+	int Ntests2 = 10*tests2.size();
+	for (int i=0; i<Ntests2; ++i) {
+		auto rrp = randrp_metg(mg,tests2[i%tests2.size()].num_nts,tests2[i%tests2.size()].num_bars);
+
+		EXPECT_TRUE(rrp.nelems()==tests2[i%tests2.size()].num_nts);
+		auto nb = rrp.nbars();
+		auto tf_nb = (nb==tests2[i%tests2.size()].num_bars);
+		EXPECT_TRUE(tf_nb);
+
+		bool found_rp = false;
+		for (auto e : rp_ans_set) {
+			if (e == rrp.to_duration_seq()) {
+				found_rp = true;
+				break;
+			}
+		}
+		EXPECT_TRUE(found_rp);
+	}
+}
+
 
 // A simple mg in 4/4; w,h,q; the w-note has a 1-bt phase shift.  
 // This mg does not factor!  The w and h notes always cross over oneanother

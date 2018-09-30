@@ -104,7 +104,7 @@ frac rapprox(double x, int N) {  // number-to-approximate, max-denominator
 	double a {0}; double b {1}; double c {1}; double d {1};
 	while (b <= N && d <=N) {
 		auto mediant = (a+c)/(b+d);
-		if ((std::abs(x-mediant) < std::pow(10,-prec))) { //(isapproxeq(x,mediant,prec)) {
+		if ((std::abs(x-mediant) < std::pow(10,-prec))) {
 			if (b+d <= N) { 
 				return sign*frac{static_cast<int>((a+c)+integral*(b+d)),static_cast<int>(b+d)};
 			} else if (d > b) {

@@ -38,25 +38,6 @@ std::optional<linreg_result> linreg(std::vector<double> const& x,
 	return res;
 }
 
-/*
-// "is d approximately [an] integer?"
-// true if d is within 10^-prec of an integer value
-bool isapproxint(double d, int prec) {
-	return isapproxeq(d,std::round(d),prec);
-}
-
-// "is lhs approximately equal to rhs?"
-// true if lhs and rhs are within 10^-prec of eachother
-bool isapproxeq(double lhs, double rhs, int prec) {
-	return (std::abs(lhs-rhs) < std::pow(10,-prec));
-}
-
-// "is a an integer multiple of b?"
-// true if a/b is within 10^-prec of an integer.  
-bool ismultiple(double a, double b, int prec) {
-	return isapproxeq(a/b,std::round(a/b),prec);
-}
-*/
 
 int lcm(std::vector<int> const& v) {
 	int result = 1;

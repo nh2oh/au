@@ -13,11 +13,6 @@ struct linreg_result {
 std::optional<linreg_result> linreg(std::vector<double> const&, std::vector<double> const&);
 
 
-// Floating point equality
-//bool isapproxint(double,int); // is approximately integer
-//bool isapproxeq(double, double, int);
-//bool ismultiple(double, double, int); // true if arg1/arg2 == integer
-
 // Kahan summation
 template<typename T>
 struct ksum {

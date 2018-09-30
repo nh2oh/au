@@ -25,11 +25,14 @@
 
 rp_t randrp_metg(tmetg_t mg, int nnts, bar_t nbars) {
 	
+	auto mgexact = mg;
 	if (nbars > 0_br) {
 		// Extends, truncates, or extends and truncates the pg to be exactly
 		// the size of nbars.  
-		mg = mg.slice(0_bt,nbeat(mg.ts(),nbars));
+		mgexact.set_length_exact(nbeat(mg.ts(),nbars));
+		//mg = mg.slice(0_bt,nbeat(mg.ts(),nbars));
 	}
+	auto mgsplit = mgexact.factor();
 
 	// Factor the input mg via mg.split(), and store the result in rps
 	struct rpset_nbars {
@@ -38,9 +41,7 @@ rp_t randrp_metg(tmetg_t mg, int nnts, bar_t nbars) {
 		size_t max_nnts {};
 		std::vector<tmetg_t::rpp> rpp {};  // Holds the result of enumerate()
 	};
-	auto mgexact = mg; mgexact.set_length_exact(nbeat(mg.ts(),nbars));
-	auto mgsplit = mgexact.factor();
-
+	
 	std::vector<rpset_nbars> rps {};
 	for (size_t i=0; i<mgsplit.size(); ++i) {
 		std::vector<tmetg_t::rpp> curr_rps = mgsplit[i].enumerate();
@@ -81,9 +82,12 @@ rp_t randrp_metg(tmetg_t mg, int nnts, bar_t nbars) {
 	size_t required_n_appends {0};
 	if (nbars > 0_br) {
 		bar_t cum_nbars {0};
-		while (cum_nbars < nbars){// && nbars!=cum_nbars) {
+		while (cum_nbars < nbars){
 			cum_nbars += rps[required_n_appends%rps.size()].nbars;
 			++required_n_appends;
+		}
+		if (!(cum_nbars == nbars)) {
+			wait();
 		}
 		au_assert(cum_nbars == nbars,
 			"The given mg does not split evenly to this nbars :(");
