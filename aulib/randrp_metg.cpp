@@ -15,9 +15,7 @@
 // TODO:  Need to take a more careful look at the method used for dropping
 // low-probability rps
 
-
 rp_t randrp_metg(tmetg_t mg, int nnts, bar_t nbars) {
-	
 	auto mgexact = mg;
 	if (nbars > 0_br) {
 		// Extends, truncates, or extends /and/ truncates the pg such that all rps will be
@@ -202,16 +200,8 @@ rp_t randrp_metg(tmetg_t mg, int nnts, bar_t nbars) {
 		} else if (nnts == 0 && nbars > 0_br) {
 			if (nbars == curr_nbars) { break; }
 		}
-
-
 	}
 	
 	return rp_t {mg.ts(),curr_rp};
-
 }
-
-
-
-
-
 

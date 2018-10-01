@@ -33,6 +33,7 @@
     <ClCompile Include="types\frq_t.cpp" />
     <ClCompile Include="types\line_t.cpp" />
     <ClCompile Include="types\metg_t.cpp" />
+    <ClCompile Include="types\metg_uih.cpp" />
     <ClCompile Include="types\ntl_t.cpp" />
     <ClCompile Include="types\nv_t.cpp" />
     <ClCompile Include="types\rp_t.cpp" />
@@ -66,6 +67,7 @@
     <ClInclude Include="types\frq_t.h" />
     <ClInclude Include="types\line_t.h" />
     <ClInclude Include="types\metg_t.h" />
+    <ClInclude Include="types\metg_uih.h" />
     <ClInclude Include="types\ntl_t.h" />
     <ClInclude Include="types\nv_t.h" />
     <ClInclude Include="types\rp_t.h" />

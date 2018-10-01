@@ -9,6 +9,7 @@
 #include "ts_t.h"
 #include "nv_t.h"
 #include "metg_t.h"
+#include "metg_uih.h"
 #include "de_t.h"
 #include "line_t.h"
 #include "teejee.h"

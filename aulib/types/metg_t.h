@@ -68,6 +68,9 @@ struct tmetg_t_opts {
 	// Does anyone want zero_pointers ever???
 };
 
+//struct metg_input_pg;
+//class metg_uih;
+
 
 class tmetg_t {
 public:
@@ -142,6 +145,7 @@ private:
 	bool internal_orphans(const std::vector<std::vector<double>>&) const;
 	std::vector<std::vector<int>> find_internal_zero_pointers(const std::vector<std::vector<double>>&) const;
 	bool is_zero_col(const int&, const std::vector<std::vector<double>>&) const;
+	std::vector<std::vector<int>> find_illegals(const std::vector<std::vector<double>>&) const;
 
 	std::vector<std::vector<double>> extend_pg(std::vector<std::vector<double>>,beat_t, beat_t) const;
 	std::vector<std::vector<double>> set_pg_length_exact(std::vector<std::vector<double>>, beat_t) const;
@@ -160,11 +164,9 @@ private:
 		std::vector<std::vector<enumerator_pgcell>> const&, int&, int) const;
 	void m_enumerator2(std::vector<nvp_p>&, 
 		std::vector<std::vector<enumerator_pgcell>> const&, int&, int) const;
-};
 
-
-namespace autests {
-	std::string tests1();
+	template <typename T>
+	friend class metg_uih;
 };
 
 
