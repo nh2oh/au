@@ -14,5 +14,6 @@ class gui2 : public QMainWindow {
 		void on_actionImport_triggered();
 		void on_actionRandrp_triggered();
 		void on_actionScale_builder_triggered();
+		void on_actionmetg_builder_triggered();
 		void on_update_clicked();
 };

@@ -3,6 +3,7 @@
 #include "nf_import_window.h"
 #include "rp_builder.h"
 #include "scale_builder.h"
+#include "metg_builder.h"
 #include "g_data_pool.h"
 #include <string>
 
@@ -27,6 +28,12 @@ void gui2::on_actionScale_builder_triggered() {
 	scale_builder *scale_builder_w = new scale_builder(this);
 	scale_builder_w->setAttribute(Qt::WA_DeleteOnClose);
 	scale_builder_w->show();
+}
+
+void gui2::on_actionmetg_builder_triggered() {
+	metg_builder *metg_builder_w = new metg_builder(this);
+	metg_builder_w->setAttribute(Qt::WA_DeleteOnClose);
+	metg_builder_w->show();
 }
 
 void gui2::on_update_clicked() {

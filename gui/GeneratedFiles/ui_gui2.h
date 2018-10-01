@@ -34,6 +34,7 @@ public:
     QAction *actionExit;
     QAction *actionScale_builder;
     QAction *actionRandrp;
+    QAction *actionmetg_builder;
     QWidget *centralwidget;
     QVBoxLayout *verticalLayout;
     QMdiArea *mdiArea;
@@ -71,6 +72,8 @@ public:
         actionScale_builder->setObjectName(QStringLiteral("actionScale_builder"));
         actionRandrp = new QAction(gui2);
         actionRandrp->setObjectName(QStringLiteral("actionRandrp"));
+        actionmetg_builder = new QAction(gui2);
+        actionmetg_builder->setObjectName(QStringLiteral("actionmetg_builder"));
         centralwidget = new QWidget(gui2);
         centralwidget->setObjectName(QStringLiteral("centralwidget"));
         verticalLayout = new QVBoxLayout(centralwidget);
@@ -156,6 +159,7 @@ public:
         menuFile->addAction(actionExit);
         menuTools->addAction(actionScale_builder);
         menuTools->addAction(actionRandrp);
+        menuTools->addAction(actionmetg_builder);
 
         retranslateUi(gui2);
         QObject::connect(update, SIGNAL(clicked()), gui2, SLOT(update()));
@@ -171,6 +175,7 @@ public:
         actionExit->setText(QApplication::translate("gui2", "Exit", nullptr));
         actionScale_builder->setText(QApplication::translate("gui2", "Scale builder", nullptr));
         actionRandrp->setText(QApplication::translate("gui2", "rand_rp()", nullptr));
+        actionmetg_builder->setText(QApplication::translate("gui2", "metg builder", nullptr));
         subwindow->setWindowTitle(QApplication::translate("gui2", "Subwindow", nullptr));
         pushButton->setText(QApplication::translate("gui2", "PushButton", nullptr));
         dump->setText(QApplication::translate("gui2", "dump", nullptr));

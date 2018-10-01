@@ -54,6 +54,9 @@
     <ClCompile Include="scale_builder.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="metg_builder.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="fonts_colors.h">
@@ -71,6 +74,9 @@
     <QtMoc Include="scale_builder.h">
       <Filter>Header Files</Filter>
     </QtMoc>
+    <QtMoc Include="metg_builder.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="fonts_colors.ui">
@@ -86,6 +92,9 @@
       <Filter>Form Files</Filter>
     </QtUic>
     <QtUic Include="rp_builder.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
+    <QtUic Include="metg_builder.ui">
       <Filter>Form Files</Filter>
     </QtUic>
   </ItemGroup>

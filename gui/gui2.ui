@@ -105,6 +105,7 @@
     </property>
     <addaction name="actionScale_builder"/>
     <addaction name="actionRandrp"/>
+    <addaction name="actionmetg_builder"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -140,6 +141,11 @@
   <action name="actionRandrp">
    <property name="text">
     <string>rand_rp()</string>
+   </property>
+  </action>
+  <action name="actionmetg_builder">
+   <property name="text">
+    <string>metg builder</string>
    </property>
   </action>
  </widget>
