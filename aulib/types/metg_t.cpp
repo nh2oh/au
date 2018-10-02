@@ -53,6 +53,17 @@ tmetg_t::tmetg_t(ts_t ts_in, std::vector<d_t> nvs_in, std::vector<beat_t> ph_in)
 	m_f_pg_extends = pg_extends(m_pg);  // Expect true...
 }
 
+tmetg_t::tmetg_t(ts_t ts_in, std::vector<teejee::nv_ph> nvph) {
+	au_assert(nvph.size()>0,"nvph.size() < 1");
+
+	m_tg = teejee {ts_in,nvph};
+	m_btstart = 0_bt;
+
+	init_pg(nbeat(m_tg.ts(),m_tg.period()));
+	set_pg_random();
+	m_f_pg_extends = pg_extends(m_pg);  // Expect true...
+}
+
 // Constructor from a tg
 // The pg spans exactly 1 period as calcuated by m_tg & m_btstart == 0_bt
 tmetg_t::tmetg_t(teejee tg) {
@@ -243,12 +254,25 @@ bool tmetg_t::onset_allowed_at(d_t nv, beat_t beat_number) const {
 	if (c >= m_pg.size() && !m_f_pg_extends) { return false; }
 
 	c = c%m_pg.size();
+	// TODO:  wtf??  Why not just read m_pg[c][r] directly???
 	for (int r=0; r<m_pg[c].size(); ++r) {
 		if (m_tg.levels()[r].nv == nv && m_pg[c][r] > 0.0) {
 			return true;
 		}
 	}
 	return false;
+}
+
+double tmetg_t::onset_prob_at(teejee::nv_ph nvph, beat_t beat_number) const {
+	if (!aprx_int(beat_number/m_tg.gres())) {
+		return 0.0;
+	}
+	int c = bt2step(beat_number);
+	if (c >= m_pg.size() && !m_f_pg_extends) { return 0.0; }
+	c = c%m_pg.size();
+	auto r = nvph2level(nvph);  // TODO:  Check if nvph is a member
+
+	return m_pg[c][r];
 }
 
 // Can the input pg be concatenated repeatedly to itself to generate rp's always
@@ -718,15 +742,20 @@ std::vector<bar_t> tmetg_t::nbars() const {
 	//return nbar(m_tg.ts(),m_tg.gres()*m_pg.size());
 	std::vector<bar_t> nbars_span {};
 	for (int r=0; r<m_tg.levels().size(); ++r) {
+		bool found_entry_on_row {false};  // TODO:  Gross, but what if m_pg is empty???
 		for (int c=m_pg.size()-1; c>-1; --c) {
 			int cptr = c+level2stride(r);
 			if (m_pg[c][r] > 0.0 && cptr >= m_pg.size()) {
+				found_entry_on_row = true;
 				// If cptr is < m_pg.size() then it must point into a col w/ @ least one nonzero
 				// member, lest it be a zero-pointer, which is not allowed.  The "terminal" 
 				// elements of the pg are those pointing off the end.  
 				nbars_span.push_back(nbar(m_tg.ts(),step2bt(cptr)-m_btstart));  // NB: -m_btstart
 				break;
 			}
+		}
+		if (!found_entry_on_row) {
+			nbars_span.push_back(0_br);  // TODO: m_btstart ??
 		}
 	}
 
@@ -738,6 +767,9 @@ ts_t tmetg_t::ts() const {
 }
 std::vector<teejee::nv_ph> tmetg_t::levels() const {
 	return m_tg.levels();
+}
+beat_t tmetg_t::btres() const {
+	return m_tg.gres();
 }
 
 // A number-of-beats, not a beat-number (ie, ignores m_btstart).  

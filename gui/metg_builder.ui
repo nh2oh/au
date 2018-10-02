@@ -7,20 +7,20 @@
     <x>0</x>
     <y>0</y>
     <width>877</width>
-    <height>364</height>
+    <height>448</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QTableView" name="tableView">
+   <widget class="QTableView" name="pg_display">
     <property name="geometry">
      <rect>
-      <x>180</x>
+      <x>150</x>
       <y>50</y>
-      <width>671</width>
-      <height>161</height>
+      <width>701</width>
+      <height>241</height>
      </rect>
     </property>
    </widget>
@@ -28,7 +28,7 @@
     <property name="geometry">
      <rect>
       <x>780</x>
-      <y>290</y>
+      <y>370</y>
       <width>75</width>
       <height>23</height>
      </rect>
@@ -41,7 +41,7 @@
     <property name="geometry">
      <rect>
       <x>670</x>
-      <y>290</y>
+      <y>370</y>
       <width>75</width>
       <height>23</height>
      </rect>
@@ -50,7 +50,7 @@
      <string>Cancel</string>
     </property>
    </widget>
-   <widget class="QLineEdit" name="lineEdit">
+   <widget class="QLineEdit" name="ts">
     <property name="geometry">
      <rect>
       <x>50</x>
@@ -77,7 +77,7 @@
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>230</y>
+      <y>310</y>
       <width>120</width>
       <height>61</height>
      </rect>
@@ -115,13 +115,13 @@
      </property>
     </widget>
    </widget>
-   <widget class="QTableView" name="tableView_2">
+   <widget class="QTableView" name="nvph_display">
     <property name="geometry">
      <rect>
-      <x>50</x>
+      <x>20</x>
       <y>50</y>
       <width>111</width>
-      <height>161</height>
+      <height>191</height>
      </rect>
     </property>
    </widget>
@@ -129,7 +129,7 @@
     <property name="geometry">
      <rect>
       <x>190</x>
-      <y>220</y>
+      <y>300</y>
       <width>91</width>
       <height>16</height>
      </rect>
@@ -142,13 +142,39 @@
     <property name="geometry">
      <rect>
       <x>750</x>
-      <y>220</y>
+      <y>300</y>
       <width>75</width>
       <height>23</height>
      </rect>
     </property>
     <property name="text">
      <string>Normalize</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="set_levels_btn">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>250</y>
+      <width>75</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Set levels</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="set_ts_btn">
+    <property name="geometry">
+     <rect>
+      <x>140</x>
+      <y>20</y>
+      <width>75</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Set ts</string>
     </property>
    </widget>
   </widget>

@@ -28,15 +28,15 @@ class Ui_metg_builder
 {
 public:
     QWidget *centralwidget;
-    QTableView *tableView;
+    QTableView *pg_display;
     QPushButton *import_btn;
     QPushButton *cancel_btn;
-    QLineEdit *lineEdit;
+    QLineEdit *ts;
     QLabel *label;
     QGroupBox *groupBox;
     QLabel *label_2;
     QLabel *label_3;
-    QTableView *tableView_2;
+    QTableView *nvph_display;
     QLabel *label_4;
     QPushButton *normalize_btn;
     QMenuBar *menubar;
@@ -46,27 +46,27 @@ public:
     {
         if (metg_builder->objectName().isEmpty())
             metg_builder->setObjectName(QStringLiteral("metg_builder"));
-        metg_builder->resize(877, 364);
+        metg_builder->resize(877, 448);
         centralwidget = new QWidget(metg_builder);
         centralwidget->setObjectName(QStringLiteral("centralwidget"));
-        tableView = new QTableView(centralwidget);
-        tableView->setObjectName(QStringLiteral("tableView"));
-        tableView->setGeometry(QRect(180, 50, 671, 161));
+        pg_display = new QTableView(centralwidget);
+        pg_display->setObjectName(QStringLiteral("pg_display"));
+        pg_display->setGeometry(QRect(150, 50, 701, 241));
         import_btn = new QPushButton(centralwidget);
         import_btn->setObjectName(QStringLiteral("import_btn"));
-        import_btn->setGeometry(QRect(780, 290, 75, 23));
+        import_btn->setGeometry(QRect(780, 370, 75, 23));
         cancel_btn = new QPushButton(centralwidget);
         cancel_btn->setObjectName(QStringLiteral("cancel_btn"));
-        cancel_btn->setGeometry(QRect(670, 290, 75, 23));
-        lineEdit = new QLineEdit(centralwidget);
-        lineEdit->setObjectName(QStringLiteral("lineEdit"));
-        lineEdit->setGeometry(QRect(50, 20, 81, 20));
+        cancel_btn->setGeometry(QRect(670, 370, 75, 23));
+        ts = new QLineEdit(centralwidget);
+        ts->setObjectName(QStringLiteral("ts"));
+        ts->setGeometry(QRect(50, 20, 81, 20));
         label = new QLabel(centralwidget);
         label->setObjectName(QStringLiteral("label"));
         label->setGeometry(QRect(20, 20, 21, 16));
         groupBox = new QGroupBox(centralwidget);
         groupBox->setObjectName(QStringLiteral("groupBox"));
-        groupBox->setGeometry(QRect(20, 230, 120, 61));
+        groupBox->setGeometry(QRect(20, 310, 120, 61));
         groupBox->setCheckable(false);
         label_2 = new QLabel(groupBox);
         label_2->setObjectName(QStringLiteral("label_2"));
@@ -74,15 +74,15 @@ public:
         label_3 = new QLabel(groupBox);
         label_3->setObjectName(QStringLiteral("label_3"));
         label_3->setGeometry(QRect(10, 40, 47, 14));
-        tableView_2 = new QTableView(centralwidget);
-        tableView_2->setObjectName(QStringLiteral("tableView_2"));
-        tableView_2->setGeometry(QRect(50, 50, 111, 161));
+        nvph_display = new QTableView(centralwidget);
+        nvph_display->setObjectName(QStringLiteral("nvph_display"));
+        nvph_display->setGeometry(QRect(20, 50, 111, 241));
         label_4 = new QLabel(centralwidget);
         label_4->setObjectName(QStringLiteral("label_4"));
-        label_4->setGeometry(QRect(190, 220, 91, 16));
+        label_4->setGeometry(QRect(190, 300, 91, 16));
         normalize_btn = new QPushButton(centralwidget);
         normalize_btn->setObjectName(QStringLiteral("normalize_btn"));
-        normalize_btn->setGeometry(QRect(750, 220, 75, 23));
+        normalize_btn->setGeometry(QRect(750, 300, 75, 23));
         metg_builder->setCentralWidget(centralwidget);
         menubar = new QMenuBar(metg_builder);
         menubar->setObjectName(QStringLiteral("menubar"));
