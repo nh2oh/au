@@ -13,7 +13,7 @@ public:
 	metg_builder(QWidget *parent = Q_NULLPTR);
 private:
 	struct defaults {
-		std::string ts {"4/4"};
+		std::string ts {4_bt,d::q};
 		std::string nv {""};
 
 		std::set<d_t> common_nvs {d::dw, d::w, d::h, d::hd, d::hdd, 
@@ -25,5 +25,8 @@ private:
 	Ui::metg_builder ui;
 private slots:
 
+	void on_normalize_btn_clicked();
+	void on_import_btn_clicked();
+	void on_cancel_btn_clicked();
 };
 

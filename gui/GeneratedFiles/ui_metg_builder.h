@@ -29,8 +29,8 @@ class Ui_metg_builder
 public:
     QWidget *centralwidget;
     QTableView *tableView;
-    QPushButton *pushButton;
-    QPushButton *pushButton_2;
+    QPushButton *import_btn;
+    QPushButton *cancel_btn;
     QLineEdit *lineEdit;
     QLabel *label;
     QGroupBox *groupBox;
@@ -38,6 +38,7 @@ public:
     QLabel *label_3;
     QTableView *tableView_2;
     QLabel *label_4;
+    QPushButton *normalize_btn;
     QMenuBar *menubar;
     QStatusBar *statusbar;
 
@@ -51,12 +52,12 @@ public:
         tableView = new QTableView(centralwidget);
         tableView->setObjectName(QStringLiteral("tableView"));
         tableView->setGeometry(QRect(180, 50, 671, 161));
-        pushButton = new QPushButton(centralwidget);
-        pushButton->setObjectName(QStringLiteral("pushButton"));
-        pushButton->setGeometry(QRect(770, 250, 75, 23));
-        pushButton_2 = new QPushButton(centralwidget);
-        pushButton_2->setObjectName(QStringLiteral("pushButton_2"));
-        pushButton_2->setGeometry(QRect(660, 250, 75, 23));
+        import_btn = new QPushButton(centralwidget);
+        import_btn->setObjectName(QStringLiteral("import_btn"));
+        import_btn->setGeometry(QRect(780, 290, 75, 23));
+        cancel_btn = new QPushButton(centralwidget);
+        cancel_btn->setObjectName(QStringLiteral("cancel_btn"));
+        cancel_btn->setGeometry(QRect(670, 290, 75, 23));
         lineEdit = new QLineEdit(centralwidget);
         lineEdit->setObjectName(QStringLiteral("lineEdit"));
         lineEdit->setGeometry(QRect(50, 20, 81, 20));
@@ -79,6 +80,9 @@ public:
         label_4 = new QLabel(centralwidget);
         label_4->setObjectName(QStringLiteral("label_4"));
         label_4->setGeometry(QRect(190, 220, 91, 16));
+        normalize_btn = new QPushButton(centralwidget);
+        normalize_btn->setObjectName(QStringLiteral("normalize_btn"));
+        normalize_btn->setGeometry(QRect(750, 220, 75, 23));
         metg_builder->setCentralWidget(centralwidget);
         menubar = new QMenuBar(metg_builder);
         menubar->setObjectName(QStringLiteral("menubar"));
@@ -96,13 +100,14 @@ public:
     void retranslateUi(QMainWindow *metg_builder)
     {
         metg_builder->setWindowTitle(QApplication::translate("metg_builder", "MainWindow", nullptr));
-        pushButton->setText(QApplication::translate("metg_builder", "Ok", nullptr));
-        pushButton_2->setText(QApplication::translate("metg_builder", "Cancel", nullptr));
+        import_btn->setText(QApplication::translate("metg_builder", "Import", nullptr));
+        cancel_btn->setText(QApplication::translate("metg_builder", "Cancel", nullptr));
         label->setText(QApplication::translate("metg_builder", "ts", nullptr));
         groupBox->setTitle(QApplication::translate("metg_builder", "chr grid", nullptr));
         label_2->setText(QApplication::translate("metg_builder", "gres", nullptr));
         label_3->setText(QApplication::translate("metg_builder", "Period", nullptr));
         label_4->setText(QApplication::translate("metg_builder", "Extends_or_not", nullptr));
+        normalize_btn->setText(QApplication::translate("metg_builder", "Normalize", nullptr));
     } // retranslateUi
 
 };
