@@ -44,6 +44,10 @@ class frq_t;
 // cent_t.   
 //
 
+
+//
+// TODO:  whatever()- > to_acname()
+//
 class cent_t {
 public:
 	cent_t() = default;
@@ -62,6 +66,7 @@ public:
 	// returned is that with idx = the int argument.  
 	std::string to_fcname(int=0) const;  // full common name
 	std::string to_acname(int=0) const; // abbreviated common name
+	std::string whatever(int=0) const; // abbreviated common name
 
 private:
 	double m_cents {0.0};

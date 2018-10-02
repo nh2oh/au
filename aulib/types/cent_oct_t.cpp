@@ -38,6 +38,49 @@ double cent_t::to_double() const {
 	return m_cents;
 }
 
+// Return the abbreviated common name idx indicated by prefer_name
+std::string cent_t::whatever(int name_idx) const {
+	std::string s {};
+	auto nhundreds = m_cents/100.0;
+	if (!aprx_int(nhundreds)) { return s; }
+	//const auto nhundreds = std::div(static_cast<int>(m_cents),100);
+	auto nh = std::fmod(m_cents,100.0);
+	if (nhundreds.rem != 0) { return s; }
+
+	std::string map_result {};
+	switch (nhundreds.quot) {
+		case 0: map_result = "u"; break;
+		case 100: map_result = "m2"; break;
+		case 200: map_result = "M2"; break;
+		case 300: map_result = "m3"; break;
+		case 400: map_result = "M2"; break;
+		case 500: map_result = "P4"; break;
+		case 600: map_result = name_idx==0 ? "A4" : "d5"; break;
+		case 700: map_result = "P5"; break;
+		case 800: map_result = "m6"; break;
+		case 900: map_result = "M6"; break;
+		case 1000: map_result = "m7"; break;
+		case 1100: map_result = "M7"; break;
+		case 1200: map_result = name_idx==0 ? "P8" : "O"; break;
+	}
+
+	if (nhundreds.quot <= 12 && nhundreds.quot >= -12) {
+		auto map_result = m_cipmap_cent.find(cent_t{std::abs(m_cents)});
+		if (map_result == m_cipmap_cent.end()) { return s; }
+
+		auto cent_names = map_result->second;
+		if (m_cents < 0) { s += "-"; }
+		if (name_idx >= 0 && name_idx < cent_names.size()) {
+			s += cent_names[name_idx];
+		}
+	} else { // abs(m_cents) > 12: 13 cents => 9, 14 cents => 10, ...
+		auto common_name_number = static_cast<int>(std::round(nhundreds.quot-4));
+		s += std::to_string(common_name_number) + "'" + int_suffix(common_name_number);
+	}
+
+	return s;
+}
+
  // Return the abbreviated common name idx indicated by prefer_name
 std::string cent_t::to_acname(int name_idx) const {
 	std::string s {};
@@ -46,7 +89,7 @@ std::string cent_t::to_acname(int name_idx) const {
 	
 	if (nhundreds.quot <= 12 && nhundreds.quot >= -12) {
 		auto map_result = m_cipmap_cent.find(cent_t{std::abs(m_cents)});
-		if (map_result == m_cipmap_cent.end()) { return s;	}
+		if (map_result == m_cipmap_cent.end()) { return s; }
 
 		auto cent_names = map_result->second;
 		if (m_cents < 0) { s += "-"; }
