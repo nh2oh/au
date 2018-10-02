@@ -199,6 +199,58 @@ bool tmetg_t::set_pg(teejee::nv_ph nvph, std::vector<double> p) {
 	return true;
 }
 
+//  TODO:  The new pg may contain many trailing cols w/ all zero p
+//  Probably can also contain zp's ant intorphs
+bool tmetg_t::delete_level(teejee::nv_ph nvph) {
+	if (!m_tg.ismember(nvph)) { return false; }
+	
+	auto r_drop = nvph2level(nvph);
+	int nrows_new = m_tg.levels().size()-1;
+	std::vector<std::vector<double>> new_pg(m_pg.size(),std::vector<double>(nrows_new,0.0));
+	std::vector<teejee::nv_ph> new_levels(nrows_new,{});
+
+	int r_new = 0;
+	for (int r=0; r<m_tg.levels().size(); ++r) {
+		if (r == r_drop) { continue; }
+
+		for (int c=0; c<m_pg.size(); ++c) {
+			new_pg[c][r_new] = m_pg[c][r];
+		}
+
+		new_levels[r_new] = m_tg.levels()[r];
+		++r_new;  // Not incremented for r==r_drop
+	}
+
+	m_tg = teejee {m_tg.ts(),new_levels};
+	m_pg = new_pg;
+	m_f_pg_extends=pg_extends(m_pg);
+
+	return true;
+}
+
+
+//  TODO...
+bool tmetg_t::insert_level(teejee::nv_ph nvph) {
+	if (m_tg.ismember(nvph)) { return false; }
+
+	auto old_levels_append = m_tg.levels(); old_levels_append.push_back(nvph);
+	tmetg_t temp_mg {m_tg.ts(),old_levels_append};
+	auto new_pg = temp_mg.m_pg;
+
+	for (int c=0; c<m_pg.size(); ++c) {
+		int dr=0;
+		for (int r=0; r<m_pg[c].size(); ++r) {
+			if (temp_mg.levels()[r] != m_tg.levels()[r]) { dr=1; continue; }
+			new_pg[c][r+dr] = m_pg[c][r];
+		}
+	}
+
+	m_tg = temp_mg.m_tg;
+	m_pg = new_pg;
+
+	return true;
+}
+
 
 int tmetg_t::nvph2level(const teejee::nv_ph& nvph) const {
 	auto lvls = m_tg.levels();

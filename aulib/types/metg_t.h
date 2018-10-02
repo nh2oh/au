@@ -120,7 +120,8 @@ public:
 	bool set_pg(teejee::nv_ph,beat_t,double);
 	bool set_pg(beat_t,std::vector<double>);  // Set a whole col
 	bool set_pg(teejee::nv_ph,std::vector<double>);  // Set a whole row
-	
+	bool delete_level(teejee::nv_ph);
+	bool insert_level(teejee::nv_ph);
 
 	// Operators
 	bool operator==(const tmetg_t&) const;
