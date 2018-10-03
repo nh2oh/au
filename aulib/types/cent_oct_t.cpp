@@ -45,7 +45,7 @@ std::string cent_t::whatever(int name_idx) const {
 	if (!aprx_int(nhundreds)) { return s; }
 	//const auto nhundreds = std::div(static_cast<int>(m_cents),100);
 	auto nh = std::fmod(m_cents,100.0);
-	if (nhundreds.rem != 0) { return s; }
+	/*if (nhundreds.rem != 0) { return s; }
 
 	std::string map_result {};
 	switch (nhundreds.quot) {
@@ -76,7 +76,7 @@ std::string cent_t::whatever(int name_idx) const {
 	} else { // abs(m_cents) > 12: 13 cents => 9, 14 cents => 10, ...
 		auto common_name_number = static_cast<int>(std::round(nhundreds.quot-4));
 		s += std::to_string(common_name_number) + "'" + int_suffix(common_name_number);
-	}
+	}*/
 
 	return s;
 }

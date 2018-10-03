@@ -28,7 +28,7 @@
 //
 //
 
-notefile read_notefile(std::string const& filename, int const& flags) {
+notefile read_notefile(const std::string& filename, int const& flags) {
 	auto fpath = std::filesystem::path(filename);
 
 	auto f = std::ifstream(filename);
@@ -79,7 +79,22 @@ std::vector<std::chrono::milliseconds> notefile2dt(notefile const& nf) {
 }
 
 
-line_t<scd_t> notefile2line(notefile const& nf) {
+bool write_notefile(const notefile& nf) {
+	auto fpath = std::filesystem::path(nf.fpath + nf.fname);
+	auto f = std::ofstream(fpath);
+	if (!f.is_open()) {
+		return false;
+	}
+
+	for (const auto& e : nf.lines) {
+		//...
+	}
+
+	return true;
+}
+
+
+line_t<scd_t> notefile2line(const notefile& nf) {
 	std::vector<scd_t> scds {};
 	for (auto e : nf.lines) {
 		scds.push_back(scd_t{e.pitch});

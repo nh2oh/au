@@ -204,7 +204,7 @@ bool tmetg_t::set_pg(teejee::nv_ph nvph, std::vector<double> p) {
 bool tmetg_t::delete_level(teejee::nv_ph nvph) {
 	if (!m_tg.ismember(nvph)) { return false; }
 	
-	auto r_drop = nvph2level(nvph);
+	/*auto r_drop = nvph2level(nvph);
 	int nrows_new = m_tg.levels().size()-1;
 	std::vector<std::vector<double>> new_pg(m_pg.size(),std::vector<double>(nrows_new,0.0));
 	std::vector<teejee::nv_ph> new_levels(nrows_new,{});
@@ -223,7 +223,7 @@ bool tmetg_t::delete_level(teejee::nv_ph nvph) {
 
 	m_tg = teejee {m_tg.ts(),new_levels};
 	m_pg = new_pg;
-	m_f_pg_extends=pg_extends(m_pg);
+	m_f_pg_extends=pg_extends(m_pg);*/
 
 	return true;
 }
@@ -233,7 +233,7 @@ bool tmetg_t::delete_level(teejee::nv_ph nvph) {
 bool tmetg_t::insert_level(teejee::nv_ph nvph) {
 	if (m_tg.ismember(nvph)) { return false; }
 
-	auto old_levels_append = m_tg.levels(); old_levels_append.push_back(nvph);
+	/*auto old_levels_append = m_tg.levels(); old_levels_append.push_back(nvph);
 	tmetg_t temp_mg {m_tg.ts(),old_levels_append};
 	auto new_pg = temp_mg.m_pg;
 
@@ -246,7 +246,7 @@ bool tmetg_t::insert_level(teejee::nv_ph nvph) {
 	}
 
 	m_tg = temp_mg.m_tg;
-	m_pg = new_pg;
+	m_pg = new_pg;*/
 
 	return true;
 }

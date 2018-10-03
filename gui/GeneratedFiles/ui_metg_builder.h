@@ -39,6 +39,8 @@ public:
     QTableView *nvph_display;
     QLabel *label_4;
     QPushButton *normalize_btn;
+    QPushButton *set_levels_btn;
+    QPushButton *set_ts_btn;
     QMenuBar *menubar;
     QStatusBar *statusbar;
 
@@ -76,13 +78,19 @@ public:
         label_3->setGeometry(QRect(10, 40, 47, 14));
         nvph_display = new QTableView(centralwidget);
         nvph_display->setObjectName(QStringLiteral("nvph_display"));
-        nvph_display->setGeometry(QRect(20, 50, 111, 241));
+        nvph_display->setGeometry(QRect(20, 50, 111, 191));
         label_4 = new QLabel(centralwidget);
         label_4->setObjectName(QStringLiteral("label_4"));
         label_4->setGeometry(QRect(190, 300, 91, 16));
         normalize_btn = new QPushButton(centralwidget);
         normalize_btn->setObjectName(QStringLiteral("normalize_btn"));
         normalize_btn->setGeometry(QRect(750, 300, 75, 23));
+        set_levels_btn = new QPushButton(centralwidget);
+        set_levels_btn->setObjectName(QStringLiteral("set_levels_btn"));
+        set_levels_btn->setGeometry(QRect(20, 250, 75, 23));
+        set_ts_btn = new QPushButton(centralwidget);
+        set_ts_btn->setObjectName(QStringLiteral("set_ts_btn"));
+        set_ts_btn->setGeometry(QRect(140, 20, 75, 23));
         metg_builder->setCentralWidget(centralwidget);
         menubar = new QMenuBar(metg_builder);
         menubar->setObjectName(QStringLiteral("menubar"));
@@ -108,6 +116,8 @@ public:
         label_3->setText(QApplication::translate("metg_builder", "Period", nullptr));
         label_4->setText(QApplication::translate("metg_builder", "Extends_or_not", nullptr));
         normalize_btn->setText(QApplication::translate("metg_builder", "Normalize", nullptr));
+        set_levels_btn->setText(QApplication::translate("metg_builder", "Set levels", nullptr));
+        set_ts_btn->setText(QApplication::translate("metg_builder", "Set ts", nullptr));
     } // retranslateUi
 
 };

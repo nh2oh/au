@@ -61,6 +61,7 @@
     <ClInclude Include="scale\scale_diatonic12tet.h" />
     <ClInclude Include="tinyformat.h" />
     <ClInclude Include="tinyformat2.h" />
+    <ClInclude Include="tinyformat2_user.h" />
     <ClInclude Include="types\beat_bar_t.h" />
     <ClInclude Include="types\cent_oct_t.h" />
     <ClInclude Include="types\de_t.h" />
