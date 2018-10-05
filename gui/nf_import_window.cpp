@@ -47,7 +47,7 @@ void nf_import_window::set_nf_from_file() {
 	if (m_nf.fname != m_fname) {
 		// Detect if the user has changed the filename and reload the entire m_nf
 		// struct if so.  
-		m_nf = read_notefile(m_fname, notefileopts::seconds);
+		m_nf = read_notefile(m_fname);
 		//m_status.nf = !m_nf.file_error;
 		if (m_nf.file_error) {return;}
 		m_nf_table_data.clear();

@@ -1,6 +1,7 @@
 #include "notefile.h"
 #include "..\util\au_util.h"
 #include "..\util\au_error.h"
+#include "..\util\au_algs.h"
 #include "..\types\line_t.h" // for notefile2line()
 #include "..\types\scd_t.h" // for notefile2line()
 #include "..\types\ts_t.h" // for notefile2line()
@@ -27,12 +28,12 @@
 //
 // "Suspicious" lines:
 // If  a given dt is <= 0, the index of the line in .lines is appended to
-// .error_lines.  Note that nf.error_lines holds indices of nf.lines, not 
-// physical line numbers in the file.  
+// .error_lines.  Note that nf.error_lines holds indices of the std::vector
+// nf.lines, not physical line numbers in the file.  
 //
 //
 
-notefile read_notefile(const std::string& filename, int const& flags) {
+notefile read_notefile(const std::string& filename) {
 	auto fpath = std::filesystem::path(filename);
 
 	auto f = std::ifstream(filename);
@@ -76,7 +77,7 @@ notefile read_notefile(const std::string& filename, int const& flags) {
 	f.close();
 
 	return notefile {false, fpath.filename().string(), fpath.relative_path().string(), 
-		nf_nnt_lines, nf_lines, flags, error_lines};
+		nf_nnt_lines, nf_lines, error_lines};
 }
 
 std::vector<std::chrono::milliseconds> notefile2dt(notefile const& nf) {
@@ -94,6 +95,9 @@ std::vector<std::chrono::milliseconds> notefile2dt(notefile const& nf) {
 //
 // nf must contain entries in nf.lines and nf.nonnote_lines for every line to be
 // written in the output file.  
+//
+// ontime and offtime have units of ms and are truncated to ints, even though 
+// struct notefileline holds these values as doubles.  
 //
 bool write_notefile(const notefile& nf) {
 	auto fpath = std::filesystem::path(nf.fpath + "/" + nf.fname);
@@ -132,11 +136,36 @@ bool write_notefile(const notefile& nf) {
 			// is incremented and that curr_ln actually refers to the phsyical line number 
 			// in the output file.  
 		}
-
-	}
+	}  // To next line
 
 	return true;
 }
+
+
+std::vector<ovl_idx> overlaps(const notefile& nf) {
+	std::vector<ovl_idx> ovl {};  // "overlap"
+	for (int i=0; i<nf.lines.size(); ++i) {
+		for (int j=(i+1); j<nf.lines.size(); ++j) {
+			bool on_t_overlaps = 
+				(nf.lines[j].ontime > nf.lines[i].ontime &&  // j starts after i starts
+				nf.lines[j].ontime < nf.lines[i].offtime);  // j starts before i ends
+			bool off_t_overlaps = 
+				(nf.lines[j].offtime > nf.lines[i].ontime &&  // j ends after i starts
+				nf.lines[j].offtime < nf.lines[i].offtime);  // j ends before i ends
+
+			if (on_t_overlaps && !off_t_overlaps) {  
+				ovl.push_back({i,j,0});  // j starts within i but ends outside of i
+			} else if (!on_t_overlaps && off_t_overlaps) {
+				ovl.push_back({i,j,1});  // j ends within i but starts before i
+			} else if (on_t_overlaps && off_t_overlaps) {
+				ovl.push_back({i,j,2});  // j is completely contained within i
+			}
+		}
+	}
+
+	return ovl;
+}
+
 
 
 line_t<scd_t> notefile2line(const notefile& nf) {

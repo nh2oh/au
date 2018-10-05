@@ -4,8 +4,6 @@
 #include <optional>
 #include <vector>
 #include <regex>
-//#include <set>
-//#include <cstdio>
 
 // Just a wrapper to tfm2
 template<typename... Args>
@@ -15,20 +13,6 @@ std::string bsprintf(const char* fmt, const Args&... args) {
 	return oss.str();
 }
 
-/*
-template<typename... Ts>
-std::string bsprintf(const char *fmt, Ts... args) {
-	size_t size = std::snprintf(nullptr,0,fmt,args...);
-	std::string s_out(size+1,'\0');
-	std::sprintf(&s_out[0], fmt, args...);
-	return s_out.substr(0,size);
-};
-
-template<typename... Ts>
-std::string bsprintf(std::string const& fmt, Ts... args) {
-	return bsprintf(fmt.c_str(),args...);
-};
-*/
 std::string int_suffix(int const&);
 
 // Specify regex as string (arg 1); function calls the std::regex

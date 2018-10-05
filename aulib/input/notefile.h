@@ -6,23 +6,12 @@
 //
 // Functions to read and write "notefiles" in "notelist" format:
 // "Note [ontime] [offtime] [pitch-num]"
-// Files may contain lines not beginning with "Note" that contain other data
-// "Meta event", ...
-//
-// In all the notefiles I have, ontime and offtime are always ints, but I am
-// entering them as doubles so i can work with them more easily.  
-//
 //
 // TODO:  Function to examine a t vector and pull out overlapping events
 //   into multiple "voices."  This can not be done w/a dt vector b/c 
 //   absolute temporal positions have been tossed.  
 //
-namespace notefileopts {
-enum {
-	seconds = 1,
-	someotheropt = 2,
-};
-};
+
 
 struct notefileline {
 	notefileline() = default;
@@ -49,16 +38,25 @@ struct notefile {
 	std::string fpath {};
 	std::vector<nonnotefileline> nonnote_lines {};
 	std::vector<notefileline> lines {};
-	int opts {0};
+	//int opts {0};
 	std::vector<int> error_lines {};
 		// idxs of notefile.lines where dt <= 0, etc.  Idxs to the vector, not
 		// file line numbers.  
 };
 
-notefile read_notefile(const std::string&, int const& = 0);
+notefile read_notefile(const std::string&);
 bool write_notefile(const notefile&);
-
 std::vector<std::chrono::milliseconds> notefile2dt(notefile const&);
+
+struct ovl_idx {
+	int idxa {};
+	int idxb {};
+	int type {};
+};
+std::vector<ovl_idx> overlaps(const notefile&);
+
+
+
 
 // Attempt at forward declarations...
 class scd_t;
