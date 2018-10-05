@@ -80,9 +80,10 @@ public:
 		size_t n {0};
 	};
 
-	tmetg_t() = delete;
-	tmetg_t(ts_t, rp_t);
+	tmetg_t() = default;
+	explicit tmetg_t(ts_t, rp_t);
 	explicit tmetg_t(ts_t,std::vector<d_t>,std::vector<beat_t>); // ts, dp, ph
+	explicit tmetg_t(ts_t,std::vector<teejee::nv_ph>);
 	explicit tmetg_t(ts_t,std::vector<teejee::nv_ph>,
 		std::vector<std::vector<double>>);
 		// Manually specify the whole pg
@@ -90,10 +91,12 @@ public:
 
 	// Getters
 	std::vector<bar_t> nbars() const;
+	beat_t btres() const; // Needed for printing the pg
 	ts_t ts() const;
 	std::vector<teejee::nv_ph> levels() const;  // passthrough to m_tg.levels()
 	bool onset_allowed_at(beat_t) const;  // beat-number, not number-of-beats
 	bool onset_allowed_at(d_t, beat_t) const;  // d_t must be a member @ beat-number
+	double onset_prob_at(teejee::nv_ph, beat_t) const;
 	bool span_possible(beat_t) const;  // number-of-beats, not beat-number
 	bool span_possible(bar_t) const;  // number-of-bars, not bar-number
 	std::string print() const;
@@ -117,7 +120,8 @@ public:
 	bool set_pg(teejee::nv_ph,beat_t,double);
 	bool set_pg(beat_t,std::vector<double>);  // Set a whole col
 	bool set_pg(teejee::nv_ph,std::vector<double>);  // Set a whole row
-	
+	bool delete_level(teejee::nv_ph);
+	bool insert_level(teejee::nv_ph);
 
 	// Operators
 	bool operator==(const tmetg_t&) const;

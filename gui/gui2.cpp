@@ -1,15 +1,12 @@
 #include "gui2.h"
-#include "aulib\util\au_util_all.h"
 #include "nf_import_window.h"
 #include "rp_builder.h"
 #include "scale_builder.h"
 #include "metg_builder.h"
 #include "g_data_pool.h"
-#include <string>
 
 gui2::gui2(QWidget *parent) : QMainWindow(parent) {
 	ui.setupUi(this);
-	
 }
 
 void gui2::on_actionImport_triggered() {

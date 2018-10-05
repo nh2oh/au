@@ -48,7 +48,8 @@ struct notefile {
 		// idxs of notefile.lines where dt <= 0, etc
 };
 
-notefile read_notefile(std::string const&, int const& = 0);
+notefile read_notefile(const std::string&, int const& = 0);
+bool write_notefile(const notefile&);
 
 std::vector<std::chrono::milliseconds> notefile2dt(notefile const&);
 
@@ -56,6 +57,6 @@ std::vector<std::chrono::milliseconds> notefile2dt(notefile const&);
 class scd_t;
 template<typename T> class line_t;
 
-line_t<scd_t> notefile2line(notefile const&);
+line_t<scd_t> notefile2line(const notefile&);
 
 
