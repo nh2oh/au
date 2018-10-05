@@ -167,12 +167,6 @@
     <ClInclude Include="types\cent_oct_t.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="tinyformat.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="tinyformat2.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="scale\scales_all.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -209,7 +203,7 @@
     <ClInclude Include="types\metg_uih.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="tinyformat2_user.h">
+    <ClInclude Include="util\tinyformat2.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

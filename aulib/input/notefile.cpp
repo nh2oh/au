@@ -1,5 +1,6 @@
 #include "notefile.h"
 #include "..\util\au_util.h"
+#include "..\util\au_error.h"
 #include "..\types\line_t.h" // for notefile2line()
 #include "..\types\scd_t.h" // for notefile2line()
 #include "..\types\ts_t.h" // for notefile2line()
@@ -15,16 +16,19 @@
 //
 // Does not verify any sort of ordering (ex, that the events returned occur
 // in order of increasing ontime).  Does not check for overlapping events
-// (=> polyphony).  Lines not conforming to: 
-// "Note [ontime] [offtime] [pitch-num]" are skipped (ignored).
+// (=> polyphony).  
 //
-// If dt is <= 0, the line is still added to the nf.lines vector, but the 
-// line  number is recorded in .error_lines.  Note that nf.error_lines 
-// => indices of nf.lines, not physical line numbers in the file.  It is
-// always possible to determine the file line number for a given 
-// nf.error_lines[i] as nf.lines[nf.error_lines[i]].file_line_num.  
+// Lines conforming to: 
+// "Note [ontime] [offtime] [pitch-num]"
+// are written to .lines.  Lines not conforming to the above are written to
+// .nonnote_lines.  This includes otherwise empty blank lines.  This ensures
+// read_notefile() and write_notefile() complement eachother.  
 //
 //
+// "Suspicious" lines:
+// If  a given dt is <= 0, the index of the line in .lines is appended to
+// .error_lines.  Note that nf.error_lines holds indices of nf.lines, not 
+// physical line numbers in the file.  
 //
 //
 
@@ -38,36 +42,41 @@ notefile read_notefile(const std::string& filename, int const& flags) {
 	}
 
 	std::vector<notefileline> nf_lines {};
+	std::vector<nonnotefileline> nf_nnt_lines {};  // "non-note lines"
 	std::vector<int> error_lines {};
 	std::regex rx("Note\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)");
 	std::string line {}; line.reserve(100);  // Expect ~25 chars/line
 	
 	int fline_num = 0;
-	int n = 0;  // The idx of .lines presently being written
 	while (getline(f,line)) {
 		++fline_num;
 		auto o_matches = rx_match_captures(rx,line);
-		if (!o_matches) { continue; }
-		auto matches = *o_matches;
+		if (!o_matches) {  // Is not a "Note ontime offtime pitch\n" line
+			nonnotefileline curr_nnf_line {};
+			curr_nnf_line.file_line_num = fline_num;
+			curr_nnf_line.linedata = line;
+			nf_nnt_lines.push_back(curr_nnf_line);
+		} else {  // Is a "Note ontime offtime pitch\n" line
+			auto matches = *o_matches;
 		
-		notefileline curr_nf_line;
-		curr_nf_line.file_line_num = fline_num;
-		curr_nf_line.ontime = std::stod(*(matches[1]));
-		curr_nf_line.offtime = std::stod(*(matches[2]));
-		curr_nf_line.dt = curr_nf_line.offtime - curr_nf_line.ontime;
-		curr_nf_line.pitch = std::stoi(*(matches[3]));
+			notefileline curr_nf_line;
+			curr_nf_line.file_line_num = fline_num;
+			curr_nf_line.ontime = std::stod(*(matches[1]));
+			curr_nf_line.offtime = std::stod(*(matches[2]));
+			curr_nf_line.dt = curr_nf_line.offtime - curr_nf_line.ontime;
+			curr_nf_line.pitch = std::stoi(*(matches[3]));
 
-		if (curr_nf_line.dt <= 0) {  // Checks for suspicious conditions...
-			error_lines.push_back(n);
+			if (curr_nf_line.dt <= 0) {  // Checks for suspicious conditions...
+				error_lines.push_back(static_cast<int>(nf_lines.size()));
+			}
+
+			nf_lines.push_back(curr_nf_line);
 		}
-
-		nf_lines.push_back(curr_nf_line);
-		++n;
-	}
+	}  // to next line in file
 	f.close();
 
 	return notefile {false, fpath.filename().string(), fpath.relative_path().string(), 
-		nf_lines, flags, error_lines};
+		nf_nnt_lines, nf_lines, flags, error_lines};
 }
 
 std::vector<std::chrono::milliseconds> notefile2dt(notefile const& nf) {
@@ -78,16 +87,52 @@ std::vector<std::chrono::milliseconds> notefile2dt(notefile const& nf) {
 	return dt;
 }
 
-
+//
+// Writes the notefile struct nf to the file indicated by nf.fpath, nf.fname.  If
+// the file indicated does not exist, it is created; if the file indicated does
+// exist, the contents are completely overwritten.  
+//
+// nf must contain entries in nf.lines and nf.nonnote_lines for every line to be
+// written in the output file.  
+//
 bool write_notefile(const notefile& nf) {
-	auto fpath = std::filesystem::path(nf.fpath + nf.fname);
-	auto f = std::ofstream(fpath);
-	if (!f.is_open()) {
+	auto fpath = std::filesystem::path(nf.fpath + "/" + nf.fname);
+	auto f = std::ofstream(fpath,std::ios_base::out);
+	if (!f.is_open() || !f) {
 		return false;
 	}
 
-	for (const auto& e : nf.lines) {
-		//...
+	int curr_ln {0};  // curr _file_ line number, starts @ 1, not 0
+	int i_lines {0}; int i_nntlines {0};
+	bool nt_lines_finished {false}; bool nnt_lines_finished {false};
+	while (curr_ln < (nf.lines.size() + nf.nonnote_lines.size())) {
+		++curr_ln;
+		nt_lines_finished = (i_lines >= nf.lines.size());
+		nnt_lines_finished = (i_nntlines >= nf.nonnote_lines.size());
+
+		if (!nt_lines_finished && !nnt_lines_finished) {
+			// Check that there is not an entry for curr_ln in _both_ 
+			// note_lines and nonnote_lines
+			au_assert(nf.lines[i_lines].file_line_num != 
+				nf.nonnote_lines[i_nntlines].file_line_num, "double what");
+		}
+
+		if (!nt_lines_finished && nf.lines[i_lines].file_line_num == curr_ln) {
+			f << bsprintf("Note %6d %6d %6d\n", 
+				nf.lines[i_lines].ontime, nf.lines[i_lines].offtime,
+				nf.lines[i_lines].pitch);
+			++i_lines;
+		} else if (!nnt_lines_finished && nf.nonnote_lines[i_nntlines].file_line_num == curr_ln) {
+			f << bsprintf("%s\n", nf.nonnote_lines[i_nntlines].linedata);
+			++i_nntlines;
+		} else {
+			// curr_ln does not appear in either nf.lines or nf_nonnote_lines
+			au_assert(false,"curr_ln does not appear in either nf.lines or nf_nonnote_lines");
+			// Dying here ensures that at every loop iteration one of i_lines, i_nntlines
+			// is incremented and that curr_ln actually refers to the phsyical line number 
+			// in the output file.  
+		}
+
 	}
 
 	return true;

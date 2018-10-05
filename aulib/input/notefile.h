@@ -33,6 +33,11 @@ struct notefileline {
 	int pitch {0}; // Middle C = 60
 };
 
+struct nonnotefileline {
+	int file_line_num {0};  // line num in the txt file; starts @ 1, not 0
+	std::string linedata {};
+};
+
 struct notefile {
 	notefile() = default;
 	bool file_error {true};
@@ -42,10 +47,12 @@ struct notefile {
 
 	std::string fname {};
 	std::string fpath {};
+	std::vector<nonnotefileline> nonnote_lines {};
 	std::vector<notefileline> lines {};
 	int opts {0};
 	std::vector<int> error_lines {};
-		// idxs of notefile.lines where dt <= 0, etc
+		// idxs of notefile.lines where dt <= 0, etc.  Idxs to the vector, not
+		// file line numbers.  
 };
 
 notefile read_notefile(const std::string&, int const& = 0);

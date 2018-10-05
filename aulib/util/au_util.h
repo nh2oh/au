@@ -1,11 +1,21 @@
 #pragma once
+#include "tinyformat2.h"
 #include <string>
 #include <optional>
 #include <vector>
 #include <regex>
-#include <set>
-#include <cstdio>
+//#include <set>
+//#include <cstdio>
 
+// Just a wrapper to tfm2
+template<typename... Args>
+std::string bsprintf(const char* fmt, const Args&... args) {
+	std::ostringstream oss;
+	tfm::format(oss, fmt, args...);
+	return oss.str();
+}
+
+/*
 template<typename... Ts>
 std::string bsprintf(const char *fmt, Ts... args) {
 	size_t size = std::snprintf(nullptr,0,fmt,args...);
@@ -18,7 +28,7 @@ template<typename... Ts>
 std::string bsprintf(std::string const& fmt, Ts... args) {
 	return bsprintf(fmt.c_str(),args...);
 };
-
+*/
 std::string int_suffix(int const&);
 
 // Specify regex as string (arg 1); function calls the std::regex
