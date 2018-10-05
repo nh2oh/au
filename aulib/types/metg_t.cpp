@@ -145,6 +145,7 @@ void tmetg_t::set_pg_random(int mode) {
 			// other elements are == 0 by the call to set_pg_zero().
 		}
 	}
+	wait();
 }
 
 // Prevents the caller from creating zero pointers and orphans
@@ -790,15 +791,13 @@ void tmetg_t::m_enumerator2(std::vector<nvp_p>& rps,
 }
 
 // A number-of-bars, not a bar-number (ie, ignores m_btstart)
+// TODO:  Drop duplicates from nbars_span
 std::vector<bar_t> tmetg_t::nbars() const {
-	//return nbar(m_tg.ts(),m_tg.gres()*m_pg.size());
 	std::vector<bar_t> nbars_span {};
 	for (int r=0; r<m_tg.levels().size(); ++r) {
-		bool found_entry_on_row {false};  // TODO:  Gross, but what if m_pg is empty???
 		for (int c=m_pg.size()-1; c>-1; --c) {
 			int cptr = c+level2stride(r);
 			if (m_pg[c][r] > 0.0 && cptr >= m_pg.size()) {
-				found_entry_on_row = true;
 				// If cptr is < m_pg.size() then it must point into a col w/ @ least one nonzero
 				// member, lest it be a zero-pointer, which is not allowed.  The "terminal" 
 				// elements of the pg are those pointing off the end.  
@@ -806,9 +805,10 @@ std::vector<bar_t> tmetg_t::nbars() const {
 				break;
 			}
 		}
-		if (!found_entry_on_row) {
-			nbars_span.push_back(0_br);  // TODO: m_btstart ??
-		}
+	}
+	// Ensures that nbars_span is always !empty
+	if (nbars_span.size() == 0) {
+		nbars_span.push_back(0_br);
 	}
 
 	return nbars_span;
