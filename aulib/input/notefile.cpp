@@ -32,7 +32,6 @@
 // nf.lines, not physical line numbers in the file.  
 //
 //
-
 notefile read_notefile(const std::string& filename) {
 	auto fpath = std::filesystem::path(filename);
 

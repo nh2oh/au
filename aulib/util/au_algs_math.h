@@ -30,7 +30,7 @@ struct ksum {
 };
 
 
-// Better version of isapproxeq()
+// aprx_eg, _lt, _gt are mutually exclusive
 template<typename T>
 bool aprx_eq(T a, T b, int ulp=2) {
 	auto e = std::numeric_limits<T>::epsilon();
@@ -61,13 +61,14 @@ bool aprx_lt(T a, T b, int ulp=2) {
 };
 
 
-// Better version of isapproxint()
+// Is a approximately an integer?
 template<typename T>
 bool aprx_int(T a, int ulp=2) {
 	T ra {std::round(a)};
 	return aprx_eq(a, ra, ulp);
 };
 
+// Is a a mersenne number?
 template<typename T>
 bool is_mersenne(T a, int ulp=2) {
 	if (a < 1) {return false;}

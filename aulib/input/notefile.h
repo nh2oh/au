@@ -56,8 +56,6 @@ struct ovl_idx {
 std::vector<ovl_idx> overlaps(const notefile&);
 
 
-
-
 // Attempt at forward declarations...
 class scd_t;
 template<typename T> class line_t;
