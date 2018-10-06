@@ -21,6 +21,7 @@ public:
 	scd_t() = default;
 	explicit scd_t(int);
 
+	std::string print() const;
 	int to_int() const;
 	double to_double() const;
 

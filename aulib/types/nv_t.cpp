@@ -211,7 +211,6 @@ std::string d_t::print() const {
 		if (tie && !lastiter) {
 			s += "(";
 		}
-		wait();
 	}
 	return s;
 }

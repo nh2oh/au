@@ -1,105 +1,92 @@
 #pragma once
+#include <variant>
+#include "..\util\au_error.h"
 #include "nv_t.h"
-#include <set>
-#include <algorithm>
-#include <type_traits>
+#include "chord_t.h"
+
 
 //
-// Duration element
-// The duration of a vertical note group or rest.  If m_nts.size() == 0, it's a rest.  
+// de_t
 //
-// As purely syntactic sugar, it'd be nice if, when an object is constructed
-// as a rest (w/ T=rest_dummy_t), said object has a converting constructor
-// (or maybe a copy constructor) to any other valid de_t<T>.  This way, a
-// user can instantiate a rest_t (ex, defined as alias of de_t<rest_dummy_t>)
-// and stick it into a sequence of, for example, de_t<scd_t>, and have it 
-// convert to a de_t<scd> w/ an empty m_nts.  
-// Other ideas:
-// A rest should not permit insert() or remove() (the methods should not
-//    exist).  
-// It may or may not be a good idea to allow a non-rest de_t<T> to call 
-//    remove() until empty... such an object is functionally a rest.  
-//
-//
-// ----------------------------------------------------------------------------
-//
-// m_nts is not sorted, since all nt types (ex: ntl_t) do not define >, <
-//    operators.  
-//
-// I named the duration m_dv instead of m_nv in anticipation of renaming
-//    nv_t to d_t (or something), and defining nt_t as corresponding to
-//    some sort of composition of a d_t and a note(s) (ie, this) and 
-//    rest_t as below.  
-//
-//
-//
-//
-//
-//
+// A "duration element."  Class de_t associates a duration with a "musical 
+// element," that is, a single note, chord, or rest.  A de_t containing a
+// chord_t<T> has type de_t<T>, the same as a de_t containing a single note 
+// of type T (scd_t, ntl_t, ...).  
+// 
+// TODO:  rest_t containment, type conversion, etc
+// 
 
-struct rest_dummy_t {
-	bool rest_dummy_t_data {true};
-};
-
-template<typename T=rest_dummy_t>
+template<typename T>
 class de_t {
 public:
-	de_t()=default;
-
-	explicit de_t(d_t dv) {
-		m_dv = dv;
-	};  // Creates a rest: T=rest_dummy_t
-
-	explicit de_t(T nt, d_t dv) {
-		insert(nt);
-		m_dv = dv;
+	de_t(chord_t<T> e, d_t d, bool isrest) {
+		m_e = e;
+		m_dv = d;
+		m_isrest = isrest;
+	};
+	de_t(T e, d_t d, bool isrest) {
+		m_e = e;
+		m_dv = d;
+		m_isrest = isrest;
 	};
 
-	explicit de_t(std::vector<T> nts, d_t dv) {
-		for (auto e : nts) {
-			insert(e);
+	std::string print() const {
+		std::string s {};
+		if (std::holds_alternative<T>(m_e)) {
+			s += std::get<T>(m_e).print();
+		} else {
+			s += std::get<chord_t<T>>(m_e).print();
 		}
-		m_dv = dv;
+		s += "/";
+		s += m_dv.print();
+		return s;
 	};
 
-	void insert(T nt) {
-		auto it = std::find(m_nts.begin(),m_nts.end(),nt);
-		if (it == m_nts.end()) { 
-			m_nts.push_back(nt);
-		}
-		return;
+	bool isrest() const {
+		return m_isrest;
 	};
 
-	void remove(const T& nt) {
-		m_nts.erase(std::remove(m_nts.begin(),m_nts.end(),nt));
-		return;
-	};
-
-	void setd(d_t dv) {  // set duration
-		m_dv = dv;
-		return;
-	};
-
-	d_t dv() {
+	d_t dv() const {
 		return m_dv;
 	};
 
-	std::vector<T> nts() {
-		return m_nts;
+	size_t n() const {
+		if (std::holds_alternative<T>(m_e)) {
+			return 1;
+		} else {
+			return std::get<chord_t<T>>(m_e).n();
+		}
 	};
+
+	T operator[](size_t idx) const {
+		if (std::holds_alternative<T>(m_e)) {
+			au_assert(idx==0,"Not a chord: idx must == 0");
+			return std::get<T>(m_e);
+		} else {
+			return std::get<chord_t<T>>(m_e).notes()[idx];
+		}
+	};
+
 private:
+	std::variant<T,chord_t<T>> m_e {};
+	bool m_isrest {false};
 	d_t m_dv {};
-	std::vector<T> m_nts {};
 };
 
-//template<typename T>
-//using chord_t = typename de_t<T>;
-	//  But note that a chord does not have duration
-	//  Call it an "ntg_t" ?? ntvg_t
-	//  Using the name "chord_t" uses up a name i probably want
-	//  to use for a collection of notes w/o duration...
-using rest_t = typename de_t<rest_dummy_t>;
 
+
+//
+// rest_t
+//
+// A rest_t is analagous to a note-type.  It is little more than a "tag"-type
+// which can be inserted into a de_t.m_e to create a "rest" as a de_t<rest_t>
+// with an associated duration.  
+//
+
+class rest_t {
+public:
+private:
+};
 
 
 

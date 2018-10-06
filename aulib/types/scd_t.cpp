@@ -1,5 +1,6 @@
 #include "scd_t.h"
 #include "..\util\au_error.h"
+#include "..\util\au_util.h"
 #include <string>
 #include <cmath>  // floor()
 
@@ -9,6 +10,9 @@
 
 scd_t::scd_t(int int_in) {
 	m_scd = int_in;
+}
+std::string scd_t::print() const {
+	return bsprintf("%d",m_scd);
 }
 int scd_t::to_int() const {
 	return m_scd;

@@ -33,6 +33,7 @@
 template<typename T>
 class chord_t {
 public:
+	explicit chord_t() =default;
 	explicit chord_t(std::vector<T> vnts) {
 		m_nts = unique_nosort(vnts);
 	};
