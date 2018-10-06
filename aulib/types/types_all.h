@@ -14,3 +14,6 @@
 #include "line_t.h"
 #include "teejee.h"
 
+#include "chord_t.h"
+
+

@@ -6,7 +6,7 @@
 
 //
 // Duration element
-// A vertical note group.  If m_nts.size() == 0, it's a rest.  
+// The duration of a vertical note group or rest.  If m_nts.size() == 0, it's a rest.  
 //
 // As purely syntactic sugar, it'd be nice if, when an object is constructed
 // as a rest (w/ T=rest_dummy_t), said object has a converting constructor

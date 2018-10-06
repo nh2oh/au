@@ -99,6 +99,9 @@
     <ClCompile Include="types\metg_uih.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="types\chord_t.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="util\au_algs.h">
@@ -204,6 +207,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="util\tinyformat2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="types\chord_t.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

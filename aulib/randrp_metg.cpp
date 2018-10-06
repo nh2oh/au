@@ -87,10 +87,11 @@ rp_t randrp_metg(tmetg_t mg, int nnts, bar_t nbars) {
 	}
 
 	// If the number of bars is constrained, exactly 1 pass over idx_uqmgsplit is
-	// required, since each element of rps is a fixed number of  bars.  If nnts is 
-	// constrained but nbars is not, append idx_uqmgsplit to itself some number of
-	// times such that idx_uqmgsplit.size() is an _upper_ bound on the number of 
-	// steps needed to build the rp.  
+	// required, since the input mg was extended to nbars prior to factoring, and
+	// since each element of rps is a fixed number of  bars.  If, OTOH, nnts is 
+	// constrained but nbars is not, modify idx_uqmgsplit by concatenating it to itself
+	// some number of times such that idx_uqmgsplit.size() is the maximum possible number
+	// of steps capable of building an rp w/ nnts notes.  
 	if (nbars > 0_br && nnts > 0) { // Constraining nbars _and_ nnts
 		size_t min_nnts {0}; size_t max_nnts {0};
 		for (auto i : idx_uqmgsplit) {
