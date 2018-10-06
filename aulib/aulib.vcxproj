@@ -30,7 +30,6 @@
     <ClCompile Include="types\beat_bar_t.cpp" />
     <ClCompile Include="types\cent_oct_t.cpp" />
     <ClCompile Include="types\chord_t.cpp" />
-    <ClCompile Include="types\de_t.cpp" />
     <ClCompile Include="types\frq_t.cpp" />
     <ClCompile Include="types\line_t.cpp" />
     <ClCompile Include="types\metg_t.cpp" />
@@ -63,7 +62,7 @@
     <ClInclude Include="types\beat_bar_t.h" />
     <ClInclude Include="types\cent_oct_t.h" />
     <ClInclude Include="types\chord_t.h" />
-    <ClInclude Include="types\de_t.h" />
+    <ClInclude Include="types\musel_t.h" />
     <ClInclude Include="types\frq_t.h" />
     <ClInclude Include="types\line_t.h" />
     <ClInclude Include="types\metg_t.h" />

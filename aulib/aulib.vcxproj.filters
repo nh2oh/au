@@ -84,9 +84,6 @@
     <ClCompile Include="nv_t_uih.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="types\de_t.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="types\line_t.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -191,9 +188,6 @@
     <ClInclude Include="uih2.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="types\de_t.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="types\line_t.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -210,6 +204,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="types\chord_t.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="types\musel_t.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

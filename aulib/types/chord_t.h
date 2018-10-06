@@ -25,7 +25,8 @@
 //
 // A possible alternative design associates a particular scale w/ a chord, ie,
 // chord_t<scale-type,note-type> (actually such a design probably makes the 
-// note-type unnecessary).  I reject this since it loses the scale-agnosticism
+// note-type unnecessary since i can just hold scd_t and use the scale to 
+// convert as necessary).  I reject this since it loses the scale-agnosticism
 // that i currently have w/ note-types.  
 //
 //

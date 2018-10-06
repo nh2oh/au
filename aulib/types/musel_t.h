@@ -6,10 +6,11 @@
 
 
 //
-// de_t
+// musel_t
 //
-// A "duration element."  Class de_t associates a duration with a "musical 
-// element," that is, a single note, chord, or rest.  A de_t containing a
+// A "musical element."  Class musel_t represents any single "musical 
+// element," that is, any element that occupies horizontal space on a staff:
+// a single note, single chord, or single rest.  A de_t containing a
 // chord_t<T> has type de_t<T>, the same as a de_t containing a single note 
 // of type T (scd_t, ntl_t, ...).  
 // 
@@ -17,16 +18,16 @@
 // 
 
 template<typename T>
-class de_t {
+class musel_t {
 public:
-	de_t(chord_t<T> e, d_t d, bool isrest) {
+	musel_t(chord_t<T> e, /*d_t d, */bool isrest) {
 		m_e = e;
-		m_dv = d;
+		//m_dv = d;
 		m_isrest = isrest;
 	};
-	de_t(T e, d_t d, bool isrest) {
+	musel_t(T e, /*d_t d, */bool isrest) {
 		m_e = e;
-		m_dv = d;
+		//m_dv = d;
 		m_isrest = isrest;
 	};
 
@@ -37,8 +38,8 @@ public:
 		} else {
 			s += std::get<chord_t<T>>(m_e).print();
 		}
-		s += "/";
-		s += m_dv.print();
+		//s += "/";
+		//s += m_dv.print();
 		return s;
 	};
 
@@ -46,9 +47,9 @@ public:
 		return m_isrest;
 	};
 
-	d_t dv() const {
-		return m_dv;
-	};
+	//d_t dv() const {
+	//	return m_dv;
+	//};
 
 	size_t n() const {
 		if (std::holds_alternative<T>(m_e)) {
@@ -70,7 +71,7 @@ public:
 private:
 	std::variant<T,chord_t<T>> m_e {};
 	bool m_isrest {false};
-	d_t m_dv {};
+	//d_t m_dv {};
 };
 
 

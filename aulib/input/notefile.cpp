@@ -178,6 +178,6 @@ line_t<scd_t> notefile2line(const notefile& nf) {
 	ts_t ts {"4/4"};
 	rp_t rp {ts,notefile2dt(nf),tempo,res};
 
-	return line_t<scd_t> {rp,scds};
+	return line_t<scd_t> {scds,rp};
 };
 
