@@ -2,7 +2,6 @@
 #include "nv_t.h"
 #include "beat_bar_t.h"
 #include "ts_t.h"
-#include "musel_t.h"
 #include <string>
 #include <vector>
 
