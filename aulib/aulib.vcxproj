@@ -31,7 +31,6 @@
     <ClCompile Include="types\cent_oct_t.cpp" />
     <ClCompile Include="types\chord_t.cpp" />
     <ClCompile Include="types\frq_t.cpp" />
-    <ClCompile Include="types\line_t.cpp" />
     <ClCompile Include="types\metg_t.cpp" />
     <ClCompile Include="types\metg_uih.cpp" />
     <ClCompile Include="types\ntl_t.cpp" />

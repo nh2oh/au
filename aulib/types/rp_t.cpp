@@ -3,6 +3,7 @@
 #include "beat_bar_t.h"
 #include "ts_t.h"
 #include "..\util\au_util.h"  // bsprintf()
+#include "..\util\au_error.h"  // bsprintf()
 #include "..\util\au_algs.h"  // unique_n() in nv_members()
 #include "..\util\au_algs_math.h"  // aprx_int()
 #include <string>
@@ -173,15 +174,13 @@ std::vector<d_t> rp_t::to_duration_seq() const {
 }
 
 d_t rp_t::operator[](int i) const {
-	d_t sum {};
-	if (i > m_usridx) {
-		return sum;
-	}
-
+	au_assert(i<=m_usridx,"out of range");
+	
 	std::vector<rp_t::vgroup> e_i {};
 	auto junk = std::copy_if(m_e.begin(),m_e.end(),std::back_inserter(e_i),
 		[&](const vgroup& curr_e){return curr_e.usrix==i; });
-	
+
+	d_t sum {};
 	for (auto const& e : e_i) {
 		sum += e.e;
 	}

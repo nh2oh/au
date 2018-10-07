@@ -10,6 +10,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "aulib", "aulib\aulib.vcxproj", "{0FFA5EC5-E53D-4F20-ACE1-AC704D0BE313}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gt_aulib", "gt_aulib\gt_aulib.vcxproj", "{CC7B3D5A-7A3B-4273-831D-901DADE7F509}"
+	ProjectSection(ProjectDependencies) = postProject
+		{0FFA5EC5-E53D-4F20-ACE1-AC704D0BE313} = {0FFA5EC5-E53D-4F20-ACE1-AC704D0BE313}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

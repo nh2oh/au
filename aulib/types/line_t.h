@@ -8,12 +8,12 @@
 //
 // line_t<T>
 //
-// Represents a sequence of musical elements each of which has duration.  
+// Represents a sequence of musical elements with associated durations.  
 // A "musical element" is any musel_t<T>:  either a single note of type T
-// (scd_t, frq_t, ...), a rest_t, or a chord chord_t<T>.  
+// (scd_t, frq_t, ...), a single rest_t, or a single chord chord_t<T>.  
 //
 // Associates a d_t to each element in a sequence of musel_t.  
-// Associates a ts_t
+// Associates a ts_t.
 //
 //
 // Notes:
@@ -73,18 +73,29 @@ public:
 	beat_t nbeats() const { return m_rp.nbeats(); };
 	size_t nelems() const { return m_rp.nelems(); };
 	std::string print() {
-		return std::string{"line_t printing function"};
+		d_t::opts rp_p_opts {};
+		rp_p_opts.denom_only = true;
+
+		std::string s {};
+		for (int i=0; i<m_mes.size(); ++i) {
+			s += m_mes[i].print();
+			s += "/";
+			s += m_rp[i].print(rp_p_opts);
+			s += " ";
+		}
+
+		return s;
 	};
+
 private:
-	struct idxs {
-		size_t begin {0};
-		size_t end {0};
-		bool ischord {false};
-		bool isrest {false};
-	};
+	//struct idxs {
+	//	size_t begin {0};
+	//	size_t end {0};
+	//	bool ischord {false};
+	//	bool isrest {false};
+	//};
 
 	rp_t m_rp;
-
 	std::vector<musel_t<T>> m_mes {};  // "elements"
 };
 

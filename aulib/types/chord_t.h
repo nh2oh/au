@@ -5,7 +5,7 @@
 #include <algorithm>
 
 //
-// chord_t
+// chord_t<T>
 //
 // Represents a chord: a vertical note-group
 // 1)  All members are unique
@@ -82,6 +82,10 @@ public:
 	};
 	bool operator!=(const chord_t& rhs) const {
 		return !(m_nts == rhs.m_nts);
+	};
+
+	T operator[](size_t idx) const {
+		return m_nts[idx];
 	};
 
 private:

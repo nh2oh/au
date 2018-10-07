@@ -1,10 +1,8 @@
-//#include "pch.h"
 #include "gtest/gtest.h"
 #include "..\aulib\types\teejee.h"
 #include <vector>
 #include <cmath>
 #include <limits>
-#include <algorithm> // random_shuffle 
 
 
 namespace tgt{

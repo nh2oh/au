@@ -84,9 +84,6 @@
     <ClCompile Include="nv_t_uih.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="types\line_t.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="randrp_metg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

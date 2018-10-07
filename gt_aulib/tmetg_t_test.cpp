@@ -1,4 +1,3 @@
-//#include "pch.h"
 #include "gtest/gtest.h"
 #include "..\aulib\types\metg_t.h"
 #include "..\aulib\util\au_random.h"
@@ -6,7 +5,8 @@
 #include <string>
 #include <cmath>
 #include <limits>
-#include <algorithm> // random_shuffle 
+#include <algorithm> // shuffle()
+#include <random> // to generate needed arg to std::shuffle
 
 // Googletest does not support c++17, so i can't include my 
 // header defining these functions.  
@@ -221,7 +221,7 @@ TEST(metg_t_tests, ZeroPhaseBuildFromExistingRPSmallDurations) {
 	}
 }
 
-/*
+
 // Testing the ability of the rp ctor to calculate note-phases
 TEST(metg_t_tests, FromRpWithNonzeroPhases1) {
 	ts_t ts {4_bt,d::q};
@@ -256,8 +256,11 @@ TEST(metg_t_tests, FromRpWithNonzeroPhases1) {
 	// _more_ q note phases than in allowed_levels.  
 	// It might contain an e-note level w/ a sx-note phase, hence, not comparing
 	// element-wise w/ levels_allowed.  
+	std::random_device rd;
+	std::mt19937 g(rd());
 	for (int i=0; i<10; ++i) {
-		std::random_shuffle(vdt.begin(),vdt.end());
+		//std::random_shuffle(vdt.begin(),vdt.end());
+		std::shuffle(vdt.begin(),vdt.end(),g);
 		tmetg_t mgrand {ts,rp_t{ts,vdt}};
 		tf = mgrand.validate();	EXPECT_TRUE(tf);
 		auto all_nbars_mgr = mgrand.nbars();
@@ -291,6 +294,9 @@ TEST(metg_t_tests, FromNvPhWithNonzeroPhases) {
 		{d::q,d_t{0}},{d::q,d::e},
 		{d::e,d_t{0}}};
 
+	std::random_device rd;
+	std::mt19937 g(rd());
+
 	// Phase-set 1
 	for (int i=0; i<10; ++i) {
 		auto mg = tmetg_t(ts,vdt,ph1);
@@ -302,7 +308,8 @@ TEST(metg_t_tests, FromNvPhWithNonzeroPhases) {
 			tf = (mg_lvls[j].ph == allowed_levels[j].ph); 
 			EXPECT_TRUE(tf);
 		}
-		std::random_shuffle(ph1.begin()+1,ph1.end()-1);
+		//std::random_shuffle(ph1.begin()+1,ph1.end()-1);
+		std::shuffle(ph1.begin()+1,ph1.end()-1,g);
 		// Note the +1, -1; need to exclude the h and e nts
 	}
 
@@ -318,11 +325,12 @@ TEST(metg_t_tests, FromNvPhWithNonzeroPhases) {
 			tf = (mg_lvls[j].nv == allowed_levels[j].nv); EXPECT_TRUE(tf);
 			tf = (mg_lvls[j].ph == allowed_levels[j].ph); EXPECT_TRUE(tf);
 		}
-		std::random_shuffle(ph2.begin()+1,ph2.end()-1);
+		//std::random_shuffle(ph2.begin()+1,ph2.end()-1);
+		std::shuffle(ph2.begin()+1,ph2.end()-1,g);
 		// Note the +1, -1; need to exclude the h and e nts
 	}
 }
-*/
+
 
 // Tests span_possible() for various beat_t and bar_t numbers
 // 3/4, w,h,q w/ 0-phase

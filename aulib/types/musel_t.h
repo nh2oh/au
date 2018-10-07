@@ -22,12 +22,10 @@ class musel_t {
 public:
 	musel_t(chord_t<T> e, /*d_t d, */bool isrest) {
 		m_e = e;
-		//m_dv = d;
 		m_isrest = isrest;
 	};
 	musel_t(T e, /*d_t d, */bool isrest) {
 		m_e = e;
-		//m_dv = d;
 		m_isrest = isrest;
 	};
 
@@ -38,18 +36,13 @@ public:
 		} else {
 			s += std::get<chord_t<T>>(m_e).print();
 		}
-		//s += "/";
-		//s += m_dv.print();
+
 		return s;
 	};
 
 	bool isrest() const {
 		return m_isrest;
 	};
-
-	//d_t dv() const {
-	//	return m_dv;
-	//};
 
 	size_t n() const {
 		if (std::holds_alternative<T>(m_e)) {
@@ -71,7 +64,6 @@ public:
 private:
 	std::variant<T,chord_t<T>> m_e {};
 	bool m_isrest {false};
-	//d_t m_dv {};
 };
 
 

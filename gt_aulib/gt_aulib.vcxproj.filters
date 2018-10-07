@@ -15,22 +15,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="gt_aulib.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="musel_t.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="test.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\gtest.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\gtest_main.cc">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\gtest-all.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\gtest-death-test.cc">
@@ -54,9 +42,6 @@
     <ClCompile Include="frq_t_cent_t_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="line_t_tests.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="nv_t_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -70,6 +55,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ts_t_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="musel_t_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="line_t_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

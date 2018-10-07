@@ -114,7 +114,10 @@ public:
 		// The m exponent of the d_t
 		// If the object has no singlet representation, returns 0
 
-	std::string print() const;
+	struct opts {
+		bool denom_only {false};
+	};
+	std::string print(d_t::opts={}) const;
 
 	bool set_base(int const&);
 	bool set_dots(int const&);

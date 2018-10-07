@@ -186,7 +186,7 @@ int d_t::base() const {
 	return 0;
 }
 
-std::string d_t::print() const {
+std::string d_t::print(d_t::opts o) const {
 	auto vs = to_singlets();
 	std::string s {};
 
@@ -198,7 +198,9 @@ std::string d_t::print() const {
 
 		auto bv = std::pow(2,curr_mn.m);
 		if (curr_mn.m > 0) { // nv() < the whole note
-			s += "1/";
+			if (!o.denom_only) {
+				s += "1/";
+			}
 			s += std::to_string(static_cast<int>(bv));
 		} else { // nv() >= the whole note
 			s += std::to_string(static_cast<int>(1.0/bv));

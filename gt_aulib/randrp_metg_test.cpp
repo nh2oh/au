@@ -1,4 +1,3 @@
-//#include "pch.h"
 #include "gtest/gtest.h"
 #include "..\aulib\types\beat_bar_t.h"
 #include "..\aulib\types\nv_t.h"

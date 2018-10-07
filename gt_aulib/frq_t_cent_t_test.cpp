@@ -1,4 +1,3 @@
-//#include "pch.h"
 #include "gtest/gtest.h"
 #include "..\aulib\types\frq_t.h"
 #include <vector>
