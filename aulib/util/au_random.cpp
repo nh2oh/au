@@ -36,6 +36,36 @@ std::vector<int> urandi(int n, int min, int max) {
 	}
 	return rv;
 }
+
+std::vector<int> nrandi(double mean, double var, int n) {
+	auto re = new_randeng(true);
+	std::normal_distribution rn {mean,std::sqrt(var)};
+	std::vector<int> rv(n,0);
+	for (auto i=0; i<n; ++i) {
+		rv[i] = static_cast<int>(std::round(rn(re)));
+	}
+	return rv;
+}
+
+/*
+double normprob(double mean, double stdev, double x) {
+	double pi {3.14159265358979323846};
+	double pre = 1.0/(stdev*std::sqrt(2.0*pi));  // "prefactor"
+	double e = (-0.5)*std::pow(((x-mean)/stdev),2);  // "exponent"
+
+	return pre*std::exp(e);
+}*/
+
+/*std::vector<double> normpdf(const std::vector<int>& x, double mean, double stdev) {
+	std::vector<double> p(x.size(),0.0);
+	for (int i=0; i<x.size(); ++i) {
+		p[i] = normprob(mean,stdev,x[i]);
+	}
+	return p;
+}*/
+
+
+
 std::vector<double> urandd(int n, double min, double max) {
 	auto re = new_randeng(true);
 	return urandd(n, min, max, re);
