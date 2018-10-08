@@ -36,7 +36,7 @@ std::vector<int> urandi(int n, int min, int max) {
 	}
 	return rv;
 }
-
+/*
 std::vector<int> urandi(int n, int min, int max) {
 	auto re = new_randeng(true);
 	std::uniform_int_distribution<int> rn {min,max};
@@ -45,7 +45,7 @@ std::vector<int> urandi(int n, int min, int max) {
 		rv[i] = rn(re);
 	}
 	return rv;
-}
+}*/
 
 /*
 double normprob(double mean, double stdev, double x) {

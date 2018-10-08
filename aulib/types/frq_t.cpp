@@ -19,8 +19,8 @@ frq_t::frq_t(double const& frq_in, unit const& unit_in) {
 	m_frq = fmax(0.0, frq_in*(std::pow(10,m_unit)));
 }
 
-std::string frq_t::print(int const& prec) const {
-	std::string fmt {"%"};
+std::string frq_t::print(int prec) const {
+	std::string fmt {"%f"};
 	if (prec > 0) { 
 		fmt += "." + std::to_string(prec);
 	}

@@ -57,13 +57,13 @@ std::vector<ntstr_t> melody_a(ma_params p) {
 	};
 
 	auto re = new_randeng(true);
-	std::uniform_int_distribution<int> rn_spidx {0,scdpool.size()};
+	std::uniform_int_distribution<size_t> rn_spidx {0,scdpool.size()};
 
 	// Initial completely random melody
 	// TODO: range of urandi: [,) or [,] ??
 	std::vector<scd_t> m = randelems(scdpool,p.nnts,scdpool_probs,re);
 	double s = score(m);
-	std::uniform_int_distribution<int> rn_midx {0,scdpool.size()};
+	std::uniform_int_distribution<size_t> rn_midx {0,scdpool.size()};
 	for (int i=0; i<p.npass; ++i) {
 		std::vector<scd_t> m_new = m;
 		m_new[rn_midx(re)] = scdpool[rn_spidx(re)];

@@ -55,7 +55,7 @@ public:
 	explicit frq_t() = default;  // 1 Hz
 	explicit frq_t(double const&, unit const& =frq_t::unit::Hz);
 
-	std::string print(int const& =3) const;
+	std::string print(int=3) const;
 
 	double operator/(frq_t const&) const;
 	frq_t& operator/=(double const&);
