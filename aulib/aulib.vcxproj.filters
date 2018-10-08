@@ -99,6 +99,9 @@
     <ClCompile Include="melgen\melody_temperley.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="melgen\melody_a.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="util\au_algs.h">

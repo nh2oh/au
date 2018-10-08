@@ -15,20 +15,9 @@ std::vector<double> urandd(int,double,double,std::mt19937&);
 
 std::vector<int> nrandi(double,double,int);  // mean, var, number-to-generate
 
-/*template<typename T>
-std::vector<T> nrandrange(T min, T max, T inc, T u, T s, int n) {
-	double nincs_range = (max-min)/inc;
-	double nincs_u = u/inc;
-	double nincs_s = s/inc;
-	// Compute the dimensionless normal density function for u=1,s=1.   
-	// Somehow map into T
-	std::vector<double> x(std::floor(nincs_range),0);
-	for (int i=0; i<x.size(); ++i) {
-		x[i] = i*;
-	}
-}*/
 
-// Normal probability _density_
+// Normal probability _density_ evaluated at x
+// p(x) = 1/(2*sqrt(2*pi)) * e^( -(1/2)*((x-u)/s)^2 )
 template<typename T>
 double normprob(T u, T s, T x) {
 	double pi {3.14159265358979323846};
@@ -38,7 +27,7 @@ double normprob(T u, T s, T x) {
 	return pre*std::exp(e);
 }
 
-// Normal probability _density_
+// Normal probability _density_ evaluated at each value of x.
 template<typename T>
 std::vector<double> normpdf(const std::vector<T>& x, T u, T s) {
 	std::vector<double> p(x.size(),0.0);
@@ -48,11 +37,8 @@ std::vector<double> normpdf(const std::vector<T>& x, T u, T s) {
 	return p;
 }
 
-//std::vector<double> normpdf(const std::vector<int>&,double,double);
-//std::vector<double> normpdf(const std::vector<double>&,double,double);
-//	// eval_at, mean, var
 
-std::vector<size_t> randset(int const&, std::vector<double> const&, std::mt19937&);
+std::vector<size_t> randset(int const&, const std::vector<double>&, std::mt19937&);
 
 template<typename T>
 std::vector<T> randelems(const std::vector<T>& s, int n, 

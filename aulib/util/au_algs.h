@@ -65,7 +65,7 @@ size_t n_unique(std::vector<T> s) {
 // number of occurences.  
 // TODO:  Fix the static_cast
 template<typename T>
-std::map<T,size_t> unique_n(std::vector<T> const& s) {
+std::map<T,size_t> unique_n(const std::vector<T>& s) {
     auto s_uq = unique(s);  // Note:  passed by value
 
     std::map<T,size_t> result {};

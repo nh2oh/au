@@ -37,12 +37,12 @@ std::vector<int> urandi(int n, int min, int max) {
 	return rv;
 }
 
-std::vector<int> nrandi(double mean, double var, int n) {
+std::vector<int> urandi(int n, int min, int max) {
 	auto re = new_randeng(true);
-	std::normal_distribution rn {mean,std::sqrt(var)};
+	std::uniform_int_distribution<int> rn {min,max};
 	std::vector<int> rv(n,0);
 	for (auto i=0; i<n; ++i) {
-		rv[i] = static_cast<int>(std::round(rn(re)));
+		rv[i] = rn(re);
 	}
 	return rv;
 }
