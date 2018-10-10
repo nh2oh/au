@@ -161,6 +161,7 @@
     <ClCompile Include="musel_t_test.cpp" />
     <ClCompile Include="nv_t_test.cpp" />
     <ClCompile Include="randrp_metg_test.cpp" />
+    <ClCompile Include="rp_t_test.cpp" />
     <ClCompile Include="src\gtest-death-test.cc" />
     <ClCompile Include="src\gtest-filepath.cc" />
     <ClCompile Include="src\gtest-port.cc" />

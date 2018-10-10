@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include "..\aulib\types\metg_t.h"
+#include "..\aulib\util\au_algs_math.h"
 #include "..\aulib\util\au_random.h"
 #include <vector>
 #include <string>
@@ -7,37 +8,6 @@
 #include <limits>
 #include <algorithm> // shuffle()
 #include <random> // to generate needed arg to std::shuffle
-
-// Googletest does not support c++17, so i can't include my 
-// header defining these functions.  
-bool aprx_eq_gtest(double a, double b, int ulp=2) {
-	auto e = std::numeric_limits<double>::epsilon();
-	auto m = std::numeric_limits<double>::min();
-	auto d = std::abs(a-b);
-	auto s = std::abs(a+b);
-	return (d <= e*s*ulp || d < m);
-};
-
-bool aprx_int_gtest(double a, int ulp=2) {
-	double ra {std::round(a)};
-	return aprx_eq_gtest(a, ra, ulp);
-};
-
-std::vector<std::vector<double>> transpose_gtest(const std::vector<std::vector<double>>& m) {
-	if (m.size() == 0) { return std::vector<std::vector<double>> {}; }
-	auto n1 = m.size();  // 1 => "dimension 1"
-	auto n2 = m[0].size();  // 2 => "dimension 2"
-
-	std::vector<std::vector<double>> res(n2,std::vector<double>(n1, 0.0));
-	for (auto i=0; i<n1; ++i) {
-		if (m[i].size() != n2) { return std::vector<std::vector<double>> {}; }
-		for (auto j=0; j<n2; ++j) {
-			res[j][i] = m[i][j];
-		}
-	}
-
-	return res;
-}
 
 
 // No phase shift
@@ -54,7 +24,7 @@ TEST(metg_t_tests, ThreeFourZeroPhaseHQEdE) {
 			bool tf = mg.onset_allowed_at(e,beat_t{i*0.25});
 			// A note of duration e should be allowed at any beat i where 
 			// nbeat(ts,e)/i is an integer.  
-			if (aprx_int_gtest(beat_t{i*0.25}/nbeat(ts,e))) {
+			if (aprx_int(beat_t{i*0.25}/nbeat(ts,e))) {
 				EXPECT_TRUE(tf);
 			} else {
 				EXPECT_FALSE(tf);
@@ -79,7 +49,7 @@ TEST(metg_t_tests, ThreeFourNegSixteenthPhaseHQEdE) {
 			bool tf = mg.onset_allowed_at(dt[j],beat_t{i*0.25});
 			// A note of duration e should be allowed at any beat i where 
 			// nbeat(ts,e)/i is an integer.  
-			if (aprx_int_gtest((beat_t{i*0.25}-ph[j])/nbeat(ts,dt[j]))) {
+			if (aprx_int((beat_t{i*0.25}-ph[j])/nbeat(ts,dt[j]))) {
 				EXPECT_TRUE(tf);
 			} else {
 				EXPECT_FALSE(tf);
@@ -103,7 +73,7 @@ TEST(metg_t_tests, ThreeFourMultiPhaseShiftHQEdE) {
 			tf = mg.onset_allowed_at(dt[j],beat_t{i*0.25});
 			// A note of duration e should be allowed at any beat i where 
 			// nbeat(ts,e)/i is an integer.  
-			if (aprx_int_gtest((beat_t{i*0.25}-ph[j])/nbeat(ts,dt[j]))) {
+			if (aprx_int((beat_t{i*0.25}-ph[j])/nbeat(ts,dt[j]))) {
 				EXPECT_TRUE(tf);
 			} else {
 				EXPECT_FALSE(tf);
@@ -458,7 +428,7 @@ TEST(metg_t_tests, ConstructFromPgFourFourWHQThenSliceTo6bts) {
 		{1,0,1,0},
 		{1,1,1,1}
 	};
-	auto pg1t = transpose_gtest(pg1);
+	auto pg1t = transpose(pg1);
 
 	tmetg_t mg1 {ts1,tg1.levels(),pg1t};
 	auto tf1 = mg1.validate();  EXPECT_TRUE(tf1);
@@ -518,7 +488,7 @@ TEST(metg_t_tests, ConstructFromPgFourFourWHQThenSliceTo7bts) {
 		{1,0,1,0},
 		{1,1,1,1}
 	};
-	auto pg1t = transpose_gtest(pg1);
+	auto pg1t = transpose(pg1);
 
 	tmetg_t mg1 {ts1,tg1.levels(),pg1t};
 	auto tf1 = mg1.validate();  EXPECT_TRUE(tf1);
@@ -650,7 +620,7 @@ TEST(metg_t_tests, AssortedTestsShortMgsVaryingTsNvsPhases) {
 			// .onset_allowed_at(beat-number) and .onset_allowed_at(d_t,beat-number)
 			bool tf_any_nv_onset_allowed = false;
 			for (int j=0; j<vdt.size(); ++j) {
-				bool tf = aprx_int_gtest((curr_bt-vph[j])/nbeat(ts,vdt[j]));
+				bool tf = aprx_int((curr_bt-vph[j])/nbeat(ts,vdt[j]));
 				if (tf) {
 					EXPECT_TRUE(mg.onset_allowed_at(vdt[j],curr_bt));
 				} else {
@@ -668,7 +638,7 @@ TEST(metg_t_tests, AssortedTestsShortMgsVaryingTsNvsPhases) {
 			if (curr_bt < 0_bt) {
 				EXPECT_FALSE(mg.span_possible(curr_bt));
 				EXPECT_FALSE(mg.span_possible(curr_bar));
-			} else if (curr_bt >= 0_bt && aprx_int_gtest(curr_bt/1_bt)) {
+			} else if (curr_bt >= 0_bt && aprx_int(curr_bt/1_bt)) {
 				EXPECT_TRUE(mg.span_possible(curr_bt));
 				EXPECT_TRUE(mg.span_possible(curr_bar));
 			}
@@ -693,7 +663,4 @@ TEST(metg_t_tests, AssortedTestsShortMgsVaryingTsNvsPhases) {
 		}
 	} // To next set in vector tsts
 }
-
-
-
 

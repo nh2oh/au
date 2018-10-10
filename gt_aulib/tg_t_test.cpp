@@ -1,26 +1,8 @@
 #include "gtest/gtest.h"
+#include "..\aulib\util\au_algs_math.h"
 #include "..\aulib\types\teejee.h"
 #include <vector>
-#include <cmath>
-#include <limits>
 
-
-namespace tgt{
-// Googletest does not support c++17, so i can't include my 
-// header defining these functions.  
-bool aprx_eq(double a, double b, int ulp=2) {
-	auto e = std::numeric_limits<double>::epsilon();
-	auto m = std::numeric_limits<double>::min();
-	auto d = std::abs(a-b);
-	auto s = std::abs(a+b);
-	return (d <= e*s*ulp || d < m);
-};
-
-bool aprx_int(double a, int ulp=2) {
-	double ra {std::round(a)};
-	return tgt::aprx_eq(a, ra, ulp);
-};
-};
 
 // No phase shift
 TEST(tg_t_tests, ThreeFourZeroPhaseHQE) {
@@ -41,7 +23,7 @@ TEST(tg_t_tests, ThreeFourZeroPhaseHQE) {
 	for (int i=0; i<N; ++i) {
 		auto curr_nbts = i*btres_test_step;
 
-		if (tgt::aprx_int(curr_nbts/4_bt)) {  // whole note
+		if (aprx_int(curr_nbts/4_bt)) {  // whole note
 			EXPECT_TRUE(tg.onset_allowed_at(curr_nbts));
 			EXPECT_TRUE(tg.factors_at(curr_nbts));
 			EXPECT_TRUE(tg.onset_allowed_at({d::w,d::z},curr_nbts));
@@ -53,7 +35,7 @@ TEST(tg_t_tests, ThreeFourZeroPhaseHQE) {
 			EXPECT_FALSE(tg.onset_allowed_at({d::w,d::z},curr_nbts));
 		}
 
-		if (tgt::aprx_int(curr_nbts/2_bt)) {  // half note
+		if (aprx_int(curr_nbts/2_bt)) {  // half note
 			EXPECT_TRUE(tg.onset_allowed_at(curr_nbts)) 
 				<< " at " << curr_nbts.print() + " beats.  ";
 			EXPECT_TRUE(tg.onset_allowed_at({d::h,d::z},curr_nbts)) 
@@ -75,7 +57,7 @@ TEST(tg_t_tests, ThreeFourZeroPhaseHQE) {
 				<< " at " << curr_nbts.print() + " beats.  ";;
 		}
 
-		if (tgt::aprx_int(curr_nbts/0.5_bt)) {  // 8 note
+		if (aprx_int(curr_nbts/0.5_bt)) {  // 8 note
 			EXPECT_TRUE(tg.onset_allowed_at(curr_nbts));
 			EXPECT_TRUE(tg.onset_allowed_at({d::e,d::z},curr_nbts));
 			EXPECT_FALSE(tg.spans_bar(curr_nbts,d_t{d::e}));  // the 8-note never spans

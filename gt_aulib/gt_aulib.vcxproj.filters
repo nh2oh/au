@@ -66,6 +66,9 @@
     <ClCompile Include="melody_temperley_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="rp_t_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\gtest-internal-inl.h">

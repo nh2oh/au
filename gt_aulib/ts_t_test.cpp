@@ -1,30 +1,8 @@
-//#include "pch.h"
 #include "gtest/gtest.h"
 #include "..\aulib\types\ts_t.h"
 #include "..\aulib\types\beat_bar_t.h"
+#include "..\aulib\util\au_algs_math.h"
 #include <vector>
-#include <numeric>
-#include <limits>
-
-
-// Kahan summation
-// Copied from au_algs_math.h b/c googletest does not support a modern 
-// enough c++ to use <optional>
-template<typename T>
-struct ksum {
-	T value {};
-	T c {};
-
-	ksum& operator+=(const T& rhs) {
-		T y = rhs - c;
-		T t = value + y;
-		c = (t - value) - y;
-		value = t;
-
-		return *this;
-	};
-};
-
 
 
 // Default ts is 4/4 simple
@@ -34,7 +12,8 @@ TEST(ts_t_tests, DefaultConstructor) {
 	EXPECT_TRUE(def_ts == fourfour);
 }
 
-
+// Tests beats_per_bar(), beat_unit(), bar_unit() with known values
+// for known inputs
 TEST(ts_t_tests, SixEightSimpleCompound) {
 	ts_t ses {6_bt,d::e,false};
 	ts_t sec {6_bt,d::e,true};
@@ -50,7 +29,8 @@ TEST(ts_t_tests, SixEightSimpleCompound) {
 	EXPECT_TRUE(sec.bar_unit() == d_t{d::hd});
 }
 
-
+// Tests beats_per_bar(), beat_unit(), bar_unit() with known values
+// for known inputs
 TEST(ts_t_tests, TwelveEightSimpleCompound) {
 	ts_t tes {12_bt,d::e,false};
 	ts_t tec {12_bt,d::e,true};
@@ -66,7 +46,9 @@ TEST(ts_t_tests, TwelveEightSimpleCompound) {
 	EXPECT_TRUE(tec.bar_unit() == d_t{d::wd});
 }
 
-
+// Tests nbeat(ts_t,d_t), duration(ts_t,beat_t), nbar(ts_t,d_t) with different 
+// d_t, ts_t values known to yield the same output.  
+// ts = 4/4, 3/4
 TEST(ts_t_tests, EquivDurationsThreeFourFourFour) {
 	ts_t tf {3_bt,d::q,false};
 	ts_t ff {4_bt,d::q,false};
@@ -91,11 +73,12 @@ TEST(ts_t_tests, EquivDurationsThreeFourFourFour) {
 
 }
 
-
+// Tests bar_t.isexact(), bar_t.fremain(), bar_t.full(), bar_t.next() for 
+// accumulation into a bar_t variable using ksum<bar_t>.  
+// Each iteration adds a d::q to the sum.  
 TEST(ts_t_tests, ThreeFourIterativeNbarCalculations) {
 	ts_t ts {3_bt,d::q,false};
 
-	//bar_t cum_nbars {0};
 	ksum<bar_t> cum_nbars {};
 	for (int i=1; i<100; ++i) {  // Note: starting at 1
 		cum_nbars += nbar(ts, d_t{d::q});
@@ -108,29 +91,14 @@ TEST(ts_t_tests, ThreeFourIterativeNbarCalculations) {
 			EXPECT_EQ(cum_nbars.value,(i/3)*(1_br));
 		}
 
-		/*
-		cum_nbars += nbar(ts, d_t{d::q});
-
-		if (cum_nbars.isexact()) {
-			// TODO
-			// This is done to prevent error accumulation in the 
-			// repeated floating-point sum... it needs to eventually be
-			// fixed.  
-			cum_nbars = cum_nbars.full();
-		}
-		if (i%3==0) {
-			bool isex = cum_nbars.isexact(); EXPECT_TRUE(isex);
-			double frem = cum_nbars.fremain(); EXPECT_EQ(frem,1.0);
-			bar_t nfull = cum_nbars.full(); EXPECT_EQ(nfull,(i/3)*1_br);
-			bar_t nnext = cum_nbars.next(); EXPECT_EQ(nnext,(i/3)*1_br+1_br);
-			EXPECT_EQ(cum_nbars,(i/3)*(1_br));
-		}*/
 	}
 
 }
 
 
-
+// For a set of rp's of known nbars, nbeats under three ts_t's == 4/4, 3/4, 5/4,
+// tests nbeat() and nbar() and the ability to repeatedly add into a beat_t, and
+// bar_t variable (does not use ksum).  
 TEST(ts_t_tests, FourTwoFiveFourBeatCalcsForAssortedRPs) {
 	std::vector<std::vector<d_t>> rp {
 		{d::q,d::q,d::h},  //  4/4 => 1 bar

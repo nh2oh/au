@@ -215,5 +215,8 @@
     <ClInclude Include="melgen\randmel_gens.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="chunkyseq.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

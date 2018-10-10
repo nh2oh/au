@@ -51,6 +51,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="aulib_all.h" />
+    <ClInclude Include="chunkyseq.h" />
     <ClInclude Include="input\notefile.h" />
     <ClInclude Include="melgen\randmel_gens.h" />
     <ClInclude Include="numeric_simple_uih.h" />

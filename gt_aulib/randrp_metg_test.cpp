@@ -1,4 +1,5 @@
 #include "gtest/gtest.h"
+#include "..\aulib\util\au_algs_math.h"  // transpose()
 #include "..\aulib\types\beat_bar_t.h"
 #include "..\aulib\types\nv_t.h"
 #include "..\aulib\types\ts_t.h"
@@ -7,25 +8,6 @@
 #include "..\aulib\randrp_metg.h"
 #include <vector>
 #include <numeric>
-#include <limits>
-
-
-std::vector<std::vector<double>> transpose_randrpmetg_gtest(const std::vector<std::vector<double>>& m) {
-	if (m.size() == 0) { return std::vector<std::vector<double>> {}; }
-	auto n1 = m.size();  // 1 => "dimension 1"
-	auto n2 = m[0].size();  // 2 => "dimension 2"
-
-	std::vector<std::vector<double>> res(n2,std::vector<double>(n1, 0.0));
-	for (auto i=0; i<n1; ++i) {
-		if (m[i].size() != n2) { return std::vector<std::vector<double>> {}; }
-		for (auto j=0; j<n2; ++j) {
-			res[j][i] = m[i][j];
-		}
-	}
-
-	return res;
-}
-
 
 
 // A simple mg in 4/4; all phases zero
@@ -161,7 +143,8 @@ TEST(randrp_metg_tests, FourFourWHQZeroPhManualPg) {
 	};
 	// 1 bar:  w; h,h; q,q,h
 	// 1.5 bars:  w,h; w,q,q; h,h,h; h,h,q,q; q,q,h,h; q,q,h,q,q
-	auto pgt = transpose_randrpmetg_gtest(pg);
+	//auto pgt = transpose_randrpmetg_gtest(pg);
+	auto pgt = transpose(pg);
 	tmetg_t mg {ts,tg.levels(),pgt};
 	auto tfval = mg.validate();  EXPECT_TRUE(tfval);
 
