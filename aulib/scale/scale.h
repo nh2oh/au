@@ -13,6 +13,12 @@ class rscdoctn_t;
 
 //-----------------------------------------------------------------------------
 // Class "scale"
+// The purpose of a scale is to map the abstract note-representations scd_t, 
+// ntstr_t, which carry no information about absolute pitch and which cannot
+// be converted to sound, to a pitch value which can be sounded.  That is,
+// a scale maps scd_t and ntstr_t to frq_t.  It also establishes the mapping 
+// between scd_t and rscdoctn_t by defining n, the number of scd_t's per 
+// octave.  
 // A scale does ___ things:
 // 1)  It establishes a modular arithmetic on elements of type scd_t which
 //     associates an scd_t with a pair {rscd, oct}.  Although the relation
@@ -20,14 +26,52 @@ class rscdoctn_t;
 //     definition of the relationship between scd_t and rscdoctn_t, that is,
 //     {scd, sc.m_n} <---> {rscd, oct, sc.m_n} is general and the scale 
 //     can't muck with it.  See scd_t.h.  
-//	   HOWEVER, a scale is not constrained to a constant m_n.  For this 
-//	   reason, scales do not accept rscdnoct_t as input to any of the
-//     to_ntstr(), to_frq() -type functions; they accept scd_t only.  
 // 2)  It defines a set of m_n unique ntl_t's.  
-// 3)  It maps, on demand, any of frq_t, scd_t, ntstr_t to any of frq_t, 
-//     scd_t, ntstr_t, octn_t.  
+// 3)  It maps, on demand, any of {frq_t, scd_t, ntstr_t} to any of {frq_t, 
+//     scd_t, ntstr_t, octn_t}.  
 //
-//  The scale is not required to make any garuntees concerning its
+
+
+class scale {
+public:
+	int n() const;
+	bool isinsc(ntl_t) const;
+	bool isinsc(frq_t) const;
+
+	scd_t to_scd(ntstr_t) const;
+	std::vector<scd_t> to_scd(std::vector<ntstr_t>) const;
+	scd_t to_scd(frq_t) const;
+	std::vector<scd_t> to_scd(std::vector<frq_t>) const;
+
+	frq_t to_frq(ntstr_t) const;
+	std::vector<frq_t> to_frq(std::vector<ntstr_t>) const;
+	frq_t to_frq(scd_t) const;
+	std::vector<frq_t> to_frq(std::vector<scd_t>) const;
+
+	ntstr_t to_ntstr(scd_t) const;
+	std::vector<ntstr_t> to_ntstr(std::vector<scd_t>) const;
+	ntstr_t to_ntstr(frq_t) const;
+	std::vector<ntstr_t> to_ntstr(std::vector<frq_t>) const;
+
+	octn_t to_octn(scd_t) const;
+	std::vector<octn_t> to_octn(std::vector<scd_t>) const;
+	octn_t to_octn(frq_t) const;
+	std::vector<octn_t> to_octn(std::vector<frq_t>) const;
+private:
+	int m_n {};
+	std::string m_name {};
+	std::string m_description {};
+};
+
+
+
+
+
+
+
+
+
+//  The scale is not required to make any guarantee's concerning its
 //  mappings.  In particular, it need not be static: the frq_t returned
 //  for a particular scd may change with time.  For this reason,
 //  even though the user can compute equivalent pairs scd_t, rscdoctn_t, 

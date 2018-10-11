@@ -37,6 +37,11 @@ kk_key_result kk_key(line_t<ntstr_t> nts, kk_key_params p) {
 		}
 	}
 
+	// The note-sequence
+	// Each note of the sequence is weighted equally, ie, without regard to its
+	// corresponding duration element.  I believe the proper way to do this is
+	// to weight by the duration of the note.  TODO:  Implement this.  
+	// Chords are flattened (TODO:  Is this how Temperley does it?).  
 	scale_12tet sc {};
 	auto notes_flatchords_norests = nts.notes();
 	std::vector<rscdoctn_t> rscds(notes_flatchords_norests.size(),rscdoctn_t{scd_t{0},12});

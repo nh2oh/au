@@ -7,9 +7,16 @@
 #include <vector>
 #include <array>
 
+
+//
+// melody_temperley()
+//
 line_t<ntstr_t> melody_temperley(ntl_t,bool,ts_t,bar_t);
 
 
+//
+// melody_a()
+//
 struct ma_params {
 	int nnts {32};
 	scd_t min {54};  // All scds in the generated sequence are between 
@@ -25,7 +32,9 @@ struct ma_params {
 std::vector<ntstr_t> melody_a(ma_params);
 
 
-
+//
+// kk_key()
+//
 struct kk_key_params {
 	int profile {0}; // 0 => kk, 1 => temperley
 };
@@ -33,6 +42,7 @@ struct kk_key_result {
 	scd_t key {0};
 	bool ismajor {false};
 	double score {0};
+	bool istie {false};
 	std::array<std::array<double,12>,2> 
 		all_scores {{{0,0,0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0,0,0}}};
 };
