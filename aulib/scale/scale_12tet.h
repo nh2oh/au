@@ -6,6 +6,10 @@
 #include "..\types\ntl_t.h"
 #include "..\types\scd_t.h"
 
+//
+// TODO:  Scales need overloads for .to_T for vector<U!=T>
+// TODO:  Drop the <optional> returns
+//
 
 //
 // The scale begins on the note 'C', hence octave increments occur between

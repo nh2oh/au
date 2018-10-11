@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <random>
+#include <numeric> // accumulate() in mean()
 
 //
 // Functions that make interacting with the c++ STL <random> library slightly
@@ -54,4 +55,43 @@ std::vector<T> randelems(const std::vector<T>& s, int n,
 }
 
 std::vector<double> normalize_probvec(std::vector<double>);
+
+
+template <typename T>
+T mean(std::vector<T> v) {
+	T tot = std::accumulate(v.begin(),v.end(),T{0});
+	return tot/v.size();
+};
+
+
+// Pearson's linear correlation coefficient
+// a,b must be the same size
+template <typename T>
+T corr(std::vector<T> a, std::vector<T> b) {
+	T ma = mean(a);	T mb = mean(b);
+	T sum_a_shift {0}; T sum_a_shift_sq {0};
+	T sum_b_shift {0}; T sum_b_shift_sq {0};
+	T sum_a_shift_b_shift {0};
+	for (int i=0; i<a.size(); ++i) {
+		sum_a_shift += a[i]-ma;
+		sum_a_shift_sq += (a[i]-ma)*(a[i]-ma);
+		sum_b_shift += b[i]-mb;
+		sum_b_shift_sq += (b[i]-mb)*(b[i]-mb);
+		sum_a_shift_b_shift += (a[i]-ma)*(b[i]-mb);
+	}
+
+	return sum_a_shift_b_shift/std::sqrt(sum_a_shift_sq*sum_b_shift_sq);
+};
+
+// Pearson's linear correlation coefficient
+// a,m[i] must be the same size for all i
+template <typename T>
+std::vector<T> corr(std::vector<T> a, std::vector<std::vector<T>> m) {
+	std::vector<T> res(m.size(),0.0);
+	for (int i=0; i<m.size(); ++i) {
+		res[i] = corr(a,m[i]);
+	}
+	return res;
+};
+
 

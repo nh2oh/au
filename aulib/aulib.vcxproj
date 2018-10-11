@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="input\notefile.cpp" />
+    <ClCompile Include="kk_key.cpp" />
     <ClCompile Include="melgen\melody_a.cpp" />
     <ClCompile Include="melgen\melody_temperley.cpp" />
     <ClCompile Include="numeric_simple_uih.cpp" />

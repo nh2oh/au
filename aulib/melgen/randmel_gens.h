@@ -5,6 +5,7 @@
 #include "..\types\ts_t.h"
 #include "..\types\beat_bar_t.h"
 #include <vector>
+#include <array>
 
 line_t<ntstr_t> melody_temperley(ntl_t,bool,ts_t,bar_t);
 
@@ -22,4 +23,24 @@ struct ma_params {
 	double optimstep {1.5};
 };
 std::vector<ntstr_t> melody_a(ma_params);
+
+
+
+struct kk_key_params {
+	int profile {0}; // 0 => kk, 1 => temperley
+};
+struct kk_key_result {
+	scd_t key {0};
+	bool ismajor {false};
+	double score {0};
+	std::array<std::array<double,12>,2> 
+		all_scores {{{0,0,0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0,0,0}}};
+};
+
+kk_key_result kk_key(line_t<ntstr_t>,kk_key_params);
+
+
+
+
+
 

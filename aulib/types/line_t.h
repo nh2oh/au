@@ -87,6 +87,23 @@ public:
 		return s;
 	};
 
+	// Needs to take options:
+	// - flatten_chords
+	// - strip_rests
+	std::vector<T> notes() const {
+		// Stripping all rests & flattening chords...
+		// ... _very_ half-assed impl
+		std::vector<T> notes_flat_norests {};
+		for (int i=0; i<m_mes.size(); ++i) {
+			auto curr_musel = m_mes[i];
+			if (curr_musel.isrest()) { continue; }
+			for (int j=0; j<curr_musel.n(); ++j) {
+				notes_flat_norests.push_back(curr_musel[j]);
+			}
+		}
+		return notes_flat_norests;
+	};
+
 private:
 	//struct idxs {
 	//	size_t begin {0};

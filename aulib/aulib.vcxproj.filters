@@ -102,6 +102,9 @@
     <ClCompile Include="melgen\melody_a.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="kk_key.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="util\au_algs.h">
