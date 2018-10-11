@@ -1,4 +1,5 @@
 #pragma once
+#include "..\types\types_all.h"
 #include <string>
 #include <vector>
 
