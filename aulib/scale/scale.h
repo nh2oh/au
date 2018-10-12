@@ -32,7 +32,7 @@ class rscdoctn_t;
 //     scd_t, ntstr_t, octn_t}.  
 //
 
-
+/*
 class scale {
 public:
 	int n() const;
@@ -63,7 +63,7 @@ private:
 	std::string m_name {};
 	std::string m_description {};
 };
-
+*/
 
 
 
