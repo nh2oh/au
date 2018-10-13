@@ -1,6 +1,5 @@
 #pragma once
 #include <vector>
-#include <optional>
 #include "..\types\cent_oct_t.h"
 #include "..\types\frq_t.h"
 #include "..\types\ntl_t.h"
@@ -20,17 +19,17 @@ public:
 	std::string description() const;
 
 	ntstr_t to_ntstr(scd_t);  // * Reads m_default_valid_ntls directly
-	std::optional<ntstr_t> to_ntstr(frq_t); // wraps to_scd(frq_in), to_ntstr(scd_in)
+	ntstr_t to_ntstr(frq_t); // wraps to_scd(frq_in), to_ntstr(scd_in)
 
 	frq_t to_frq(scd_t);  // * Calls frq_eqt() directly
-	std::optional<frq_t> to_frq(ntstr_t);  // wraps to_scd(ntstr_t), to_frq(scd_t)
+	frq_t to_frq(ntstr_t);  // wraps to_scd(ntstr_t), to_frq(scd_t)
 
-	std::optional<scd_t> to_scd(frq_t); // * Calls n_eqt() directly
-	std::optional<scd_t> to_scd(ntstr_t);    // * Reads m_default_valid_ntls directly
+	scd_t to_scd(frq_t); // * Calls n_eqt() directly
+	scd_t to_scd(ntstr_t);    // * Reads m_default_valid_ntls directly
 
 	octn_t to_octn(scd_t);
-	std::optional<octn_t> to_octn(frq_t);  // wraps to_scd(frq_in), to_octn(scd_t)
-	std::optional<octn_t> to_octn(ntstr_t);    // wraps to_scd(ntstr_t), to_octn(scd_t)
+	octn_t to_octn(frq_t);  // wraps to_scd(frq_in), to_octn(scd_t)
+	octn_t to_octn(ntstr_t);    // wraps to_scd(ntstr_t), to_octn(scd_t)
 
 	bool isinsc(frq_t);
 	bool isinsc(ntl_t);

@@ -72,7 +72,7 @@ line_t<ntstr_t> melody_temperley(ntl_t keyntl, bool ismajor, ts_t ts, bar_t nbar
 	// The elements of KP must "align" correctly with the elements of scdpool.  For 
 	// example,  if key_scd == 4 (corresponding to scdpool[4]), KP[4] needs to 
 	// be == KP_base[0].  
-	scd_t key_scd = *(sc.to_scd(ntstr_t{keyntl,4}));
+	scd_t key_scd = sc.to_scd(ntstr_t{keyntl,4});
 	rscdoctn_t key_rscd {key_scd,12};
 	
 	std::vector<double> KP_base;
@@ -117,11 +117,11 @@ line_t<ntstr_t> melody_temperley(ntl_t keyntl, bool ismajor, ts_t ts, bar_t nbar
 		scds[i] = scdpool[randset(1,curr_RPKPPP,re)[0]];
 	}
 
-	std::vector<ntstr_t> ntstrs(scds.size(),ntstr_t{});
-	for (int i=0; i<scds.size(); ++i) {
-		ntstrs[i] = sc.to_ntstr(scds[i]);
-	}
-
+	//std::vector<ntstr_t> ntstrs(scds.size(),ntstr_t{});
+	//for (int i=0; i<scds.size(); ++i) {
+	//	ntstrs[i] = sc.to_ntstr(scds[i]);
+	//}
+	std::vector<ntstr_t> ntstrs = sc.to_ntstr(scds);
 	return line_t {ntstrs,rp};
 }
 

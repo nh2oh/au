@@ -72,6 +72,9 @@
     <ClCompile Include="kk_key_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="scale_12tet_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\gtest-internal-inl.h">

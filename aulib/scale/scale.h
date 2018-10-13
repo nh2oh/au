@@ -32,10 +32,12 @@ class rscdoctn_t;
 //     scd_t, ntstr_t, octn_t}.  
 //
 
-/*
+
 class scale {
 public:
 	int n() const;
+	std::string name() const;
+	std::string description() const;
 	bool isinsc(ntl_t) const;
 	bool isinsc(frq_t) const;
 
@@ -62,8 +64,11 @@ private:
 	int m_n {};
 	std::string m_name {};
 	std::string m_description {};
+
+	std::vector<ntl_t> m_ntls;
+	std::vector<frq_t> m_frq;
 };
-*/
+
 
 
 

@@ -5,7 +5,7 @@
 
 //
 // chunkyseq<T>
-// Kind of like a std::vector<std::vecot<T>> except that the elements are 
+// Kind of like a std::vector<std::vector<T>> except that the elements are 
 // contiguous.  
 //
 
@@ -122,6 +122,27 @@ public:
 		}
 		return true;
 	}
+
+	bool validate() const {
+		// m_idx.front().start == 0, m_idx.back().end == m_d.size(), and
+		// each element i in m_idx follows element i-1 with no gaps and
+		// no overlaps.  
+		for (int i=0; i<m_idx.size(); ++i) {
+			if (m_idx[i].start >= m_idx[i].end) { return false; }
+			if (i>0) {
+				if (m_idx[i].start != m_idx[i-1].end) { return false; }
+			}
+		}
+		if (m_idx.size() >= 1 && m_idx[0].start != 0) {
+			return false;
+		}
+		if (m_idx.back().end != m_d.size()) {
+			return false;
+		}
+
+		return true;
+	}
+		
 private:
 	struct idx {
 		size_t start {0};

@@ -1,6 +1,5 @@
 #include <string>
 #include <vector>
-#include <optional>
 #include <cmath>
 #include <algorithm>
 #include "scale_12tet.h"
@@ -8,44 +7,11 @@
 #include "..\types\ntl_t.h"
 #include "..\types\frq_t.h"
 #include "..\types\scd_t.h"
-#include "..\util\au_util_all.h"
+#include "..\util\au_util.h"
+#include "..\util\au_error.h"
+#include "..\util\au_algs.h"  // ismember()
+#include "..\util\au_algs_math.h"  //aprx_int()
 
-scale_12tet::scale_12tet() {
-	m_name = "12-tone equal-tempered scale";
-	m_name += " with " + ntstr_t{m_ref_ntl,m_ref_octn}.print() + " defined as ";
-	m_name += m_ref_frq.print() + " Hz.";
-	m_description = "Default-constructed";
-}
-
-scale_12tet::scale_12tet(ntl_t ref_ntl_in, octn_t ref_oct_in, frq_t ref_frq_in) {
-	auto it = std::find(m_default_valid_ntls.begin(),
-		m_default_valid_ntls.end(),ref_ntl_in);
-	au_assert(it != m_default_valid_ntls.end(),"Invalid ref ntl");
-
-	int m_ref_ntl_idx {static_cast<int>(it-m_default_valid_ntls.begin())};
-	ntl_t m_ref_ntl {ref_ntl_in};
-	frq_t m_ref_frq {ref_frq_in};
-	octn_t m_ref_octn {ref_oct_in};
-
-	m_name = "12-tone equal-tempered scale";
-	m_name += " with " + ntstr_t{m_ref_ntl,m_ref_octn}.print() + " defined as ";
-	m_name += m_ref_frq.print() + " Hz.";
-
-	m_description = "scale_12tet::scale_12tet(ntl_t " + ref_ntl_in.print();
-	m_description += ", octn_t " + ref_oct_in.print();
-	m_description += ", frq_t " + ref_frq_in.print() + ")";
-}
-
-int scale_12tet::n() {
-	return m_n;
-}
-
-std::string scale_12tet::name() const {
-	return m_name;
-}
-std::string scale_12tet::description() const {
-	return m_description;
-}
 
 // Static data members
 const int scale_12tet::m_gint = 2;  // Generating interval = 2
@@ -57,20 +23,73 @@ const int scale_12tet::m_default_ref_ntl_idx = 9; // "A"
 const frq_t scale_12tet::m_default_ref_frq {440};
 const octn_t scale_12tet::m_default_ref_octave {4};
 
+scale_12tet::scale_12tet() {
+	m_name = bsprintf("12-tone equal-tempered scale with %s defined as %s Hz",
+		ntstr_t{m_ref_ntl,m_ref_octn}.print(), m_ref_frq.print());
+	m_description = "Default-constructed";
+}
+
+// Means that ref_ntl_in(ref_oct_in) corresponds to ref_frq_in.  Note however that 
+// scd_t {0} does _not_ correspond to ref_ntl_in(ref_oct_in).  scd_t {0} always
+// corresponds to ref_ntl_in(0).  
+//
+// to_ntstr(my_scd) == to_scd(to_ntstr(my_scd))
+// to_frq(my_scd) == to_scd(to_frq(my_scd))
+//
+scale_12tet::scale_12tet(ntl_t ref_ntl_in, octn_t ref_oct_in, frq_t ref_frq_in) {
+	auto it = std::find(m_default_valid_ntls.begin(),
+		m_default_valid_ntls.end(),ref_ntl_in);
+	au_assert(ismember(ref_ntl_in,m_default_valid_ntls),"Invalid ref ntl");
+
+	int m_ref_ntl_idx =static_cast<int>(it-m_default_valid_ntls.begin());
+	m_ref_ntl = ref_ntl_in;
+	m_ref_frq = ref_frq_in;
+	m_ref_octn = ref_oct_in;
+
+	m_name = bsprintf("12-tone equal-tempered scale with %s defined as %s Hz",
+		ntstr_t{m_ref_ntl,m_ref_octn}.print(), m_ref_frq.print());
+
+	m_description = bsprintf("scale_12tet(ntl_t %s, octn_t %s, frq_t %s)",
+		ref_ntl_in.print(), ref_oct_in.print(), ref_frq_in.print());
+}
+
+int scale_12tet::n() const {
+	return m_n;
+}
+std::string scale_12tet::name() const {
+	return m_name;
+}
+std::string scale_12tet::description() const {
+	return m_description;
+}
+bool scale_12tet::isinsc(ntl_t ntl_in) const {
+	return ismember(ntl_in, m_default_valid_ntls);
+}
+bool scale_12tet::isinsc(frq_t frq_in) const {
+	return aprx_int(n_eqt(frq_in, m_ref_frq, m_n, m_gint));
+}
+
+
 // This function assumes none of the ntls in the scale are duplicates, so it
 // is not applicable to the completely general case of an arbitrary scale
 ntstr_t scale_12tet::to_ntstr(scd_t scd_in) {  // Reads m_default_valid_ntls directly
 	rscdoctn_t rscdoctn_in {scd_in, m_n};
-	return ntstr_t {m_default_valid_ntls[rscdoctn_in.to_int()], 
+	//return ntstr_t {m_default_valid_ntls[rscdoctn_in.to_int()], 
+	//	octn_t{scd_in,m_n}};
+	return ntstr_t {m_default_valid_ntls[(rscdoctn_in.to_int()+m_ref_ntl_idx)%12], 
 		octn_t{scd_in,m_n}};
 }
-
-std::optional<ntstr_t> scale_12tet::to_ntstr(frq_t frq_in) {  // wrapper
-	std::optional<scd_t> scd_in = to_scd(frq_in);
-	if (!scd_in) {
-		return {};
+std::vector<ntstr_t> scale_12tet::to_ntstr(std::vector<scd_t> scds_in) {
+	std::vector<ntstr_t> ntstrs(scds_in.size(),ntstr_t{});
+	for (int i=0; i<scds_in.size(); ++i) {
+		ntstrs[i] = to_ntstr(scds_in[i]);
 	}
-	return to_ntstr(*scd_in);
+	return ntstrs;
+}
+
+ntstr_t scale_12tet::to_ntstr(frq_t frq_in) {  // wrapper
+	scd_t scd_in = to_scd(frq_in);
+	return to_ntstr(scd_in);
 }
 
 frq_t scale_12tet::to_frq(scd_t scd_in) {  // Calls frq_eqt() directly
@@ -78,35 +97,29 @@ frq_t scale_12tet::to_frq(scd_t scd_in) {  // Calls frq_eqt() directly
 	frq_t frq = frq_eqt(dn, m_ref_frq, m_n, m_gint);
 	return frq;
 }
-std::optional<frq_t> scale_12tet::to_frq(ntstr_t ntstr_in) {  // wrapper
-	std::optional<scd_t> scd_in = to_scd(ntstr_in);
-	if (!scd_in) {
-		return {};
-	}
-
-	return to_frq(*scd_in);
+frq_t scale_12tet::to_frq(ntstr_t ntstr_in) {  // wrapper
+	scd_t scd_in = to_scd(ntstr_in);
+	return to_frq(scd_in);
 }
-std::optional<scd_t> scale_12tet::to_scd(frq_t frq_in) {  //  Calls n_eqt() directly
-	auto dn_approx = n_eqt(frq_in, m_ref_frq, m_n, m_gint);
-	if (!aprx_int(dn_approx)) {
-		return {};
-	}
+scd_t scale_12tet::to_scd(frq_t frq_in) {  //  Calls n_eqt() directly
+	double dn_approx = n_eqt(frq_in, m_ref_frq, m_n, m_gint);
+	au_assert(aprx_int(dn_approx),"frq not in sc");
 	auto dn = static_cast<int>(std::round(dn_approx));
 	
-	return scd_t {dn - m_ref_octn.to_int()*m_n + m_ref_ntl_idx};
+	//return scd_t {dn - m_ref_octn.to_int()*m_n + m_ref_ntl_idx};
+	scd_t ans_scd {dn + (m_ref_octn.to_int()*m_n + m_ref_ntl_idx)};
+	return ans_scd;
 }
 
 // This function assumes none of the ntls in the scale are duplicates, so it
 // is not applicable to the completely general case of an arbitrary scale
-std::optional<scd_t> scale_12tet::to_scd(ntstr_t ntstr_in) {  // Reads m_default_valid_ntls directly
+scd_t scale_12tet::to_scd(ntstr_t ntstr_in) {  // Reads m_default_valid_ntls directly
 	auto it = std::find(m_default_valid_ntls.begin(),
 		m_default_valid_ntls.end(),ntl_t{ntstr_in});
-	if (it == m_default_valid_ntls.end()) {
-		return {};
-	}
-
+	au_assert(it != m_default_valid_ntls.end(), "ntl not in sc");
 	int ntl_idx = it-m_default_valid_ntls.begin();
-	auto rscdoct = rscdoctn_t{scd_t{ntl_idx},m_n};
+	//auto rscdoct = rscdoctn_t{scd_t{ntl_idx},m_n};
+	auto rscdoct = rscdoctn_t{scd_t{ntl_idx-m_ref_ntl_idx},m_n};
 	return rscdoct.to_scd(octn_t{ntstr_in}); // barf: using the conversion operator
 }
 
@@ -114,36 +127,15 @@ octn_t scale_12tet::to_octn(scd_t scd_in) {
 	return octn_t{scd_in,m_n};
 }
 
-std::optional<octn_t> scale_12tet::to_octn(frq_t frq_in) {
-	std::optional<scd_t> scd_in = to_scd(frq_in);
-	if (!scd_in) {
-		return {};
-	}
-	return to_octn(*scd_in);
+octn_t scale_12tet::to_octn(frq_t frq_in) {
+	scd_t scd_in = to_scd(frq_in);
+	return to_octn(scd_in);
 }
 
-std::optional<octn_t> scale_12tet::to_octn(ntstr_t ntstr_in) {
-	std::optional<scd_t> scd_in = to_scd(ntstr_in);
-	if (!scd_in) {
-		return {};
-	}
-	return to_octn(*scd_in);
+octn_t scale_12tet::to_octn(ntstr_t ntstr_in) {
+	scd_t scd_in = to_scd(ntstr_in);
+	return to_octn(scd_in);
 }
-
-bool scale_12tet::isinsc(frq_t frq_in) {
-	double dn_approx = n_eqt(frq_in, m_ref_frq, m_n, m_gint);
-	return aprx_int(dn_approx);
-}
-bool scale_12tet::isinsc(ntl_t ntl_in) {
-	return ismember(ntl_in,m_default_valid_ntls);
-}
-
-
-
-
-
-
-
 
 
 // Return a frq vector corresponding to some equal-tempered scale.  
@@ -169,7 +161,7 @@ bool scale_12tet::isinsc(ntl_t ntl_in) {
 // auto cchrom_new_frqs = frq_eqt(dn_vec, 440, 12, 2);
 //
 
-std::vector<frq_t> frq_eqt(std::vector<int> const& dn, frq_t const& ref_frq, \
+std::vector<frq_t> frq_eqt(std::vector<int> const& dn, frq_t const& ref_frq, 
 	int const& ntet, int const& gint) {
 	std::vector<frq_t> frqs; frqs.reserve(dn.size());
 
@@ -182,7 +174,7 @@ std::vector<frq_t> frq_eqt(std::vector<int> const& dn, frq_t const& ref_frq, \
 	return frqs;
 }
 
-frq_t frq_eqt(int const& dn, frq_t const& ref_frq, \
+frq_t frq_eqt(int const& dn, frq_t const& ref_frq, 
 	int const& ntet, int const& gint) {
 	// f = fref.*((gint^(1/ntet))).^dn;
 	auto x = std::pow(static_cast<double>(gint),(1/static_cast<double>(ntet)));
@@ -192,7 +184,7 @@ frq_t frq_eqt(int const& dn, frq_t const& ref_frq, \
 }
 
 // The inverse:  Takes in a frq_t and returns a double corresponding to the scd_t
-double n_eqt(frq_t const& frq_in, frq_t const& ref_frq, \
+double n_eqt(frq_t const& frq_in, frq_t const& ref_frq, 
 	int const& ntet, int const& gint) {
 	// f = fref.*((gint^(1/ntet))).^dn;
 	// => dn = log(f/fref)/log(gint^(1/ntet))
@@ -200,9 +192,6 @@ double n_eqt(frq_t const& frq_in, frq_t const& ref_frq, \
 	double ffref = frq_in/ref_frq;
 	double scd_approx = std::log(ffref)/std::log(gint_pow_ntet);
 
-
 	return scd_approx;
 }
-
-
 

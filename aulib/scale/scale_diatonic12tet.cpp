@@ -1,6 +1,5 @@
 #include <string>
 #include <vector>
-#include <optional>
 #include <cmath>
 #include <algorithm>
 #include "scale_diatonic12tet.h"
@@ -10,6 +9,7 @@
 #include "..\types\frq_t.h"
 #include "..\types\scd_t.h"
 #include "..\util\au_util_all.h"
+#include "..\util\au_error.h"
 
 scale_diatonic12tet::scale_diatonic12tet() {
 	scale_12tet sc12tet {"A"_ntl, octn_t{4}, frq_t{440}};
@@ -28,11 +28,11 @@ scale_diatonic12tet::scale_diatonic12tet(scale_12tet scin, ntl_t base_ntl, int i
 
 void scale_diatonic12tet::build_sc(scale_12tet sc12tet, ntl_t base_ntl, int ip_startidx) {
 	auto init_scd = sc12tet.to_scd(ntstr_t {base_ntl,octn_t{0}});
-	m_ntls.push_back(ntl_t{sc12tet.to_ntstr(*init_scd)});
-	m_frqs.push_back(sc12tet.to_frq(*init_scd));
+	m_ntls.push_back(ntl_t{sc12tet.to_ntstr(init_scd)});
+	m_frqs.push_back(sc12tet.to_frq(init_scd));
 	std::rotate(m_interval_pattern.begin(), m_interval_pattern.begin()+ip_startidx,m_interval_pattern.end());
 
-	auto curr_scd = *init_scd;
+	auto curr_scd = init_scd;
 	for (int i=0; i<m_n; ++i) {
 		curr_scd = curr_scd + scd_t{m_interval_pattern[i]};
 		m_ntls.push_back(ntl_t{sc12tet.to_ntstr(curr_scd)});
@@ -63,12 +63,9 @@ ntstr_t scale_diatonic12tet::to_ntstr(scd_t scd_in) {  // Reads m_default_valid_
 	return ntstr_t {m_ntls[rscdoctn_in.to_int()], octn_t{scd_in,m_n}};
 }
 
-std::optional<ntstr_t> scale_diatonic12tet::to_ntstr(frq_t frq_in) {  // wrapper
-	std::optional<scd_t> scd_in = to_scd(frq_in);
-	if (!scd_in) {
-		return {};
-	}
-	return to_ntstr(*scd_in);
+ntstr_t scale_diatonic12tet::to_ntstr(frq_t frq_in) {  // wrapper
+	scd_t scd_in = to_scd(frq_in);
+	return to_ntstr(scd_in);
 }
 
 frq_t scale_diatonic12tet::to_frq(scd_t scd_in) {  // Calls frq_eqt() directly
@@ -80,15 +77,11 @@ frq_t scale_diatonic12tet::to_frq(scd_t scd_in) {  // Calls frq_eqt() directly
 	frq_t frq {m_frqs[rscd] + oct_t{oct}};
 	return frq;
 }
-std::optional<frq_t> scale_diatonic12tet::to_frq(ntstr_t ntstr_in) {  // wrapper
-	std::optional<scd_t> scd_in = to_scd(ntstr_in);
-	if (!scd_in) {
-		return {};
-	}
-
-	return to_frq(*scd_in);
+frq_t scale_diatonic12tet::to_frq(ntstr_t ntstr_in) {  // wrapper
+	scd_t scd_in = to_scd(ntstr_in);
+	return to_frq(scd_in);
 }
-std::optional<scd_t> scale_diatonic12tet::to_scd(frq_t frq_in) {  //  Calls n_eqt() directly
+scd_t scale_diatonic12tet::to_scd(frq_t frq_in) {  //  Calls n_eqt() directly
 	for (auto i=0; i<m_n; ++i) {
 		auto n_approx = std::log2(frq_in/m_frqs[i]);
 		if (!aprx_int(n_approx)) {
@@ -98,16 +91,13 @@ std::optional<scd_t> scale_diatonic12tet::to_scd(frq_t frq_in) {  //  Calls n_eq
 			return rscdoctn_t{scd_t{i},m_n}.to_scd(octn_t{oct});
 		}
 	}
-	return {};
+	au_assert(false,"frq not in sc.");
 }
 
 // This function assumes none of the ntls in the scale are duplicates, so it
 // is not applicable to the completely general case of an arbitrary scale
-std::optional<scd_t> scale_diatonic12tet::to_scd(ntstr_t ntstr_in) {  // Reads m_ntls directly
+scd_t scale_diatonic12tet::to_scd(ntstr_t ntstr_in) {  // Reads m_ntls directly
 	auto it = std::find(m_ntls.begin(),m_ntls.end(),ntl_t{ntstr_in});
-	if (it == m_ntls.end()) {
-		return {};
-	}
 	scd_t rscd {static_cast<int>(it-m_ntls.begin())};
 
 	return rscdoctn_t{rscd,m_n}.to_scd(octn_t{ntstr_in});
@@ -117,20 +107,14 @@ octn_t scale_diatonic12tet::to_octn(scd_t scd_in) {
 	return octn_t{scd_in,m_n};
 }
 
-std::optional<octn_t> scale_diatonic12tet::to_octn(frq_t frq_in) {
-	std::optional<scd_t> scd_in = to_scd(frq_in);
-	if (!scd_in) {
-		return {};
-	}
-	return to_octn(*scd_in);
+octn_t scale_diatonic12tet::to_octn(frq_t frq_in) {
+	scd_t scd_in = to_scd(frq_in);
+	return to_octn(scd_in);
 }
 
-std::optional<octn_t> scale_diatonic12tet::to_octn(ntstr_t ntstr_in) {
-	std::optional<scd_t> scd_in = to_scd(ntstr_in);
-	if (!scd_in) {
-		return {};
-	}
-	return to_octn(*scd_in);
+octn_t scale_diatonic12tet::to_octn(ntstr_t ntstr_in) {
+	scd_t scd_in = to_scd(ntstr_in);
+	return to_octn(scd_in);
 }
 
 bool scale_diatonic12tet::isinsc(frq_t frq_in) {

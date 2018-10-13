@@ -46,7 +46,7 @@ kk_key_result kk_key(line_t<ntstr_t> nts, kk_key_params p) {
 	auto notes_flatchords_norests = nts.notes();
 	std::vector<rscdoctn_t> rscds(notes_flatchords_norests.size(),rscdoctn_t{scd_t{0},12});
 	for (int i=0; i<notes_flatchords_norests.size(); ++i) {
-		auto curr_rscd = rscdoctn_t{*(sc.to_scd(notes_flatchords_norests[i])),12};
+		auto curr_rscd = rscdoctn_t{sc.to_scd(notes_flatchords_norests[i]),12};
 		rscds[i] = curr_rscd;
 	}
 	auto uqn_rscds = unique_n(rscds);
