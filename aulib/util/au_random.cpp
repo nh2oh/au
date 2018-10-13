@@ -24,11 +24,19 @@ std::mt19937 new_randeng(bool randseed) {
 
 
 // Random ints (urandi), doubles (urandd)
-// Return a vector of n random ints between min, max chosen from a uniform 
+// Return a vector of n random ints on [min, max] chosen from a uniform 
 // distribution.  A new random engine is instantiated and seeded with
 // new_randeng(true).  
 std::vector<int> urandi(int n, int min, int max) {
 	auto re = new_randeng(true);
+	std::uniform_int_distribution<int> rn {min,max};
+	std::vector<int> rv(n,0);
+	for (auto i=0; i<n; ++i) {
+		rv[i] = rn(re);
+	}
+	return rv;
+}
+std::vector<int> urandi(int n, int min, int max, std::mt19937& re) {
 	std::uniform_int_distribution<int> rn {min,max};
 	std::vector<int> rv(n,0);
 	for (auto i=0; i<n; ++i) {

@@ -158,12 +158,14 @@
     <ClCompile Include="frq_t_cent_t_test.cpp" />
     <ClCompile Include="kk_key_test.cpp" />
     <ClCompile Include="line_t_test.cpp" />
+    <ClCompile Include="melody_a_testcpp.cpp" />
     <ClCompile Include="melody_temperley_test.cpp" />
     <ClCompile Include="musel_t_test.cpp" />
     <ClCompile Include="nv_t_test.cpp" />
     <ClCompile Include="randrp_metg_test.cpp" />
     <ClCompile Include="rp_t_test.cpp" />
     <ClCompile Include="scale_12tet_test.cpp" />
+    <ClCompile Include="scale_diatonic12tet_test.cpp" />
     <ClCompile Include="src\gtest-death-test.cc" />
     <ClCompile Include="src\gtest-filepath.cc" />
     <ClCompile Include="src\gtest-port.cc" />

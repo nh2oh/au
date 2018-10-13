@@ -10,7 +10,8 @@
 
 std::mt19937 new_randeng(bool randseed=true);
 
-std::vector<int> urandi(int,int,int);
+std::vector<int> urandi(int,int,int);  // n, min, max; range: [min,max]
+std::vector<int> urandi(int,int,int,std::mt19937&);  // n, min, max; range: [min,max]
 std::vector<double> urandd(int,double,double);
 std::vector<double> urandd(int,double,double,std::mt19937&);
 
@@ -49,6 +50,19 @@ std::vector<T> randelems(const std::vector<T>& s, int n,
 	std::vector<T> res {}; // "random elements"
 	for (int i=0; i<ridxs.size(); ++i) {
 		res.push_back(s[ridxs[i]]);
+	}
+
+	return res;
+}
+
+// n random elements from s chosen w/a uniform probability dist
+template<typename T>
+std::vector<T> urandelems(const std::vector<T>& s, int n, std::mt19937& re) {
+	auto ridxs = urandi(n,0,s.size()-1,re);  // NB:  size()-1
+
+	std::vector<T> res(n,T{}); // "result"
+	for (int i=0; i<ridxs.size(); ++i) {
+		res[i] = s[ridxs[i]];
 	}
 
 	return res;

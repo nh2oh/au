@@ -75,6 +75,12 @@
     <ClCompile Include="scale_12tet_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="scale_diatonic12tet_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="melody_a_testcpp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\gtest-internal-inl.h">
