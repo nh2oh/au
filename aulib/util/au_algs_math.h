@@ -32,7 +32,7 @@ struct ksum {
 
 // aprx_eg, _lt, _gt are mutually exclusive
 template<typename T>
-bool aprx_eq(T a, T b, int ulp=2) {
+bool aprx_eq(T a, T b, int ulp=4) {
 	auto e = std::numeric_limits<T>::epsilon();
 	auto m = std::numeric_limits<T>::min();
 	auto d = std::abs(a-b);
@@ -42,7 +42,7 @@ bool aprx_eq(T a, T b, int ulp=2) {
 
 // a > b
 template<typename T>
-bool aprx_gt(T a, T b, int ulp=2) {
+bool aprx_gt(T a, T b, int ulp=4) {
 	auto e = std::numeric_limits<T>::epsilon();
 	auto d = a-b;
 	auto s = std::abs(a+b);
@@ -51,7 +51,7 @@ bool aprx_gt(T a, T b, int ulp=2) {
 
 // a < b
 template<typename T>
-bool aprx_lt(T a, T b, int ulp=2) {
+bool aprx_lt(T a, T b, int ulp=4) {
 	auto e = std::numeric_limits<T>::epsilon();
 	auto m = std::numeric_limits<T>::min();
 	auto d = a-b;
@@ -63,14 +63,14 @@ bool aprx_lt(T a, T b, int ulp=2) {
 
 // Is a approximately an integer?
 template<typename T>
-bool aprx_int(T a, int ulp=2) {
+bool aprx_int(T a, int ulp=4) {
 	T ra {std::round(a)};
 	return aprx_eq(a, ra, ulp);
 };
 
 // Is a a mersenne number?
 template<typename T>
-bool is_mersenne(T a, int ulp=2) {
+bool is_mersenne(T a, int ulp=4) {
 	if (a < 1) {return false;}
 	return aprx_int(std::log2(a+1),ulp);
 };

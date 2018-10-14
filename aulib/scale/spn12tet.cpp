@@ -87,7 +87,7 @@ ntstr_t spn12tet::to_ntstr(frq_t frq) const {  // wrapper
 }
 
 frq_t spn12tet::to_frq(scd_t scd) const {  // Calls frq_eqt() directly
-	return spn12tet::frq_eqt(scd.to_int(),m_ps.ref_frq,m_ps.ntet,m_ps.gen_int);
+	return spn12tet::frq_eqt(scd.to_int()-m_shift_scd,m_ps.ref_frq,m_ps.ntet,m_ps.gen_int);
 }
 std::vector<frq_t> spn12tet::to_frq(const std::vector<scd_t>& scds) const {
 	std::vector<frq_t> res(scds.size(),frq_t{});
@@ -109,8 +109,18 @@ std::vector<frq_t> spn12tet::to_frq(const std::vector<ntstr_t>& ntstr) const {
 }
 scd_t spn12tet::to_scd(frq_t frq) const {  //  Calls n_eqt() directly
 	double dn_approx = n_eqt(frq,m_ps.ref_frq,m_ps.ntet,m_ps.gen_int);
+	//bool tf =aprx_int(dn_approx);
+	//if (!tf) {
+	//	wait();
+	//}
 	au_assert(aprx_int(dn_approx),"frq not in sc");
-	return scd_t {static_cast<int>(std::round(dn_approx))};
+	//dn_approx = std::round(dn_approx + m_shift_scd);
+	//tf  =aprx_int(dn_approx,4);
+	//if (!tf) {
+	//	wait();
+	//}
+	//au_assert(tf,"frq not in sc");
+	return scd_t {static_cast<int>(std::round(dn_approx+m_shift_scd))};
 }
 scd_t spn12tet::to_scd(ntstr_t ntstr) const {  // Reads m_default_valid_ntls directly
 	auto it = std::find(m_ntls.begin(),m_ntls.end(),ntl_t{ntstr});
@@ -173,10 +183,10 @@ std::vector<frq_t> spn12tet::frq_eqt(const std::vector<int>& dn, frq_t ref_frq,
 
 frq_t spn12tet::frq_eqt(int dn, frq_t ref_frq, int ntet, int gint) const {
 	// f = fref.*((gint^(1/ntet))).^dn;
-	double dn_shift = dn - m_shift_scd;
+	//double dn_shift = dn - m_shift_scd;
 	//auto x = std::pow(static_cast<double>(gint),(1/static_cast<double>(ntet)));
 	//frq_t frq = ref_frq * std::pow(x, static_cast<double>(dn));
-	frq_t frq {ref_frq*std::pow(gint,dn_shift/static_cast<double>(ntet))};
+	frq_t frq {ref_frq*std::pow(gint,dn/static_cast<double>(ntet))};
 	return frq;
 }
 
@@ -189,11 +199,11 @@ double spn12tet::n_eqt(frq_t frq_in, frq_t ref_frq, int ntet, int gint) const {
 	// => dn = ntet*(log(f/fref)/log(gint))
 	
 	
-	double dn = ntet*(std::log(frq_in/ref_frq)/std::log(static_cast<double>(gint)));
-	if (aprx_int(dn)) {
-		dn = std::round(dn);
-	}
-	return dn + m_shift_scd;
+	return ntet*(std::log(frq_in/ref_frq)/std::log(static_cast<double>(gint)));
+	//if (aprx_int(dn)) {
+	//	dn = std::round(dn);
+	//}
+	//return dn + m_shift_scd;
 	//bool tf1 = aprx_int(x);
 	//double res = x+m_shift_scd;
 	//bool tf2 = aprx_int(res);

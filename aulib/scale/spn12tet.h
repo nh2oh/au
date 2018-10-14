@@ -23,7 +23,6 @@ public:
 		// Changing ref_ntstr here does _not_ change the note @ which the 
 		// octave boundry occurs.  
 		ntstr_t ref_ntstr {"A"_ntl,4};
-		int ref_scd {36}; // => A(4)
 		frq_t ref_frq {440};
 		int gen_int {2};
 		int ntet {12};
