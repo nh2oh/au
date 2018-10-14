@@ -23,7 +23,7 @@ TEST(scale_diatonic12tet_tests, DefaultConstructor) {
 	for (const auto& e : ntls_not_in_sc) {
 		EXPECT_FALSE(sc.isinsc(e));
 	}
-	
+	/*
 	// Tests that an assorted set of frqs are scale members
 	std::vector<int> random_semitones {0,159,25,70,137,240,242,40,243,240,122,
 		201,36,106,229,199,240,164,9,213,234,170,190,186,99,164,43,177,8,70,
@@ -49,7 +49,7 @@ TEST(scale_diatonic12tet_tests, DefaultConstructor) {
 		//EXPECT_TRUE(curr_ntstr == sc.to_ntstr(curr_frq));
 		//EXPECT_TRUE(curr_frq == sc.to_frq(curr_scd));
 	}
+	*/
 }
-
 
 

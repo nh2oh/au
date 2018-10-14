@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <map>
 
+// TODO:  Template this so it works w/ arrays
 template<typename T>
 bool ismember(T const& e, std::vector<T> const& s) {
     return (std::find(s.begin(),s.end(),e) != s.end());

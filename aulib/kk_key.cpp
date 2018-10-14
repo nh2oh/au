@@ -17,13 +17,13 @@ kk_key_result kk_key(line_t<ntstr_t> nts, kk_key_params p) {
 	switch (p.profile) {
 		case 0:
 			// Algorithm of Krumhansl & Kessler as described by Temperly p.52
-			//        C     C#    D     D#    E     F      F#    G     G#    A    A#    B
+			//             C     C#    D     D#    E     F      F#    G     G#    A    A#    B
 			kp_base_maj = {6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88};
 			kp_base_min = {6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17};
 			break;
 		case 1:
 			// Page 180 of "The Cognition of Basic Musical Structures" by Temperley
-			//        C  C# D    D# E    F  F# G    G# A    A#   B
+			//             C  C# D    D# E    F  F# G    G# A    A#   B
 			kp_base_maj = {5, 2, 3.5, 2, 4.5, 4, 2, 4.5, 2, 3.5, 1.5, 4};
 			kp_base_min = {5, 2, 3.5, 4.5, 2, 4, 2, 4.5, 3.5, 2, 1.5, 4};
 			break;

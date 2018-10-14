@@ -105,6 +105,9 @@
     <ClCompile Include="kk_key.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="scale\spn12tet.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="util\au_algs.h">
@@ -219,6 +222,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="chunkyseq.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scale\spn12tet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

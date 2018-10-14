@@ -3,33 +3,23 @@
 #include <string>
 #include <vector>
 
-// Forward declarations from ntl_t.h
-/*class ntl_t;
-class frq_t;
-class scd_t;
-class ntstr_t;
-class ntl_t;
-class rscdoctn_t;
-*///struct rscdoct_t;
-
 //-----------------------------------------------------------------------------
 // Class "scale"
 // The purpose of a scale is to map the abstract note-representations scd_t, 
 // ntstr_t, which carry no information about absolute pitch and which cannot
 // be converted to sound, to a pitch value which can be sounded.  That is,
-// a scale maps scd_t and ntstr_t to frq_t.  It also establishes the mapping 
-// between scd_t and rscdoctn_t by defining n, the number of scd_t's per 
-// octave.  
+// a scale maps scd_t to and from ntstr_t and frq_t.  It also establishes 
+// equivalence relations between pairs of abstract note elements for all such
+// elements in its domain to create n equivalence classes.  Normally these 
+// relations are based on pitch classes (ie, two notes differing in frq_t by 
+// a factor of 2^m are members of the saem equivalence class), but there are 
+// no restrictions on the specifics of the relations.  
+//
 // A scale does ___ things:
-// 1)  It establishes a modular arithmetic on elements of type scd_t which
-//     associates an scd_t with a pair {rscd, oct}.  Although the relation
-//     is "established" by the scale (since the scale sets m_n), the 
-//     definition of the relationship between scd_t and rscdoctn_t, that is,
-//     {scd, sc.m_n} <---> {rscd, oct, sc.m_n} is general and the scale 
-//     can't muck with it.  See scd_t.h.  
-// 2)  It defines a set of m_n unique ntl_t's.  
-// 3)  It maps, on demand, any of {frq_t, scd_t, ntstr_t} to any of {frq_t, 
-//     scd_t, ntstr_t, octn_t}.  
+// 1)  Establishes a constant, finite set of n note-letters ntl_t.  
+// 2)  Maps any of {frq_t, scd_t, ntstr_t} to any of {frq_t, scd_t, 
+//     ntstr_t, octn_t}.  
+// 3)  
 //
 
 
