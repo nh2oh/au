@@ -146,7 +146,7 @@ octn_t spn12tet::to_octn(frq_t frq) const {
 }
 
 
-// TODO:  Check these examples
+//
 // Return a frq vector corresponding to some equal-tempered scale.  
 // Calculate the frequency of notes dn semitones different from the reference
 // note, defined by fref in an ntet-tone equal temperment syetem in which a 
@@ -183,36 +183,12 @@ std::vector<frq_t> spn12tet::frq_eqt(const std::vector<int>& dn, frq_t ref_frq,
 
 frq_t spn12tet::frq_eqt(int dn, frq_t ref_frq, int ntet, int gint) const {
 	// f = fref.*((gint^(1/ntet))).^dn;
-	//double dn_shift = dn - m_shift_scd;
-	//auto x = std::pow(static_cast<double>(gint),(1/static_cast<double>(ntet)));
-	//frq_t frq = ref_frq * std::pow(x, static_cast<double>(dn));
 	frq_t frq {ref_frq*std::pow(gint,dn/static_cast<double>(ntet))};
 	return frq;
 }
 
 // The inverse:  Takes in a frq_t and returns a double corresponding to the scd_t
 double spn12tet::n_eqt(frq_t frq_in, frq_t ref_frq, int ntet, int gint) const {
-	// f = fref*(gint^(1/ntet))^dn;
-	// =>  fref*(gint^(dn/ntet));
-	// => log(f/fref) = (dn/ntet)*log(gint)
-	// => dn/ntet = log(f/fref)/log(gint)
-	// => dn = ntet*(log(f/fref)/log(gint))
-	
-	
 	return ntet*(std::log(frq_in/ref_frq)/std::log(static_cast<double>(gint)));
-	//if (aprx_int(dn)) {
-	//	dn = std::round(dn);
-	//}
-	//return dn + m_shift_scd;
-	//bool tf1 = aprx_int(x);
-	//double res = x+m_shift_scd;
-	//bool tf2 = aprx_int(res);
-	//return res;
-
-	// => dn = log(f/fref)/log(gint^(1/ntet))
-	//double gint_pow_ntet = std::pow(static_cast<double>(gint),1.0/static_cast<double>(ntet));
-	//double ffref = frq_in/ref_frq;
-	//double scd_approx = std::log(ffref)/std::log(gint_pow_ntet);
-	//return scd_approx + m_shift_scd;
 }
 

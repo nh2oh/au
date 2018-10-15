@@ -6,13 +6,18 @@
 #include "..\types\ntl_t.h"
 #include "..\types\scd_t.h"
 
+//
 // "spn" is a standard that associates ntl_t's w/ octn_t's.  That is, it
-// specifies how pitch names should be notated; it does not stipulate
-// frequencies for the pitches.  
-// In SPN, the note C is the first note of each octave, hence, 
+// specifies how pitch names should be notated (in particular, at which 
+// note letter pair the octave boundry should occur); it does not stipulate
+// frequencies for the pitches of the note letters.  
+// In SPN, there are 12 note letters A,A#,B,C,...,G,G#.  The note C is the 
+// first note of each octave, hence, 
 // scd_t == 0 <=> C(0)
 //
-//
+// The default constructor uses the A440 pitch standard: A(4) == 440 Hz.  
+// Changing the pitch standard does _not_ change the ordering of the ntl's
+// nor the location of the octave breaks.  See the note above.  
 //
 
 class spn12tet {
