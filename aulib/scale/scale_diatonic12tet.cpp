@@ -128,6 +128,10 @@ bool scale_diatonic12tet::isinsc(frq_t frq_in) {
 }
 
 bool scale_diatonic12tet::isinsc(ntl_t ntl_in) {
-	return ismember(ntl_in,m_ntls);
+	bool tf = ismember(ntl_in,m_ntls);
+	if (!tf) {
+		wait();
+	}
+	return tf;
 }
 
