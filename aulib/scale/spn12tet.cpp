@@ -37,9 +37,10 @@ spn12tet::spn12tet(spn12tet::pitch_std ps) {
 	au_assert(ps.gen_int > 0,"ono");
 	au_assert(ps.ntet>0,"ono");
 	m_ps = ps;
-	auto idx = std::find(m_ntls.begin(),m_ntls.end(),ntl_t{m_ps.ref_ntstr})-m_ntls.begin();
-	m_shift_scd = (octn_t{ps.ref_ntstr}.to_int())*12+static_cast<int>(idx);
-	// TODO:  Expect 57 ??
+	auto idx = std::find(m_ntls.begin(),m_ntls.end(),ntl_t{m_ps.ref_ntstr});
+	au_assert(idx != m_ntls.end(),"ntl not found");
+	m_shift_scd = (octn_t{ps.ref_ntstr}.to_int())*12+static_cast<int>(idx-m_ntls.begin());
+	// Expect 57 for a ref pitch of A(4)
 }
 
 int spn12tet::n() const {
@@ -109,17 +110,7 @@ std::vector<frq_t> spn12tet::to_frq(const std::vector<ntstr_t>& ntstr) const {
 }
 scd_t spn12tet::to_scd(frq_t frq) const {  //  Calls n_eqt() directly
 	double dn_approx = n_eqt(frq,m_ps.ref_frq,m_ps.ntet,m_ps.gen_int);
-	//bool tf =aprx_int(dn_approx);
-	//if (!tf) {
-	//	wait();
-	//}
 	au_assert(aprx_int(dn_approx),"frq not in sc");
-	//dn_approx = std::round(dn_approx + m_shift_scd);
-	//tf  =aprx_int(dn_approx,4);
-	//if (!tf) {
-	//	wait();
-	//}
-	//au_assert(tf,"frq not in sc");
 	return scd_t {static_cast<int>(std::round(dn_approx+m_shift_scd))};
 }
 scd_t spn12tet::to_scd(ntstr_t ntstr) const {  // Reads m_default_valid_ntls directly

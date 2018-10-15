@@ -34,7 +34,7 @@ public:
 	};
 
 	// Constructors
-	spn12tet()=default;  // Generates A440 ("A" octave 4 == 440 Hz)
+	spn12tet()=default;  // Generates A440 ("A(4)" == 440 Hz)
 	spn12tet(spn12tet::pitch_std);
 
 	int n() const;
@@ -66,7 +66,7 @@ public:
 
 private:
 	pitch_std m_ps {};
-	int m_shift_scd {57};  // the scd that generates the ref frq
+	int m_shift_scd {57};  // the scd that generates the ref frq; 57 => A(4)
 	const std::vector<ntl_t> m_ntls {"C"_ntl,"C#"_ntl,"D"_ntl,"D#"_ntl,
 		"E"_ntl,"F"_ntl,"F#"_ntl,"G"_ntl,"G#"_ntl,"A"_ntl,"A#"_ntl,"B"_ntl};
 
