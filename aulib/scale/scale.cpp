@@ -1,3 +1,47 @@
+#include "scale.h"
+
+
+
+
+
+
+int oosc_d1::n() const {
+	return m_n;
+}
+int oosc_d1::to_scd(double d) const {
+	return static_cast<int>(m_scf*d);
+}
+double oosc_d1::to_frq(int i) const {
+	return static_cast<int>(m_n*i*m_scf)%m_n;
+}
+int oosc_d1::otherfunc() const {
+	return 3;
+}
+
+int oosc_d2::n() const {
+	return m_n;
+}
+int oosc_d2::to_scd(double d) const {
+	return static_cast<int>(m_scf*d + m_pf);
+}
+double oosc_d2::to_frq(int i) const {
+	return static_cast<int>(m_n*i*m_scf + i*m_pf)%m_n;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /*
 //-----------------------------------------------------------------------------
@@ -320,4 +364,5 @@ bool scale::validate() {
 
 
 */
+
 

@@ -12,27 +12,6 @@
 #include "..\util\au_algs.h"  // ismember()
 #include "..\util\au_algs_math.h"  //aprx_int()
 
-/*
-// Static data members
-const int scale_12tet::m_gint = 2;  // Generating interval = 2
-const int scale_12tet::m_n = 12;  // ntet = 12
-const std::vector<ntl_t> scale_12tet::m_default_valid_ntls
-	{"C"_ntl,"C#"_ntl,"D"_ntl,"D#"_ntl,"E"_ntl,"F"_ntl,"F#"_ntl,"G"_ntl,
-	"G#"_ntl,"A"_ntl,"A#"_ntl,"B"_ntl};
-const int scale_12tet::m_default_ref_ntl_idx = 9; // "A"
-const frq_t scale_12tet::m_default_ref_frq {440};
-const octn_t scale_12tet::m_default_ref_octave {4};
-*/
-
-
-// Means that ref_ntl_in(ref_oct_in) corresponds to ref_frq_in.  Note however that 
-// scd_t {0} does _not_ correspond to ref_ntl_in(ref_oct_in).  scd_t {0} always
-// corresponds to ref_ntl_in(0).  
-//
-// to_ntstr(my_scd) == to_scd(to_ntstr(my_scd))
-// to_frq(my_scd) == to_scd(to_frq(my_scd))
-//
-
 spn12tet::spn12tet(spn12tet::pitch_std ps) {
 	au_assert(ps.gen_int > 0,"ono");
 	au_assert(ps.ntet>0,"ono");
