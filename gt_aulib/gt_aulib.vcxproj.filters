@@ -78,6 +78,9 @@
     <ClCompile Include="scale_spn12tet_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="notefile_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\gtest-internal-inl.h">

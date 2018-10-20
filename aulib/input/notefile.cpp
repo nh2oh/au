@@ -2,6 +2,7 @@
 #include "..\util\au_util.h"
 #include "..\util\au_error.h"
 #include "..\util\au_algs.h"
+#include "..\util\au_algs_math.h"
 #include "..\types\line_t.h" // for notefile2line()
 #include "..\types\scd_t.h" // for notefile2line()
 #include "..\types\ts_t.h" // for notefile2line()
@@ -14,6 +15,25 @@
 #include <filesystem>
 #include <chrono>
 
+bool notefileline::operator==(const notefileline& rhs) const {
+	return (file_line_num == rhs.file_line_num &&
+		aprx_eq(ontime,rhs.ontime) && 
+		aprx_eq(offtime,rhs.offtime) &&
+		aprx_eq(dt,rhs.dt) &&
+		pitch == rhs.pitch);
+}
+bool nonnotefileline::operator==(const nonnotefileline& rhs) const {
+	return (file_line_num == rhs.file_line_num &&
+		linedata == rhs.linedata);
+}
+bool notefile::operator==(const notefile& rhs) const {
+	return (fname == rhs.fname &&
+		fpath == rhs.fpath &&
+		nonnote_lines == rhs.nonnote_lines && 
+		lines == rhs.lines &&
+		error_lines == rhs.error_lines);
+}
+
 //
 // Does not verify any sort of ordering (ex, that the events returned occur
 // in order of increasing ontime).  Does not check for overlapping events
@@ -25,7 +45,6 @@
 // .nonnote_lines.  This includes otherwise empty blank lines.  This ensures
 // read_notefile() and write_notefile() complement eachother.  
 //
-//
 // "Suspicious" lines:
 // If  a given dt is <= 0, the index of the line in .lines is appended to
 // .error_lines.  Note that nf.error_lines holds indices of the std::vector
@@ -35,8 +54,8 @@
 notefile read_notefile(const std::string& filename) {
 	auto fpath = std::filesystem::path(filename);
 
-	auto f = std::ifstream(filename);
-	if (!f.is_open()) {
+	auto f = std::ifstream(filename,std::ios::in);
+	if (f.fail() || !f.is_open()) {
 		notefile nf {};  nf.file_error = true;
 		return nf;
 	}
@@ -75,7 +94,7 @@ notefile read_notefile(const std::string& filename) {
 	}  // to next line in file
 	f.close();
 
-	return notefile {false, fpath.filename().string(), fpath.relative_path().string(), 
+	return notefile {false, fpath.filename().string(), fpath.parent_path().string(), 
 		nf_nnt_lines, nf_lines, error_lines};
 }
 
@@ -101,7 +120,7 @@ std::vector<std::chrono::milliseconds> notefile2dt(notefile const& nf) {
 bool write_notefile(const notefile& nf) {
 	auto fpath = std::filesystem::path(nf.fpath + "/" + nf.fname);
 	auto f = std::ofstream(fpath,std::ios_base::out);
-	if (!f.is_open() || !f) {
+	if (f.fail() || !f.is_open() || !f) {
 		return false;
 	}
 

@@ -14,34 +14,38 @@
 
 
 struct notefileline {
-	notefileline() = default;
 	int file_line_num {0};  // The actual line number in the txt file
 	double ontime {0.0};  // Milliseconds by default
 	double offtime {0.0};
 	double dt {0.0};
 	int pitch {0}; // Middle C = 60
+
+	bool operator==(const notefileline&) const;
 };
 
 struct nonnotefileline {
 	int file_line_num {0};  // line num in the txt file; starts @ 1, not 0
 	std::string linedata {};
+
+	bool operator==(const nonnotefileline&) const;
 };
 
 struct notefile {
-	notefile() = default;
 	bool file_error {true};
 		// Indicates some error reading or opening the file.  Does not
-		// depend on the contents of the file. To see if the file contents
+		// depend on the contents of the file.  To see if the file contents
 		// are in some way suspicious, see member error_lines.  
+		// If file_error is true, fname and fpath will both be empty.  
 
 	std::string fname {};
 	std::string fpath {};
 	std::vector<nonnotefileline> nonnote_lines {};
 	std::vector<notefileline> lines {};
-	//int opts {0};
 	std::vector<int> error_lines {};
 		// idxs of notefile.lines where dt <= 0, etc.  Idxs to the vector, not
 		// file line numbers.  
+
+	bool operator==(const notefile&) const;
 };
 
 notefile read_notefile(const std::string&);

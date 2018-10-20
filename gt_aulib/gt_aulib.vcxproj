@@ -165,6 +165,7 @@
     <ClCompile Include="melody_a_testcpp.cpp" />
     <ClCompile Include="melody_temperley_test.cpp" />
     <ClCompile Include="musel_t_test.cpp" />
+    <ClCompile Include="notefile_test.cpp" />
     <ClCompile Include="nv_t_test.cpp" />
     <ClCompile Include="randrp_metg_test.cpp" />
     <ClCompile Include="rp_t_test.cpp" />
