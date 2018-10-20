@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <array>
 #include <random>
 #include <numeric> // accumulate() in mean()
 
@@ -76,7 +77,11 @@ T mean(std::vector<T> v) {
 	T tot = std::accumulate(v.begin(),v.end(),T{0});
 	return tot/v.size();
 };
-
+template <typename T, int N>
+T mean(std::array<T,N> v) {
+	T tot = std::accumulate(v.begin(),v.end(),T{0});
+	return tot/v.size();
+};
 
 // Pearson's linear correlation coefficient
 // a,b must be the same size

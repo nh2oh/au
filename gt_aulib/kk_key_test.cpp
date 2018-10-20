@@ -10,12 +10,14 @@
 
 // TODO:  Need to fix scales before wasting time w/ more tests
 
-TEST(kk_key_tests, yay) {
+TEST(kk_key_tests, CmajorScaleOnePassZeroOctave) {
 	diatonic_spn12tet sc {ntl_t{"C"},diatonic_spn12tet::mode::major};
-	std::vector<scd_t> nts_scds {scd_t{0},scd_t{1},scd_t{2},scd_t{3},scd_t{4},scd_t{5},scd_t{6}};
+	// My "melody," nts_scds, nts_ntstrs is just C(0)-D(0)-...-B(0)
+	// This should test positive for C-major
+	std::vector<int> nts_scds {0,1,2,3,4,5,6};
 	std::vector<ntstr_t> nts_ntstrs {};
 	for (auto e : nts_scds) {
-		nts_ntstrs.push_back(sc.to_ntstr(e));
+		nts_ntstrs.push_back(sc.to_ntstr(scd_t{e}));
 	}
 	rp_t rp {ts_t{4_bt,d::q},std::vector<d_t>(nts_ntstrs.size(),d::q)};
 	line_t line {nts_ntstrs,rp};
@@ -24,6 +26,22 @@ TEST(kk_key_tests, yay) {
 	scd_t ans_key_scd {0};  // C
 	bool ans_ismajor {true};
 	EXPECT_TRUE(res.ismajor);
+	EXPECT_TRUE(ans_key_scd == res.key);
+}
+
+TEST(kk_key_tests, CminorScaleOnePassZeroOctave) {
+	diatonic_spn12tet sc {ntl_t{"C"},diatonic_spn12tet::mode::minor};
+	std::vector<int> nts_scds {0,1,2,3,4,5,6};
+	std::vector<ntstr_t> nts_ntstrs {};
+	for (auto e : nts_scds) {
+		nts_ntstrs.push_back(sc.to_ntstr(scd_t{e}));
+	}
+	rp_t rp {ts_t{4_bt,d::q},std::vector<d_t>(nts_ntstrs.size(),d::q)};
+	line_t line {nts_ntstrs,rp};
+
+	auto res = kk_key(line,kk_key_params{0});
+	scd_t ans_key_scd {0};  // C
+	EXPECT_FALSE(res.ismajor);
 	EXPECT_TRUE(ans_key_scd == res.key);
 }
 

@@ -12,10 +12,10 @@
 #include <algorithm>
 
 diatonic_spn12tet::diatonic_spn12tet(ntl_t base_ntl, mode m) {
-	build_sc(m_sc_base,base_ntl,ionian);
+	build_sc(m_sc_base,base_ntl,m);
 }
 diatonic_spn12tet::diatonic_spn12tet(spn12tet sc, ntl_t base_ntl, mode m) {
-	build_sc(sc,base_ntl,ionian);
+	build_sc(sc,base_ntl,m);
 }
 
 void diatonic_spn12tet::build_sc(spn12tet sc_base, ntl_t ntl_base, mode m) {
@@ -29,7 +29,7 @@ void diatonic_spn12tet::build_sc(spn12tet sc_base, ntl_t ntl_base, mode m) {
 		if (i>0) {
 			curr_scd += scd_t{m_ip[(i-1+m_mode_idx)%m_ip.size()]};
 		}
-		m_ntls.push_back(ntl_t{m_sc_base.to_ntstr(curr_scd)});
+		m_ntls[i] = ntl_t{m_sc_base.to_ntstr(curr_scd)};
 	}
 
 	m_name = "Diatonic scale " + m_ntl_base.print() + " ...";

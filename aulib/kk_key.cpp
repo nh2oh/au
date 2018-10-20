@@ -1,11 +1,11 @@
-#include "melgen/randmel_gens.h"
-#include "types/line_t.h"
+#include "melgen\randmel_gens.h"
+#include "types\line_t.h"
 #include "types\ntl_t.h"
-//#include "scale\scale_12tet.h"
+#include "types\scd_t.h"
 #include "scale\spn12tet.h"
 #include "util\au_random.h"
 #include "util\au_algs.h"  // unique_n(rscds)
-#include "util\au_algs_math.h"
+#include "util\au_algs_math.h"  // corr()
 #include <array>
 #include <algorithm>  // std::max_element()
 
@@ -29,6 +29,14 @@ kk_key_result kk_key(line_t<ntstr_t> nts, kk_key_params p) {
 			kp_base_min = {5, 2, 3.5, 4.5, 2, 4, 2, 4.5, 3.5, 2, 1.5, 4};
 			break;
 	}
+	// The base profiles have to be "centered," ie, mean-subtracted
+	double mean_base_maj = mean(kp_base_maj);
+	double mean_base_min = mean(kp_base_min);
+	std::for_each(kp_base_maj.begin(),kp_base_maj.end(),
+		[&](double& d){d-=mean_base_maj;});
+	std::for_each(kp_base_min.begin(),kp_base_min.end(),
+		[&](double& d){d-=mean_base_min;});
+
 	std::vector<std::vector<double>> kp_maj(12,std::vector<double>(12,0.0));
 	std::vector<std::vector<double>> kp_min(12,std::vector<double>(12,0.0));
 	for (int i=0; i<kp_base_maj.size(); ++i) {
@@ -43,7 +51,7 @@ kk_key_result kk_key(line_t<ntstr_t> nts, kk_key_params p) {
 	// corresponding duration element.  I believe the proper way to do this is
 	// to weight by the duration of the note.  TODO:  Implement this.  
 	// Chords are flattened (TODO:  Is this how Temperley does it?).  
-	spn12tet sc {}; //scale_12tet sc {};
+	spn12tet sc {};
 	auto notes_flatchords_norests = nts.notes();
 	std::vector<rscdoctn_t> rscds(notes_flatchords_norests.size(),rscdoctn_t{scd_t{0},12});
 	for (int i=0; i<notes_flatchords_norests.size(); ++i) {
@@ -84,9 +92,8 @@ kk_key_result kk_key(line_t<ntstr_t> nts, kk_key_params p) {
 	for (int i=0; i<corr_min.size(); ++i) {
 		res.all_scores[1][i] = corr_min[i];
 	}
-
+	auto knt = sc.to_ntstr(res.key);
 	return res;
-
 }
 
 
