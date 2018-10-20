@@ -2,5 +2,6 @@
 
 #include "scale.h"
 #include "scale_12tet.h"
-#include "scale_diatonic12tet.h"
 #include "spn12tet.h"
+#include "diatonic_spn12tet.h"
+

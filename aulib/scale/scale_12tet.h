@@ -57,7 +57,7 @@ private:
 	std::string m_description {};
 };
 
-
+/*
 // Return a frq vector corresponding to some equal-tempered scale
 std::vector<frq_t> frq_eqt(std::vector<int> const&, frq_t const&, int const&,
 	int const&);
@@ -69,5 +69,5 @@ frq_t frq_eqt(int const&, frq_t const&, int const&, int const&);
 // not std::vector
 double n_eqt(frq_t const& frq_in, frq_t const& ref_frq,int const& ntet,
 	int const& gint);
-
+	*/
 

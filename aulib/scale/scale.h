@@ -3,66 +3,15 @@
 #include <string>
 #include <vector>
 
-template<typename T>
-class oosc_b {
-public:
-	int n() const {
-		return self().n();
-		//return static_cast<T*>(*this).n();
-		//return T::n();
-	};
-	int to_scd(double d) const {
-		return self().to_scd(d);
-		//return T::to_scd(d);
-	};
-	double to_frq(int i) const {
-		return self().to_frq(i);
-		//return T::to_frq(i);
-	};
-	int otherfunc() const {
-		return self().otherfunc();
-	};
-private:
-	//oosc_b(){};
-	T& self() const {
-		return static_cast<T&>(*this);
-	};
 
-	//friend T;
-	/*virtual int n() const =0;
-	virtual int to_scd(double) const =0;
-	virtual double to_frq(int) const =0;*/
-};
+// ref-frq, ntet, gint
+std::vector<frq_t> frq_eqt(const std::vector<int>&,frq_t,int,int);
+// scd (dn), ref-frq, ntet, gint
+frq_t frq_eqt(int, frq_t,int,int);
+// ref-frq, ntet, gint
+double n_eqt(frq_t, frq_t,int,int);
 
 
-class oosc_d1 : public oosc_b<oosc_d1> {
-public:
-	int n() const;
-	int to_scd(double) const;
-	double to_frq(int) const;
-	int otherfunc() const;
-	/*int n() const override;
-	int to_scd(double) const override;
-	double to_frq(int) const override;*/
-private:
-	int m_n {13};
-	double m_scf {1.12345};
-};
-
-
-class oosc_d2 : public oosc_b<oosc_d2> {
-public:
-	int n() const;
-	int to_scd(double) const;
-	double to_frq(int) const;
-	/*int n() const override;
-	int to_scd(double) const override;
-	double to_frq(int) const override;*/
-private:
-	int m_n {11};
-	double m_scf {2.12345};
-	double m_pf {1.11};
-};
 
 //-----------------------------------------------------------------------------
 // Class "scale"
@@ -90,7 +39,7 @@ private:
 // 3)  
 //
 
-
+/*
 class scale {
 public:
 	int n() const;
@@ -126,7 +75,7 @@ private:
 	std::vector<ntl_t> m_ntls;
 	std::vector<frq_t> m_frq;
 };
-
+*/
 
 
 

@@ -2,6 +2,7 @@
 #include <vector>
 #include <cmath>
 #include <algorithm>
+#include "scale.h"
 #include "scale_12tet.h"
 #include "..\types\cent_oct_t.h"
 #include "..\types\ntl_t.h"
@@ -160,7 +161,7 @@ octn_t scale_12tet::to_octn(ntstr_t ntstr_in) {
 // std::vector<int> dn_vec {-57,-56,-55,-54,-53,-52,-51,-50,-49,-48,-47,-46};
 // auto cchrom_new_frqs = frq_eqt(dn_vec, 440, 12, 2);
 //
-
+/*
 std::vector<frq_t> frq_eqt(std::vector<int> const& dn, frq_t const& ref_frq, 
 	int const& ntet, int const& gint) {
 	std::vector<frq_t> frqs; frqs.reserve(dn.size());
@@ -194,4 +195,6 @@ double n_eqt(frq_t const& frq_in, frq_t const& ref_frq,
 
 	return scd_approx;
 }
+*/
+
 

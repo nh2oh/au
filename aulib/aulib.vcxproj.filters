@@ -57,9 +57,6 @@
     <ClCompile Include="scale\scale_12tet.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="scale\scale_diatonic12tet.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="rpgen\rand_rp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -106,6 +103,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="scale\spn12tet.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="scale\diatonic_spn12tet.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -156,9 +156,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="scale\scale_12tet.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="scale\scale_diatonic12tet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="rpgen\rand_rp.h">
@@ -225,6 +222,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="scale\spn12tet.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scale\diatonic_spn12tet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

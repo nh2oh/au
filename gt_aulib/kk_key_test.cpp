@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 #include "..\aulib\melgen\randmel_gens.h"
 #include "..\aulib\scale\scale_12tet.h"
-#include "..\aulib\scale\scale_diatonic12tet.h"
+#include "..\aulib\scale\diatonic_spn12tet.h"
 #include "..\aulib\types\line_t.h"
 #include "..\aulib\types\ntl_t.h"
 #include "..\aulib\types\scd_t.h"
@@ -12,7 +12,7 @@
 // TODO:  Need to fix scales before wasting time w/ more tests
 
 TEST(kk_key_tests, yay) {
-	scale_diatonic12tet sc {ntl_t{"C"},0};
+	diatonic_spn12tet sc {ntl_t{"C"},diatonic_spn12tet::mode::major};
 	std::vector<scd_t> nts_scds {scd_t{0},scd_t{1},scd_t{2},scd_t{3},scd_t{4},scd_t{5},scd_t{6}};
 	std::vector<ntstr_t> nts_ntstrs {};
 	for (auto e : nts_scds) {
