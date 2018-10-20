@@ -1,7 +1,3 @@
-#include <string>
-#include <vector>
-#include <cmath>
-#include <algorithm>
 #include "spn12tet.h"
 #include "..\types\cent_oct_t.h"
 #include "..\types\ntl_t.h"
@@ -11,6 +7,10 @@
 #include "..\util\au_error.h"
 #include "..\util\au_algs.h"  // ismember()
 #include "..\util\au_algs_math.h"  //aprx_int()
+#include <string>
+#include <vector>
+#include <cmath>
+#include <algorithm>
 
 spn12tet::spn12tet(spn12tet::pitch_std ps) {
 	au_assert(ps.gen_int > 0,"ono");

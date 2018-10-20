@@ -1,6 +1,6 @@
 #pragma once
 #include "randmel_gens.h"
-#include "..\scale\scale_12tet.h"
+#include "..\scale\spn12tet.h"
 #include "..\types\line_t.h"
 #include "..\types\ntl_t.h"
 #include "..\types\ts_t.h"
@@ -10,6 +10,7 @@
 #include "..\util\au_random.h"
 #include <string>
 #include <numeric>
+#include <vector>
 
 //
 // Melody generator function using the method implied by Temperley Chapter 
@@ -41,7 +42,8 @@ line_t<ntstr_t> melody_temperley(ntl_t keyntl, bool ismajor, ts_t ts, bar_t nbar
 	// All notes are drawn from the chromatic scale.  Probability distributions 
 	// controlling note selection are what make notes "diatonic" to the key 
 	// more probable.  
-	scale_12tet sc {};
+
+	spn12tet sc {};
 
 	std::vector<d_t> nvpool {d::q,d::e,d::sx};
 	std::vector<beat_t> ph {0_bt,0_bt,0_bt};

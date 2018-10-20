@@ -29,7 +29,6 @@
     <ClCompile Include="rpgen\rand_rp.cpp" />
     <ClCompile Include="scale\spn12tet.cpp" />
     <ClCompile Include="scale\scale.cpp" />
-    <ClCompile Include="scale\scale_12tet.cpp" />
     <ClCompile Include="scale\diatonic_spn12tet.cpp" />
     <ClCompile Include="types\beat_bar_t.cpp" />
     <ClCompile Include="types\cent_oct_t.cpp" />
@@ -63,7 +62,6 @@
     <ClInclude Include="scale\spn12tet.h" />
     <ClInclude Include="scale\scale.h" />
     <ClInclude Include="scale\scales_all.h" />
-    <ClInclude Include="scale\scale_12tet.h" />
     <ClInclude Include="scale\diatonic_spn12tet.h" />
     <ClInclude Include="types\beat_bar_t.h" />
     <ClInclude Include="types\cent_oct_t.h" />

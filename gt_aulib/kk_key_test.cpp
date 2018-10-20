@@ -1,6 +1,5 @@
 #include "gtest/gtest.h"
 #include "..\aulib\melgen\randmel_gens.h"
-#include "..\aulib\scale\scale_12tet.h"
 #include "..\aulib\scale\diatonic_spn12tet.h"
 #include "..\aulib\types\line_t.h"
 #include "..\aulib\types\ntl_t.h"

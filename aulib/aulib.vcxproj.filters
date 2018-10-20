@@ -54,9 +54,6 @@
     <ClCompile Include="scale\scale.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="scale\scale_12tet.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="rpgen\rand_rp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -153,9 +150,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="scale\scale.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="scale\scale_12tet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="rpgen\rand_rp.h">

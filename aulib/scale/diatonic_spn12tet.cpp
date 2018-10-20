@@ -1,7 +1,3 @@
-#include <string>
-#include <vector>
-#include <cmath>
-#include <algorithm>
 #include "scale.h"
 #include "diatonic_spn12tet.h"
 #include "spn12tet.h"
@@ -11,10 +7,10 @@
 #include "..\types\scd_t.h"
 #include "..\util\au_util_all.h"
 #include "..\util\au_error.h"
-/*
-diatonic_spn12tet::diatonic_spn12tet() {
-	build_sc(m_sc_base,"C"_ntl,ionian);
-}*/
+#include <string>
+#include <vector>
+#include <algorithm>
+
 diatonic_spn12tet::diatonic_spn12tet(ntl_t base_ntl, mode m) {
 	build_sc(m_sc_base,base_ntl,ionian);
 }
