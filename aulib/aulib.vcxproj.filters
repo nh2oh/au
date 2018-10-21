@@ -96,13 +96,13 @@
     <ClCompile Include="melgen\melody_a.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="kk_key.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="scale\spn12tet.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="scale\diatonic_spn12tet.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ks_key.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

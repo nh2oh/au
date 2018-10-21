@@ -69,9 +69,6 @@
     <ClCompile Include="rp_t_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="kk_key_test.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="melody_a_testcpp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -79,6 +76,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="notefile_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ks_key_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

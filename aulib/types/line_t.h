@@ -90,15 +90,24 @@ public:
 	// Needs to take options:
 	// - flatten_chords
 	// - strip_rests
-	std::vector<T> notes() const {
+	template<typename U>
+	struct notes_flat_element {
+		U note {};
+		d_t d {};
+	};
+	std::vector<notes_flat_element<T>> notes_flat() const {
+	//std::vector<T> notes_flat() const {
 		// Stripping all rests & flattening chords...
 		// ... _very_ half-assed impl
-		std::vector<T> notes_flat_norests {};
+
+		std::vector<notes_flat_element<T>> notes_flat_norests {};
+		//std::vector<T> notes_flat_norests {};
 		for (int i=0; i<m_mes.size(); ++i) {
 			auto curr_musel = m_mes[i];
 			if (curr_musel.isrest()) { continue; }
 			for (int j=0; j<curr_musel.n(); ++j) {
-				notes_flat_norests.push_back(curr_musel[j]);
+				//notes_flat_norests.push_back(curr_musel[j]);
+				notes_flat_norests.push_back({curr_musel[j],m_rp[i]});
 			}
 		}
 		return notes_flat_norests;

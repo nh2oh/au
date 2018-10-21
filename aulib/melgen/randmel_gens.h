@@ -33,21 +33,22 @@ std::vector<scd_t> melody_a(ma_params);
 
 
 //
-// kk_key()
+// ks_key()
 //
-struct kk_key_params {
+struct ks_key_params {
 	int profile {0}; // 0 => kk, 1 => temperley
 };
-struct kk_key_result {
-	scd_t key {0};
+struct ks_key_result {
+	ntl_t key {};
 	bool ismajor {false};
 	double score {0};
 	bool istie {false};
 	std::array<std::array<double,12>,2> 
 		all_scores {{{0,0,0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0,0,0}}};
+		// all_scores[0] => major, all_scores[1] => minor
 };
 
-kk_key_result kk_key(line_t<ntstr_t>,kk_key_params);
+ks_key_result ks_key(line_t<ntstr_t>,ks_key_params);
 
 
 

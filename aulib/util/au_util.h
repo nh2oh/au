@@ -4,6 +4,7 @@
 #include <optional>
 #include <vector>
 #include <regex>
+#include <array>
 
 // Just a wrapper to tfm2
 template<typename... Args>
@@ -28,52 +29,59 @@ std::optional<std::vector<std::optional<std::string>>>
 // Waits a v. short amount of time... sometimes useful for debugging
 int wait();
 
-/*
+
+// f_e => fmt str for each element
+// ex:  f+e = "%f5.3\n"
 template<typename T>
-class uih_pred {
-public:
-	explicit uih_pred(T const& upred, const char *fail_msg) : m_upred(upred), m_fail_msg(fail_msg) { };
-	
-	bool operator()(std::string const& str_in) { return m_upred(str_in); };
-	const char* msg() const { return m_fail_msg; };
+std::string printv(const std::vector<T>& v, const char *f_e) {
+	std::string s {};
+	for (const auto& e : v) {
+		s += bsprintf(f_e,e);
+	}
 
-private:
-	T m_upred;
-	const char *m_fail_msg;
+	return s;
 };
 
-// To make one of these, define a function of only one parameter (a
-// std::string) that returns a uih_parser::uih_parse_res struct and pass this
-// function to the constructor.  
-template<typename T, typename U>
-class uih_parser {
-public:
-	struct uih_parse_res<U> {
-		std::optional<U> v {};
-		std::string msg {};
-	};
+// m[c][r];  m[i] => 1xn vector representing col i; m[i].size() == nrows
+// and is the same for all i.  
+// f_e => fmt str for each element & includes the col seperator
+template<typename T, std::size_t NC, std::size_t NR>
+std::string printm(const std::array<std::array<T,NR>,NC>& v,
+	const char *f_e, const char *rsep="\n") {
+	std::string s {};
+	size_t nrows {v[0].size()};
+	size_t ncols {v.size()};
+	for (size_t r=0; r<nrows; ++r) {
+		for (size_t c=0; c<ncols; ++c) {
+			s += bsprintf(f_e,v[c][r]);
+		}  // To next c in r
+		if (r<(nrows-1)) {  // Not the last iter
+			s += bsprintf(rsep);
+		}
+	} // To next r
 
-	explicit uih_parser(T const& uparser) : m_parser(uparser) { };
-
-	uih_parse_res<U> operator()(std::string const& str_in) const { return m_parser(str_in); };
-private:
-	T m_parser;
+	return s;
 };
 
+
+// m[c][r];  m[i] => 1xn vector representing col i; m[i].size() == nrows
+// and is the same for all i.  
+// f_e => fmt str for each element & includes the col seperator
 template<typename T>
-class uih {
-public:
-	explicit uih(uih_parser<T> const& , const char *fail_msg) : m_upred(upred),
-		m_fail_msg(fail_msg) { };
-private:
-	
+std::string printm(const std::vector<std::vector<T>>& v,
+	const char *f_e, const char *rsep="\n") {
+	std::string s {};
+	size_t nrows {v[0].size()};
+	size_t ncols {v.size()};
+	for (size_t r=0; r<nrows; ++r) {
+		for (size_t c=0; c<ncols; ++c) {
+			s += bsprintf(f_e,v[c][r]);
+		}  // To next c in r
+		if (r<(nrows-1)) {  // Not the last iter
+			s += bsprintf(rsep);
+		}
+	} // To next r
+
+	return s;
 };
-
-*/
-
-
-
-
-
-
 
