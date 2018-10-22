@@ -8,7 +8,6 @@
 #include "..\aulib\types\beat_bar_t.h"
 #include "..\aulib\types\nv_t.h"
 
-// TODO:  Need to fix scales before wasting time w/ more tests
 
 TEST(ks_key_tests, CmajorScaleOnePassZeroOctave) {
 	diatonic_spn12tet sc {ntl_t{"C"},diatonic_spn12tet::mode::major};

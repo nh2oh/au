@@ -221,5 +221,8 @@
     <ClInclude Include="scale\diatonic_spn12tet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="contigmap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

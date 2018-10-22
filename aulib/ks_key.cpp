@@ -12,7 +12,6 @@
 //#include "util\au_util.h"
 
 //
-//
 // The Krumhansl-Schmuckler key-finding algorithm as described by p.52
 // of Music and Probability (MIT Press) 2007 by David Temperly.  
 // Also inspired by Temperley's C implementation (ks-key.c) obtained from
