@@ -52,8 +52,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="aulib_all.h" />
-    <ClInclude Include="chunkyseq.h" />
-    <ClInclude Include="contigmap.h" />
     <ClInclude Include="input\notefile.h" />
     <ClInclude Include="melgen\randmel_gens.h" />
     <ClInclude Include="numeric_simple_uih.h" />
@@ -89,7 +87,6 @@
     <ClInclude Include="util\au_random.h" />
     <ClInclude Include="util\au_util.h" />
     <ClInclude Include="util\au_util_all.h" />
-    <ClInclude Include="util\tinyformat2.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
@@ -198,7 +195,7 @@
       <PreprocessorDefinitions>_DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\ben\Desktop\cpp\dbklib\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

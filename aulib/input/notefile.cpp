@@ -140,12 +140,12 @@ bool write_notefile(const notefile& nf) {
 		}
 
 		if (!nt_lines_finished && nf.lines[i_lines].file_line_num == curr_ln) {
-			f << bsprintf("Note %6d %6d %6d\n", 
+			f << dbk::bsprintf("Note %6d %6d %6d\n", 
 				nf.lines[i_lines].ontime, nf.lines[i_lines].offtime,
 				nf.lines[i_lines].pitch);
 			++i_lines;
 		} else if (!nnt_lines_finished && nf.nonnote_lines[i_nntlines].file_line_num == curr_ln) {
-			f << bsprintf("%s\n", nf.nonnote_lines[i_nntlines].linedata);
+			f << dbk::bsprintf("%s\n", nf.nonnote_lines[i_nntlines].linedata);
 			++i_nntlines;
 		} else {
 			// curr_ln does not appear in either nf.lines or nf_nonnote_lines

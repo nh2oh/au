@@ -36,7 +36,7 @@ std::string frq_t::print(int prec) const {
 		default: unitstr = "? unit"; break;
 	}
 
-	return bsprintf(fmt.c_str(),m_frq,unitstr.c_str());
+	return dbk::bsprintf(fmt.c_str(),m_frq,unitstr.c_str());
 }
 
 // Member operators

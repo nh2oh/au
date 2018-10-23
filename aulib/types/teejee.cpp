@@ -254,7 +254,7 @@ std::string teejee::print_g() const {
 			if (onset_allowed_at(nv_ph{m_ts.bar_unit(),d::z},cbt)) {
 				s += "| ";
 			}
-			s += bsprintf("%d ", onset_allowed_at(nv_ph{e.nv,e.ph},cbt));
+			s += dbk::bsprintf("%d ", onset_allowed_at(nv_ph{e.nv,e.ph},cbt));
 		}
 		s += "\n";
 	}

@@ -12,7 +12,7 @@ scd_t::scd_t(int int_in) {
 	m_scd = int_in;
 }
 std::string scd_t::print() const {
-	return bsprintf("%d",m_scd);
+	return dbk::bsprintf("%d",m_scd);
 }
 int scd_t::to_int() const {
 	return m_scd;

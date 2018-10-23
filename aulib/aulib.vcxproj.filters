@@ -200,9 +200,6 @@
     <ClInclude Include="types\metg_uih.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="util\tinyformat2.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="types\chord_t.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -212,16 +209,10 @@
     <ClInclude Include="melgen\randmel_gens.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="chunkyseq.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="scale\spn12tet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="scale\diatonic_spn12tet.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="contigmap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

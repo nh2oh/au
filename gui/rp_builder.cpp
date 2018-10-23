@@ -200,7 +200,7 @@ void rp_builder::set_nvpool() {
 	int r=0;
 	for (auto e : m_nvpool) {
 		QStandardItem *curr_nv = new QStandardItem(QString::fromStdString(e.first.print()));
-		QStandardItem *curr_prob = new QStandardItem(QString::fromStdString(bsprintf("%.3f",e.second)));
+		QStandardItem *curr_prob = new QStandardItem(QString::fromStdString(dbk::bsprintf("%.3f",e.second)));
 		m_nvpool_model.setItem(r,0,curr_nv);
 		m_nvpool_model.setItem(r,1,curr_prob);
 		++r;

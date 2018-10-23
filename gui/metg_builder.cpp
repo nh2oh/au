@@ -48,7 +48,7 @@ void metg_builder::set_pg_display() {
 		for (int r=0; r<m_metg.levels().size(); ++r) {
 			auto curr_prob = m_metg.onset_prob_at(m_metg.levels()[r],curr_bt);;
 			QStandardItem *curr_prob_modelitem = 
-				new QStandardItem(QString::fromStdString(bsprintf("%.3f",curr_prob)));
+				new QStandardItem(QString::fromStdString(dbk::bsprintf("%.3f",curr_prob)));
 			
 			m_pg_display_model.setItem(r,(c+1),curr_prob_modelitem);  // NOTE !! c+1 !!
 		}

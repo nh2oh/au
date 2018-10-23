@@ -1,18 +1,20 @@
 #pragma once
-#include "tinyformat2.h"
+#include "dbklib\tinyformat_dbk.h"
 #include <string>
 #include <optional>
 #include <vector>
 #include <regex>
 #include <array>
 
+//using namespace dbk;
+/*
 // Just a wrapper to tfm2
 template<typename... Args>
 std::string bsprintf(const char* fmt, const Args&... args) {
 	std::ostringstream oss;
 	tfm::format(oss, fmt, args...);
 	return oss.str();
-}
+}*/
 
 std::string int_suffix(int const&);
 
@@ -53,10 +55,10 @@ std::string printm(const std::array<std::array<T,NR>,NC>& v,
 	size_t ncols {v.size()};
 	for (size_t r=0; r<nrows; ++r) {
 		for (size_t c=0; c<ncols; ++c) {
-			s += bsprintf(f_e,v[c][r]);
+			s += dbk::bsprintf(f_e,v[c][r]);
 		}  // To next c in r
 		if (r<(nrows-1)) {  // Not the last iter
-			s += bsprintf(rsep);
+			s += dbk::bsprintf(rsep);
 		}
 	} // To next r
 
@@ -75,10 +77,10 @@ std::string printm(const std::vector<std::vector<T>>& v,
 	size_t ncols {v.size()};
 	for (size_t r=0; r<nrows; ++r) {
 		for (size_t c=0; c<ncols; ++c) {
-			s += bsprintf(f_e,v[c][r]);
+			s += dbk::bsprintf(f_e,v[c][r]);
 		}  // To next c in r
 		if (r<(nrows-1)) {  // Not the last iter
-			s += bsprintf(rsep);
+			s += dbk::bsprintf(rsep);
 		}
 	} // To next r
 

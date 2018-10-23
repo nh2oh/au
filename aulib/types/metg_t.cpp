@@ -869,7 +869,7 @@ std::string tmetg_t::print_pg() const {
 			if (m_tg.onset_allowed_at(teejee::nv_ph{m_tg.ts().bar_unit(),d::z},step2bt(c))) {
 				s += "|   ";
 			}
-			s += bsprintf("%5.3f   ",m_pg[c][r]);
+			s += dbk::bsprintf("%5.3f   ",m_pg[c][r]);
 		}
 		s += "\n";
 	}

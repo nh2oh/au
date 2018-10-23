@@ -151,11 +151,11 @@ bool diatonic_spn12tet::isinsc(ntl_t ntl) const {
 }
 std::string diatonic_spn12tet::print(scd_t from, scd_t to) const {
 	std::string s {};
-	s = bsprintf("%s\n%s\n\n",m_name,m_description);
+	s = dbk::bsprintf("%s\n%s\n\n",m_name,m_description);
 
 	for (scd_t curr_scd=from; curr_scd<to; ++curr_scd) {
 		//std::string curr_line {};
-		s += bsprintf("%d:\t%s\t%.3f\n",
+		s += dbk::bsprintf("%d:\t%s\t%.3f\n",
 			curr_scd.to_int(),to_ntstr(curr_scd).print(),to_frq(curr_scd)/frq_t{1});
 	}
 	s += "\n\n";
