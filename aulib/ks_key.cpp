@@ -6,6 +6,7 @@
 #include "util\au_random.h"
 #include "util\au_algs.h"  // unique_n(rscds)
 #include "util\au_algs_math.h"  // corr()
+#include "dbklib\contigmap.h"
 #include <array>
 #include <algorithm>  // std::max_element()
 //#include <iostream>
@@ -59,11 +60,15 @@ ks_key_result ks_key(line_t<ntstr_t> nts, ks_key_params p) {
 	spn12tet sc {};
 	auto notes_flatchords_norests = nts.notes_flat();
 
+	dbk::contigmap<rscdoctn_t,double> rw {};
 	std::vector<double> rscds_weighted(12,0.0);
 	d_t dw {d::w};
 	for (size_t i=0; i<notes_flatchords_norests.size(); ++i) {
 		int curr_rscd = rscdoctn_t{sc.to_scd(notes_flatchords_norests[i].note),12}.to_int();
 		rscds_weighted[curr_rscd] += (notes_flatchords_norests[i].d)/dw;
+
+		rscdoctn_t cr {sc.to_scd(notes_flatchords_norests[i].note),12};
+		rw[cr] += (notes_flatchords_norests[i].d)/dw;
 	}
 
 	auto corr_maj = corr(rscds_weighted,kp_maj);

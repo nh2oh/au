@@ -8,7 +8,6 @@
 #include "..\aulib\types\beat_bar_t.h"
 #include "..\aulib\types\nv_t.h"
 
-
 TEST(ks_key_tests, CmajorScaleOnePassZeroOctave) {
 	diatonic_spn12tet sc {ntl_t{"C"},diatonic_spn12tet::mode::major};
 	// My "melody," nts_scds, nts_ntstrs is just C(0)-D(0)-...-B(0)
