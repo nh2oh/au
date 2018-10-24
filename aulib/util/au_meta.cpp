@@ -7,7 +7,13 @@
 
 
 std::string print_tt_table() {
-	dbk::contigmap<std::string,dbk::contigmap<std::string,bool>> all {};
+	//dbk::contigmap<std::string,dbk::contigmap<std::string,bool>> all {};
+	dbk::contigmap<std::string,dbk::inspect_type_result> all {};
+
+	int int_def{}; all["int"] = dbk::inspect_type(int_def);
+	double double_def{}; all["double"] = dbk::inspect_type(double_def);
+	std::string stdstring_def{}; all["std::string"] = dbk::inspect_type(stdstring_def);
+
 	frq_t frq_def {}; all["frq_t"] = dbk::inspect_type(frq_def);
 	cent_t cent_def {}; all["cent_t"] = dbk::inspect_type(cent_def);
 	oct_t oct_def {}; all["oct_t"] = dbk::inspect_type(oct_def);
@@ -25,17 +31,18 @@ std::string print_tt_table() {
 	teejee teejee_def {}; all["teejee_t"] = dbk::inspect_type(teejee_def);
 	chord_t<scd_t> chordscd_def {}; all["chord_t<scd_t>_t"] = dbk::inspect_type(chordscd_def);
 
-	size_t num_type_traits {43};
+	size_t num_type_traits {57};
 
 	std::vector<std::string> lines(num_type_traits,"");
 	std::string s_header {};
 	s_header += dbk::bsprintf("%-45s","Type trait");
 	
+	//auto static_tt=all.static_tt;
 	bool first_iter {true};
 	for (auto type : all) {
 		s_header += dbk::bsprintf("%-18s",type.k);
 		size_t i {0};
-		for (auto tt : type.v) {
+		for (auto tt : type.v.static_tt) {
 			if (first_iter) {
 				lines[i] += dbk::bsprintf("%-45s",tt.k);
 			}
@@ -47,6 +54,11 @@ std::string print_tt_table() {
 
 	std::string res {};
 	res = dbk::bsprintf("%s\n",s_header);
+	res += dbk::bsprintf("%-45s", "typeinfo().name():");
+	for (auto tt : all) {
+		res += dbk::bsprintf("%-18s",tt.v.typeinfoname);
+	}
+	res += "\n";
 	for (const auto& tt : lines) {
 		res += dbk::bsprintf("%s\n",tt);
 	}
