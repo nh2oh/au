@@ -20,7 +20,7 @@
 //
 
 ks_key_result ks_key(line_t<ntstr_t> nts, ks_key_params p) {
-
+	spn12tet sc {};
 	std::array<double,12> kp_base_maj;
 	std::array<double,12> kp_base_min;
 	switch (p.profile) {
@@ -42,6 +42,9 @@ ks_key_result ks_key(line_t<ntstr_t> nts, ks_key_params p) {
 	// For key i=0, element 0 of the base profile needs to appear in row 0.  
 	// For key i=1, element _0_ of the base profile needs to appear in row 
 	// 1, ...
+	dbk::contigmap<ntstr_t,std::vector<double>> mkp_maj {};
+	dbk::contigmap<ntstr_t,std::vector<double>> mkp_min {};
+
 	std::vector<std::vector<double>> kp_maj(12,std::vector<double>(12,0.0));
 	std::vector<std::vector<double>> kp_min(12,std::vector<double>(12,0.0));
 	for (int i=0; i<12; ++i) {
@@ -49,6 +52,8 @@ ks_key_result ks_key(line_t<ntstr_t> nts, ks_key_params p) {
 			kp_maj[i][j] = kp_base_maj[(j-i+12)%12];
 			kp_min[i][j] = kp_base_min[(j-i+12)%12];
 		}
+		mkp_maj[sc.to_ntstr(scd_t{i})] = kp_maj[i];
+		mkp_min[sc.to_ntstr(scd_t{i})] = kp_min[i];
 	}
 
 	// The note-sequence / rscd weights
@@ -57,9 +62,9 @@ ks_key_result ks_key(line_t<ntstr_t> nts, ks_key_params p) {
 	// deals with chords).  
 	// rscds_weighted[0] => total duration for 'C', rscds_weighted[1] => C#, ...
 	// Relies on the fact that for spn12tet, C => rscd == 0, etc.  
-	spn12tet sc {};
 	auto notes_flatchords_norests = nts.notes_flat();
 
+	dbk::contigmap<ntstr_t,double> nsw {};
 	dbk::contigmap<rscdoctn_t,double> rw {};
 	std::vector<double> rscds_weighted(12,0.0);
 	d_t dw {d::w};
@@ -69,6 +74,7 @@ ks_key_result ks_key(line_t<ntstr_t> nts, ks_key_params p) {
 
 		rscdoctn_t cr {sc.to_scd(notes_flatchords_norests[i].note),12};
 		rw[cr] += (notes_flatchords_norests[i].d)/dw;
+		nsw[notes_flatchords_norests[i].note] += (notes_flatchords_norests[i].d)/dw;
 	}
 
 	auto corr_maj = corr(rscds_weighted,kp_maj);
