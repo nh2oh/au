@@ -6,7 +6,7 @@
 #include "util\au_random.h"
 #include "util\au_algs.h"  // unique_n(rscds)
 #include "util\au_algs_math.h"  // corr()
-#include "dbklib\contigmap.h"
+#include "dbklib\contigumap.h"
 #include <array>
 #include <algorithm>  // std::max_element()
 //#include <iostream>
@@ -42,8 +42,8 @@ ks_key_result ks_key(line_t<ntstr_t> nts, ks_key_params p) {
 	// For key i=0, element 0 of the base profile needs to appear in row 0.  
 	// For key i=1, element _0_ of the base profile needs to appear in row 
 	// 1, ...
-	dbk::contigmap<ntstr_t,std::vector<double>> mkp_maj {};
-	dbk::contigmap<ntstr_t,std::vector<double>> mkp_min {};
+	dbk::contigumap<ntstr_t,std::vector<double>> mkp_maj {};
+	dbk::contigumap<ntstr_t,std::vector<double>> mkp_min {};
 
 	std::vector<std::vector<double>> kp_maj(12,std::vector<double>(12,0.0));
 	std::vector<std::vector<double>> kp_min(12,std::vector<double>(12,0.0));
@@ -64,8 +64,8 @@ ks_key_result ks_key(line_t<ntstr_t> nts, ks_key_params p) {
 	// Relies on the fact that for spn12tet, C => rscd == 0, etc.  
 	auto notes_flatchords_norests = nts.notes_flat();
 
-	dbk::contigmap<ntstr_t,double> nsw {};
-	dbk::contigmap<rscdoctn_t,double> rw {};
+	dbk::contigumap<ntstr_t,double> nsw {};
+	dbk::contigumap<rscdoctn_t,double> rw {};
 	std::vector<double> rscds_weighted(12,0.0);
 	d_t dw {d::w};
 	for (size_t i=0; i<notes_flatchords_norests.size(); ++i) {

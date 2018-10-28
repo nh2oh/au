@@ -1,5 +1,5 @@
 #pragma once
-#include "scale.h";
+#include "scale.h"
 #include "..\types\cent_oct_t.h"
 #include "..\types\frq_t.h"
 #include "..\types\ntl_t.h"
