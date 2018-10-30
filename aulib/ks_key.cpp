@@ -92,11 +92,11 @@ ks_key_result ks_key(line_t<ntstr_t> nts, ks_key_params p) {
 	ks_key_result res {};
 	if (corr_maj[rscd_max_corr_maj] >= corr_min[rscd_max_corr_min]) {
 		// NOTE:  >= => report major if there is a tie
-		res.key = ntl_t{sc.to_ntstr(scd_t{static_cast<int>(rscd_max_corr_maj)})};
+		res.key = sc.to_ntstr(scd_t{static_cast<int>(rscd_max_corr_maj)}).ntl();
 		res.ismajor = true;
 		res.score = corr_maj[rscd_max_corr_maj];
 	} else {
-		res.key = ntl_t{sc.to_ntstr(scd_t{static_cast<int>(rscd_max_corr_min)})};
+		res.key = sc.to_ntstr(scd_t{static_cast<int>(rscd_max_corr_min)}).ntl();
 		res.ismajor = false;
 		res.score = corr_maj[rscd_max_corr_min];
 	}

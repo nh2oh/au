@@ -29,7 +29,7 @@ void diatonic_spn12tet::build_sc(spn12tet sc_base, ntl_t ntl_base, mode m) {
 		if (i>0) {
 			curr_scd += scd_t{m_ip[(i-1+m_mode_idx)%m_ip.size()]};
 		}
-		m_ntls[i] = ntl_t{m_sc_base.to_ntstr(curr_scd)};
+		m_ntls[i] = m_sc_base.to_ntstr(curr_scd).ntl();
 	}
 
 	m_name = "Diatonic scale " + m_ntl_base.print() + " ...";
@@ -48,7 +48,7 @@ scd_t diatonic_spn12tet::scd_diatonic2spn12tet(scd_t scd_in) const {
 }
 scd_t diatonic_spn12tet::scd_spn12tet2diatonic(scd_t scd_in) const {
 	ntstr_t ntstr = m_sc_base.to_ntstr(scd_in);
-	ntl_t ntl {ntstr};
+	ntl_t ntl {ntstr.ntl()};
 	auto idx = std::find(m_ntls.begin(), m_ntls.end(), ntl)-m_ntls.begin();
 	return scd_t {static_cast<int>(idx)};
 }
@@ -97,7 +97,7 @@ std::vector<frq_t> diatonic_spn12tet::to_frq(const std::vector<scd_t>& scds) con
 	return frqs;
 }
 frq_t diatonic_spn12tet::to_frq(ntstr_t ntstr) const {
-	au_assert(isinsc(ntl_t{ntstr}),"ntstr not in scale");
+	au_assert(isinsc(ntstr.ntl()),"ntstr not in scale");
 	return m_sc_base.to_frq(ntstr);
 }
 std::vector<frq_t> diatonic_spn12tet::to_frq(const std::vector<ntstr_t>& ntstrs) const {
@@ -121,7 +121,7 @@ std::vector<scd_t> diatonic_spn12tet::to_scd(const std::vector<frq_t>& frqs) con
 	return scds;
 }
 scd_t diatonic_spn12tet::to_scd(ntstr_t ntstr) const {
-	au_assert(isinsc(ntl_t{ntstr}),"ntstr not in scale");
+	au_assert(isinsc(ntstr.ntl()),"ntstr not in scale");
 	scd_t scd_12tet = m_sc_base.to_scd(ntstr);
 	return scd_spn12tet2diatonic(scd_12tet);
 }
@@ -144,7 +144,7 @@ octn_t diatonic_spn12tet::to_octn(frq_t frq) const {
 
 bool diatonic_spn12tet::isinsc(frq_t frq) const {
 	ntstr_t ntstr = m_sc_base.to_ntstr(frq);
-	return isinsc(ntl_t{ntstr});
+	return isinsc(ntstr.ntl());
 }
 bool diatonic_spn12tet::isinsc(ntl_t ntl) const {
 	return std::find(m_ntls.begin(),m_ntls.end(),ntl) != m_ntls.end();

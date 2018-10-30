@@ -57,5 +57,11 @@
     <ClCompile Include="ks_key_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ntl_t_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ntstr_t_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

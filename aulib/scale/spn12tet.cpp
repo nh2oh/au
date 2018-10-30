@@ -16,9 +16,9 @@ spn12tet::spn12tet(spn12tet::pitch_std ps) {
 	au_assert(ps.gen_int > 0,"ono");
 	au_assert(ps.ntet>0,"ono");
 	m_ps = ps;
-	auto idx = std::find(m_ntls.begin(),m_ntls.end(),ntl_t{m_ps.ref_ntstr});
+	auto idx = std::find(m_ntls.begin(),m_ntls.end(),m_ps.ref_ntstr.ntl());
 	au_assert(idx != m_ntls.end(),"ntl not found");
-	m_shift_scd = (octn_t{ps.ref_ntstr}.to_int())*12+static_cast<int>(idx-m_ntls.begin());
+	m_shift_scd = (ps.ref_ntstr.oct().to_int())*12+static_cast<int>(idx-m_ntls.begin());
 	// Expect 57 for a ref pitch of A(4)
 }
 
@@ -93,10 +93,10 @@ scd_t spn12tet::to_scd(frq_t frq) const {  //  Calls n_eqt() directly
 	return scd_t {static_cast<int>(std::round(dn_approx+m_shift_scd))};
 }
 scd_t spn12tet::to_scd(ntstr_t ntstr) const {  // Reads m_default_valid_ntls directly
-	auto it = std::find(m_ntls.begin(),m_ntls.end(),ntl_t{ntstr});
+	auto it = std::find(m_ntls.begin(),m_ntls.end(),ntstr.ntl());
 	au_assert(it != m_ntls.end(), "ntl not in sc");
 	int ntl_idx = it-m_ntls.begin();
-	int octn = octn_t{ntstr}.to_int();
+	int octn = ntstr.oct().to_int();
 	return scd_t {ntl_idx+12*octn};
 }
 std::vector<scd_t> spn12tet::to_scd(const std::vector<ntstr_t>& ntstr) const {

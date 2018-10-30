@@ -35,7 +35,7 @@ TEST(scale_spn12tet_tests, DefaultConstructor) {
 
 		ntstr_t ntstr_from_scd {sc.to_ntstr(ans_curr_scd)};
 		ntl_t ntl_from_scd {ntstr_from_scd};
-		octn_t oct_from_ntstr_from_scd {ntstr_from_scd};
+		octn_t oct_from_ntstr_from_scd {ntstr_from_scd.oct()};
 		octn_t oct_from_scd {sc.to_octn(ans_curr_scd)};
 		EXPECT_TRUE(ntstr_from_scd == ans_curr_ntstr);
 		EXPECT_TRUE(ntl_from_scd == ans_curr_ntl);
@@ -89,7 +89,7 @@ TEST(scale_spn12tet_tests, CSharpFour330Hz) {
 
 		ntstr_t ntstr_from_scd {sc.to_ntstr(ans_curr_scd)};
 		ntl_t ntl_from_scd {ntstr_from_scd};
-		octn_t oct_from_ntstr_from_scd {ntstr_from_scd};
+		octn_t oct_from_ntstr_from_scd {ntstr_from_scd.oct()};
 		octn_t oct_from_scd {sc.to_octn(ans_curr_scd)};
 		EXPECT_TRUE(ntstr_from_scd == ans_curr_ntstr);
 		EXPECT_TRUE(ntl_from_scd == ans_curr_ntl);
@@ -144,7 +144,7 @@ TEST(scale_spn12tet_tests, BThree551HzGint3ThirteenTET) {
 
 		ntstr_t ntstr_from_scd {sc.to_ntstr(ans_curr_scd)};
 		ntl_t ntl_from_scd {ntstr_from_scd};
-		octn_t oct_from_ntstr_from_scd {ntstr_from_scd};
+		octn_t oct_from_ntstr_from_scd {ntstr_from_scd.oct()};
 		octn_t oct_from_scd {sc.to_octn(ans_curr_scd)};
 		EXPECT_TRUE(ntstr_from_scd == ans_curr_ntstr);
 		EXPECT_TRUE(ntl_from_scd == ans_curr_ntl);
