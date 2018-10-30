@@ -172,6 +172,7 @@
     <ClCompile Include="randrp_metg_test.cpp" />
     <ClCompile Include="rp_t_test.cpp" />
     <ClCompile Include="scale_spn12tet_test.cpp" />
+    <ClCompile Include="scd_t_test.cpp" />
     <ClCompile Include="tg_t_test.cpp" />
     <ClCompile Include="tmetg_t_test.cpp" />
     <ClCompile Include="ts_t_test.cpp" />
