@@ -87,6 +87,8 @@ bar_t operator/(bar_t, const double&);
 // Class tempo_t
 // Represents some number of beats per minute
 
+// std::chrono::duration<double,std::ratio<1,1000>> dt {offtime[i]-ontime[i]};
+
 class tempo_t {
 public:
 	//using namespace std::chrono_literals;
@@ -106,5 +108,4 @@ private:
 std::chrono::milliseconds operator/(beat_t const&, tempo_t const&);
 beat_t operator*(tempo_t const&, std::chrono::milliseconds const&); 
 beat_t operator*(std::chrono::milliseconds const&, tempo_t const&); 
-
 

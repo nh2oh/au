@@ -3,6 +3,7 @@
 #include <array>
 #include <random>
 #include <numeric> // accumulate() in mean()
+#include <exception>  // std::abort()
 
 //
 // Functions that make interacting with the c++ STL <random> library slightly
@@ -86,7 +87,10 @@ T mean(std::array<T,N> v) {
 // Pearson's linear correlation coefficient
 // a,b must be the same size
 template <typename T>
-T corr(std::vector<T> a, std::vector<T> b) {
+T corr(const std::vector<T>& a, const std::vector<T>& b) {
+	if (a.size() != b.size()) {
+		std::abort();
+	}
 	T ma = mean(a);	T mb = mean(b);
 	T sum_a_shift {0}; T sum_a_shift_sq {0};
 	T sum_b_shift {0}; T sum_b_shift_sq {0};
@@ -103,14 +107,16 @@ T corr(std::vector<T> a, std::vector<T> b) {
 };
 
 // Pearson's linear correlation coefficient
-// a,m[i] must be the same size for all i
+// a,m[i] must be the same size for all i (checked by corr(vector,vector>)
 template <typename T>
-std::vector<T> corr(std::vector<T> a, std::vector<std::vector<T>> m) {
+std::vector<T> corr(const std::vector<T>& a, const std::vector<std::vector<T>>& m) {
 	std::vector<T> res(m.size(),0.0);
 	for (int i=0; i<m.size(); ++i) {
 		res[i] = corr(a,m[i]);
 	}
 	return res;
 };
+
+
 
 

@@ -161,3 +161,6 @@ err_accum err_nbeat_accum(ts_t ts, d_t nv, int niter, int record_every, bar_t nb
 	//return {err_nbar,err_nbeat};
 	return {err_nbar};
 }
+
+
+
