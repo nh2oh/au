@@ -30,6 +30,7 @@
     <ClCompile Include="scale\spn12tet.cpp" />
     <ClCompile Include="scale\scale.cpp" />
     <ClCompile Include="scale\diatonic_spn12tet.cpp" />
+    <ClCompile Include="scale\spn12tet3.cpp" />
     <ClCompile Include="types\beat_bar_t.cpp" />
     <ClCompile Include="types\cent_oct_t.cpp" />
     <ClCompile Include="types\chord_t.cpp" />
@@ -63,6 +64,7 @@
     <ClInclude Include="scale\scale.h" />
     <ClInclude Include="scale\scales_all.h" />
     <ClInclude Include="scale\diatonic_spn12tet.h" />
+    <ClInclude Include="scale\spn12tet3.h" />
     <ClInclude Include="types\beat_bar_t.h" />
     <ClInclude Include="types\cent_oct_t.h" />
     <ClInclude Include="types\chord_t.h" />
@@ -74,6 +76,7 @@
     <ClInclude Include="types\ntl_t.h" />
     <ClInclude Include="types\nv_t.h" />
     <ClInclude Include="types\rp_t.h" />
+    <ClInclude Include="types\scd3_t.h" />
     <ClInclude Include="types\scd_t.h" />
     <ClInclude Include="types\teejee.h" />
     <ClInclude Include="types\ts_t.h" />

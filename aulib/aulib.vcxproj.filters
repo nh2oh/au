@@ -108,6 +108,9 @@
     <ClCompile Include="util\au_meta.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="scale\spn12tet3.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="util\au_algs.h">
@@ -219,6 +222,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="util\au_meta.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scale\spn12tet3.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="types\scd3_t.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

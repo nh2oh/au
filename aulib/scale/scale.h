@@ -1,13 +1,14 @@
 #pragma once
-#include "..\types\types_all.h"
-#include <string>
+#include "..\types\frq_t.h"
 #include <vector>
 
 
 // ref-frq, ntet, gint
 std::vector<frq_t> frq_eqt(const std::vector<int>&,frq_t,int,int);
+
 // scd (dn), ref-frq, ntet, gint
 frq_t frq_eqt(int, frq_t,int,int);
+
 // ref-frq, ntet, gint
 double n_eqt(frq_t, frq_t,int,int);
 
