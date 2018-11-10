@@ -3,6 +3,20 @@
 #include <vector>
 
 
+// Should this be a template param for the scale ?
+struct pitch_std {
+	explicit pitch_std()=default;
+	// These control the pitch standard, ie, the actual frq values of the 
+	// named pitches of SPN (C(i),C#(i),D(i),...B(i),C(i+1),...).  
+	// Changing ref_ntstr here does _not_ change the note @ which the 
+	// octave boundry occurs.  
+	std::string ref_ntl {"A(4)"};
+	//int ref_oct {4};
+	frq_t ref_frq {440};
+	int gen_int {2};
+	int ntet {12};
+};
+
 // ref-frq, ntet, gint
 std::vector<frq_t> frq_eqt(const std::vector<int>&,frq_t,int,int);
 

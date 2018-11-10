@@ -2,7 +2,6 @@
 #include "scd_t.h"  // declares/defines octn_t
 #include <string>
 
-
 class ntl_t {
 public:
 	explicit ntl_t() = default;

@@ -7,26 +7,175 @@
 #include <exception>
 #include <string>
 #include <array>
+#include <regex>  // for parse_ntstr()
 
-const std::array<char,7> spn12tet3::ntl3_t::base_ntls {'C','D','E','F','G','A','B'};
-const std::array<char,2> spn12tet3::ntl3_t::ntl_modifiers {'#','&'};
 
-bool spn12tet3::ntl3_t::is_ntl(const std::string& s) {
-	if (s.size() == 0) { return false; }
+const std::array<std::array<char,2>,12> spn12tet3::m_ntls {{'C','C#','D','D#',
+		'E','F','F#','G','G#','A','A#','B'}};
+//const std::array<char,12> spn12tet3::m_ntls_nomod {'C','D',
+//		'E','F','G','A','B'};
+//const std::array<char,2> spn12tet3::m_mods {'#','&'};
 
-	auto it = std::find(spn12tet3::ntl3_t::base_ntls.begin(),base_ntls.end(),s[0]);
-	if (it == base_ntls.end()) { return false; }
 
-	if (s.size() > 1) {
-		auto it = std::find_if(s.begin()+1,s.end(),
-			[](char c) {
-				return !(c==ntl_modifiers[0] || c==ntl_modifiers[1]);
-			});
-		if (it!=s.end()) { return false; }
+spn12tet3::spn12tet3(pitch_std ps) {
+	if (ps.gen_int <= 0 || ps.ntet <= 0) { std::abort(); }
+	auto ref_ntl_parsed = spn12tet3::parse_ntstr(ps.ref_ntl);
+	if (!ref_ntl_parsed.is_valid) { std::abort(); }
+
+	m_pstd = ps;
+
+	m_shift_scd = (ref_ntl_parsed.oct)*(spn12tet3::m_ntls.size()) + ref_ntl_parsed.ntl_idx;
+	// Expect 57 for a ref pitch of A(4)
+
+}
+
+std::string spn12tet3::print() const {
+	return spn12tet3::print(spn12tet3::scd3_t {0}, spn12tet3::scd3_t {spn12tet3::m_ntls.size()});
+}
+std::string spn12tet3::print(spn12tet3::scd3_t from, spn12tet3::scd3_t to) const {
+	std::string s {};
+	s = dbk::bsprintf("%s\n%s\n\n",m_name,m_description);
+	
+	spn12tet3::scd3_t zero {0};
+	for (spn12tet3::scd3_t curr_scd=from; curr_scd<to; ++curr_scd) {
+		s += dbk::bsprintf("%d:\t%s\t%.3f\n",
+			(curr_scd-zero),(*curr_scd).print(),(*curr_scd).frq());
+	}
+	s += "\n\n";
+	return s;
+}
+std::string spn12tet3::name() const {
+	return m_name;
+}
+std::string spn12tet3::description() const {
+	return m_description;
+}
+
+bool spn12tet3::isinsc(const std::string& s) const {
+	auto ntstr_parsed = spn12tet3::parse_ntstr(s);
+	return ntstr_parsed.is_valid;
+}
+bool spn12tet3::isinsc(const frq_t& frq_in) const {
+	return aprx_int(n_eqt(frq_in, m_pstd.ref_frq, m_pstd.ntet, m_pstd.gen_int));
+}
+
+spn12tet3::scd3_t spn12tet3::to_scd(const std::string& s) const {
+	auto ntstr_parsed = parse_ntstr(s);
+	if (!ntstr_parsed.is_valid) {
+		// This should be impossible: note is of type spn12tet3::note_t,
+		// so this error implies an error in maintaining the note_t invariant.  
+		std::abort();
+	}
+	int scd_idx = (ntstr_parsed.ntl_idx) + (ntstr_parsed.oct)*(spn12tet3::m_ntls.size());
+	return spn12tet3::scd3_t {scd_idx};
+}
+spn12tet3::scd3_t spn12tet3::to_scd(const spn12tet3::note_t& note) const {
+	auto ntstr_parsed = parse_ntstr(note.print());
+	if (!ntstr_parsed.is_valid || !isinsc(note.frq())) {
+		// This should be impossible: note is of type spn12tet3::note_t,
+		// so this error implies an error in maintaining the note_t invariant.  
+		std::abort();
+	}
+	int scd_idx = (ntstr_parsed.ntl_idx) + (ntstr_parsed.oct)*(spn12tet3::m_ntls.size());
+	return spn12tet3::scd3_t {scd_idx};
+}
+std::vector<spn12tet3::scd3_t> spn12tet3::to_scd(const std::vector<spn12tet3::note_t>& ntls) const {
+	std::vector<spn12tet3::scd3_t> scds {}; scds.reserve(ntls.size());
+	for (const auto& e : ntls) {
+		scds.push_back(to_scd(e));
+	}
+	return scds;
+}
+
+spn12tet3::ntstr_parsed spn12tet3::parse_ntstr(const std::string& s) {
+	spn12tet3::ntstr_parsed result {};
+
+	if (s.size() == 0) {
+		result.is_valid = false;
+		return result;
 	}
 
-	return true;
+	bool consume_first_sharp {false};
+	int i=0;
+	if (s.size() == 1 || (s.size()>1 && s[1]!='#')) {
+		// Only match the letter
+		for (; i<spn12tet3::m_ntls.size();++i) {
+			if (spn12tet3::m_ntls[i][0] == s[0]) { break; }
+		}
+	} else if (s.size() > 1 && s[1]=='#') {
+		// Start by only matching the letter
+		for (; i<spn12tet3::m_ntls.size();++i) {
+			if (spn12tet3::m_ntls[i][0] == s[0]) { break; }
+		}
+		if (m_ntls[i][0] != 'B' && m_ntls[i][0] != 'E') {
+			i = (i+1)%(m_ntls.size());
+			consume_first_sharp = true;
+		}
+	}
+
+	if (i==m_ntls.size()) {  // Didn't find the note letter
+		result.is_valid = false;
+		return result;
+	} else {
+		result.ntl = m_ntls[i];
+		result.ntl_idx = i;
+	}
+
+
+	std::regex rx("([#&]+)?(?:\\((-?\\d+)\\))?");
+	std::smatch rx_matches;
+	if (!std::regex_match(s.begin()+1,s.end(), rx_matches, rx)) {
+		result.is_valid=false;
+		return result;
+	}
+	// Sharps+flats
+	if (rx_matches[0].matched) {
+		result.n_sharp = std::count(s.begin(),s.end(),'#');
+		result.n_flat = std::count(s.begin(),s.end(),'&');
+	} else {
+		result.n_sharp = 0;
+		result.n_flat = 0;
+	}
+	if (consume_first_sharp) {
+		--(result.n_sharp);
+	}
+	int net_sharp = result.n_sharp-result.n_flat;
+	result.ntl_idx = (i+net_sharp)%(spn12tet3::m_ntls.size());
+
+	// Octave designation
+	if (rx_matches[1].matched) {
+		result.oct = std::stoi(rx_matches[1].str());
+		result.oct_specified = true;
+	} else {
+		result.oct = 0;
+		result.oct_specified = false;
+	}
+
+	return result;
 }
+
+
+
+
+
+
+
+
+
+
+
+spn12tet3::note_t::note_t(const std::string& s) {
+	auto ntstr_parsed = spn12tet3::parse_ntstr(s);
+	if (!ntstr_parsed.is_valid) {
+		std::abort();
+	}
+	spn12tet3::scd3_t scd {s};
+	spn12tet3::note_t temp_note {*scd};
+	m_frq = temp_note.m_frq;
+	m_ntstr = temp_note.m_ntstr;
+}
+
+
 
 spn12tet3::ntl3_t::ntl3_t(const std::string& s) {
 	if (!is_ntl(s)) { std::abort(); }
@@ -70,59 +219,15 @@ bool operator>=(const spn12tet3::ntl3_t& lhs, const spn12tet3::ntl3_t& rhs) {
 	return (lhs>rhs || lhs==rhs);
 }
 
-bool spn12tet3::is_ntl(const std::string& s) {
-	return spn12tet3::ntl3_t::is_ntl(s);
-}
 
 
 
 
 
 
-spn12tet3::spn12tet3(spn12tet3::pitch_std ps) {
-	if (ps.gen_int <= 0 || ps.ntet <= 0) { std::abort(); }
-	m_ps = ps;
-
-	auto it = std::find(spn12tet3::ntl3_t::base_ntls.begin(),
-		spn12tet3::ntl3_t::base_ntls.end(), m_ps.ref_ntl.m_ntl);
-	if (it == spn12tet3::ntl3_t::base_ntls.end()) {
-		// This should be impossible: pitch_std.ref_ntl is of type spn12tet3::ntl3_t,
-		// so this error implies an error in the ntl3_t ctor.  
-		std::abort();
-	}
-	m_shift_scd = (ps.ref_oct)*(spn12tet3::N) + 
-		static_cast<int>(it-spn12tet3::ntl3_t::base_ntls.begin());
-	// Expect 57 for a ref pitch of A(4)
-}
 
 
-std::string spn12tet3::name() const {
-	return m_name;
-}
-std::string spn12tet3::description() const {
-	return m_description;
-}
-bool spn12tet3::isinsc(const std::string& s) const {
-	return spn12tet3::ntl3_t::is_ntl(s);
-}
-bool spn12tet3::isinsc(frq_t frq_in) const {
-	return aprx_int(n_eqt(frq_in, m_ps.ref_frq, m_ps.ntet, m_ps.gen_int));
-}
-std::string spn12tet3::print() const {
-	return spn12tet3::print(scd_t {0}, scd_t {N});
-}
-std::string spn12tet3::print(scd_t from, scd_t to) const {
-	std::string s {};
-	s = dbk::bsprintf("%s\n%s\n\n",m_name,m_description);
 
-	for (scd_t curr_scd=from; curr_scd<to; ++curr_scd) {
-		//std::string curr_line {};
-		s += dbk::bsprintf("%d:\t%s\t%.3f\n",
-			curr_scd.to_int(),to_ntl(curr_scd).print(),to_frq(curr_scd)/frq_t{1});
-	}
-	s += "\n\n";
-	return s;
-}
 
 spn12tet3::ntl_t spn12tet3::to_ntl(scd_t scd) const {  // Reads m_default_valid_ntls directly
 	return spn12tet3::ntl3_t {&spn12tet3::ntl3_t::base_ntls[scd.rscd().to_int()],scd.octn()};
@@ -166,22 +271,5 @@ spn12tet3::scd_t spn12tet3::to_scd(frq_t frq) const {  //  Calls n_eqt() directl
 	if (!aprx_int(dn_approx)) { std::abort(); }
 	return scd_t {static_cast<int>(std::round(dn_approx+m_shift_scd))};
 }
-spn12tet3::scd_t spn12tet3::to_scd(spn12tet3::ntl_t ntl) const {  // Reads m_default_valid_ntls directly
-	auto it = std::find(spn12tet3::ntl_t::base_ntls.begin(),
-		spn12tet3::ntl_t::base_ntls.end(),ntl.m_ntl);
-	if (it == spn12tet3::ntl3_t::base_ntls.end()) {
-		// This should be impossible: ntl is of type spn12tet3::ntl3_t,
-		// so this error implies an error in maintaining the ntl3_t invariant.  
-		std::abort();
-	}
-	int ntl_idx = it-spn12tet3::ntl3_t::base_ntls.begin();
-	return scd_t {ntl_idx, ntl.m_oct};
-}
-std::vector<spn12tet3::scd_t> spn12tet3::to_scd(const std::vector<spn12tet3::ntl_t>& ntls) const {
-	std::vector<spn12tet3::scd_t> scds {}; scds.reserve(ntls.size());
-	for (const auto& e : ntls) {
-		scds.push_back(to_scd(e));
-	}
-	return scds;
-}
+
 
