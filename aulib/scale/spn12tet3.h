@@ -95,20 +95,18 @@
 //
 class note_t {
 public:
-	explicit note_t()=default;
-	explicit note_t(ntl_t,octn_t,frq_t);
+	//explicit note_t()=default;
+	//explicit note_t(ntl_t,octn_t,frq_t);
 
-	std::string print() const;
-
-	frq_t frq {252.0};
 	ntl_t ntl {"C"};
-
-	// The vast-vast majority of scales will have a finite set of repeating ntl_t's,
-	// and it is very useful to be able to number them.  Assignment and 
-	// interpretation is left _completely_ up to the scale.  
 	octn_t oct {0};
-private:
-	// Turns out a note_t has no invariants!
+	frq_t frq {252.0};
+	
+	// The vast-vast majority of scales will have a finite set of repeating ntl_t's,
+	// and it is very useful to be able to number them.  Hence the oct field.  
+	// Assignment of this field and its interpretation is left _completely_ up to 
+	// the scale.  
+private:  // Turns out a note_t has no invariants!
 };
 
 
@@ -130,24 +128,28 @@ public:
 	public:
 		// Note these ctors are public... in general scale scd3_t's need not provide
 		// public ctors...
-		explicit scd3_t();
-		explicit scd3_t(int);
+		explicit scd3_t(int,const spn12tet3*);
 
 		note_t operator*() const;
-		int operator-(const scd3_t&) const;
+		//int operator-(const scd3_t&) const;
 		scd3_t& operator++();  // prefix
 		scd3_t operator++(int);  // postfix
-		bool operator==(const scd3_t&) const;
-		bool operator>(const scd3_t&) const;
-		bool operator<(const scd3_t&) const;
+		scd3_t& operator--();  // prefix
+		scd3_t operator--(int);  // postfix
+		scd3_t& operator-=(const scd3_t&);
+		friend int operator-(const scd3_t&,const scd3_t&);
+		//bool operator==(const scd3_t&) const;
+		//bool operator>(const scd3_t&) const;
+		//bool operator<(const scd3_t&) const;
 	private:
 		int m_val {0};
-		// spn12tet3 *m_sc {};
+		const spn12tet3 *m_sc {};
 		// Note that the private int m_val is the only data contained by the scd3_t  
 		// for spn12tet3.  In general, more "complex," dynamic scales will have completely
 		// different data members, including possibly pointers back into the parent
 		// scale object.  
 	};
+	
 
 	// Constructors
 	explicit spn12tet3()=default;  // Generates A440 ("A(4)" == 440 Hz)
@@ -157,7 +159,7 @@ public:
 	std::string name() const;
 	std::string description() const;
 	std::string print() const;
-	std::string print(spn12tet3::scd3_t,spn12tet3::scd3_t) const;
+	std::string print(int,int) const;
 
 	bool isinsc(const ntl_t&) const;
 	bool isinsc(const frq_t&) const;
@@ -170,13 +172,17 @@ public:
 private:
 	struct base_ntl_idx_t {
 		bool is_valid {false};
-		int idx_noshift {0};
-		int idx_shift {0};
+		int ntl_idx {0};  // [0,m_ntls.size())
+		int scd_idx {0};
+
+		// Expect:  ntl_idx==(scd_idx+m_ntls.size())%(m_ntls.size);
 	};
 
 	// Methods
-	base_ntl_idx_t base_ntl_idx(const ntl_t&) const;
+	base_ntl_idx_t base_ntl_idx(const ntl_t&, const octn_t&) const;
 	base_ntl_idx_t base_ntl_idx(const frq_t&) const;
+
+	note_t to_note(int) const;  // Getter called by scd3_t::operator*()
 	
 	// Data
 	pitch_std3 m_pstd {};
@@ -186,8 +192,4 @@ private:
 	std::string m_name {"12-tone chromatic"};
 	std::string m_description {"12-tone equal-tempered with A(4)=440Hz; SPN"};
 };
-
-
-
-
 

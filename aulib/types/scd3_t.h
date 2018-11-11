@@ -8,6 +8,8 @@
 // representation of an absolute position within a scale.  
 //
 
+/*
+
 template<int N>
 class scd3_t {
 public:
@@ -113,4 +115,4 @@ bool operator<=(const scd3_t<N>& lhs, const scd3_t<N>& rhs) {
 	return (lhs<rhs || lhs==rhs);
 };
 
-
+*/
