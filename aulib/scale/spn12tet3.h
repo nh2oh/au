@@ -1,6 +1,7 @@
 #pragma once
 #include "scale.h"
 #include "..\types\frq_t.h"
+#include "..\types\ntl_t.h"
 #include <vector>
 #include <string>
 #include <array>
@@ -30,6 +31,10 @@
 // something close to the initial design, in which ntl_t,ntstr_t were scale-
 // independent.  
 //
+// A downside to this design is that note_t's don't "belong" to scales and can be
+// used "unsafely" between multiple scales.  
+//
+//
 // * A scale is expected to provide an scd_t which dereferences to a scale-independent 
 //   note_t.
 //
@@ -40,7 +45,8 @@
 // work?  Should all scales be forced to define equiv relations on the 'global' 
 // note_t ~ {ntl_t,frq_t} classes?  What should the rules be?  
 // One easy way is for scales to do this implictly, by setting the ntl_t and
-// oct_t of the note_t.  The user can define an equiv relation on the ntl_t.  
+// oct_t of the note_t.  The equiv relation for sets of notes is based on the
+// operator== for ntl_t.  
 // The scale is free to choose to define the rules by which certain frq_t's are
 // paired w/ ntl_ts in whatever wacky way it wants.  A scale not wanting to
 // have any equiv relations can simply use numbers for the ntl_t's and give
@@ -50,13 +56,19 @@
 // of scd_t's, external note_t's etc to this new type.  The new type can 
 // have whatever unusual equiv relation the scale wants to define.  
 //
+// * Scales group the note_t's returned by operator* on their scd_t iterators
+//   _implictly_ by the ntl_t field in the note_t.  Note pitch classes are defined
+//   by note_t.ntl_t.  Scales are free to convert their scd_t's to anything else
+//   they want, say:  
+//   blorg_t sc.to_blorg_pitch_class(sc::scd3_t),
+//   blorg_t sc.to_blorg_pitch_class(note_t)
+//   etc
+//
+// BIG PICTURE:  All scales sc offer an sc.to_scd() for note_t, frq_t, ntl_t, etc.
+// The sc::scd_t returned represents the position of the input in the scale.  
+//
+//
 // How about:
-// A scale _is_ required to define npc's, and these must be static (why? 
-// --because i want nlt_t's, scd_t's to be classifyable into pitch classes 
-// without having to instantiate an instance of a sc object which might have
-// state, etc),
-// with static (why?) == relations, but it is _not_ required that this set be 
-// finite.  
 // Consider what if i want a microtonal scale which allows ntl's like C'''''' where
 // each ' is an ulp of whatever fundamental type frq is represented in.  In
 // reality, a user who wants a finite set of npc's needs to check beforehand
@@ -71,54 +83,53 @@
 //
 
 
+
+
+// Note that all members are "absolute;" that is, they do not reference
+// scale state or scale-dependent types. However, despite this, the
+// class is a sub-class of the scale. To compare w/ note_t's that are
+// subclasses of different scales, someone will have to define a conversion
+// function/constructor/whatever. Probably such a thing will go through
+// a scale-dependent validation function that parses the ntstr and frq.
+//
+//
 class note_t {
-	// Note that all members are "absolute;" that is, they do not reference
-	// scale state or scale-dependent types.  However, despite this, the 
-	// class is a sub-class of the scale.  To compare w/ note_t's that are
-	// subclasses of different scales, someone will have to define a conversion
-	// function/constructor/whatever.  Probably such a thing will go through
-	// a scale-dependent validation function that parses the ntstr and frq.  
-	//
-	// Note that the ntl set, not the note_t class, is a static member of the scale
-	// class.  This could probably go either way.  For now i want to keep all
-	// the authority of deciding equality, membership, etc in the hands of the
-	// scale.  Note that these methods need not be static.  Conversion from a
-	// note_t to an npc_t is static, but conversion from a string/char* to a
-	// note is not.  
-	//
 public:
 	explicit note_t()=default;
-	explicit note_t(const std::string&);
-
-	// see spn12tet::isinsc()
-	//bool is_valid(const std::string&) const;
-	//bool is_valid(const frq_t&) const;
-	//bool is_valid(const std::string&, const frq_t&) const;
+	explicit note_t(ntl_t,octn_t,frq_t);
 
 	std::string print() const;
-	frq_t frq() const;
 
-	frq_t m_frq {252_Hz};
-	ntl_t m_ntl {"C"};
+	frq_t frq {252.0};
+	ntl_t ntl {"C"};
 
-	// A nod to the fact that the vast-vast majority of scales will have 
-	// repeating ntl_t's
-	oct_t m_oct {0};
+	// The vast-vast majority of scales will have a finite set of repeating ntl_t's,
+	// and it is very useful to be able to number them.  Assignment and 
+	// interpretation is left _completely_ up to the scale.  
+	octn_t oct {0};
 private:
 	// Turns out a note_t has no invariants!
 };
 
 
+// Should this be a template param for the scale ?
+struct pitch_std3 {
+	explicit pitch_std3()=default;
+	// These control the pitch standard, ie, the actual frq values of the 
+	// named pitches of SPN (C(i),C#(i),D(i),...B(i),C(i+1),...).  
+	// Changing ref_note here does _not_ change the note @ which the 
+	// octave boundry occurs.  
+	note_t ref_note {ntl_t{"A"}, octn_t{4}, frq_t{440}};
+	int gen_int {2};
+	int ntet {12};
+};
+
 class spn12tet3 {
 public:
 	class scd3_t {
-		// The iterator for the scale.
-		// Note here i include an int; this is an implementation detail of the
-		// scd_t for this particular scale.  In the general case a sc need not
-		// define its scd_t as containign an int, or even a ptr to a scale object.
-		// For spn12tet3 i don't need the ptr, only the int, since the scale is
-		// not dynamic.  
 	public:
+		// Note these ctors are public... in general scale scd3_t's need not provide
+		// public ctors...
 		explicit scd3_t();
 		explicit scd3_t(int);
 
@@ -132,13 +143,15 @@ public:
 	private:
 		int m_val {0};
 		// spn12tet3 *m_sc {};
+		// Note that the private int m_val is the only data contained by the scd3_t  
+		// for spn12tet3.  In general, more "complex," dynamic scales will have completely
+		// different data members, including possibly pointers back into the parent
+		// scale object.  
 	};
-
-	
 
 	// Constructors
 	explicit spn12tet3()=default;  // Generates A440 ("A(4)" == 440 Hz)
-	explicit spn12tet3(spn12tet3::pitch_std);
+	explicit spn12tet3(pitch_std3);
 
 	// Getters
 	std::string name() const;
@@ -146,51 +159,33 @@ public:
 	std::string print() const;
 	std::string print(spn12tet3::scd3_t,spn12tet3::scd3_t) const;
 
-	// For note-letters derrived from different scales, the user is responsible
-	// for converting their note_t to a string.  This makes it obvious that there
-	// are no shenanigans.  That is, it is clear that the comparison only takes 
-	// into account the printable ("externally observable") representation of the
-	// ntl.  Alternatively, whatever note_t the user is working with can define its
-	// own converting constructor to a spn12tet::note_t.  
 	bool isinsc(const ntl_t&) const;
 	bool isinsc(const frq_t&) const;
 	bool isinsc(const note_t&) const;
 	
-	spn12tet3::scd3_t to_scd(const std::string&) const;
-	spn12tet3::scd3_t to_scd(const spn12tet3::note_t&) const;
-	std::vector<spn12tet3::scd3_t> to_scd(const std::vector<spn12tet3::note_t>&) const;
+	spn12tet3::scd3_t to_scd(const ntl_t&, const octn_t&) const;
+	spn12tet3::scd3_t to_scd(const note_t&) const;
+	spn12tet3::scd3_t to_scd(const frq_t&) const;
+	std::vector<spn12tet3::scd3_t> to_scd(const std::vector<note_t>&) const;
 private:
-
-	struct ntstr_parsed {
+	struct base_ntl_idx_t {
 		bool is_valid {false};
-		std::array<char,2> ntl {};
-		int ntl_idx {0};
-		int n_sharp {0};
-		int n_flat {0};
-		int oct {0};
-		bool oct_specified {false};
+		int idx_noshift {0};
+		int idx_shift {0};
 	};
-	static ntstr_parsed parse_ntstr(const std::string&);
 
-	spn12tet3::note_t to_note(const std::string&);  // NB not nec const...
-	spn12tet3::note_t to_note(const frq_t&);  // NB not nec const...
-
-	pitch_std m_pstd {};
-	int m_shift_scd {57};  // the scd that generates the ref frq; 57 => A(4)
+	// Methods
+	base_ntl_idx_t base_ntl_idx(const ntl_t&) const;
+	base_ntl_idx_t base_ntl_idx(const frq_t&) const;
 	
-	std::vector<ntl_t> m_ntls {"C"_ntl,"C#"_ntl,"D"_ntl,"D#"_ntl,
+	// Data
+	pitch_std3 m_pstd {};
+	int m_shift_scd {57};  // the scd that generates the ref frq; 57 => A(4)
+	const std::vector<ntl_t> m_ntls {"C"_ntl,"C#"_ntl,"D"_ntl,"D#"_ntl,
 		"E"_ntl,"F"_ntl,"F#"_ntl,"G"_ntl,"G#"_ntl,"A"_ntl,"A#"_ntl,"B"_ntl};
-
 	std::string m_name {"12-tone chromatic"};
 	std::string m_description {"12-tone equal-tempered with A(4)=440Hz; SPN"};
 };
-
-/*
-bool operator!=(const spn12tet3::ntl3_t&, const spn12tet3::ntl3_t&);
-bool operator>(const spn12tet3::ntl3_t&, const spn12tet3::ntl3_t&);
-bool operator<=(const spn12tet3::ntl3_t&, const spn12tet3::ntl3_t&);
-bool operator>=(const spn12tet3::ntl3_t&, const spn12tet3::ntl3_t&);
-*/
 
 
 
