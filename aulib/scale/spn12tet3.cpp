@@ -32,7 +32,7 @@ std::string spn12tet3::print(int from, int to) const {
 		note_t curr_note = *curr_scd;
 
 		s += dbk::bsprintf("%d:\t%s\t%.3f\n",
-			i,curr_note.ntl.print(),curr_note.frq);
+			i,curr_note.ntl.print(),(curr_note.frq/frq_t{1}));
 	}
 	s += "\n\n";
 
@@ -90,32 +90,45 @@ spn12tet3::base_ntl_idx_t spn12tet3::base_ntl_idx(const ntl_t& ntl, const octn_t
 	base_ntl_idx_t res {};
 	auto it = std::find(m_ntls.begin(),m_ntls.end(),ntl);
 	
-	res.is_valid = (it==m_ntls.end());
+	res.is_valid = (it!=m_ntls.end());
 	res.ntl_idx = static_cast<int>(it-m_ntls.begin());
-	res.scd_idx = res.ntl_idx + (oct.to_int())*(m_ntls.size()) + m_shift_scd;
+	res.scd_idx = res.ntl_idx + (oct.to_int())*N;// + m_shift_scd;
 	return res;
 }
 
 // Private method
 spn12tet3::base_ntl_idx_t spn12tet3::base_ntl_idx(const frq_t& frq_in) const {
 	base_ntl_idx_t res {};
-	int idx = n_eqt(frq_in, m_pstd.ref_note.frq, m_pstd.ntet, m_pstd.gen_int);
+	double idx = n_eqt(frq_in, m_pstd.ref_note.frq, m_pstd.ntet, m_pstd.gen_int);
 	if (!aprx_int(idx)) {
 		res.is_valid = false;
-		return;
+		return res;
 	}
 
-	res.scd_idx = idx + m_shift_scd;
-	res.ntl_idx = (res.scd_idx+m_ntls.size())%(m_ntls.size);
+	res.scd_idx = static_cast<int>(std::round(idx)) + m_shift_scd;
+	res.ntl_idx = ((res.scd_idx%N)+N)%N;
+	//res.ntl_idx = static_cast<int>((res.scd_idx+m_ntls.size())%(m_ntls.size()));
+	// TODO:  Danger here: m_ntls.size() is unsigned, res.scd may be - ...
+	// I don't know the implicit conversion rules.  
 	res.is_valid = true;
 	return res;
 }
 
 // Getter called by spn12tet3::scd3_t::operator*()
 note_t spn12tet3::to_note(int scd_idx) const {
-	int ntl_idx = ((scd_idx-m_shift_scd)+m_ntls.size())%(m_ntls.size());
-	frq_t frq = frq_eqt(scd_idx,m_pstd.ref_note.frq,m_pstd.ntet,m_pstd.gen_int);
-	octn_t octn {(scd_idx+m_ntls.size())%(m_ntls.size())};
+	
+	int ntl_idx = ((scd_idx%N)+N)%N;
+	// int ntl_idx = (scd_idx+m_ntls.size())%(m_ntls.size());
+	// int ntl_idx = ((scd_idx-m_shift_scd)+m_ntls.size())%(m_ntls.size());
+	// TODO:  Danger here: m_ntls.size() is unsigned, res.scd may be - ...
+	// I don't know the implicit conversion rules.  
+
+	frq_t frq = frq_eqt(scd_idx-m_shift_scd,m_pstd.ref_note.frq,m_pstd.ntet,m_pstd.gen_int);
+	
+	octn_t octn {static_cast<int>(std::floor(static_cast<double>(scd_idx)/static_cast<double>(N)))};
+	// octn_t octn {static_cast<int>((scd_idx+m_ntls.size())%(m_ntls.size()))};
+	// TODO:  Danger here: m_ntls.size() is unsigned, res.scd may be - ...
+	// I don't know the implicit conversion rules.  
 
 	return note_t {m_ntls[ntl_idx],octn,frq};
 }

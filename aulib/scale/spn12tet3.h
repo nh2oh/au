@@ -131,7 +131,6 @@ public:
 		explicit scd3_t(int,const spn12tet3*);
 
 		note_t operator*() const;
-		//int operator-(const scd3_t&) const;
 		scd3_t& operator++();  // prefix
 		scd3_t operator++(int);  // postfix
 		scd3_t& operator--();  // prefix
@@ -144,10 +143,6 @@ public:
 	private:
 		int m_val {0};
 		const spn12tet3 *m_sc {};
-		// Note that the private int m_val is the only data contained by the scd3_t  
-		// for spn12tet3.  In general, more "complex," dynamic scales will have completely
-		// different data members, including possibly pointers back into the parent
-		// scale object.  
 	};
 	
 
@@ -186,6 +181,7 @@ private:
 	
 	// Data
 	pitch_std3 m_pstd {};
+	const int N {12};
 	int m_shift_scd {57};  // the scd that generates the ref frq; 57 => A(4)
 	const std::vector<ntl_t> m_ntls {"C"_ntl,"C#"_ntl,"D"_ntl,"D#"_ntl,
 		"E"_ntl,"F"_ntl,"F#"_ntl,"G"_ntl,"G#"_ntl,"A"_ntl,"A#"_ntl,"B"_ntl};

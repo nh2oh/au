@@ -66,5 +66,8 @@
     <ClCompile Include="scd_t_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="scale_spn12tet3cpp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
