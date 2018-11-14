@@ -8,12 +8,15 @@ public:
 	explicit ntl_t(const char*);
 	explicit ntl_t(const std::string&);
 
+	static bool valid_string(const std::string&);
+
 	std::string print() const;
 
 	bool operator==(const ntl_t&) const;
 private:
-	void set_ntl(const std::string&);  // Delegated constructor
+	void set_ntl(const std::string&);  //  Essentially a delegated constructor
 
+	static const char *m_allowed;
 	std::string m_ntl {"C"};
 };
 

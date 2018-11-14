@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 
+
 TEST(ntl_t_tests, ConstructFromConstCharStar) {
 	ntl_t a {"C"};
 	ntl_t b {"C#"};
@@ -47,6 +48,7 @@ TEST(ntl_t_tests, MultiSharpMultiFlat) {
 	}
 
 	for (int i=0; i<vs_sharps.size(); ++i) {
+		EXPECT_TRUE(ntl_t::valid_string(vs_sharps[i]));
 		EXPECT_EQ(vs_sharps[i],v_sharps[i].print());
 		EXPECT_EQ(vs_flats[i],v_flats[i].print());
 	}
@@ -54,4 +56,27 @@ TEST(ntl_t_tests, MultiSharpMultiFlat) {
 }
 
 
+TEST(ntl_t_tests, NumbersBracketsDashesUnderscores) {
+	std::vector<std::string> weird {"C-","_C##","D_--12","D#1##2]","[E]","F[-7]","F[##_#-#6#]",
+		"G","G##","A_____","-_-","--B-"};
+	
+	for (int i=0; i<weird.size(); ++i) {
+		EXPECT_TRUE(ntl_t::valid_string(weird[i]));
+		ntl_t curr_ntl {weird[i]};
+		EXPECT_EQ(curr_ntl.print(),weird[i]);
+	}
+
+}
+
+
+TEST(ntl_t_tests, IllegalChars) {
+	std::vector<std::string> illegal  {"", " ", "	", 
+		" C","C #","D ","D	#","E(","F(5)","(-2)F#","\\0G","G/#","A%","A!#","B*",
+		"C$","D &",	"G.","G#.#","A__^___","-%_-","--~B-"};
+	
+	for (int i=0; i<illegal.size(); ++i) {
+		EXPECT_FALSE(ntl_t::valid_string(illegal[i]));
+	}
+
+}
 

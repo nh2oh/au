@@ -5,6 +5,7 @@
 #include <regex>
 #include <algorithm>
 
+const char *ntl_t::m_allowed {"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234567989_-[]#&"};
 
 //-----------------------------------------------------------------------------
 // The ntl_t class
@@ -17,15 +18,14 @@ ntl_t::ntl_t(const char* char_in) {
 	set_ntl(std::string(char_in));
 }
 
-// TODO:  Specify the _allowed_ chars, not the disallowed chars
-// My illegal-list is missing \t, for example
-void ntl_t::set_ntl(const std::string& str_in) {
-	const std::string s_illegal {"()[] ;,"};  // NB: contains the space char: ' '
-	auto i = std::find_first_of(str_in.begin(),str_in.end(),
-		s_illegal.begin(),s_illegal.end());
-	au_assert(str_in.size()>=1 && i==str_in.end(),
-		"Empty string or string contains illegal chars");
+bool ntl_t::valid_string(const std::string& str_in) {
+	if (str_in.size() == 0) { return false; }
+	auto pos_illegal = str_in.find_first_not_of(m_allowed,0);
+	return pos_illegal == std::string::npos;
+}
 
+void ntl_t::set_ntl(const std::string& str_in) {
+	if (!valid_string(str_in)) { std::abort(); }
 	m_ntl = str_in;
 }
 
