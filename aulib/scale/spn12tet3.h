@@ -98,12 +98,12 @@
 // >,<, etc operators on scd_t's ??  Up to the scale?
 //
 //
-// Users will also show up w/ sets fo scd_t's from scale a and want to convert them to
+// Users will also show up w/ sets of scd_t's from scale a and want to convert them to
 // scale_b.  How should this be dealt with?  
 // Scale a may define a converting operator from its scd_t to int; scale b may define the
 // overload b.to_scd(int).  Scale b may also define a ctor b::scd_t(int,*instance_of_b).  
 // If different scales define conversions between all other scales i lose the scale-independent
-// property that scd_t's were supposed to provide in the first place.  Requiring  conversion
+// property that scd_t's were supposed to provide in the first place.  Requiring conversion
 // to int may allow for the best of both worlds.  
 //
 // How about:  
@@ -121,32 +121,6 @@
 //
 
 
-
-
-
-// Note that all members are "absolute;" that is, they do not reference
-// scale state or scale-dependent types. However, despite this, the
-// class is a sub-class of the scale. To compare w/ note_t's that are
-// subclasses of different scales, someone will have to define a conversion
-// function/constructor/whatever. Probably such a thing will go through
-// a scale-dependent validation function that parses the ntstr and frq.
-//
-//
-class note_t {
-public:
-	//explicit note_t()=default;
-	//explicit note_t(ntl_t,octn_t,frq_t);
-
-	ntl_t ntl {"C"};
-	octn_t oct {0};
-	frq_t frq {252.0};
-	
-	// The vast-vast majority of scales will have a finite set of repeating ntl_t's,
-	// and it is very useful to be able to number them.  Hence the oct field.  
-	// Assignment of this field and its interpretation is left _completely_ up to 
-	// the scale.  
-private:  // Turns out a note_t has no invariants!
-};
 
 
 // Should this be a template param for the scale ?
