@@ -4,6 +4,14 @@
 #include <vector>
 
 
+
+TEST(ntl_t_tests, DefaultCtor) {
+	ntl_t def_ntl {};
+	EXPECT_EQ(def_ntl,ntl_t{"C"});
+	EXPECT_EQ(def_ntl.print(),std::string{"C"});
+}
+
+
 TEST(ntl_t_tests, ConstructFromConstCharStar) {
 	ntl_t a {"C"};
 	ntl_t b {"C#"};

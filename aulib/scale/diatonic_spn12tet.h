@@ -19,6 +19,8 @@
 //
 //
 
+// TODO:  Base on spn12tet3; new name == spn_diatonic ?
+
 class diatonic_spn12tet {
 public:
 	enum mode {
