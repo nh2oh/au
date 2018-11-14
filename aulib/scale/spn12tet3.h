@@ -113,6 +113,10 @@
 // n'th scale degree is always the n'th scale degree, but its frq, ntl, etc may change (for
 // a dynamic scale)."  
 //
+// Allow scd_t's to be constructed w/o a scale w/ ints?  User can call some sort of scd_t.set(*sc)
+// method later on when ready to deref ?.  scd_t would have to be a template: scd_t<typename sc>.  
+// What's the point of this?  Why not just have users work with naked ints?  No association to
+// a scale... scd_t just goes back to being a "strong type."  
 //
 // All sc.to_scd() methods are const; sc::scd_t::operator*() may change the state of the 
 // scale but the to_scd() methods do not.  
