@@ -17,6 +17,8 @@ ntl_t::ntl_t(const char* char_in) {
 	set_ntl(std::string(char_in));
 }
 
+// TODO:  Specify the _allowed_ chars, not the disallowed chars
+// My illegal-list is missing \t, for example
 void ntl_t::set_ntl(const std::string& str_in) {
 	const std::string s_illegal {"()[] ;,"};  // NB: contains the space char: ' '
 	auto i = std::find_first_of(str_in.begin(),str_in.end(),
