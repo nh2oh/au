@@ -80,7 +80,7 @@ bool operator!=(const note_t& lhs, const note_t& rhs) {
 ntstr_parsed parse_ntstr(const std::string& s) {
 	ntstr_parsed result {false, false, ntl_t{"C"}, octn_t{0}};
 
-	std::regex rx("([a-zA-Z0-9#&\\[\\]_\-]+)(?:\\((-?\\d+)\\))?");
+	std::regex rx("([a-zA-Z0-9#&\\[\\]_\\-]+)(?:\\((-?\\d+)\\))?");
 	std::smatch rx_matches {};
 	if (!std::regex_match(s, rx_matches, rx)) {
 		return result;
@@ -96,14 +96,14 @@ ntstr_parsed parse_ntstr(const std::string& s) {
 			result.ntl = ntl_t {rx_matches[1].str()};
 		}
 		result.is_valid = true;
-		result.oct_set = false;
+		result.is_oct_set = false;
 	} else if (rx_matches[1].matched && rx_matches[2].matched) {  // octave set
 		if (ntl_t::valid_string(rx_matches[1].str())) {
 			result.ntl = ntl_t {rx_matches[1].str()};
 		}
 		result.oct = octn_t {std::stoi(rx_matches[2].str())};
 		result.is_valid = true;
-		result.oct_set = true;
+		result.is_oct_set = true;
 	}
 
 	return result;

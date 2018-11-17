@@ -60,13 +60,13 @@
     <ClCompile Include="ntl_t_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ntstr_t_test.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="scd_t_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="scale_spn12tet3cpp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="note_t_tests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

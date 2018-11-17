@@ -53,7 +53,7 @@ public:
 
 	ntl_t ntl {"C"};
 	octn_t oct {0};
-	frq_t frq {252.0};
+	frq_t frq {16.352};
 
 	bool operator==(const note_t&) const;
 private:  // Turns out a note_t has no invariants!
@@ -62,11 +62,12 @@ bool operator!=(const note_t&, const note_t&);
 
 struct ntstr_parsed {
 	bool is_valid {false};
-	bool oct_set {false};
+	bool is_oct_set {false};
 	ntl_t ntl {};
 	octn_t oct {};
 };
 ntstr_parsed parse_ntstr(const std::string&);
+
 
 
 
