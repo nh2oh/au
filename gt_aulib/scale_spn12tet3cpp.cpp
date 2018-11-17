@@ -8,7 +8,7 @@
 // Default constructor should generate A440 w/ the expected ntl set
 TEST(scaleSPN12tet3Tests, DefaultCtorNtlMembers) {
 	spn12tet3 sc {};
-
+	pitch_std3 ps {};
 	// 1)  All these ntl's are scale-members.
 	// 2)  For a range of octn's, conversion to an scd then from an scd to a note
 	//     returns the same ntl.  

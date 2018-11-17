@@ -50,8 +50,8 @@ ntl_t operator""_ntl(const char *literal_in, size_t length) {
 
 note_t::note_t(ntl_t n, octn_t o, frq_t f) {
 	ntl = n;
-	o = o;
-	f = f;
+	oct = o;
+	frq = f;
 }
 
 std::string note_t::print(note_t::fmt f) const {
@@ -80,7 +80,7 @@ bool operator!=(const note_t& lhs, const note_t& rhs) {
 ntstr_parsed parse_ntstr(const std::string& s) {
 	ntstr_parsed result {false, false, ntl_t{"C"}, octn_t{0}};
 
-	std::regex rx("([a-zA-Z0-9#&\[\]_\-]+)(?:\\((-?\\d+)\\))?");
+	std::regex rx("([a-zA-Z0-9#&\\[\\]_\-]+)(?:\\((-?\\d+)\\))?");
 	std::smatch rx_matches {};
 	if (!std::regex_match(s, rx_matches, rx)) {
 		return result;
@@ -136,7 +136,7 @@ ntstr_t::ntstr_t(ntl_t ntl_in, octn_t octn_in) {
 }
 
 void ntstr_t::from_string(const std::string& str_in) {
-	std::regex rx("([a-zA-Z0-9#&\[\]_\-]+)(?:\\((-?\\d+)\\))?");
+	std::regex rx("([a-zA-Z0-9#&\\[\\]_\-]+)(?:\\((-?\\d+)\\))?");
 	std::smatch rx_matches;
 	if (!std::regex_match(str_in, rx_matches, rx)) {
 		au_error("!std::regex_match(str_in, rx_matches, rx)");
