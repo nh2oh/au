@@ -180,6 +180,9 @@ public:
 	spn12tet3::scd3_t to_scd(const ntl_t&, const octn_t&) const;
 	spn12tet3::scd3_t to_scd(const note_t&) const;
 	spn12tet3::scd3_t to_scd(const frq_t&) const;
+	spn12tet3::scd3_t to_scd(const int&) const;
+		// to_scd(0) is analagous to getting a vector iterator by calling .front()
+		// to_scd(5) is alalagous to auto it = myvec.front()+5;
 	std::vector<spn12tet3::scd3_t> to_scd(const std::vector<note_t>&) const;
 private:
 	struct base_ntl_idx_t {

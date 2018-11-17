@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 #include "..\aulib\melgen\randmel_gens.h"
 #include "..\aulib\scale\diatonic_spn12tet.h"
+#include "..\aulib\scale\spn12tet3.h"
 #include "..\aulib\types\line_t.h"
 #include "..\aulib\types\ntl_t.h"
 #include "..\aulib\types\scd_t.h"
@@ -10,23 +11,24 @@
 #include <numeric>  // std::round()
 
 TEST(ks_key_tests, CmajorScaleOnePassZeroOctave) {
-	diatonic_spn12tet sc {ntl_t{"C"},diatonic_spn12tet::mode::major};
-	// My "melody," nts_scds, nts_ntstrs is just C(0)-D(0)-...-B(0)
-	// This should test positive for C-major
-	std::vector<int> nts_scds {0,1,2,3,4,5,6};
-	std::vector<ntstr_t> nts_ntstrs {};
-	for (auto e : nts_scds) {
-		nts_ntstrs.push_back(sc.to_ntstr(scd_t{e}));
-	}
-	rp_t rp {ts_t{4_bt,d::q},std::vector<d_t>(nts_ntstrs.size(),d::q)};
-	line_t line {nts_ntstrs,rp};
+	spn12tet3 sc3 {};
+	std::vector<ntl_t> cmaj_ntls {"C"_ntl,"D"_ntl,"E"_ntl,"F"_ntl,"G"_ntl,"A"_ntl,"B"_ntl};
 
-	auto res = ks_key(line,ks_key_params{0});
+	std::vector<note_t> melody_notes {};
+	for (const auto& e : cmaj_ntls) {
+		melody_notes.push_back(*(sc3.to_scd(e,octn_t{0})));
+	}
+	rp_t melody_rp {ts_t{4_bt,d::q},std::vector<d_t>(melody_notes.size(),d::q)};
+	line_t melody {melody_notes,melody_rp};
+
+	auto res = ks_key(melody,ks_key_params{0});
+
 	ntl_t ans_key {"C"};  // C
 	bool ans_ismajor {true};
 	EXPECT_TRUE(res.ismajor);
 	EXPECT_TRUE(ans_key == res.key);
 }
+
 
 TEST(ks_key_tests, CminorScaleOnePassZeroOctave) {
 	// Comparison to Temperley's C implementation on the following notes file:
@@ -37,16 +39,24 @@ TEST(ks_key_tests, CminorScaleOnePassZeroOctave) {
 	// Note   1000   1200 67
 	// Note   1200   1400 68
 	// Note   1400   1600 70
-	diatonic_spn12tet sc {ntl_t{"C"},diatonic_spn12tet::mode::minor};
-	std::vector<int> nts_scds {0,1,2,3,4,5,6};
-	std::vector<ntstr_t> nts_ntstrs {};
-	for (auto e : nts_scds) {
-		nts_ntstrs.push_back(sc.to_ntstr(scd_t{e}));
-	}
-	rp_t rp {ts_t{4_bt,d::q},std::vector<d_t>(nts_ntstrs.size(),d::q)};
-	line_t line {nts_ntstrs,rp};
+	std::vector<ntl_t> cmin_ntls {"C"_ntl,"D"_ntl,"D#"_ntl,"F"_ntl,"G"_ntl,"G#"_ntl,"A#"_ntl};
+	spn12tet3 sc {};
 
-	auto res = ks_key(line,ks_key_params{0});
+	std::vector<note_t> melody_notes {};
+	for (const auto& e : cmin_ntls) {
+		melody_notes.push_back(*(sc.to_scd(e,octn_t{0})));
+	}
+	rp_t melody_rp {ts_t{4_bt,d::q},std::vector<d_t>(melody_notes.size(),d::q)};
+	line_t melody {melody_notes,melody_rp};
+
+	auto res = ks_key(melody,ks_key_params{0});
+
+	std::vector<double> res_maj_scores {};
+	std::vector<double> res_min_scores {};
+	for (const auto& e : res.all_scores) {
+		res_maj_scores.push_back(e.v[0]);
+		res_min_scores.push_back(e.v[1]);
+	}
 	// For some reason the ks alg assigns this sequence D#-major
 	ntl_t ans_key {"D#"};
 	std::vector<double> ans_maj_scores {0.23318,-0.00502,-0.29139,0.75641,-0.71693,
@@ -58,20 +68,20 @@ TEST(ks_key_tests, CminorScaleOnePassZeroOctave) {
 
 	for (int i=0; i<12; ++i) {
 		EXPECT_EQ(std::round(1000*ans_maj_scores[i]),
-			std::round(1000*res.all_scores[0][i]));
+			std::round(1000*res_maj_scores[i]));
 		EXPECT_EQ(std::round(1000*ans_min_scores[i]),
-			std::round(1000*res.all_scores[1][i]));
+			std::round(1000*res_min_scores[i]));
 	}
 }
 
+
 TEST(ks_key_tests, ChildO5Notes) {
-	diatonic_spn12tet sc {ntl_t{"C"},diatonic_spn12tet::mode::major};
+	spn12tet3 sc {};
+	std::vector<ntl_t> cmaj_ntls {"C"_ntl,"D"_ntl,"E"_ntl,"F"_ntl,"G"_ntl,"A"_ntl,"B"_ntl};
 	ts_t ts {4_bt,d::q};
+
 	std::vector<int> midi_code {71,69,67,67,67,71,72,74,76,74,71,67,71,69,67,67,72,
 		71,69,67,67,71,72,74,76,74,71,67,71,69,67,67};
-	for (auto& e : midi_code) {
-		//e += 1;
-	}
 	std::vector<double> ontime {0,288,620,1227,1500,1789,2074,2418,3669,3969,4312,
 		4935,5096,5546,6046,6224,7199,7502,7797,8122,8760,9360,9651,9987,11252,
 		11549,11893,12531,12695,13176,13693,13897};
@@ -83,25 +93,17 @@ TEST(ks_key_tests, ChildO5Notes) {
 	// that just does this.  
 	// Also convert the midi notes to scds.  
 	std::vector<d_t> nvs {};
-	std::vector<scd_t> scds {};
-	//double dt_ms_64th_note = 18.75;  // => d::q ~ 300 ms
-	//d_t nv_sf {d::sf};  // A 64'th note
+	std::vector<note_t> melody_notes {};
 	for (int i=0; i<ontime.size(); ++i) {
 		//double num_64th_notes = std::round((offtime[i]-ontime[i])/dt_ms_64th_note);
 		//d_t curr_nv = nv_sf*num_64th_notes;
 		d_t curr_nv {(offtime[i]-ontime[i])/1000.0};
 		nvs.push_back(curr_nv);
 
-		scds.push_back(scd_t{midi_code[i]});
+		melody_notes.push_back(*(sc.to_scd(midi_code[i])));
 	}
-	rp_t rp {ts,nvs};
-	auto nvs_rev = rp.to_duration_seq();
-	std::vector<double> dt_rev {};
-	d_t wholent {d::w};
-	for (const auto& e : nvs_rev) {
-		dt_rev.push_back((e/wholent)*1000);
-	}
-	line_t<ntstr_t> melody {sc.to_ntstr(scds),rp};
+	rp_t melody_rp {ts,nvs};
+	line_t<note_t> melody {melody_notes,melody_rp};
 
 	auto res = ks_key(melody,ks_key_params{0});
 
@@ -109,6 +111,5 @@ TEST(ks_key_tests, ChildO5Notes) {
 	EXPECT_TRUE(res.ismajor);
 	EXPECT_TRUE(ans_key == res.key);
 }
-
 
 

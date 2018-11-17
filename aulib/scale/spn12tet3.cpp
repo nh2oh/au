@@ -74,6 +74,10 @@ spn12tet3::scd3_t spn12tet3::to_scd(const frq_t& frq) const {
 	if (!idx.is_valid) { std::abort(); }
 	return  spn12tet3::scd3_t {idx.scd_idx,this};
 }
+spn12tet3::scd3_t spn12tet3::to_scd(const int& i) const {
+	return  spn12tet3::scd3_t {i,this};
+}
+
 spn12tet3::scd3_t spn12tet3::to_scd(const note_t& note) const {
 	return to_scd(note.ntl,note.oct);
 }

@@ -4,6 +4,7 @@
 #include "..\types\frq_t.h"
 #include "..\types\ts_t.h"
 #include "..\types\beat_bar_t.h"
+#include "dbklib\contigumap.h"
 #include <vector>
 #include <array>
 
@@ -43,12 +44,15 @@ struct ks_key_result {
 	bool ismajor {false};
 	double score {0};
 	bool istie {false};
-	std::array<std::array<double,12>,2> 
-		all_scores {{{0,0,0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0,0,0}}};
-		// all_scores[0] => major, all_scores[1] => minor
+	dbk::contigumap<ntl_t,std::array<double,2>> all_scores {};
+	// all_scores[0] => major, all_scores[1] => minor
+
+	//std::array<std::array<double,12>,2> 
+	//	all_scores {{{0,0,0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0,0,0}}};
+	//	// all_scores[0] => major, all_scores[1] => minor
 };
 
-ks_key_result ks_key(line_t<ntstr_t>,ks_key_params);
+ks_key_result ks_key(line_t<note_t>,ks_key_params);
 
 
 
