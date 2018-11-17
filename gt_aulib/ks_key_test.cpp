@@ -54,8 +54,8 @@ TEST(ks_key_tests, CminorScaleOnePassZeroOctave) {
 	std::vector<double> res_maj_scores {};
 	std::vector<double> res_min_scores {};
 	for (const auto& e : res.all_scores) {
-		res_maj_scores.push_back(e.v[0]);
-		res_min_scores.push_back(e.v[1]);
+		res_maj_scores.push_back(e.v.maj);
+		res_min_scores.push_back(e.v.min);
 	}
 	// For some reason the ks alg assigns this sequence D#-major
 	ntl_t ans_key {"D#"};
