@@ -56,7 +56,6 @@ ks_key_result ks_key(line_t<note_t> nts, ks_key_params p) {
 	// deals with chords).  
 	auto melody_flat = nts.notes_flat();
 	dbk::contigumap<ntl_t,double> note_wtcount {cchrom_ntls,0.0};  // "note weighted-count"
-	std::vector<double> rscds_weighted(12,0.0);
 	d_t dw {d::w};
 	for (const auto& e : melody_flat) {
 		note_wtcount[e.note.ntl] += (e.d)/dw;
@@ -64,26 +63,23 @@ ks_key_result ks_key(line_t<note_t> nts, ks_key_params p) {
 
 
 	ks_key_result res {};
-	dbk::contigumap<ntl_t,ks_key_result::major_minor_pair> scores_kps {cchrom_ntls,{0.0,0.0}};
 	for (const auto& curr_ntl : cchrom_ntls) { 
-		scores_kps[curr_ntl] = {
+		res.all_scores[curr_ntl] = {
 			corr(note_wtcount.values(),kps[curr_ntl].maj),
 			corr(note_wtcount.values(),kps[curr_ntl].min)
 		};
 
-		if (scores_kps[curr_ntl].maj >= res.score) {
-			res.score = scores_kps[curr_ntl].maj;
+		if (res.all_scores[curr_ntl].maj >= res.score) {
+			res.score = res.all_scores[curr_ntl].maj;
 			res.ismajor = true;
 			res.key = curr_ntl;
-		} else if (scores_kps[curr_ntl].min > res.score) {
-			res.score = scores_kps[curr_ntl].min;
+		} else if (res.all_scores[curr_ntl].min > res.score) {
+			res.score = res.all_scores[curr_ntl].min;
 			res.ismajor = false;
 			res.key = curr_ntl;;
 		}
 	}
-	res.all_scores = scores_kps;
 
 	return res;
 }
-
 
