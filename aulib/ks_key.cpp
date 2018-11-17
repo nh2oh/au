@@ -24,23 +24,58 @@ ks_key_result ks_key(line_t<note_t> nts, ks_key_params p) {
 	spn12tet sc {};
 	spn12tet3 sc3 {};
 
-	std::array<double,12> kp_base_maj;
-	std::array<double,12> kp_base_min;
+	const std::vector<ntl_t> cchrom_ntls {"C"_ntl,"C#"_ntl,"D"_ntl,"D#"_ntl,
+		"E"_ntl,"F"_ntl,"F#"_ntl,"G"_ntl,"G#"_ntl,"A"_ntl,"A#"_ntl,"B"_ntl};
+
+	std::vector<double> values_basekp_maj;
+	std::vector<double> values_basekp_min;
 	switch (p.profile) {
 		case 0:
 			// From Temperly p.52
-			//             C     C#    D     D#    E     F      F#    G     G#    A    A#    B
-			kp_base_maj = {6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88};
-			kp_base_min = {6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17};
+			//                   C    C#   D    D#   E    F    F#   G    G#   A    A#   B
+			values_basekp_maj = {6.35,2.23,3.48,2.33,4.38,4.09,2.52,5.19,2.39,3.66,2.29,2.88};
+			values_basekp_min = {6.33,2.68,3.52,5.38,2.60,3.53,2.54,4.75,3.98,2.69,3.34,3.17};
 			break;
 		case 1:
 			// Page 180 of "The Cognition of Basic Musical Structures" by Temperley
-			//             C  C# D    D# E    F  F# G    G# A    A#   B
-			kp_base_maj = {5, 2, 3.5, 2, 4.5, 4, 2, 4.5, 2, 3.5, 1.5, 4};
-			kp_base_min = {5, 2, 3.5, 4.5, 2, 4, 2, 4.5, 3.5, 2, 1.5, 4};
+			//                   C  C# D    D# E    F  F# G    G# A    A#   B
+			values_basekp_maj = {5, 2, 3.5, 2, 4.5, 4, 2, 4.5, 2, 3.5, 1.5, 4};
+			values_basekp_min = {5, 2, 3.5, 4.5, 2, 4, 2, 4.5, 3.5, 2, 1.5, 4};
 			break;
 	}
+	dbk::contigumap<ntl_t,std::vector<double>> kp_maj {};
+	dbk::contigumap<ntl_t,std::vector<double>> kp_min {};
+	for (int i=0; i<12; ++i) {
+		std::vector<double> curr_kpvals_maj {};  curr_kpvals_maj.reserve(12);
+		std::vector<double> curr_kpvals_min {};  curr_kpvals_min.reserve(12);
+		for (int j=0; j<12; ++j) {
+			// For key i=0, element 0 of the base profile needs to appear in row 0.  
+			// For key i=1, element _0_ of the base profile needs to appear in row 
+			// 1, ...
+			curr_kpvals_maj.push_back(values_basekp_maj[(j-i+12)%12]);
+			curr_kpvals_min.push_back(values_basekp_min[(j-i+12)%12]);
+		}
+		kp_maj[cchrom_ntls[i]] = curr_kpvals_maj;
+		kp_min[cchrom_ntls[i]] = curr_kpvals_min;
+	}
 
+	/*
+	for (const auto& curr_ntl : cchrom_ntls) {
+		for (int j=0; j<12; ++j) {
+			int i = kp_maj.begin()
+			kp_maj[curr_ntl][j] = kp_base_maj[(j-i+12)%12];
+			kp_min[curr_ntl][j] = kp_base_min[(j-i+12)%12];
+		}
+		//mkp_maj[sc.to_ntstr(scd_t{i})] = kp_maj[i];
+		//mkp_min[sc.to_ntstr(scd_t{i})] = kp_min[i];
+		auto curr_note = *(sc3.to_scd(i));
+		mkp_maj[curr_note.ntl] = kp_maj[i];
+		mkp_min[curr_note.ntl] = kp_min[i];
+	}*/
+
+
+
+	/*
 	// kp_maj[key][rscd], kp_min[][]
 	// For key i=0, element 0 of the base profile needs to appear in row 0.  
 	// For key i=1, element _0_ of the base profile needs to appear in row 
@@ -60,7 +95,7 @@ ks_key_result ks_key(line_t<note_t> nts, ks_key_params p) {
 		auto curr_note = *(sc3.to_scd(i));
 		mkp_maj[curr_note.ntl] = kp_maj[i];
 		mkp_min[curr_note.ntl] = kp_min[i];
-	}
+	}*/
 
 	// The note-sequence / rscd weights
 	// Each rscd is weighted according to the total amount of time it occupies 
@@ -70,7 +105,7 @@ ks_key_result ks_key(line_t<note_t> nts, ks_key_params p) {
 	// Relies on the fact that for spn12tet, C => rscd == 0, etc.  
 	auto notes_flatchords_norests = nts.notes_flat();
 
-	dbk::contigumap<ntl_t,double> nsw {mkp_maj.keys(),std::vector<double>(12,0.0)};  // "note-string-weighted"
+	dbk::contigumap<ntl_t,double> nsw {cchrom_ntls,std::vector<double>(12,0.0)};  // "note-string-weighted"
 	//dbk::contigumap<rscdoctn_t,double> rw {};
 	std::vector<double> rscds_weighted(12,0.0);
 	d_t dw {d::w};
@@ -85,6 +120,7 @@ ks_key_result ks_key(line_t<note_t> nts, ks_key_params p) {
 		nsw[curr_ntl] += (notes_flatchords_norests[i].d)/dw;
 	}
 
+	/*
 	auto corr_maj = corr(rscds_weighted,kp_maj);
 	auto corr_min = corr(rscds_weighted,kp_min);
 	auto rscd_max_corr_maj = std::distance(
@@ -93,14 +129,14 @@ ks_key_result ks_key(line_t<note_t> nts, ks_key_params p) {
 	auto rscd_max_corr_min = std::distance(
 		corr_min.begin(),
 		std::max_element(corr_min.begin(), corr_min.end()));
-
+		*/
 	auto corr_maj_frommap = nsw;
 	auto corr_min_frommap = nsw;
-	for (const auto& curr_kp : mkp_maj) {
+	for (const auto& curr_kp : kp_maj) {
 		auto curr_corr = corr(nsw.values(),curr_kp.v);
 		corr_maj_frommap[curr_kp.k] = curr_corr;
 	}
-	for (const auto& curr_kp : mkp_min) {
+	for (const auto& curr_kp : kp_min) {
 		auto curr_corr = corr(nsw.values(),curr_kp.v);
 		corr_min_frommap[curr_kp.k] = curr_corr;
 	}
@@ -159,7 +195,7 @@ ks_key_result ks_key(line_t<note_t> nts, ks_key_params p) {
 		res.all_scores[0][i] = corr_maj[i];
 		res.all_scores[1][i] = corr_min[i];
 	}*/
-	for (const auto& curr_ntl : mkp_maj) {
+	for (const auto& curr_ntl : kp_maj) {
 		res.all_scores[curr_ntl.k][0] = corr_maj_frommap[curr_ntl.k];
 		res.all_scores[curr_ntl.k][1] = corr_min_frommap[curr_ntl.k];
 	}

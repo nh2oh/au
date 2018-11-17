@@ -18,7 +18,6 @@ spn12tet3::spn12tet3(pitch_std3 ps) {
 
 	m_shift_scd = (m_pstd.ref_note.oct.to_int())*(spn12tet3::m_ntls.size()) + (it-m_ntls.begin());
 	// Expect 57 for a ref pitch of A(4)
-	auto x = (m_shift_scd == 57);
 }
 
 std::string spn12tet3::print() const {
