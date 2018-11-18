@@ -20,9 +20,29 @@
 //
 
 // TODO:  Base on spn12tet3; new name == spn_diatonic ?
-/*
+
 class diatonic_spn12tet {
 public:
+	class scd3_t {
+	public:
+		// Note these ctors are public... in general scale scd3_t's need not provide
+		// public ctors...
+		explicit scd3_t(int,const spn12tet*);
+
+		note_t operator*() const;
+		scd3_t& operator++();  // prefix
+		scd3_t operator++(int);  // postfix
+		scd3_t& operator--();  // prefix
+		scd3_t operator--(int);  // postfix
+		scd3_t& operator-=(const scd3_t&);
+		friend int operator-(const scd3_t&,const scd3_t&);
+		//bool operator==(const scd3_t&) const;
+		//bool operator>(const scd3_t&) const;
+		//bool operator<(const scd3_t&) const;
+	private:
+		int m_val {0};
+		const spn12tet *m_sc {};
+	};
 	enum mode {
 		major = 0,
 		minor = 5,
@@ -35,19 +55,42 @@ public:
 		aeolian = 5,
 		locrian = 6
 	};
+
 	// Constructors -- all delegate to build_sc()
 	diatonic_spn12tet()=default;
 	explicit diatonic_spn12tet(ntl_t,mode);
 	explicit diatonic_spn12tet(spn12tet,ntl_t,mode);
 
-	// Info
-	int n() const;
+	// Getters
 	std::string name() const;
 	std::string description() const;
-	bool isinsc(ntl_t) const;
-	bool isinsc(frq_t) const;
-	std::string print(scd_t,scd_t) const;
+	std::string print() const;
+	std::string print(int,int) const;
 
+	bool isinsc(const ntl_t&) const;
+	bool isinsc(const frq_t&) const;
+	bool isinsc(const note_t&) const;
+	
+	diatonic_spn12tet::scd3_t to_scd(const ntl_t&, const octn_t&) const;
+	diatonic_spn12tet::scd3_t to_scd(const note_t&) const;
+	diatonic_spn12tet::scd3_t to_scd(const frq_t&) const;
+	diatonic_spn12tet::scd3_t to_scd(const int&) const;
+		// to_scd(0) is analagous to getting a vector iterator by calling .front()
+		// to_scd(5) is alalagous to auto it = myvec.front()+5;
+	std::vector<diatonic_spn12tet::scd3_t> to_scd(const std::vector<note_t>&) const;
+
+
+
+
+
+	// Info
+	//int n() const;
+	//std::string name() const;
+	//std::string description() const;
+	//bool isinsc(ntl_t) const;
+	//bool isinsc(frq_t) const;
+	//std::string print(scd_t,scd_t) const;
+	/*
 	scd_t to_scd(ntstr_t) const;
 	std::vector<scd_t> to_scd(const std::vector<ntstr_t>&) const;
 	scd_t to_scd(frq_t) const;
@@ -67,6 +110,7 @@ public:
 	//std::vector<octn_t> to_octn(const std::vector<scd_t>&) const;
 	octn_t to_octn(frq_t) const;
 	//std::vector<octn_t> to_octn(const std::vector<frq_t>&) const;
+	*/
 
 private:
 	void build_sc(spn12tet,ntl_t,mode);  // Delegated constructor
@@ -88,4 +132,3 @@ private:
 
 };
 
-*/

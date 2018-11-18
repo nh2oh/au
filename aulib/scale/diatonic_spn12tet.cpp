@@ -1,8 +1,6 @@
-/*
 #include "scale.h"
 #include "diatonic_spn12tet.h"
 #include "spn12tet.h"
-#include "..\types\cent_oct_t.h"
 #include "..\types\ntl_t.h"
 #include "..\types\frq_t.h"
 #include "..\types\scd_t.h"
@@ -22,7 +20,7 @@ diatonic_spn12tet::diatonic_spn12tet(spn12tet sc, ntl_t base_ntl, mode m) {
 void diatonic_spn12tet::build_sc(spn12tet sc_base, ntl_t ntl_base, mode m) {
 	m_sc_base = sc_base;
 	m_ntl_base = ntl_base;
-	m_shift_scd = m_sc_base.to_scd(ntstr_t{ntl_base,0}).to_int();
+	m_shift_scd = m_sc_base.to_scd(ntl_base,octn_t{0}) - m_sc_base.to_scd(0);
 	m_mode_idx = static_cast<int>(m);
 	
 	scd_t curr_scd {m_shift_scd};
@@ -163,4 +161,3 @@ std::string diatonic_spn12tet::print(scd_t from, scd_t to) const {
 	return s;
 }
 
-*/

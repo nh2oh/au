@@ -9,7 +9,7 @@
 #include <string>
 
 
-spn12tet::spn12tet(pitch_std3 ps) {
+spn12tet::spn12tet(pitch_std ps) {
 	if (ps.gen_int <= 0 || ps.ntet <= 0) { std::abort(); }  // TODO:  Move into pitch_std class
 	m_pstd = ps;
 
