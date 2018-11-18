@@ -96,9 +96,6 @@
     <ClCompile Include="melgen\melody_a.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="scale\spn12tet.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="scale\diatonic_spn12tet.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -213,9 +210,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="melgen\randmel_gens.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="scale\spn12tet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="scale\diatonic_spn12tet.h">

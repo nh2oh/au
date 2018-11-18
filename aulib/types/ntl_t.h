@@ -69,33 +69,3 @@ struct ntstr_parsed {
 ntstr_parsed parse_ntstr(const std::string&);
 
 
-
-
-//-----------------------------------------------------------------------------
-// The ntstr_t class
-// TODO:  Deprecate
-class ntstr_t {
-public:
-	explicit ntstr_t() = default;
-	explicit ntstr_t(std::string);
-	explicit ntstr_t(std::string,int);
-	explicit ntstr_t(ntl_t, int);  // arg2 ~ octave number
-	explicit ntstr_t(ntl_t, octn_t);
-
-	std::string print() const;
-
-	const octn_t& oct() const;
-	const ntl_t& ntl() const;
-	explicit operator ntl_t() const;
-	bool operator==(const ntstr_t&) const;
-private:
-	void from_string(const std::string&);
-	ntl_t m_ntl {"C"};
-	octn_t m_octn {0};
-};
-
-bool operator!=(const ntstr_t&, const ntstr_t&);
-
-
-
-

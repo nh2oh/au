@@ -19,7 +19,6 @@ std::string print_tt_table() {
 	oct_t oct_def {}; all["oct_t"] = dbk::inspect_type(oct_def);
 	scd_t scd_def {}; all["scd_t"] = dbk::inspect_type(scd_def);
 	ntl_t ntl_def {}; all["ntl_t"] = dbk::inspect_type(ntl_def);
-	ntstr_t ntstr_def {}; all["ntstr_t"] = dbk::inspect_type(ntstr_def);
 	beat_t beat_def {}; all["beat_t"] = dbk::inspect_type(beat_def);
 	bar_t bar_def {}; all["bar_t"] = dbk::inspect_type(bar_def);
 	rp_t rp_def {}; all["rp_t"] = dbk::inspect_type(rp_def);

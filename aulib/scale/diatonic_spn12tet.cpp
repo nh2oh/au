@@ -1,6 +1,7 @@
+/*
 #include "scale.h"
 #include "diatonic_spn12tet.h"
-#include "spn12tet.h"
+#include "spn12tet3.h"
 #include "..\types\cent_oct_t.h"
 #include "..\types\ntl_t.h"
 #include "..\types\frq_t.h"
@@ -162,3 +163,4 @@ std::string diatonic_spn12tet::print(scd_t from, scd_t to) const {
 	return s;
 }
 
+*/

@@ -3,7 +3,7 @@
 #include "..\types\frq_t.h"
 #include "..\types\ntl_t.h"
 #include "..\types\scd_t.h"
-#include "spn12tet.h"
+#include "spn12tet3.h"
 #include <vector>
 #include <string>
 
@@ -20,7 +20,7 @@
 //
 
 // TODO:  Base on spn12tet3; new name == spn_diatonic ?
-
+/*
 class diatonic_spn12tet {
 public:
 	enum mode {
@@ -88,4 +88,4 @@ private:
 
 };
 
-
+*/

@@ -36,7 +36,7 @@ private:
 	dp_type_pool<std::vector<d_t>> m_rps {};
 	dp_type_pool<std::vector<scd_t>> m_scds {};
 	dp_type_pool<std::vector<frq_t>> m_frqs {};
-	dp_type_pool<std::vector<ntstr_t>> m_ntstrs {};
+	dp_type_pool<std::vector<note_t>> m_ntstrs {};
 	dp_type_pool<notefile> m_nfs {};
 };
 

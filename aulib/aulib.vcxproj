@@ -27,7 +27,6 @@
     <ClCompile Include="nv_t_uih.cpp" />
     <ClCompile Include="randrp_metg.cpp" />
     <ClCompile Include="rpgen\rand_rp.cpp" />
-    <ClCompile Include="scale\spn12tet.cpp" />
     <ClCompile Include="scale\scale.cpp" />
     <ClCompile Include="scale\diatonic_spn12tet.cpp" />
     <ClCompile Include="scale\spn12tet3.cpp" />
@@ -60,7 +59,6 @@
     <ClInclude Include="nv_t_uih.h" />
     <ClInclude Include="randrp_metg.h" />
     <ClInclude Include="rpgen\rand_rp.h" />
-    <ClInclude Include="scale\spn12tet.h" />
     <ClInclude Include="scale\scale.h" />
     <ClInclude Include="scale\scales_all.h" />
     <ClInclude Include="scale\diatonic_spn12tet.h" />
