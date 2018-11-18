@@ -112,6 +112,9 @@ std::vector<double> normalize_probvec(std::vector<double> p) {
 // must not contain any values < 0.  If the values in p sum to > 1, p is
 // normalized before generating the set.  
 // That is, p == {1,2} => p == {1/3,2/3}
+//
+//  TODO:  Rename to... randidx? draw[_from_pdf]?
+//
 std::vector<size_t> randset(int const& n, std::vector<double> const& p,
 	std::mt19937& re) {
 	au_assert(p.size()>0, "p>0");

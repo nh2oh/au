@@ -12,7 +12,7 @@
 //
 // melody_temperley()
 //
-line_t<ntstr_t> melody_temperley(ntl_t,bool,ts_t,bar_t);
+line_t<note_t> melody_temperley(ntl_t,bool,ts_t,bar_t);
 
 
 //

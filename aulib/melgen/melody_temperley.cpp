@@ -1,6 +1,6 @@
 #pragma once
 #include "randmel_gens.h"
-#include "..\scale\spn12tet.h"
+#include "..\scale\spn12tet3.h"
 #include "..\types\line_t.h"
 #include "..\types\ntl_t.h"
 #include "..\types\ts_t.h"
@@ -8,8 +8,9 @@
 #include "..\types\metg_t.h"
 #include "..\randrp_metg.h"
 #include "..\util\au_random.h"
-#include <string>
-#include <numeric>
+#include "..\util\au_algs_math.h"
+//#include <string>
+//#include <numeric>
 #include <vector>
 
 //
@@ -31,28 +32,32 @@
 //
 // In Temperley's version, the key is random w/ pmaj = 0.88,  pmin = 0.12.
 // It is probably easy enough to allow the present function to pick the
-// key randomly then use kk_key to shift it if a particular key is desired.
+// key randomly then use ks_key() to shift it if a particular key is desired.
 // The current implementation does not gaurantee keyntl will be the resultant 
 // key.  
 //
 //
 //
 
-line_t<ntstr_t> melody_temperley(ntl_t keyntl, bool ismajor, ts_t ts, bar_t nbars) {
+line_t<note_t> melody_temperley(ntl_t keyntl, bool ismajor, ts_t ts, bar_t nbars) {
 	// All notes are drawn from the chromatic scale.  Probability distributions 
 	// controlling note selection are what make notes "diatonic" to the key 
 	// more probable.  
 
-	spn12tet sc {};
+	spn12tet3 sc {};
 
 	std::vector<d_t> nvpool {d::q,d::e,d::sx};
 	std::vector<beat_t> ph {0_bt,0_bt,0_bt};
 	tmetg_t base_metg {ts,nvpool,ph};
 	rp_t rp = randrp_metg(base_metg,0,nbars);
 
-	// The scdpool is the "domain" of notes from which the melody is drawn
-	std::vector<scd_t> scdpool(120,scd_t{0});
-	std::iota(scdpool.begin(),scdpool.end(),scd_t{0});
+	// The scdpool is the "domain" of chromatic scale degrees from which the melody is drawn
+	int sz_scdpool {120};  // TODO:  Make user-settable
+	std::vector<int> scdpool {};  scdpool.reserve(sz_scdpool);
+	for (int i=0; i<sz_scdpool; ++i) {
+		scdpool.push_back(i);
+	}
+	//std::iota(scdpool.begin(),scdpool.end(),0);
 
 	auto re = new_randeng(true);
 
@@ -65,18 +70,21 @@ line_t<ntstr_t> melody_temperley(ntl_t keyntl, bool ismajor, ts_t ts, bar_t nbar
 	//
 	// For the default-constructed scale_12tet, "Middle C" => 261.63 Hz => scd 60.
 	// 
-	scd_t CP_mean {60}; scd_t CP_stdev {13};
+	int CP_mean {60}; int CP_stdev {13};
 	std::vector<double> CP = normpdf(scdpool,CP_mean,CP_stdev);
-	scd_t c {scdpool[randset(1,CP,re)[0]]};  // The central pitch for the melody (_not_ the key)
+	int central_scd {scdpool[randset(1,CP,re)[0]]};  // The central pitch for the melody (_not_ the key)
+	// TODO:  Is c ever used below???
 
 	// The Key Profile (KP)
 	// 
 	// The elements of KP must "align" correctly with the elements of scdpool.  For 
 	// example,  if key_scd == 4 (corresponding to scdpool[4]), KP[4] needs to 
 	// be == KP_base[0].  
-	scd_t key_scd = sc.to_scd(ntstr_t{keyntl,4});
-	rscdoctn_t key_rscd {key_scd,12};
+	spn12tet3::scd3_t key_rscd = sc.to_scd(keyntl,octn_t{0});
+	// Note that i am naming the scd obtained from the "0" octave the rscd
+	//rscdoctn_t key_rscd {key_scd,12};
 	
+	// TODO:  Why are these different from the ks_key() params?
 	std::vector<double> KP_base;
 	if (ismajor) {
 		KP_base =
@@ -86,9 +94,16 @@ line_t<ntstr_t> melody_temperley(ntl_t keyntl, bool ismajor, ts_t ts, bar_t nbar
 			{0.192,0.005,0.149,0.179,0.002,0.144,0.002,0.201,0.038,0.012,0.053,0.022}; // p.60
 	}
 
-	std::vector<double> KP(scdpool.size(),0.0);
+	std::vector<double> KP;  KP.reserve(scdpool.size());
 	for (int i=0; i<scdpool.size(); ++i) {
-		KP[i] = KP_base[(i+key_rscd.to_int())%KP_base.size()];
+		//KP[i] = KP_base[(i+key_rscd.to_int())%KP_base.size()];
+		
+		int val_rscd = key_rscd-sc.to_scd(0);
+		KP.push_back(KP_base[(i+val_rscd)%KP_base.size()]);
+		// TODO:  Check idx calc... compare to ks_key()
+		// TODO:  Make a note somewhere... this type of idxing is dangerous if i 
+		// make the scale user-specifyable. What if somehow, for some scale, val_rscd
+		// is < 0 ?
 	}
 
 	// The Range Profile (RP)
@@ -98,33 +113,41 @@ line_t<ntstr_t> melody_temperley(ntl_t keyntl, bool ismajor, ts_t ts, bar_t nbar
 	// Use the RP to select the initial note of the melody.  
 	// p.61
 	//
-	scd_t RP_stdev {5}; 
-    std::vector<double> RP = normpdf(scdpool,c,RP_stdev);
-	std::vector<double> RPKP(RP.size(),0.0);
+	int RP_stdev {5};   // TODO:  Allow the user to specify?
+    std::vector<double> RP = normpdf(scdpool,central_scd,RP_stdev);
+	std::vector<double> RPKP{};  RPKP.reserve(RP.size());
 	for (int i=0; i<RP.size(); ++i) {
-		RPKP[i] = RP[i]*KP[i];
+		RPKP.push_back(RP[i]*KP[i]);
 	}
 	RPKP = normalize_probvec(RPKP);
 	
-	std::vector<scd_t> scds(rp.nelems(),scd_t{});
-	scds[0] = scdpool[randset(1,RPKP,re)[0]];
-	scd_t PP_s {7}; //double PP_stdev = 7.2; 
+	std::vector<int> melody {}; melody.reserve(rp.nelems());
+	melody.push_back(scdpool[randset(1,RPKP,re)[0]]);
+	int PP_s {7}; //double PP_stdev = 7.2;   // TODO:  Allow the user to specify?
 	for (int i=1; i<rp.nelems(); ++i) {
-		auto curr_PP = normpdf(scdpool,scds[i-1],PP_s); // Mean is the previous pitch
-		std::vector<double> curr_RPKPPP(RP.size(),0.0);
-		for (int j=0; j<curr_RPKPPP.size(); ++j) {
-			curr_RPKPPP[j] = RP[j]*KP[j]*curr_PP[j];
-		}
+		auto curr_PP = normpdf(scdpool,melody[i-1],PP_s); // Mean is the previous pitch
+		
+		//std::vector<double> curr_RPKPPP(RP.size(),0.0);
+		//for (int j=0; j<curr_RPKPPP.size(); ++j) {
+		//	curr_RPKPPP[j] = RP[j]*KP[j]*curr_PP[j];
+		//}
+		std::vector<double> curr_RPKPPP = vprod(RP,KP,curr_PP);
 		curr_RPKPPP = normalize_probvec(curr_RPKPPP);
-		scds[i] = scdpool[randset(1,curr_RPKPPP,re)[0]];
+		melody.push_back(scdpool[randset(1,curr_RPKPPP,re)[0]]);
 	}
 
 	//std::vector<ntstr_t> ntstrs(scds.size(),ntstr_t{});
 	//for (int i=0; i<scds.size(); ++i) {
 	//	ntstrs[i] = sc.to_ntstr(scds[i]);
 	//}
-	std::vector<ntstr_t> ntstrs = sc.to_ntstr(scds);
-	return line_t {ntstrs,rp};
+
+	std::vector<note_t> melody_notes {};  melody_notes.reserve(melody.size());
+	for (const auto& e : melody) {
+		melody_notes.push_back(*(sc.to_scd(e)));
+	}
+	//std::vector<ntstr_t> ntstrs = sc.to_ntstr(scds);
+	//return line_t {ntstrs,rp};
+	return line_t {melody_notes,rp};
 }
 
 

@@ -15,7 +15,7 @@ TEST(melody_temperley_tests, yay) {
 	bool ismajor {true};
 	ts_t ts {4_bt,d::q};
 	bar_t nbars {4};
-	line_t<ntstr_t> rm {};  // "random melody"
+	line_t<note_t> rm {};  // "random melody"
 	rm = melody_temperley(keyntl, ismajor, ts, nbars);
 
 	bool tf {false};
