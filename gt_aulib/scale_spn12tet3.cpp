@@ -27,7 +27,6 @@ TEST(scaleSPN12tet3Tests, DefaultCtorNtlMembers) {
 }
 
 
-
 // Check ntl ordering and location of octave breaks w/ different pith stds.
 // C is always the first ntl of the octave; the pitch std is not a factor
 TEST(scaleSPN12tet3Tests, LocationOctaveBreaks) {
@@ -187,7 +186,6 @@ TEST(scaleSPN12tet3Tests, ScdNoteNtlOctInterconversionDefaultCtor) {
 }
 
 
-
 // The note returned by dereferencing an scd should be consistent w/ the
 // ntl, oct, frq, etc that generated the scd.  
 // Exactly the same test as ScdNoteNtlOctInterconversionDefaultCtor (above)
@@ -247,6 +245,19 @@ TEST(scaleSPN12tet3Tests, ScdNoteNtlOctInterconversionCSharpFive330Hz) {
 }
 
 
+// Middle C:  scd 48 => C(4)
+// Midi-C_5:  scd 60 => C(5)
+TEST(scaleSPN12tet3Tests, ExpectedScdNtlRelationships) {
+	spn12tet3 sc {};
+	
+	auto scd48_from_int = sc.to_scd(48);
+	auto scd48_from_ntloct = sc.to_scd("C"_ntl, octn_t{4});
+	EXPECT_EQ(*scd48_from_int,*scd48_from_ntloct);
+
+	auto scd60_from_int = sc.to_scd(60);
+	auto scd60_from_ntloct = sc.to_scd("C"_ntl, octn_t{5});
+	EXPECT_EQ(*scd60_from_int,*scd60_from_ntloct);
+}
 
 
 

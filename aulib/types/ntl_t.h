@@ -49,7 +49,7 @@ public:
 		ntl,
 		ntlo
 	};
-	std::string print(note_t::fmt) const;
+	std::string print(note_t::fmt=note_t::fmt::ntlo) const;
 
 	ntl_t ntl {"C"};
 	octn_t oct {0};

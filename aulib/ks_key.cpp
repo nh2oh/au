@@ -76,7 +76,7 @@ ks_key_result ks_key(line_t<note_t> nts, ks_key_params p) {
 		} else if (res.all_scores[curr_ntl].min > res.score) {
 			res.score = res.all_scores[curr_ntl].min;
 			res.ismajor = false;
-			res.key = curr_ntl;;
+			res.key = curr_ntl;
 		}
 	}
 

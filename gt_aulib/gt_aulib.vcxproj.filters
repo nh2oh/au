@@ -63,10 +63,10 @@
     <ClCompile Include="scd_t_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="scale_spn12tet3cpp.cpp">
+    <ClCompile Include="note_t_tests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="note_t_tests.cpp">
+    <ClCompile Include="scale_spn12tet3.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

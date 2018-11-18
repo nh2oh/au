@@ -72,7 +72,7 @@ public:
 	bar_t nbars() const { return m_rp.nbars(); };
 	beat_t nbeats() const { return m_rp.nbeats(); };
 	size_t nelems() const { return m_rp.nelems(); };
-	std::string print() {
+	std::string print(const std::string& sep = " ") {
 		d_t::opts rp_p_opts {};
 		rp_p_opts.denom_only = true;
 
@@ -81,7 +81,7 @@ public:
 			s += m_mes[i].print();
 			s += "/";
 			s += m_rp[i].print(rp_p_opts);
-			s += " ";
+			s += sep;
 		}
 
 		return s;

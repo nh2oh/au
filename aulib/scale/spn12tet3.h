@@ -139,6 +139,10 @@ struct pitch_std3 {
 	int ntet {12};
 };
 
+//
+// For spn12tet, scd 60 => C(4) ("middle C"); scd 0 => ???
+// 
+//
 class spn12tet3 {
 public:
 	class scd3_t {
