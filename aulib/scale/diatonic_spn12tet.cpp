@@ -1,7 +1,7 @@
 /*
 #include "scale.h"
 #include "diatonic_spn12tet.h"
-#include "spn12tet3.h"
+#include "spn12tet.h"
 #include "..\types\cent_oct_t.h"
 #include "..\types\ntl_t.h"
 #include "..\types\frq_t.h"

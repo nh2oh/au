@@ -1,6 +1,6 @@
 #pragma once
 #include "randmel_gens.h"
-#include "..\scale\spn12tet3.h"
+#include "..\scale\spn12tet.h"
 #include "..\types\ntl_t.h"
 #include "..\util\au_random.h"
 #include "..\util\au_algs_math.h"
@@ -22,7 +22,7 @@ std::vector<note_t> melody_temperley(const melody_temperley_params& p) {
 	// All notes are drawn from the chromatic scale.  Probability distributions 
 	// controlling note selection are what make notes "diatonic" to the key 
 	// more probable.  
-	spn12tet3 sc {};
+	spn12tet sc {};
 	
 	// The scdpool is the "domain" of chromatic scale degrees from which the melody is drawn
 	std::vector<int> scdpool {};  scdpool.reserve(p.sz_scdpool);
@@ -39,7 +39,7 @@ std::vector<note_t> melody_temperley(const melody_temperley_params& p) {
 	// pitches from which the melody will be drawn.  central_scd is _not_ the tonal 
 	// center (the key) of the piece, it is merely the center of the range.  
 	//
-	// For the default-constructed spn12tet3, "Middle C" => 261.63 Hz => scd 48.
+	// For the default-constructed spn12tet, "Middle C" => 261.63 Hz => scd 48.
 	// scd 0 is C(0)
 	//
 	std::vector<double> CP = normpdf(scdpool,p.CP_mean,p.CP_stdev);
@@ -62,9 +62,9 @@ std::vector<note_t> melody_temperley(const melody_temperley_params& p) {
 	// KP[2] == KP_ base[1], ...  KP[key_rscd+12n] == KP_base[0] for all n.  
 	//
 	// Note that i am naming the scd obtained from the "0" octave the "r"scd
-	spn12tet3::scd3_t key_rscd = sc.to_scd(p.key_ntl,octn_t{0});
+	spn12tet::scd3_t key_rscd = sc.to_scd(p.key_ntl,octn_t{0});
 	if ((key_rscd-sc.to_scd(0)) >= 12 || (key_rscd-sc.to_scd(0)) < 0) {
-		// Obviously spn12tet3 should never cause this, but in the future this function
+		// Obviously spn12tet should never cause this, but in the future this function
 		// might be refactored to allow the caller to pass in any random scale.  An out-
 		// of-bounds key_rscd will break the vector indexing in some of the loops below.  
 		std::abort();

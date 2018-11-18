@@ -3,7 +3,7 @@
 #include "..\types\frq_t.h"
 #include "..\types\ntl_t.h"
 #include "..\types\scd_t.h"
-#include "spn12tet3.h"
+#include "spn12tet.h"
 #include <vector>
 #include <string>
 

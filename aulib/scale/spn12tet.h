@@ -143,13 +143,13 @@ struct pitch_std3 {
 // For spn12tet, scd 60 => C(4) ("middle C"); scd 0 => ???
 // 
 //
-class spn12tet3 {
+class spn12tet {
 public:
 	class scd3_t {
 	public:
 		// Note these ctors are public... in general scale scd3_t's need not provide
 		// public ctors...
-		explicit scd3_t(int,const spn12tet3*);
+		explicit scd3_t(int,const spn12tet*);
 
 		note_t operator*() const;
 		scd3_t& operator++();  // prefix
@@ -163,13 +163,13 @@ public:
 		//bool operator<(const scd3_t&) const;
 	private:
 		int m_val {0};
-		const spn12tet3 *m_sc {};
+		const spn12tet *m_sc {};
 	};
 	
 
 	// Constructors
-	explicit spn12tet3()=default;  // Generates A440 ("A(4)" == 440 Hz)
-	explicit spn12tet3(pitch_std3);
+	explicit spn12tet()=default;  // Generates A440 ("A(4)" == 440 Hz)
+	explicit spn12tet(pitch_std3);
 
 	// Getters
 	std::string name() const;
@@ -181,13 +181,13 @@ public:
 	bool isinsc(const frq_t&) const;
 	bool isinsc(const note_t&) const;
 	
-	spn12tet3::scd3_t to_scd(const ntl_t&, const octn_t&) const;
-	spn12tet3::scd3_t to_scd(const note_t&) const;
-	spn12tet3::scd3_t to_scd(const frq_t&) const;
-	spn12tet3::scd3_t to_scd(const int&) const;
+	spn12tet::scd3_t to_scd(const ntl_t&, const octn_t&) const;
+	spn12tet::scd3_t to_scd(const note_t&) const;
+	spn12tet::scd3_t to_scd(const frq_t&) const;
+	spn12tet::scd3_t to_scd(const int&) const;
 		// to_scd(0) is analagous to getting a vector iterator by calling .front()
 		// to_scd(5) is alalagous to auto it = myvec.front()+5;
-	std::vector<spn12tet3::scd3_t> to_scd(const std::vector<note_t>&) const;
+	std::vector<spn12tet::scd3_t> to_scd(const std::vector<note_t>&) const;
 private:
 	struct base_ntl_idx_t {
 		bool is_valid {false};

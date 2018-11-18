@@ -1,13 +1,13 @@
 #include "gtest/gtest.h"
-#include "..\aulib\scale\spn12tet3.h"
+#include "..\aulib\scale\spn12tet.h"
 #include "..\aulib\types\types_all.h"
 #include <vector>
 
 
 
 // Default constructor should generate A440 w/ the expected ntl set
-TEST(scaleSPN12tet3Tests, DefaultCtorNtlMembers) {
-	spn12tet3 sc {};
+TEST(scalespn12tetTests, DefaultCtorNtlMembers) {
+	spn12tet sc {};
 	pitch_std3 ps {};
 	// 1)  All these ntl's are scale-members.
 	// 2)  For a range of octn's, conversion to an scd then from an scd to a note
@@ -29,14 +29,14 @@ TEST(scaleSPN12tet3Tests, DefaultCtorNtlMembers) {
 
 // Check ntl ordering and location of octave breaks w/ different pith stds.
 // C is always the first ntl of the octave; the pitch std is not a factor
-TEST(scaleSPN12tet3Tests, LocationOctaveBreaks) {
-	spn12tet3 sca4 {};
+TEST(scalespn12tetTests, LocationOctaveBreaks) {
+	spn12tet sca4 {};
 
 	pitch_std3 ps {};
 	ps.ref_note = note_t{"C#"_ntl, octn_t{5}, frq_t{330}};
 	ps.gen_int = 2;
 	ps.ntet = 12;
-	spn12tet3 sc_cs_5_330 {ps};
+	spn12tet sc_cs_5_330 {ps};
 
 	// C is always the first ntl of the octave, even for different pitch stds
 	std::vector<ntl_t> ntls_in_sc {"C"_ntl,"C#"_ntl,"D"_ntl,"D#"_ntl,"E"_ntl,
@@ -69,8 +69,8 @@ TEST(scaleSPN12tet3Tests, LocationOctaveBreaks) {
 
 // The scale is not dynamic.  Dereferencing an scd multiple times 
 // always returns the same note
-TEST(scaleSPN12tet3Tests, MultipleScdDeref) {
-	spn12tet3 sc {};
+TEST(scalespn12tetTests, MultipleScdDeref) {
+	spn12tet sc {};
 	auto scd_a4 = sc.to_scd(ntl_t{"A"},octn_t{4});
 	auto n_a4 = *scd_a4;
 	EXPECT_TRUE(n_a4.frq == frq_t{440});
@@ -90,7 +90,7 @@ TEST(scaleSPN12tet3Tests, MultipleScdDeref) {
 
 
 // Note-letter members and non-members are not affected by the pitch std
-TEST(scaleSPN12tet3Tests, ConstructDiffPStdsNtlMembers) {
+TEST(scalespn12tetTests, ConstructDiffPStdsNtlMembers) {
 	std::vector<ntl_t> ntls_in_sc {"C"_ntl,"C#"_ntl,"D"_ntl,"D#"_ntl,"E"_ntl,
 		"F"_ntl,"F#"_ntl,"G"_ntl,"G#"_ntl,"A"_ntl,"A#"_ntl,"B"_ntl};
 	std::vector<octn_t> octs { octn_t {-4}, octn_t {-3}, octn_t {-2}, octn_t {-1},
@@ -113,7 +113,7 @@ TEST(scaleSPN12tet3Tests, ConstructDiffPStdsNtlMembers) {
 		"#A"_ntl, "&A"_ntl};
 
 	for (const auto& e : random_pitch_stds) {
-		spn12tet3 curr_sc {e};
+		spn12tet curr_sc {e};
 
 		for (const auto& ntl_yes : ntls_in_sc) {
 			EXPECT_TRUE(curr_sc.isinsc(ntl_yes));
@@ -135,8 +135,8 @@ TEST(scaleSPN12tet3Tests, ConstructDiffPStdsNtlMembers) {
 
 //  The note returned by dereferencing an scd should be consistent w/ the
 // ntl, oct, frq, etc that generated the scd. 
-TEST(scaleSPN12tet3Tests, ScdNoteNtlOctInterconversionDefaultCtor) {
-	spn12tet3 sc {};
+TEST(scalespn12tetTests, ScdNoteNtlOctInterconversionDefaultCtor) {
+	spn12tet sc {};
 	std::vector<ntl_t> ntls_in_sc {"C"_ntl,"C#"_ntl,"D"_ntl,"D#"_ntl,"E"_ntl,
 		"F"_ntl,"F#"_ntl,"G"_ntl,"G#"_ntl,"A"_ntl,"A#"_ntl,"B"_ntl};
 
@@ -190,12 +190,12 @@ TEST(scaleSPN12tet3Tests, ScdNoteNtlOctInterconversionDefaultCtor) {
 // ntl, oct, frq, etc that generated the scd.  
 // Exactly the same test as ScdNoteNtlOctInterconversionDefaultCtor (above)
 // but the scale here uses a weird different pitch std.  
-TEST(scaleSPN12tet3Tests, ScdNoteNtlOctInterconversionCSharpFive330Hz) {
+TEST(scalespn12tetTests, ScdNoteNtlOctInterconversionCSharpFive330Hz) {
 	pitch_std3 ps {};
 	ps.ref_note = note_t{"C#"_ntl, octn_t{5}, frq_t{330}};
 	ps.gen_int = 2;
 	ps.ntet = 12;
-	spn12tet3 sc {ps};
+	spn12tet sc {ps};
 	std::vector<ntl_t> ntls_in_sc {"C"_ntl,"C#"_ntl,"D"_ntl,"D#"_ntl,"E"_ntl,
 		"F"_ntl,"F#"_ntl,"G"_ntl,"G#"_ntl,"A"_ntl,"A#"_ntl,"B"_ntl};
 
@@ -247,8 +247,8 @@ TEST(scaleSPN12tet3Tests, ScdNoteNtlOctInterconversionCSharpFive330Hz) {
 
 // Middle C:  scd 48 => C(4)
 // Midi-C_5:  scd 60 => C(5)
-TEST(scaleSPN12tet3Tests, ExpectedScdNtlRelationships) {
-	spn12tet3 sc {};
+TEST(scalespn12tetTests, ExpectedScdNtlRelationships) {
+	spn12tet sc {};
 	
 	auto scd48_from_int = sc.to_scd(48);
 	auto scd48_from_ntloct = sc.to_scd("C"_ntl, octn_t{4});
