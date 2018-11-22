@@ -3,34 +3,46 @@
 #include "..\aulib\scale\spn12tet.h"
 #include "..\aulib\types\types_all.h"
 #include <vector>
+#include <cmath>  // std::floor()
 
 
-
-// Default constructor should generate C-major w/ A440
+// Default constructor should generate C-major
 TEST(scaleDiatonicSpn12tetTests, DefaultCtorCmaj) {
 	diatonic_spn12tet sc {};
 
-	struct expect_scd_ntlo {
-		int sc_idx {0};
-		ntl_t ntl {};
-		octn_t oct {};
-	};
-
-	std::vector<expect_scd_ntlo> expect_ntlo {{0,ntl_t{"C"},octn_t{0}}, {1,ntl_t{"D"},octn_t{0}},
-		{2,ntl_t{"E"},octn_t{0}}, {3,ntl_t{"F"},octn_t{0}}, {4,ntl_t{"G"},octn_t{0}},
-		{5,ntl_t{"A"},octn_t{0}}, {6,ntl_t{"B"},octn_t{0}}};
+	std::vector<ntl_t> expect_ntl {ntl_t{"C"}, ntl_t{"D"},ntl_t{"E"},ntl_t{"F"},
+		ntl_t{"G"},ntl_t{"A"},ntl_t{"B"}};
 	
-	int N = expect_ntlo.size();
-	for (int i=0; i<23; ++i) {
-		auto curr_expected = expect_ntlo[((i%N)+N)%N];
-		curr_expected.oct = octn_t {static_cast<int>(static_cast<double>(i)/static_cast<double>(7))};
+	int N = expect_ntl.size();
+	for (int i=-23; i<23; ++i) {
+		auto ntl_expect = expect_ntl[((i%N)+N)%N];
+		double r = std::floor(static_cast<double>(i)/static_cast<double>(7));
+		octn_t oct_expect {static_cast<int>(r)};
 		
 		auto from_int = *sc.to_scd(i);
-		EXPECT_EQ(from_int.ntl, curr_expected.ntl);
-		EXPECT_EQ(from_int.oct, curr_expected.oct);
+		EXPECT_EQ(from_int.ntl, ntl_expect);
+		EXPECT_EQ(from_int.oct, oct_expect);
 	}
 }
 
+// Check ntl sequence for C-minor
+TEST(scaleDiatonicSpn12tetTests, NtlSequenceCminor) {
+	diatonic_spn12tet sc {ntl_t{"C"},diatonic_spn12tet::mode::minor};
+
+	std::vector<ntl_t> expect_ntl {ntl_t{"C"}, ntl_t{"D"},ntl_t{"D#"},ntl_t{"F"},
+		ntl_t{"G"},ntl_t{"G#"},ntl_t{"A#"}};
+	
+	int N = expect_ntl.size();
+	for (int i=-23; i<23; ++i) {
+		auto ntl_expect = expect_ntl[((i%N)+N)%N];
+		double r = std::floor(static_cast<double>(i)/static_cast<double>(7));
+		octn_t oct_expect {static_cast<int>(r)};
+		
+		auto from_int = *sc.to_scd(i);
+		EXPECT_EQ(from_int.ntl, ntl_expect);
+		EXPECT_EQ(from_int.oct, oct_expect);
+	}
+}
 /*
 	// 1)  All these ntl's are scale-members.
 	// 2)  For a range of octn's, conversion to an scd then from an scd to a note

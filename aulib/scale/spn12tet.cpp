@@ -179,7 +179,7 @@ spn12tet::scd3_t& spn12tet::scd3_t::operator-=(const int& rhs) {
 	return *this;
 }
 spn12tet::scd3_t& spn12tet::scd3_t::operator+=(const int& rhs) {
-	m_val-=rhs;
+	m_val+=rhs;
 	return *this;
 }
 int operator-(const spn12tet::scd3_t& lhs, const spn12tet::scd3_t& rhs) {

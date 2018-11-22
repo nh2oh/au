@@ -87,16 +87,12 @@ private:
 	struct base_ntl_idx_t {
 		bool is_valid {false};
 		int ntl_idx {0};  // [0,m_ntls.size())
-		//int oct {0};
 		int scd_idx {0};
-		// Expect:  ntl_idx==(scd_idx+m_ntls.size())%(m_ntls.size);
 	};
 	base_ntl_idx_t base_ntl_idx(const ntl_t&, const octn_t&) const;
 	base_ntl_idx_t base_ntl_idx(const frq_t&) const;
 
 	void build_sc(spn12tet,ntl_t,mode);  // Delegated constructor
-	//spn12tet::scd3_t scd_diatonic2spn12tet(const diatonic_spn12tet::scd3_t&) const;
-	//diatonic_spn12tet::scd3_t scd_spn12tet2diatonic(const spn12tet::scd3_t&) const;
 
 	note_t to_note(int) const;  // Getter called by scd3_t::operator*()
 
