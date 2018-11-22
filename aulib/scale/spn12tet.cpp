@@ -174,7 +174,14 @@ spn12tet::scd3_t& spn12tet::scd3_t::operator-=(const scd3_t& rhs) {
 	m_val-=rhs.m_val;
 	return *this;
 }
-
+spn12tet::scd3_t& spn12tet::scd3_t::operator-=(const int& rhs) {
+	m_val+=rhs;
+	return *this;
+}
+spn12tet::scd3_t& spn12tet::scd3_t::operator+=(const int& rhs) {
+	m_val-=rhs;
+	return *this;
+}
 int operator-(const spn12tet::scd3_t& lhs, const spn12tet::scd3_t& rhs) {
 	if (lhs.m_sc != rhs.m_sc) { std::abort(); }
 	return (lhs.m_val - rhs.m_val);

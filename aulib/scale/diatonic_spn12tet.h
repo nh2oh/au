@@ -27,7 +27,7 @@ public:
 	public:
 		// Note these ctors are public... in general scale scd3_t's need not provide
 		// public ctors...
-		explicit scd3_t(int,const spn12tet*);
+		explicit scd3_t(int,const diatonic_spn12tet*);
 
 		note_t operator*() const;
 		scd3_t& operator++();  // prefix
@@ -35,13 +35,15 @@ public:
 		scd3_t& operator--();  // prefix
 		scd3_t operator--(int);  // postfix
 		scd3_t& operator-=(const scd3_t&);
+		scd3_t& operator-=(const int&);
+		scd3_t& operator+=(const int&);
 		friend int operator-(const scd3_t&,const scd3_t&);
 		//bool operator==(const scd3_t&) const;
 		//bool operator>(const scd3_t&) const;
 		//bool operator<(const scd3_t&) const;
 	private:
 		int m_val {0};
-		const spn12tet *m_sc {};
+		const diatonic_spn12tet *m_sc {};
 	};
 	enum mode {
 		major = 0,
@@ -71,51 +73,22 @@ public:
 	bool isinsc(const frq_t&) const;
 	bool isinsc(const note_t&) const;
 	
-	diatonic_spn12tet::scd3_t to_scd(const ntl_t&, const octn_t&) const;
 	diatonic_spn12tet::scd3_t to_scd(const note_t&) const;
+	diatonic_spn12tet::scd3_t to_scd(const ntl_t&, const octn_t&) const;
 	diatonic_spn12tet::scd3_t to_scd(const frq_t&) const;
 	diatonic_spn12tet::scd3_t to_scd(const int&) const;
 		// to_scd(0) is analagous to getting a vector iterator by calling .front()
 		// to_scd(5) is alalagous to auto it = myvec.front()+5;
 	std::vector<diatonic_spn12tet::scd3_t> to_scd(const std::vector<note_t>&) const;
+	std::vector<diatonic_spn12tet::scd3_t> to_scd(const std::vector<frq_t>&) const;
 
-
-
-
-
-	// Info
-	//int n() const;
-	//std::string name() const;
-	//std::string description() const;
-	//bool isinsc(ntl_t) const;
-	//bool isinsc(frq_t) const;
-	//std::string print(scd_t,scd_t) const;
-	/*
-	scd_t to_scd(ntstr_t) const;
-	std::vector<scd_t> to_scd(const std::vector<ntstr_t>&) const;
-	scd_t to_scd(frq_t) const;
-	std::vector<scd_t> to_scd(const std::vector<frq_t>&) const;
-
-	frq_t to_frq(ntstr_t) const;
-	std::vector<frq_t> to_frq(const std::vector<ntstr_t>&) const;
-	frq_t to_frq(scd_t) const;
-	std::vector<frq_t> to_frq(const std::vector<scd_t>&) const;
-
-	ntstr_t to_ntstr(scd_t) const;
-	std::vector<ntstr_t> to_ntstr(const std::vector<scd_t>&) const;
-	ntstr_t to_ntstr(frq_t) const;
-	std::vector<ntstr_t> to_ntstr(const std::vector<frq_t>&) const;
-
-	octn_t to_octn(scd_t) const;
-	//std::vector<octn_t> to_octn(const std::vector<scd_t>&) const;
-	octn_t to_octn(frq_t) const;
-	//std::vector<octn_t> to_octn(const std::vector<frq_t>&) const;
-	*/
 
 private:
 	void build_sc(spn12tet,ntl_t,mode);  // Delegated constructor
-	scd_t scd_diatonic2spn12tet(scd_t) const;
-	scd_t scd_spn12tet2diatonic(scd_t) const;
+	spn12tet::scd3_t scd_diatonic2spn12tet(const diatonic_spn12tet::scd3_t&) const;
+	diatonic_spn12tet::scd3_t scd_spn12tet2diatonic(const spn12tet::scd3_t&) const;
+
+	note_t to_note(int) const;
 
 	std::string m_name {"Diatonic scale C"};
 	std::string m_description {"whatever"};

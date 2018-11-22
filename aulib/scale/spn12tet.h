@@ -29,6 +29,7 @@ public:
 	public:
 		// Note these ctors are public... in general scale scd3_t's need not provide
 		// public ctors...
+		scd3_t()=default;
 		explicit scd3_t(int,const spn12tet*);
 
 		note_t operator*() const;
@@ -37,6 +38,8 @@ public:
 		scd3_t& operator--();  // prefix
 		scd3_t operator--(int);  // postfix
 		scd3_t& operator-=(const scd3_t&);
+		scd3_t& operator-=(const int&);
+		scd3_t& operator+=(const int&);
 		friend int operator-(const scd3_t&,const scd3_t&);
 		//bool operator==(const scd3_t&) const;
 		//bool operator>(const scd3_t&) const;
@@ -48,7 +51,7 @@ public:
 	
 
 	// Constructors
-	explicit spn12tet()=default;  // Generates A440 ("A(4)" == 440 Hz)
+	/*explicit*/ spn12tet()=default;  // Generates A440 ("A(4)" == 440 Hz)
 	explicit spn12tet(pitch_std);
 
 	// Getters
@@ -85,9 +88,9 @@ private:
 	
 	// Data
 	pitch_std m_pstd {};
-	const int N {12};
+	/*const*/ int N {12};
 	int m_shift_scd {57};  // the scd that generates the ref frq; 57 => A(4)
-	const std::vector<ntl_t> m_ntls {"C"_ntl,"C#"_ntl,"D"_ntl,"D#"_ntl,
+	/*const*/ std::vector<ntl_t> m_ntls {"C"_ntl,"C#"_ntl,"D"_ntl,"D#"_ntl,
 		"E"_ntl,"F"_ntl,"F#"_ntl,"G"_ntl,"G#"_ntl,"A"_ntl,"A#"_ntl,"B"_ntl};
 	std::string m_name {"12-tone chromatic"};
 	std::string m_description {"12-tone equal-tempered with A(4)=440Hz; SPN"};
