@@ -84,11 +84,21 @@ public:
 
 
 private:
-	void build_sc(spn12tet,ntl_t,mode);  // Delegated constructor
-	spn12tet::scd3_t scd_diatonic2spn12tet(const diatonic_spn12tet::scd3_t&) const;
-	diatonic_spn12tet::scd3_t scd_spn12tet2diatonic(const spn12tet::scd3_t&) const;
+	struct base_ntl_idx_t {
+		bool is_valid {false};
+		int ntl_idx {0};  // [0,m_ntls.size())
+		//int oct {0};
+		int scd_idx {0};
+		// Expect:  ntl_idx==(scd_idx+m_ntls.size())%(m_ntls.size);
+	};
+	base_ntl_idx_t base_ntl_idx(const ntl_t&, const octn_t&) const;
+	base_ntl_idx_t base_ntl_idx(const frq_t&) const;
 
-	note_t to_note(int) const;
+	void build_sc(spn12tet,ntl_t,mode);  // Delegated constructor
+	//spn12tet::scd3_t scd_diatonic2spn12tet(const diatonic_spn12tet::scd3_t&) const;
+	//diatonic_spn12tet::scd3_t scd_spn12tet2diatonic(const spn12tet::scd3_t&) const;
+
+	note_t to_note(int) const;  // Getter called by scd3_t::operator*()
 
 	std::string m_name {"Diatonic scale C"};
 	std::string m_description {"whatever"};
@@ -98,7 +108,7 @@ private:
 	std::vector<int> m_ip {2,2,1,2,2,2,1};
 	ntl_t m_ntl_base {"C"};
 	int m_mode_idx {0};
-	int m_shift_scd {0};  // the spn12tet scd that generates m_scale_ntl(0)
+	int m_shift_basentl {0};  // the spn12tet scd that generates m_scale_ntl(0)
 
 	std::vector<ntl_t> m_ntls {"C"_ntl,"D"_ntl,"E"_ntl,"F"_ntl,"G"_ntl,
 		"A"_ntl,"B"_ntl};
