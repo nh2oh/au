@@ -20,7 +20,6 @@ public:
 	}
 
 	note_t operator*() const {
-		//return *(m_sc->to_scd(m_scd));
 		return m_sc->operator[](m_scd);
 	}
 

@@ -1,5 +1,4 @@
 #pragma once
-#include "..\types\cent_oct_t.h"
 #include "..\types\frq_t.h"
 #include "..\types\ntl_t.h"
 #include "..\types\scale_iterator.h"
@@ -17,33 +16,10 @@
 // added in the future.  
 //
 //
-
 class diatonic_spn {
 public:
 	using iterator = typename scale_const_iterator<diatonic_spn>;
 
-	class scd3_t {
-	public:
-		// Note these ctors are public... in general scale scd3_t's need not provide
-		// public ctors...
-		explicit scd3_t(int,const diatonic_spn*);
-
-		note_t operator*() const;
-		scd3_t& operator++();  // prefix
-		scd3_t operator++(int);  // postfix
-		scd3_t& operator--();  // prefix
-		scd3_t operator--(int);  // postfix
-		scd3_t& operator-=(const scd3_t&);
-		scd3_t& operator-=(const int&);
-		scd3_t& operator+=(const int&);
-		friend int operator-(const scd3_t&,const scd3_t&);
-		//bool operator==(const scd3_t&) const;
-		//bool operator>(const scd3_t&) const;
-		//bool operator<(const scd3_t&) const;
-	private:
-		int m_val {0};
-		const diatonic_spn *m_sc {};
-	};
 	enum mode {
 		major = 0,  // W-W-H-W-W-W-H 
 		minor = 5,  // W-H-W-W-H-W-W 
@@ -72,12 +48,18 @@ public:
 	bool isinsc(const frq_t&) const;
 	bool isinsc(const note_t&) const;
 	
-	diatonic_spn::scd3_t to_scd(const note_t&) const;
-	diatonic_spn::scd3_t to_scd(const ntl_t&, const octn_t&) const;
-	diatonic_spn::scd3_t to_scd(const frq_t&) const;
-	diatonic_spn::scd3_t to_scd(const int&) const;
-	std::vector<diatonic_spn::scd3_t> to_scd(const std::vector<note_t>&) const;
-	std::vector<diatonic_spn::scd3_t> to_scd(const std::vector<frq_t>&) const;
+	int to_scd(const note_t&) const;
+	int to_scd(const ntl_t&, const octn_t&) const;
+	int to_scd(const frq_t&) const;
+	int to_scd(const int&) const;
+	std::vector<int> to_scd(const std::vector<note_t>&) const;
+	std::vector<int> to_scd(const std::vector<frq_t>&) const;
+
+	template<typename T>
+	note_t to_note(const T& query) const {  // Getter called by scd3_t::operator*()
+		int scd = this->to_scd(query);
+		return this->operator[](scd);
+	};
 
 	note_t operator[](int) const;
 	iterator zero() const;
@@ -92,16 +74,12 @@ private:
 
 	void build_sc(spn,ntl_t,mode);  // Delegated constructor
 
-	note_t to_note(int) const;  // Getter called by scd3_t::operator*()
-
 	std::string m_name {"Diatonic scale"};
 	std::string m_description {"whatever"};
-
 	spn m_sc_base {};  // C-chromatic 12-tet
 	int m_n = 7;
 	std::vector<int> m_ip {2,2,1,2,2,2,1};  // Chromatic steps between adjacent scds
 	int m_mode_idx {0};
-
 	std::vector<ntl_t> m_ntls {};
 };
 

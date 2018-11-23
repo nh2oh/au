@@ -5,6 +5,7 @@
 #include <vector>
 #include <cmath>  // std::floor()
 
+
 // Default constructor should generate C-major
 TEST(scaleDiatonicSpnTests, DefaultCtorCmaj) {
 	diatonic_spn sc {};
@@ -18,7 +19,7 @@ TEST(scaleDiatonicSpnTests, DefaultCtorCmaj) {
 		double r = std::floor(static_cast<double>(i)/static_cast<double>(7));
 		octn_t oct_expect {static_cast<int>(r)};
 		
-		auto from_int = *sc.to_scd(i);
+		auto from_int = sc[i]; //*sc.to_scd(i);
 		EXPECT_EQ(from_int.ntl, ntl_expect);
 		EXPECT_EQ(from_int.oct, oct_expect);
 	}
@@ -37,7 +38,7 @@ TEST(scaleDiatonicSpnTests, NtlSequenceCminor) {
 		double r = std::floor(static_cast<double>(i)/static_cast<double>(7));
 		octn_t oct_expect {static_cast<int>(r)};
 		
-		auto from_int = *sc.to_scd(i);
+		auto from_int = sc[i]; //*sc.to_scd(i);
 		EXPECT_EQ(from_int.ntl, ntl_expect);
 		EXPECT_EQ(from_int.oct, oct_expect);
 	}
@@ -58,7 +59,7 @@ TEST(scaleDiatonicSpnTests, NtlSequenceFSharpMajor) {
 		double r = std::floor(static_cast<double>(i)/static_cast<double>(7));
 		octn_t oct_expect {static_cast<int>(r)};
 		
-		auto from_int = *sc.to_scd(i);
+		auto from_int = sc[i];  //*sc.to_scd(i);
 		EXPECT_EQ(from_int.ntl, ntl_expect);
 		EXPECT_EQ(from_int.oct, oct_expect);
 	}
@@ -91,7 +92,7 @@ TEST(scaleDiatonicSpnTests, NtlSequenceBAllModes) {
 			double r = std::floor(static_cast<double>(j)/static_cast<double>(7));
 			octn_t oct_expect {static_cast<int>(r)};
 		
-			auto from_int = *sc.to_scd(j);
+			auto from_int = sc[j];  //*sc.to_scd(j);
 			EXPECT_EQ(from_int.ntl, ntl_expect);
 			EXPECT_EQ(from_int.oct, oct_expect);
 		}
@@ -110,15 +111,15 @@ TEST(scaleDiatonicSpnTests, ExpectedScdNtlRelationships) {
 	
 	diatonic_spn sc_cmaj {};
 	auto C4_cmaj = sc_cmaj.to_scd("C"_ntl, octn_t{4});
-	EXPECT_EQ(*scd48_cchrom,*C4_cmaj);
+	EXPECT_EQ(*scd48_cchrom,sc_cmaj[C4_cmaj]);
 	auto C5_cmaj = sc_cmaj.to_scd("C"_ntl, octn_t{5});
-	EXPECT_EQ(*scd60_cchrom,*C5_cmaj);
+	EXPECT_EQ(*scd60_cchrom,sc_cmaj[C5_cmaj]);
 
 	diatonic_spn sc_bphyg {"B"_ntl, diatonic_spn::mode::phygrian};
 	auto C4_bphyg = sc_bphyg.to_scd("C"_ntl, octn_t{4});
-	EXPECT_EQ(*scd48_cchrom,*C4_cmaj);
+	EXPECT_EQ(*scd48_cchrom,sc_bphyg[C4_bphyg]);
 	auto C5_bphyg = sc_bphyg.to_scd("C"_ntl, octn_t{5});
-	EXPECT_EQ(*scd60_cchrom,*C5_cmaj);
+	EXPECT_EQ(*scd60_cchrom,sc_bphyg[C5_bphyg]);
 }
 
 
@@ -132,8 +133,8 @@ TEST(scaleDiatonicSpnTests, NtlOctnToScdAndBack) {
 	for (int i=0; i<ntls_in_sc.size(); ++i) {
 		EXPECT_TRUE(sc_cmaj.isinsc(ntls_in_sc[i]));
 		for (int o=-4; o<5; ++o) {
-			auto scd = sc_cmaj.to_scd(ntls_in_sc[i],octn_t{o});
-			auto nt = *scd;
+			auto sc_it = sc_cmaj.zero() + sc_cmaj.to_scd(ntls_in_sc[i],octn_t{o});
+			auto nt = *sc_it;
 			EXPECT_TRUE(nt.ntl == ntls_in_sc[i]);
 			EXPECT_TRUE(nt.oct == octn_t{o});
 
@@ -144,7 +145,6 @@ TEST(scaleDiatonicSpnTests, NtlOctnToScdAndBack) {
 		}
 	}
 }
-
 
 
 //  The note returned by dereferencing an scd should be consistent w/ the
@@ -167,28 +167,27 @@ TEST(scaleDiatonicSpnTests, ScdNoteNtlOctInterconversion) {
 		//
 		octn_t ans_curr_octn {static_cast<int>(std::floor(std::abs(i)/7))};
 		ntl_t ans_curr_ntl {ntls_in_sc[((i%7)+7)%7]};
-		auto ans_curr_scd = sc.to_scd(ans_curr_ntl,ans_curr_octn);
-		auto ans_curr_note = *ans_curr_scd;
+		auto it_initial = sc.zero() + sc.to_scd(ans_curr_ntl,ans_curr_octn);
+		auto ans_curr_note = *it_initial;
 		frq_t ans_curr_frq = ans_curr_note.frq;
 
 		EXPECT_TRUE(ans_curr_note.ntl == ans_curr_ntl);
 		EXPECT_TRUE(ans_curr_note.oct == ans_curr_octn);
 
 		// Get a new scd/note from the frq.  It should be the same as the initial note
-		auto scd_from_frq = sc.to_scd(ans_curr_frq);
-		auto nt_from_frq = *scd_from_frq;
+		auto it_from_frq = sc.zero() + sc.to_scd(ans_curr_frq);
+		auto nt_from_frq = *it_from_frq;
 		EXPECT_TRUE(nt_from_frq.ntl == ans_curr_ntl);
 		EXPECT_TRUE(nt_from_frq.oct == ans_curr_octn);
 		EXPECT_TRUE(nt_from_frq.frq == ans_curr_frq);
 
 		// Get a new scd/note from the note.{ntl,octave}.  It should be the same as
 		// the initial ntl and oct
-		auto scd_from_ntlo = sc.to_scd(ans_curr_note.ntl,ans_curr_note.oct);
-		auto nt_from_ntlo = *scd_from_ntlo;
+		auto it_from_ntlo = sc.zero() + sc.to_scd(ans_curr_note.ntl,ans_curr_note.oct);
+		auto nt_from_ntlo = *it_from_ntlo;
 		EXPECT_TRUE(nt_from_ntlo.ntl == ans_curr_ntl);
 		EXPECT_TRUE(nt_from_ntlo.oct == ans_curr_octn);
 		EXPECT_TRUE(nt_from_ntlo.frq == ans_curr_frq);
-
 	}
 }
 
