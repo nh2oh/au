@@ -31,6 +31,23 @@ scd_t scd_t::operator--(int dummy_int) { // postfix
 	return copy_preinc;
 }
 
+scd_t& scd_t::operator+=(const scd_t& rhs) {
+	m_value += rhs.m_value;
+	return *this;
+}
+scd_t& scd_t::operator-=(const scd_t& rhs) {
+	m_value -= rhs.m_value;
+	return *this;
+}
+scd_t& scd_t::operator+=(const int& rhs) {
+	m_value += rhs;
+	return *this;
+}
+scd_t& scd_t::operator-=(const int& rhs) {
+	m_value -= rhs;
+	return *this;
+}
+
 /*
 //-----------------------------------------------------------------------------
 // The scd_t class
@@ -137,63 +154,4 @@ bool operator>=(octn_t const& lhs, octn_t const& rhs) {
 	return (lhs.m_octn>=rhs.m_octn);
 }
 
-
-//-----------------------------------------------------------------------------
-// The rscdoctn_t class
-
-
-rscdoctn_t::rscdoctn_t(scd_t scd_in, int n_in) {  // arg2 is num scds in octave
-	au_assert(n_in > 0,"rscdoctn_t(scd_t scd_in, int n_in):  n_in <= 0");
-	//m_rscd = fold(scd_in.to_int(),n_in);
-	m_rscd = fold(scd_in,n_in);
-	m_n = n_in;
-}
-scd_t rscdoctn_t::to_scd(octn_t o) const {
-	return scd_t{o.to_int()*m_n + m_rscd};
-}
-int rscdoctn_t::to_int() const {
-	return m_rscd;
-}
-std::string rscdoctn_t::print() const {
-	std::string s {};
-	s += m_rscd + " => {" + m_n;
-	s += "}";
-	return s;
-}
-
-int rscdoctn_t::fold(int scd, int pivot) {
-	double r = static_cast<double>(scd)/static_cast<double>(pivot);
-	return scd - pivot*static_cast<int>(std::floor(r));
-}
-rscdoctn_t& rscdoctn_t::operator+=(rscdoctn_t const& rhs) {
-	au_assert(m_n == rhs.m_n);
-	m_rscd = fold(m_rscd+rhs.m_rscd,m_n);
-	return *this;
-}
-rscdoctn_t& rscdoctn_t::operator-=(rscdoctn_t const& rhs) {
-	au_assert(m_n == rhs.m_n);
-	m_rscd = fold(m_rscd-rhs.m_rscd,m_n);
-	return *this;
-}
-
-rscdoctn_t operator+(rscdoctn_t const& lhs, rscdoctn_t const& rhs) {
-	rscdoctn_t result {lhs};
-	return result += rhs;  // Operator += checks for same m_n
-}
-rscdoctn_t operator-(rscdoctn_t const& lhs, rscdoctn_t const& rhs) {
-	rscdoctn_t result {lhs};
-	return result -= rhs;  // Operator -= checks for same m_n
-}
-
-bool operator==(rscdoctn_t const& lhs, rscdoctn_t const& rhs) {
-	return ((lhs.m_n == rhs.m_n) && (lhs.m_rscd == rhs.m_rscd));
-}
-bool operator<(rscdoctn_t const& lhs, rscdoctn_t const& rhs) {
-	au_assert(lhs.m_n == rhs.m_n);
-	return(lhs.m_rscd < rhs.m_rscd);
-}
-bool operator>(rscdoctn_t const& lhs, rscdoctn_t const& rhs) {
-	au_assert(lhs.m_n == rhs.m_n);
-	return(lhs.m_rscd > rhs.m_rscd);
-}
 

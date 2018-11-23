@@ -2,6 +2,8 @@
 #include "..\aulib\types\scd_t.h"
 #include <vector>
 
+
+/*
 TEST(scd_t_tests, Set1FromMatlabImpl) {
 	int N = 12;
 	std::vector<int> vi_scd {0,1,2,15,-4,-16};
@@ -14,5 +16,5 @@ TEST(scd_t_tests, Set1FromMatlabImpl) {
 	}
 
 }
-
+*/
 
