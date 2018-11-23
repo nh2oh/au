@@ -21,16 +21,16 @@
 // nor the location of the octave breaks.  See the note above.  
 //
 // TODO:  Should pitch-std be a template param for the scale ?
-// 
+// TODO:  Rename to spn?  Put in namespace scale => scale::spn ???
 //
-class spn12tet {
+class spn {
 public:
 	class scd3_t {
 	public:
 		// Note these ctors are public... in general scale scd3_t's need not provide
 		// public ctors...
 		scd3_t()=default;
-		explicit scd3_t(int,const spn12tet*);
+		explicit scd3_t(int,const spn*);
 
 		note_t operator*() const;
 		scd3_t& operator++();  // prefix
@@ -46,13 +46,13 @@ public:
 		//bool operator<(const scd3_t&) const;
 	private:
 		int m_val {0};
-		const spn12tet *m_sc {};
+		const spn *m_sc {};
 	};
 	
 
 	// Constructors
-	/*explicit*/ spn12tet()=default;  // Generates A440 ("A(4)" == 440 Hz)
-	explicit spn12tet(pitch_std);
+	spn()=default;  // Generates A440 ("A(4)" == 440 Hz)
+	explicit spn(pitch_std);
 
 	// Getters
 	std::string name() const;
@@ -64,13 +64,15 @@ public:
 	bool isinsc(const frq_t&) const;
 	bool isinsc(const note_t&) const;
 	
-	spn12tet::scd3_t to_scd(const ntl_t&, const octn_t&) const;
-	spn12tet::scd3_t to_scd(const note_t&) const;
-	spn12tet::scd3_t to_scd(const frq_t&) const;
-	spn12tet::scd3_t to_scd(const int&) const;
+	spn::scd3_t zero() const;
+
+	spn::scd3_t to_scd(const ntl_t&, const octn_t&) const;
+	spn::scd3_t to_scd(const note_t&) const;
+	spn::scd3_t to_scd(const frq_t&) const;
+	spn::scd3_t to_scd(const int&) const;
 		// to_scd(0) is analagous to getting a vector iterator by calling .front()
 		// to_scd(5) is alalagous to auto it = myvec.front()+5;
-	std::vector<spn12tet::scd3_t> to_scd(const std::vector<note_t>&) const;
+	std::vector<spn::scd3_t> to_scd(const std::vector<note_t>&) const;
 private:
 	struct base_ntl_idx_t {
 		bool is_valid {false};

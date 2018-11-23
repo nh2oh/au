@@ -1,6 +1,6 @@
 #pragma once
 #include "randmel_gens.h"
-#include "..\scale\spn12tet.h"
+#include "..\scale\spn.h"
 #include "..\types\ntl_t.h"
 #include "..\util\au_random.h"
 #include "..\util\au_algs_math.h"
@@ -22,7 +22,7 @@ std::vector<note_t> melody_temperley(const melody_temperley_params& p) {
 	// All notes are drawn from the chromatic scale.  Probability distributions 
 	// controlling note selection are what make notes "diatonic" to the key 
 	// more probable.  
-	spn12tet sc {};
+	spn sc {};
 	
 	// The scdpool is the "domain" of chromatic scale degrees from which the melody is drawn
 	std::vector<int> scdpool {};  scdpool.reserve(p.sz_scdpool);
@@ -62,7 +62,7 @@ std::vector<note_t> melody_temperley(const melody_temperley_params& p) {
 	// KP[2] == KP_ base[1], ...  KP[key_rscd+12n] == KP_base[0] for all n.  
 	//
 	// Note that i am naming the scd obtained from the "0" octave the "r"scd
-	spn12tet::scd3_t key_rscd = sc.to_scd(p.key_ntl,octn_t{0});
+	spn::scd3_t key_rscd = sc.to_scd(p.key_ntl,octn_t{0});
 	if ((key_rscd-sc.to_scd(0)) >= 12 || (key_rscd-sc.to_scd(0)) < 0) {
 		// Obviously spn12tet should never cause this, but in the future this function
 		// might be refactored to allow the caller to pass in any random scale.  An out-

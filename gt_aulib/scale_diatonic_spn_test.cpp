@@ -1,14 +1,14 @@
 #include "gtest/gtest.h"
-#include "..\aulib\scale\diatonic_spn12tet.h"
-#include "..\aulib\scale\spn12tet.h"
+#include "..\aulib\scale\diatonic_spn.h"
+#include "..\aulib\scale\spn.h"
 #include "..\aulib\types\types_all.h"
 #include <vector>
 #include <cmath>  // std::floor()
 
 
 // Default constructor should generate C-major
-TEST(scaleDiatonicSpn12tetTests, DefaultCtorCmaj) {
-	diatonic_spn12tet sc {};
+TEST(scaleDiatonicSpnTests, DefaultCtorCmaj) {
+	diatonic_spn sc {};
 
 	std::vector<ntl_t> expect_ntl {ntl_t{"C"}, ntl_t{"D"},ntl_t{"E"},ntl_t{"F"},
 		ntl_t{"G"},ntl_t{"A"},ntl_t{"B"}};
@@ -26,8 +26,8 @@ TEST(scaleDiatonicSpn12tetTests, DefaultCtorCmaj) {
 }
 
 // Check ntl sequence for C-minor
-TEST(scaleDiatonicSpn12tetTests, NtlSequenceCminor) {
-	diatonic_spn12tet sc {ntl_t{"C"},diatonic_spn12tet::mode::minor};
+TEST(scaleDiatonicSpnTests, NtlSequenceCminor) {
+	diatonic_spn sc {ntl_t{"C"},diatonic_spn::mode::minor};
 
 	std::vector<ntl_t> expect_ntl {ntl_t{"C"}, ntl_t{"D"},ntl_t{"D#"},ntl_t{"F"},
 		ntl_t{"G"},ntl_t{"G#"},ntl_t{"A#"}};
@@ -64,14 +64,14 @@ TEST(scaleDiatonicSpn12tetTests, NtlSequenceCminor) {
 
 // Check ntl ordering and location of octave breaks w/ different pith stds.
 // C is always the first ntl of the octave; the pitch std is not a factor
-TEST(scaleDiatonicSpn12tetTests, LocationOctaveBreaks) {
-	spn12tet sca4 {};
+TEST(scaleDiatonicspnTests, LocationOctaveBreaks) {
+	spn sca4 {};
 
 	pitch_std ps {};
 	ps.ref_note = note_t{"C#"_ntl, octn_t{5}, frq_t{330}};
 	ps.gen_int = 2;
 	ps.ntet = 12;
-	spn12tet sc_cs_5_330 {ps};
+	spn sc_cs_5_330 {ps};
 
 	// C is always the first ntl of the octave, even for different pitch stds
 	std::vector<ntl_t> ntls_in_sc {"C"_ntl,"C#"_ntl,"D"_ntl,"D#"_ntl,"E"_ntl,
@@ -104,8 +104,8 @@ TEST(scaleDiatonicSpn12tetTests, LocationOctaveBreaks) {
 
 // The scale is not dynamic.  Dereferencing an scd multiple times 
 // always returns the same note
-TEST(scaleDiatonicSpn12tetTests, MultipleScdDeref) {
-	spn12tet sc {};
+TEST(scaleDiatonicspnTests, MultipleScdDeref) {
+	spn sc {};
 	auto scd_a4 = sc.to_scd(ntl_t{"A"},octn_t{4});
 	auto n_a4 = *scd_a4;
 	EXPECT_TRUE(n_a4.frq == frq_t{440});
@@ -125,7 +125,7 @@ TEST(scaleDiatonicSpn12tetTests, MultipleScdDeref) {
 
 
 // Note-letter members and non-members are not affected by the pitch std
-TEST(scaleDiatonicSpn12tetTests, ConstructDiffPStdsNtlMembers) {
+TEST(scaleDiatonicspnTests, ConstructDiffPStdsNtlMembers) {
 	std::vector<ntl_t> ntls_in_sc {"C"_ntl,"C#"_ntl,"D"_ntl,"D#"_ntl,"E"_ntl,
 		"F"_ntl,"F#"_ntl,"G"_ntl,"G#"_ntl,"A"_ntl,"A#"_ntl,"B"_ntl};
 	std::vector<octn_t> octs { octn_t {-4}, octn_t {-3}, octn_t {-2}, octn_t {-1},
@@ -148,7 +148,7 @@ TEST(scaleDiatonicSpn12tetTests, ConstructDiffPStdsNtlMembers) {
 		"#A"_ntl, "&A"_ntl};
 
 	for (const auto& e : random_pitch_stds) {
-		spn12tet curr_sc {e};
+		spn curr_sc {e};
 
 		for (const auto& ntl_yes : ntls_in_sc) {
 			EXPECT_TRUE(curr_sc.isinsc(ntl_yes));
@@ -170,8 +170,8 @@ TEST(scaleDiatonicSpn12tetTests, ConstructDiffPStdsNtlMembers) {
 
 //  The note returned by dereferencing an scd should be consistent w/ the
 // ntl, oct, frq, etc that generated the scd. 
-TEST(scaleDiatonicSpn12tetTests, ScdNoteNtlOctInterconversionDefaultCtor) {
-	spn12tet sc {};
+TEST(scaleDiatonicspnTests, ScdNoteNtlOctInterconversionDefaultCtor) {
+	spn sc {};
 	std::vector<ntl_t> ntls_in_sc {"C"_ntl,"C#"_ntl,"D"_ntl,"D#"_ntl,"E"_ntl,
 		"F"_ntl,"F#"_ntl,"G"_ntl,"G#"_ntl,"A"_ntl,"A#"_ntl,"B"_ntl};
 
@@ -225,12 +225,12 @@ TEST(scaleDiatonicSpn12tetTests, ScdNoteNtlOctInterconversionDefaultCtor) {
 // ntl, oct, frq, etc that generated the scd.  
 // Exactly the same test as ScdNoteNtlOctInterconversionDefaultCtor (above)
 // but the scale here uses a weird different pitch std.  
-TEST(scaleDiatonicSpn12tetTests, ScdNoteNtlOctInterconversionCSharpFive330Hz) {
+TEST(scaleDiatonicspnTests, ScdNoteNtlOctInterconversionCSharpFive330Hz) {
 	pitch_std ps {};
 	ps.ref_note = note_t{"C#"_ntl, octn_t{5}, frq_t{330}};
 	ps.gen_int = 2;
 	ps.ntet = 12;
-	spn12tet sc {ps};
+	spn sc {ps};
 	std::vector<ntl_t> ntls_in_sc {"C"_ntl,"C#"_ntl,"D"_ntl,"D#"_ntl,"E"_ntl,
 		"F"_ntl,"F#"_ntl,"G"_ntl,"G#"_ntl,"A"_ntl,"A#"_ntl,"B"_ntl};
 
@@ -282,8 +282,8 @@ TEST(scaleDiatonicSpn12tetTests, ScdNoteNtlOctInterconversionCSharpFive330Hz) {
 
 // Middle C:  scd 48 => C(4)
 // Midi-C_5:  scd 60 => C(5)
-TEST(scaleDiatonicSpn12tetTests, ExpectedScdNtlRelationships) {
-	spn12tet sc {};
+TEST(scaleDiatonicspnTests, ExpectedScdNtlRelationships) {
+	spn sc {};
 	
 	auto scd48_from_int = sc.to_scd(48);
 	auto scd48_from_ntloct = sc.to_scd("C"_ntl, octn_t{4});

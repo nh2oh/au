@@ -96,7 +96,7 @@
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
@@ -171,8 +171,8 @@
     <ClCompile Include="nv_t_test.cpp" />
     <ClCompile Include="randrp_metg_test.cpp" />
     <ClCompile Include="rp_t_test.cpp" />
-    <ClCompile Include="scale_diatonic_spn12tet.cpp" />
-    <ClCompile Include="scale_spn12tet_tests.cpp" />
+    <ClCompile Include="scale_diatonic_spn_test.cpp" />
+    <ClCompile Include="scale_spn_tests.cpp" />
     <ClCompile Include="scd_t_test.cpp" />
     <ClCompile Include="tg_t_test.cpp" />
     <ClCompile Include="tmetg_t_test.cpp" />

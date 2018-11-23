@@ -15,6 +15,8 @@
 // This is so no precision is lost; the user has to manually re-cast to 
 // scd_t.  
 //
+// TODO:  Deprecate this nonsense ?
+//
 
 class scd_t {
 public:

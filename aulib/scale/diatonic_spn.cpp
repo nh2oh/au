@@ -1,6 +1,6 @@
 #include "scale.h"
-#include "diatonic_spn12tet.h"
-#include "spn12tet.h"
+#include "diatonic_spn.h"
+#include "spn.h"
 #include "..\types\ntl_t.h"
 #include "..\types\frq_t.h"
 #include "..\util\au_util.h"  // bsprintf()
@@ -10,19 +10,19 @@
 #include <exception>  // std::abort()
 #include <cmath>  // std::floor()
 
-diatonic_spn12tet::diatonic_spn12tet(ntl_t base_ntl, mode m) {
+diatonic_spn::diatonic_spn(ntl_t base_ntl, mode m) {
 	build_sc(m_sc_base,base_ntl,m);
 }
-diatonic_spn12tet::diatonic_spn12tet(spn12tet sc, ntl_t base_ntl, mode m) {
+diatonic_spn::diatonic_spn(spn sc, ntl_t base_ntl, mode m) {
 	build_sc(sc,base_ntl,m);
 }
 
-void diatonic_spn12tet::build_sc(spn12tet sc_base, ntl_t ntl_base, mode m) {
+void diatonic_spn::build_sc(spn sc_base, ntl_t ntl_base, mode m) {
 	m_sc_base = sc_base;
 	if (!m_sc_base.isinsc(ntl_base)) { std::abort(); }
 	
 	m_mode_idx = static_cast<int>(m);
-	spn12tet::scd3_t spn_scd = m_sc_base.to_scd(ntl_base,octn_t{0});
+	spn::scd3_t spn_scd = m_sc_base.to_scd(ntl_base,octn_t{0});
 	for (int i=0; i<m_n; ++i) {
 		if (i>0) { 
 			// Note this weird i>0 condition:  The first ntl (idx==0) is just ntl_base;
@@ -37,13 +37,11 @@ void diatonic_spn12tet::build_sc(spn12tet sc_base, ntl_t ntl_base, mode m) {
 	m_shift_basentl = 0;  // TODO:  Therefore i don't need it...
 
 	m_name = "Diatonic scale " + m_ntl_base.print() + " ...";
-	m_description = "Constructed from spn12tet:  \n";
+	m_description = "Constructed from spn:  \n";
 	m_description += m_sc_base.name() + "\n" + m_sc_base.description();
 }
 
-
-
-diatonic_spn12tet::base_ntl_idx_t diatonic_spn12tet::base_ntl_idx(const ntl_t& ntl, const octn_t& o) const {
+diatonic_spn::base_ntl_idx_t diatonic_spn::base_ntl_idx(const ntl_t& ntl, const octn_t& o) const {
 	base_ntl_idx_t res {};
 	auto it = std::find(m_ntls.begin(),m_ntls.end(),ntl);
 	if (it == m_ntls.end()) {
@@ -55,26 +53,26 @@ diatonic_spn12tet::base_ntl_idx_t diatonic_spn12tet::base_ntl_idx(const ntl_t& n
 	res.ntl_idx = static_cast<int>(it-m_ntls.begin());
 	res.scd_idx = res.ntl_idx + (o.to_int())*m_n;
 }
-diatonic_spn12tet::base_ntl_idx_t diatonic_spn12tet::base_ntl_idx(const frq_t& frq) const {
+diatonic_spn::base_ntl_idx_t diatonic_spn::base_ntl_idx(const frq_t& frq) const {
 	note_t spn_nt = *m_sc_base.to_scd(frq);
 	return base_ntl_idx(spn_nt.ntl,spn_nt.oct);
 }
 
-std::string diatonic_spn12tet::name() const {
+std::string diatonic_spn::name() const {
 	return m_name;
 }
-std::string diatonic_spn12tet::description() const {
+std::string diatonic_spn::description() const {
 	return m_description;
 }
-std::string diatonic_spn12tet::print() const {
+std::string diatonic_spn::print() const {
 	return print(0,12);
 }
-std::string diatonic_spn12tet::print(int from, int to) const {
+std::string diatonic_spn::print(int from, int to) const {
 	std::string s {};
 	s = dbk::bsprintf("%s\n%s\n\n",m_name,m_description);
 	
 	for (int i=from; i<to; ++i) {
-		diatonic_spn12tet::scd3_t curr_scd {i,this};
+		diatonic_spn::scd3_t curr_scd {i,this};
 		note_t curr_note = *curr_scd;
 
 		s += dbk::bsprintf("%d:\t%s\t%.3f\n",
@@ -86,50 +84,50 @@ std::string diatonic_spn12tet::print(int from, int to) const {
 }
 
 
-diatonic_spn12tet::scd3_t diatonic_spn12tet::to_scd(const int& i) const {
-	return diatonic_spn12tet::scd3_t {i,this};
+diatonic_spn::scd3_t diatonic_spn::to_scd(const int& i) const {
+	return diatonic_spn::scd3_t {i,this};
 }
-diatonic_spn12tet::scd3_t diatonic_spn12tet::to_scd(const ntl_t& ntl, const octn_t& o) const {
+diatonic_spn::scd3_t diatonic_spn::to_scd(const ntl_t& ntl, const octn_t& o) const {
 	auto res = base_ntl_idx(ntl,o);
 	if (!res.is_valid) {
 		std::abort();
 	}
 
-	return diatonic_spn12tet::scd3_t {res.scd_idx,this};
+	return diatonic_spn::scd3_t {res.scd_idx,this};
 }
-diatonic_spn12tet::scd3_t diatonic_spn12tet::to_scd(const note_t& nt) const {
+diatonic_spn::scd3_t diatonic_spn::to_scd(const note_t& nt) const {
 	auto res = base_ntl_idx(nt.ntl,nt.oct);
 	if (!res.is_valid) {  // TODO:  Also check the frq
 		std::abort();
 	}
 
-	return diatonic_spn12tet::scd3_t {res.scd_idx,this};
+	return diatonic_spn::scd3_t {res.scd_idx,this};
 }
-std::vector<diatonic_spn12tet::scd3_t> diatonic_spn12tet::to_scd(const std::vector<note_t>& nts) const {
-	std::vector<diatonic_spn12tet::scd3_t> scds {};  scds.reserve(nts.size());
+std::vector<diatonic_spn::scd3_t> diatonic_spn::to_scd(const std::vector<note_t>& nts) const {
+	std::vector<diatonic_spn::scd3_t> scds {};  scds.reserve(nts.size());
 	for (const auto& e: nts) {
 		scds.push_back(to_scd(e));
 	}
 	return scds;
 }
-diatonic_spn12tet::scd3_t diatonic_spn12tet::to_scd(const frq_t& frq) const {
+diatonic_spn::scd3_t diatonic_spn::to_scd(const frq_t& frq) const {
 	auto res = base_ntl_idx(frq);
 	if (!res.is_valid) {
 		std::abort();
 	}
 
-	return diatonic_spn12tet::scd3_t {res.scd_idx,this};
+	return diatonic_spn::scd3_t {res.scd_idx,this};
 }
-std::vector<diatonic_spn12tet::scd3_t> diatonic_spn12tet::to_scd(const std::vector<frq_t>& frqs) const {
-	std::vector<diatonic_spn12tet::scd3_t> scds {};  scds.reserve(frqs.size());
+std::vector<diatonic_spn::scd3_t> diatonic_spn::to_scd(const std::vector<frq_t>& frqs) const {
+	std::vector<diatonic_spn::scd3_t> scds {};  scds.reserve(frqs.size());
 	for (const auto& e : frqs) {
 		scds.push_back(to_scd(e));
 	}
 	return scds;
 }
 
-// Getter called by diatonic_spn12tet::scd3_t::operator*()
-note_t diatonic_spn12tet::to_note(int scd_idx) const {
+// Getter called by diatonic_spn::scd3_t::operator*()
+note_t diatonic_spn::to_note(int scd_idx) const {
 	int ntl_idx = ((scd_idx%m_n)+m_n)%m_n-m_shift_basentl;
 	octn_t octn {static_cast<int>(std::floor(static_cast<double>(scd_idx)/static_cast<double>(m_n)))};
 	frq_t frq = (*m_sc_base.to_scd(m_ntls[ntl_idx],octn)).frq;
@@ -137,57 +135,57 @@ note_t diatonic_spn12tet::to_note(int scd_idx) const {
 	return note_t {m_ntls[ntl_idx],octn,frq};
 }
 
-diatonic_spn12tet::scd3_t::scd3_t(int i, const diatonic_spn12tet *sc) {
+diatonic_spn::scd3_t::scd3_t(int i, const diatonic_spn *sc) {
 	m_val = i;
 	m_sc = sc;
 }
-note_t diatonic_spn12tet::scd3_t::operator*() const {
+note_t diatonic_spn::scd3_t::operator*() const {
 	return m_sc->to_note(m_val);
 }
-diatonic_spn12tet::scd3_t& diatonic_spn12tet::scd3_t::operator++() {  // prefix
+diatonic_spn::scd3_t& diatonic_spn::scd3_t::operator++() {  // prefix
 	m_val++;
 	return *this;
 }
-diatonic_spn12tet::scd3_t diatonic_spn12tet::scd3_t::operator++(int) {  // postfix
-	diatonic_spn12tet::scd3_t scd = *this; ++*this;
+diatonic_spn::scd3_t diatonic_spn::scd3_t::operator++(int) {  // postfix
+	diatonic_spn::scd3_t scd = *this; ++*this;
 	return scd;
 }
-diatonic_spn12tet::scd3_t& diatonic_spn12tet::scd3_t::operator--() { // prefix
+diatonic_spn::scd3_t& diatonic_spn::scd3_t::operator--() { // prefix
 	m_val--;
 	return *this;
 }
-diatonic_spn12tet::scd3_t diatonic_spn12tet::scd3_t::operator--(int) {  // postfix
-	diatonic_spn12tet::scd3_t scd = *this; --*this;
+diatonic_spn::scd3_t diatonic_spn::scd3_t::operator--(int) {  // postfix
+	diatonic_spn::scd3_t scd = *this; --*this;
 	return scd;
 }
-diatonic_spn12tet::scd3_t& diatonic_spn12tet::scd3_t::operator-=(const scd3_t& rhs) {
+diatonic_spn::scd3_t& diatonic_spn::scd3_t::operator-=(const scd3_t& rhs) {
 	if (m_sc != rhs.m_sc) { std::abort(); }
 	m_val-=rhs.m_val;
 	return *this;
 }
-diatonic_spn12tet::scd3_t& diatonic_spn12tet::scd3_t::operator-=(const int& rhs) {
+diatonic_spn::scd3_t& diatonic_spn::scd3_t::operator-=(const int& rhs) {
 	m_val+=rhs;
 	return *this;
 }
-diatonic_spn12tet::scd3_t& diatonic_spn12tet::scd3_t::operator+=(const int& rhs) {
+diatonic_spn::scd3_t& diatonic_spn::scd3_t::operator+=(const int& rhs) {
 	m_val+=rhs;
 	return *this;
 }
-int operator-(const diatonic_spn12tet::scd3_t& lhs, const diatonic_spn12tet::scd3_t& rhs) {
+int operator-(const diatonic_spn::scd3_t& lhs, const diatonic_spn::scd3_t& rhs) {
 	if (lhs.m_sc != rhs.m_sc) { std::abort(); }
 	return (lhs.m_val - rhs.m_val);
 }
 
 
-bool diatonic_spn12tet::isinsc(const frq_t& frq) const {
+bool diatonic_spn::isinsc(const frq_t& frq) const {
 	base_ntl_idx_t idx = base_ntl_idx(frq);
 	return idx.is_valid;
 }
-bool diatonic_spn12tet::isinsc(const ntl_t& ntl) const {
+bool diatonic_spn::isinsc(const ntl_t& ntl) const {
 	base_ntl_idx_t idx = base_ntl_idx(ntl,octn_t{0});
 	return idx.is_valid;
 }
-bool diatonic_spn12tet::isinsc(const note_t& note) const {
+bool diatonic_spn::isinsc(const note_t& note) const {
 	// Both the ntl and frq must be valid, AND the ntl => by the frq must be the same.  
 	base_ntl_idx_t idx_ntloct = base_ntl_idx(note.ntl,note.oct);
 	if (!idx_ntloct.is_valid) { return false; }

@@ -30,7 +30,7 @@ double n_eqt(frq_t, frq_t,int,int);
 // Random notes about scales
 //
 // The problem with defining the scd_t/rscd_t as a "global" type outside of all scales 
-// is that an scd => sn rscd,oct => an npc,oct/ntl,oct/ntstr, and scales can then no
+// is that an scd => an rscd,oct => an npc,oct/ntl,oct/ntstr, and scales can then no
 // longer dynamically control the ordering or categorization of notes, since "global" 
 // scd_t's are ordered in an obvious and transparent way.  
 //

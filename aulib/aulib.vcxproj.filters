@@ -96,16 +96,16 @@
     <ClCompile Include="melgen\melody_a.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="scale\diatonic_spn12tet.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ks_key.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="util\au_meta.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="scale\spn12tet.cpp">
+    <ClCompile Include="scale\diatonic_spn.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="scale\spn.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -212,16 +212,16 @@
     <ClInclude Include="melgen\randmel_gens.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="scale\diatonic_spn12tet.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="util\au_meta.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="types\scd3_t.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="scale\spn12tet.h">
+    <ClInclude Include="scale\spn.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scale\diatonic_spn.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

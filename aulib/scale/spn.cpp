@@ -1,4 +1,4 @@
-#include "spn12tet.h"
+#include "spn.h"
 #include "scale.h"  // n_eqt(), etc
 #include "..\util\au_algs_math.h"  // aprx_int(), aprx_eq()
 #include "..\util\au_util.h"  // bsprintf()
@@ -9,26 +9,26 @@
 #include <string>
 
 
-spn12tet::spn12tet(pitch_std ps) {
+spn::spn(pitch_std ps) {
 	if (ps.gen_int <= 0 || ps.ntet <= 0) { std::abort(); }  // TODO:  Move into pitch_std class
 	m_pstd = ps;
 
 	auto it = std::find(m_ntls.begin(),m_ntls.end(),m_pstd.ref_note.ntl);
 	if (it == m_ntls.end()) { std::abort(); }
 
-	m_shift_scd = (m_pstd.ref_note.oct.to_int())*(spn12tet::m_ntls.size()) + (it-m_ntls.begin());
+	m_shift_scd = (m_pstd.ref_note.oct.to_int())*(spn::m_ntls.size()) + (it-m_ntls.begin());
 	// Expect 57 for a ref pitch of A(4)
 }
 
-std::string spn12tet::print() const {
-	return spn12tet::print(0,12);
+std::string spn::print() const {
+	return spn::print(0,12);
 }
-std::string spn12tet::print(int from, int to) const {
+std::string spn::print(int from, int to) const {
 	std::string s {};
 	s = dbk::bsprintf("%s\n%s\n\n",m_name,m_description);
 	
 	for (int i=from; i<to; ++i) {
-		spn12tet::scd3_t curr_scd {i,this};
+		spn::scd3_t curr_scd {i,this};
 		note_t curr_note = *curr_scd;
 
 		s += dbk::bsprintf("%d:\t%s\t%.3f\n",
@@ -38,22 +38,22 @@ std::string spn12tet::print(int from, int to) const {
 
 	return s;
 }
-std::string spn12tet::name() const {
+std::string spn::name() const {
 	return m_name;
 }
-std::string spn12tet::description() const {
+std::string spn::description() const {
 	return m_description;
 }
 
-bool spn12tet::isinsc(const ntl_t& ntl) const {
+bool spn::isinsc(const ntl_t& ntl) const {
 	base_ntl_idx_t idx = base_ntl_idx(ntl,octn_t{0});
 	return idx.is_valid;
 }
-bool spn12tet::isinsc(const frq_t& frq_in) const {
+bool spn::isinsc(const frq_t& frq_in) const {
 	base_ntl_idx_t idx = base_ntl_idx(frq_in);
 	return idx.is_valid;
 }
-bool spn12tet::isinsc(const note_t& note_in) const {
+bool spn::isinsc(const note_t& note_in) const {
 	// Both the ntl and frq must be valid, AND the ntl => by the frq must be the same.  
 	base_ntl_idx_t idx_ntloct = base_ntl_idx(note_in.ntl,note_in.oct);
 	if (!idx_ntloct.is_valid) { return false; }
@@ -63,25 +63,25 @@ bool spn12tet::isinsc(const note_t& note_in) const {
 	return (idx_ntloct.scd_idx == idx_frq.scd_idx);
 }
 
-spn12tet::scd3_t spn12tet::to_scd(const ntl_t& ntl, const octn_t& o) const {
+spn::scd3_t spn::to_scd(const ntl_t& ntl, const octn_t& o) const {
 	base_ntl_idx_t idx = base_ntl_idx(ntl,o);
 	if (!idx.is_valid) { std::abort(); }
-	return spn12tet::scd3_t {idx.scd_idx,this};
+	return spn::scd3_t {idx.scd_idx,this};
 }
-spn12tet::scd3_t spn12tet::to_scd(const frq_t& frq) const {
+spn::scd3_t spn::to_scd(const frq_t& frq) const {
 	base_ntl_idx_t idx = base_ntl_idx(frq);
 	if (!idx.is_valid) { std::abort(); }
-	return  spn12tet::scd3_t {idx.scd_idx,this};
+	return  spn::scd3_t {idx.scd_idx,this};
 }
-spn12tet::scd3_t spn12tet::to_scd(const int& i) const {
-	return  spn12tet::scd3_t {i,this};
+spn::scd3_t spn::to_scd(const int& i) const {
+	return  spn::scd3_t {i,this};
 }
 
-spn12tet::scd3_t spn12tet::to_scd(const note_t& note) const {
+spn::scd3_t spn::to_scd(const note_t& note) const {
 	return to_scd(note.ntl,note.oct);
 }
-std::vector<spn12tet::scd3_t> spn12tet::to_scd(const std::vector<note_t>& nts) const {
-	std::vector<spn12tet::scd3_t> scds {}; scds.reserve(nts.size());
+std::vector<spn::scd3_t> spn::to_scd(const std::vector<note_t>& nts) const {
+	std::vector<spn::scd3_t> scds {}; scds.reserve(nts.size());
 	for (const auto& e : nts) {
 		scds.push_back(to_scd(e));
 	}
@@ -90,7 +90,7 @@ std::vector<spn12tet::scd3_t> spn12tet::to_scd(const std::vector<note_t>& nts) c
 
 
 // Private method
-spn12tet::base_ntl_idx_t spn12tet::base_ntl_idx(const ntl_t& ntl, const octn_t& oct) const {
+spn::base_ntl_idx_t spn::base_ntl_idx(const ntl_t& ntl, const octn_t& oct) const {
 	base_ntl_idx_t res {};
 	auto it = std::find(m_ntls.begin(),m_ntls.end(),ntl);
 	
@@ -101,7 +101,7 @@ spn12tet::base_ntl_idx_t spn12tet::base_ntl_idx(const ntl_t& ntl, const octn_t& 
 }
 
 // Private method
-spn12tet::base_ntl_idx_t spn12tet::base_ntl_idx(const frq_t& frq_in) const {
+spn::base_ntl_idx_t spn::base_ntl_idx(const frq_t& frq_in) const {
 	base_ntl_idx_t res {};
 	double idx = n_eqt(frq_in, m_pstd.ref_note.frq, m_pstd.ntet, m_pstd.gen_int);
 	if (!aprx_int(idx)) {
@@ -118,8 +118,8 @@ spn12tet::base_ntl_idx_t spn12tet::base_ntl_idx(const frq_t& frq_in) const {
 	return res;
 }
 
-// Getter called by spn12tet::scd3_t::operator*()
-note_t spn12tet::to_note(int scd_idx) const {
+// Getter called by spn::scd3_t::operator*()
+note_t spn::to_note(int scd_idx) const {
 	
 	int ntl_idx = ((scd_idx%N)+N)%N;
 	// int ntl_idx = (scd_idx+m_ntls.size())%(m_ntls.size());
@@ -144,45 +144,45 @@ note_t spn12tet::to_note(int scd_idx) const {
 
 
 
-spn12tet::scd3_t::scd3_t(int i, const spn12tet *sc) {
+spn::scd3_t::scd3_t(int i, const spn *sc) {
 	m_val = i;
 	m_sc = sc;
 }
 
-note_t spn12tet::scd3_t::operator*() const {
+note_t spn::scd3_t::operator*() const {
 	return m_sc->to_note(m_val);
 }
 
-spn12tet::scd3_t& spn12tet::scd3_t::operator++() {  // prefix
+spn::scd3_t& spn::scd3_t::operator++() {  // prefix
 	m_val++;
 	return *this;
 }
-spn12tet::scd3_t spn12tet::scd3_t::operator++(int) {  // postfix
-	spn12tet::scd3_t scd = *this; ++*this;
+spn::scd3_t spn::scd3_t::operator++(int) {  // postfix
+	spn::scd3_t scd = *this; ++*this;
 	return scd;
 }
-spn12tet::scd3_t& spn12tet::scd3_t::operator--() { // prefix
+spn::scd3_t& spn::scd3_t::operator--() { // prefix
 	m_val--;
 	return *this;
 }
-spn12tet::scd3_t spn12tet::scd3_t::operator--(int) {  // postfix
-	spn12tet::scd3_t scd = *this; --*this;
+spn::scd3_t spn::scd3_t::operator--(int) {  // postfix
+	spn::scd3_t scd = *this; --*this;
 	return scd;
 }
-spn12tet::scd3_t& spn12tet::scd3_t::operator-=(const scd3_t& rhs) {
+spn::scd3_t& spn::scd3_t::operator-=(const scd3_t& rhs) {
 	if (m_sc != rhs.m_sc) { std::abort(); }
 	m_val-=rhs.m_val;
 	return *this;
 }
-spn12tet::scd3_t& spn12tet::scd3_t::operator-=(const int& rhs) {
+spn::scd3_t& spn::scd3_t::operator-=(const int& rhs) {
 	m_val+=rhs;
 	return *this;
 }
-spn12tet::scd3_t& spn12tet::scd3_t::operator+=(const int& rhs) {
+spn::scd3_t& spn::scd3_t::operator+=(const int& rhs) {
 	m_val+=rhs;
 	return *this;
 }
-int operator-(const spn12tet::scd3_t& lhs, const spn12tet::scd3_t& rhs) {
+int operator-(const spn::scd3_t& lhs, const spn::scd3_t& rhs) {
 	if (lhs.m_sc != rhs.m_sc) { std::abort(); }
 	return (lhs.m_val - rhs.m_val);
 }

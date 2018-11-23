@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 #include "..\aulib\melgen\randmel_gens.h"
-#include "..\aulib\scale\diatonic_spn12tet.h"
-#include "..\aulib\scale\spn12tet.h"
+#include "..\aulib\scale\diatonic_spn.h"
+#include "..\aulib\scale\spn.h"
 #include "..\aulib\types\line_t.h"
 #include "..\aulib\types\ntl_t.h"
 #include "..\aulib\types\scd_t.h"
@@ -11,7 +11,7 @@
 #include <numeric>  // std::round()
 
 TEST(ks_key_tests, CmajorScaleOnePassZeroOctave) {
-	spn12tet sc3 {};
+	spn sc3 {};
 	std::vector<ntl_t> cmaj_ntls {"C"_ntl,"D"_ntl,"E"_ntl,"F"_ntl,"G"_ntl,"A"_ntl,"B"_ntl};
 
 	std::vector<note_t> melody_notes {};
@@ -40,7 +40,7 @@ TEST(ks_key_tests, CminorScaleOnePassZeroOctave) {
 	// Note   1200   1400 68
 	// Note   1400   1600 70
 	std::vector<ntl_t> cmin_ntls {"C"_ntl,"D"_ntl,"D#"_ntl,"F"_ntl,"G"_ntl,"G#"_ntl,"A#"_ntl};
-	spn12tet sc {};
+	spn sc {};
 
 	std::vector<note_t> melody_notes {};
 	for (const auto& e : cmin_ntls) {
@@ -76,7 +76,7 @@ TEST(ks_key_tests, CminorScaleOnePassZeroOctave) {
 
 
 TEST(ks_key_tests, ChildO5Notes) {
-	spn12tet sc {};
+	spn sc {};
 	std::vector<ntl_t> cmaj_ntls {"C"_ntl,"D"_ntl,"E"_ntl,"F"_ntl,"G"_ntl,"A"_ntl,"B"_ntl};
 	ts_t ts {4_bt,d::q};
 

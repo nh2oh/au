@@ -7,7 +7,6 @@
 // An scd3_t represents a scale degree of some unspecified scale.  It is a
 // representation of an absolute position within a scale.  
 //
-
 /*
 
 template<int N>
@@ -114,5 +113,5 @@ template<int N>
 bool operator<=(const scd3_t<N>& lhs, const scd3_t<N>& rhs) {
 	return (lhs<rhs || lhs==rhs);
 };
-
 */
+
