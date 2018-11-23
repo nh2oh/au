@@ -189,7 +189,8 @@ std::vector<ovl_idx> overlaps(const notefile& nf) {
 line_t<scd_t> notefile2line(const notefile& nf) {
 	std::vector<scd_t> scds {};
 	for (auto e : nf.lines) {
-		scds.push_back(scd_t{e.pitch});
+		//scds.push_back(scd_t{e.pitch});
+		scds.push_back(e.pitch);
 	}
 
 	auto res = std::chrono::milliseconds(250);

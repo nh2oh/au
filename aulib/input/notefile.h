@@ -18,7 +18,7 @@ struct notefileline {
 	double ontime {0.0};  // Milliseconds by default
 	double offtime {0.0};
 	double dt {0.0};
-	int pitch {0}; // Middle C = 60
+	int pitch {0};  // Middle C = 60
 
 	bool operator==(const notefileline&) const;
 };

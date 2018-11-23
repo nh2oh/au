@@ -59,7 +59,8 @@ std::vector<scd_t> melody_a(ma_params p) {
 	auto score = [&](const std::vector<scd_t>& m) {
 		double s {0};
 		for (int i=1; i<m.size(); ++i) {  // NB: starts @ 1
-			double curr_delta = std::abs((m[i]-m[i-1]).to_double());
+			//double curr_delta = std::abs((m[i]-m[i-1]).to_double());
+			double curr_delta = std::abs(m[i]-m[i-1]);
 			if (aprx_eq(curr_delta,0.0)) {
 				s += p.sc_adjnts;
 			}
@@ -76,7 +77,8 @@ std::vector<scd_t> melody_a(ma_params p) {
 	};
 
 	// The scdpool is the "domain" of notes from which the melody is drawn
-	std::vector<scd_t> scdpool((p.max-p.min).to_int(),scd_t{0});
+	//std::vector<scd_t> scdpool((p.max-p.min).to_int(),scd_t{0});
+	std::vector<scd_t> scdpool(p.max-p.min,scd_t{0});
 	std::iota(scdpool.begin(),scdpool.end(),p.min);
 
 	// rn_spidx => "random number scd pool idx;" rn_midx => "random number

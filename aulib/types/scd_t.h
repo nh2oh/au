@@ -21,6 +21,23 @@
 // TODO:  Deprecate this nonsense ?
 //
 
+//using scd_t = int;
+
+class scd_t {
+public:
+	scd_t()=default;
+	scd_t(int i);
+	operator int() const;
+
+	scd_t& operator++(); // prefix
+	scd_t operator++(int); // postfix
+	scd_t& operator--(); // prefix
+	scd_t operator--(int); // postfix
+private:
+	int m_value {0};
+};
+
+/*
 class scd_t {
 public:
 	scd_t() = default;
@@ -50,7 +67,7 @@ bool operator<(scd_t const&, scd_t const&);
 bool operator>(scd_t const&, scd_t const&);
 bool operator>=(scd_t const&, scd_t const&);
 bool operator<=(scd_t const&, scd_t const&);
-
+*/
 
 //-----------------------------------------------------------------------------
 // The octn_t class

@@ -84,7 +84,6 @@ std::vector<int> spn::to_scd(const std::vector<note_t>& nts) const {
 	return scds;
 }
 
-
 // Private method
 spn::base_ntl_idx_t spn::base_ntl_idx(const ntl_t& ntl, const octn_t& oct) const {
 	base_ntl_idx_t res {};
@@ -107,9 +106,6 @@ spn::base_ntl_idx_t spn::base_ntl_idx(const frq_t& frq_in) const {
 
 	res.scd_idx = static_cast<int>(std::round(idx)) + m_shift_scd;
 	res.ntl_idx = ((res.scd_idx%N)+N)%N;
-	//res.ntl_idx = static_cast<int>((res.scd_idx+m_ntls.size())%(m_ntls.size()));
-	// TODO:  Danger here: m_ntls.size() is unsigned, res.scd may be - ...
-	// I don't know the implicit conversion rules.  
 	res.is_valid = true;
 	return res;
 }
@@ -118,8 +114,6 @@ note_t spn::operator[](int i) const {
 	int ntl_idx = ((i%N)+N)%N;
 	frq_t frq = frq_eqt(i-m_shift_scd,m_pstd.ref_note.frq,m_pstd.ntet,m_pstd.gen_int);
 	octn_t octn {static_cast<int>(std::floor(static_cast<double>(i)/static_cast<double>(N)))};
-	// TODO:  Danger here: m_ntls.size() is unsigned, res.scd may be - ...
-	// I don't know the implicit conversion rules.  
 	
 	return note_t {m_ntls[ntl_idx],octn,frq};
 }

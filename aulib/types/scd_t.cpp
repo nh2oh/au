@@ -5,6 +5,33 @@
 #include <cmath>  // floor()
 
 
+scd_t::scd_t(int i) {
+	m_value=i;
+}
+scd_t::operator int() const {
+	return m_value;
+}
+
+scd_t& scd_t::operator++() { // prefix
+	++m_value;
+	return *this;
+}
+scd_t scd_t::operator++(int dummy_int) { // postfix
+	scd_t copy_preinc = *this;
+	++m_value;
+	return copy_preinc;
+}
+scd_t& scd_t::operator--() { // prefix
+	--m_value;
+	return *this;
+}
+scd_t scd_t::operator--(int dummy_int) { // postfix
+	scd_t copy_preinc = *this;
+	--m_value;
+	return copy_preinc;
+}
+
+/*
 //-----------------------------------------------------------------------------
 // The scd_t class
 
@@ -75,7 +102,7 @@ bool operator<=(scd_t const& lhs, scd_t const& rhs) {
 	return (lhs.to_int() <= rhs.to_int());
 }
 
-
+*/
 
 
 //-----------------------------------------------------------------------------
@@ -117,7 +144,8 @@ bool operator>=(octn_t const& lhs, octn_t const& rhs) {
 
 rscdoctn_t::rscdoctn_t(scd_t scd_in, int n_in) {  // arg2 is num scds in octave
 	au_assert(n_in > 0,"rscdoctn_t(scd_t scd_in, int n_in):  n_in <= 0");
-	m_rscd = fold(scd_in.to_int(),n_in);
+	//m_rscd = fold(scd_in.to_int(),n_in);
+	m_rscd = fold(scd_in,n_in);
 	m_n = n_in;
 }
 scd_t rscdoctn_t::to_scd(octn_t o) const {

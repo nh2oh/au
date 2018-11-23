@@ -47,7 +47,7 @@ public:
 	std::vector<int> to_scd(const std::vector<note_t>&) const;
 
 	template<typename T>
-	note_t to_note(const T& query) const {  // Getter called by scd3_t::operator*()
+	note_t to_note(const T& query) const {
 		int scd = this->to_scd(query);
 		return this->operator[](scd);
 	};
@@ -59,8 +59,6 @@ private:
 		bool is_valid {false};
 		int ntl_idx {0};  // [0,m_ntls.size())
 		int scd_idx {0};
-
-		// Expect:  ntl_idx==(scd_idx+m_ntls.size())%(m_ntls.size);
 	};
 
 	// Methods
@@ -69,9 +67,9 @@ private:
 	
 	// Data
 	pitch_std m_pstd {};
-	/*const*/ int N {12};
+	int N {12};
 	int m_shift_scd {57};  // the scd that generates the ref frq; 57 => A(4)
-	/*const*/ std::vector<ntl_t> m_ntls {"C"_ntl,"C#"_ntl,"D"_ntl,"D#"_ntl,
+	std::vector<ntl_t> m_ntls {"C"_ntl,"C#"_ntl,"D"_ntl,"D#"_ntl,
 		"E"_ntl,"F"_ntl,"F#"_ntl,"G"_ntl,"G#"_ntl,"A"_ntl,"A#"_ntl,"B"_ntl};
 	std::string m_name {"12-tone chromatic"};
 	std::string m_description {"12-tone equal-tempered with A(4)=440Hz; SPN"};
