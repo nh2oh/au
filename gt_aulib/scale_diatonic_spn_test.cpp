@@ -5,7 +5,6 @@
 #include <vector>
 #include <cmath>  // std::floor()
 
-
 // Default constructor should generate C-major
 TEST(scaleDiatonicSpnTests, DefaultCtorCmaj) {
 	diatonic_spn sc {};
@@ -43,6 +42,85 @@ TEST(scaleDiatonicSpnTests, NtlSequenceCminor) {
 		EXPECT_EQ(from_int.oct, oct_expect);
 	}
 }
+
+
+// Check ntl sequence for F#-major
+TEST(scaleDiatonicSpnTests, NtlSequenceFSharpMajor) {
+	diatonic_spn sc {ntl_t{"F#"},diatonic_spn::mode::major};
+
+	std::vector<ntl_t> expect_ntl {ntl_t{"F#"}, ntl_t{"G#"},ntl_t{"A#"},ntl_t{"B"},
+		ntl_t{"C#"},ntl_t{"D#"},ntl_t{"F"}};
+		// Note that, at present, i have to write the final note as F instead of E#
+
+	int N = expect_ntl.size();
+	for (int i=-23; i<23; ++i) {
+		auto ntl_expect = expect_ntl[((i%N)+N)%N];
+		double r = std::floor(static_cast<double>(i)/static_cast<double>(7));
+		octn_t oct_expect {static_cast<int>(r)};
+		
+		auto from_int = *sc.to_scd(i);
+		EXPECT_EQ(from_int.ntl, ntl_expect);
+		EXPECT_EQ(from_int.oct, oct_expect);
+	}
+}
+
+
+// Check ntl sequence for B all modes
+TEST(scaleDiatonicSpnTests, NtlSequenceBAllModes) {
+
+	std::vector<std::vector<ntl_t>> expect_ntl {
+		{ntl_t{"B"},ntl_t{"C#"},ntl_t{"D#"},ntl_t{"E"},ntl_t{"F#"},ntl_t{"G#"},ntl_t{"A#"}},
+		{ntl_t{"B"},ntl_t{"C#"},ntl_t{"D"},ntl_t{"E"},ntl_t{"F#"},ntl_t{"G#"},ntl_t{"A"}},
+		{ntl_t{"B"},ntl_t{"C"},ntl_t{"D"},ntl_t{"E"},ntl_t{"F#"},ntl_t{"G"},ntl_t{"A"}},
+		{ntl_t{"B"},ntl_t{"C#"},ntl_t{"D#"},ntl_t{"F"},ntl_t{"F#"},ntl_t{"G#"},ntl_t{"A#"}},
+		{ntl_t{"B"},ntl_t{"C#"},ntl_t{"D#"},ntl_t{"E"},ntl_t{"F#"},ntl_t{"G#"},ntl_t{"A"}},
+		{ntl_t{"B"},ntl_t{"C#"},ntl_t{"D"},ntl_t{"E"},ntl_t{"F#"},ntl_t{"G"},ntl_t{"A"}},
+		{ntl_t{"B"},ntl_t{"C"},ntl_t{"D"},ntl_t{"E"},ntl_t{"F"},ntl_t{"G"},ntl_t{"A"}}
+	};
+		// Note that, at present, i have to write the final note as F instead of E#
+	int N = expect_ntl.size();
+
+	for (int i=0; i<expect_ntl.size(); ++i) {
+		auto curr_ntl_seq = expect_ntl[i];
+
+		diatonic_spn::mode curr_mode = static_cast<diatonic_spn::mode>(i);
+		diatonic_spn sc {ntl_t {"B"}, curr_mode};
+	
+		for (int j=-23; j<23; ++j) {
+			auto ntl_expect = curr_ntl_seq[((j%N)+N)%N];
+			double r = std::floor(static_cast<double>(j)/static_cast<double>(7));
+			octn_t oct_expect {static_cast<int>(r)};
+		
+			auto from_int = *sc.to_scd(j);
+			EXPECT_EQ(from_int.ntl, ntl_expect);
+			EXPECT_EQ(from_int.oct, oct_expect);
+		}
+	}
+}
+
+// Middle C:  scd 48 => C(4)
+// Midi-C_5:  scd 60 => C(5)
+// The numeric scd's for the two scales are different, but the note w/ letter "C" and
+// octave 4 has the same frq on both scales.  In no case does this depend on the choice
+// of root note for the scale, nor the mode.  This is required y the dfn of "spn."  
+TEST(scaleDiatonicSpnTests, ExpectedScdNtlRelationships) {
+	spn sc_cchrom {};
+	auto scd48_cchrom = sc_cchrom.to_scd(48);
+	auto scd60_cchrom = sc_cchrom.to_scd(60);
+	
+	diatonic_spn sc_cmaj {};
+	auto C4_cmaj = sc_cmaj.to_scd("C"_ntl, octn_t{4});
+	EXPECT_EQ(*scd48_cchrom,*C4_cmaj);
+	auto C5_cmaj = sc_cmaj.to_scd("C"_ntl, octn_t{5});
+	EXPECT_EQ(*scd60_cchrom,*C5_cmaj);
+
+	diatonic_spn sc_bphyg {"B"_ntl, diatonic_spn::mode::phygrian};
+	auto C4_bphyg = sc_bphyg.to_scd("C"_ntl, octn_t{4});
+	EXPECT_EQ(*scd48_cchrom,*C4_cmaj);
+	auto C5_bphyg = sc_bphyg.to_scd("C"_ntl, octn_t{5});
+	EXPECT_EQ(*scd60_cchrom,*C5_cmaj);
+}
+
 /*
 	// 1)  All these ntl's are scale-members.
 	// 2)  For a range of octn's, conversion to an scd then from an scd to a note
@@ -280,19 +358,7 @@ TEST(scaleDiatonicspnTests, ScdNoteNtlOctInterconversionCSharpFive330Hz) {
 }
 
 
-// Middle C:  scd 48 => C(4)
-// Midi-C_5:  scd 60 => C(5)
-TEST(scaleDiatonicspnTests, ExpectedScdNtlRelationships) {
-	spn sc {};
-	
-	auto scd48_from_int = sc.to_scd(48);
-	auto scd48_from_ntloct = sc.to_scd("C"_ntl, octn_t{4});
-	EXPECT_EQ(*scd48_from_int,*scd48_from_ntloct);
 
-	auto scd60_from_int = sc.to_scd(60);
-	auto scd60_from_ntloct = sc.to_scd("C"_ntl, octn_t{5});
-	EXPECT_EQ(*scd60_from_int,*scd60_from_ntloct);
-}
 
 */
 

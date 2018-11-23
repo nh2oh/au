@@ -59,7 +59,7 @@ public:
 	};
 
 	// Constructors -- all delegate to build_sc()
-	diatonic_spn()=default;
+	explicit diatonic_spn();
 	explicit diatonic_spn(ntl_t,mode);
 	explicit diatonic_spn(spn,ntl_t,mode);
 
@@ -94,7 +94,7 @@ private:
 
 	note_t to_note(int) const;  // Getter called by scd3_t::operator*()
 
-	std::string m_name {"Diatonic scale C"};
+	std::string m_name {"Diatonic scale"};
 	std::string m_description {"whatever"};
 
 	spn m_sc_base {};  // C-chromatic 12-tet
@@ -104,8 +104,7 @@ private:
 	int m_mode_idx {0};
 	int m_shift_basentl {0};  // the spn scd that generates m_scale_ntl(0)
 
-	std::vector<ntl_t> m_ntls {"C"_ntl,"D"_ntl,"E"_ntl,"F"_ntl,"G"_ntl,
-		"A"_ntl,"B"_ntl};
+	std::vector<ntl_t> m_ntls {};
 
 };
 

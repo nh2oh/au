@@ -10,6 +10,9 @@
 #include <exception>  // std::abort()
 #include <cmath>  // std::floor()
 
+diatonic_spn::diatonic_spn() {
+	build_sc(m_sc_base,ntl_t{"C"},mode::major);
+}
 diatonic_spn::diatonic_spn(ntl_t base_ntl, mode m) {
 	build_sc(m_sc_base,base_ntl,m);
 }
@@ -30,7 +33,7 @@ void diatonic_spn::build_sc(spn sc_base, ntl_t ntl_base, mode m) {
 			// ntl of the scale (m_ntls[1]).  
 			spn_scd += m_ip[(i-1+m_mode_idx)%m_ip.size()];  // TODO:  Replace w/ ring
 		}
-		m_ntls[i] = (*spn_scd).ntl;
+		m_ntls.push_back((*spn_scd).ntl);
 	}
 
 	// Always 0, since i am rewriting the m_ntls vector in the loop above
@@ -52,6 +55,8 @@ diatonic_spn::base_ntl_idx_t diatonic_spn::base_ntl_idx(const ntl_t& ntl, const 
 
 	res.ntl_idx = static_cast<int>(it-m_ntls.begin());
 	res.scd_idx = res.ntl_idx + (o.to_int())*m_n;
+
+	return res;
 }
 diatonic_spn::base_ntl_idx_t diatonic_spn::base_ntl_idx(const frq_t& frq) const {
 	note_t spn_nt = *m_sc_base.to_scd(frq);
