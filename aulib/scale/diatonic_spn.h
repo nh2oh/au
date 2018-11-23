@@ -2,27 +2,26 @@
 #include "..\types\cent_oct_t.h"
 #include "..\types\frq_t.h"
 #include "..\types\ntl_t.h"
-#include "..\types\scd_t.h"
+#include "..\types\scale_iterator.h"
 #include "spn.h"
 #include <vector>
 #include <string>
 
 //
-// As the name "_spn" implies, octave breaks occur & are named 
-// according to the "spn" standard, that is, between B and C.  It 
-// does not matter what the user has chosen as the root note for the
-// scale.  In the future, will create a more generalized scale type
-// that allows this to be customized.  
-// The zeroth scale degree is the zeroth-octave of the user-selected 
-// root note, where the frq_t of this is determined by spn.  
+// As the name "_spn" implies, octave breaks occur & are named according to the 
+// "spn" standard (see scale::spn), that is, between B and C.  It does not matter
+// what the user has chosen as the root note or mode for the scale.  The zeroth scale
+// degree is the zeroth-octave of the user-selected root note on the scale::spn 
+// scale.  Since the ctors only accept ntl_t arguments, it is not possible to set 
+// the zeroth scd to an spn-note w an octave > 0, but this feature could easily be 
+// added in the future.  
 //
 //
-//
-
-// TODO:  Base on spn3; new name == spn_diatonic ?
 
 class diatonic_spn {
 public:
+	using iterator = typename scale_const_iterator<diatonic_spn>;
+
 	class scd3_t {
 	public:
 		// Note these ctors are public... in general scale scd3_t's need not provide
@@ -46,16 +45,16 @@ public:
 		const diatonic_spn *m_sc {};
 	};
 	enum mode {
-		major = 0,
-		minor = 5,
+		major = 0,  // W-W-H-W-W-W-H 
+		minor = 5,  // W-H-W-W-H-W-W 
 
-		ionian = 0,
-		dorian = 1,
-		phygrian = 2,
-		lydian = 3,
-		mixolydian = 4,
-		aeolian = 5,
-		locrian = 6
+		ionian = 0,  // W-W-H-W-W-W-H 
+		dorian = 1,  // W-H-W-W-W-H-W
+		phygrian = 2,  // H-W-W-W-H-W-W
+		lydian = 3,  // W-W-W-H-W-W-H 
+		mixolydian = 4,  // W-W-H-W-W-H-W
+		aeolian = 5,  // W-H-W-W-H-W-W 
+		locrian = 6  // H-W-W-H-W-W-W
 	};
 
 	// Constructors -- all delegate to build_sc()
@@ -77,10 +76,11 @@ public:
 	diatonic_spn::scd3_t to_scd(const ntl_t&, const octn_t&) const;
 	diatonic_spn::scd3_t to_scd(const frq_t&) const;
 	diatonic_spn::scd3_t to_scd(const int&) const;
-		// to_scd(0) is analagous to getting a vector iterator by calling .front()
-		// to_scd(5) is alalagous to auto it = myvec.front()+5;
 	std::vector<diatonic_spn::scd3_t> to_scd(const std::vector<note_t>&) const;
 	std::vector<diatonic_spn::scd3_t> to_scd(const std::vector<frq_t>&) const;
+
+	note_t operator[](int) const;
+	iterator zero() const;
 private:
 	struct base_ntl_idx_t {
 		bool is_valid {false};
@@ -99,12 +99,9 @@ private:
 
 	spn m_sc_base {};  // C-chromatic 12-tet
 	int m_n = 7;
-	std::vector<int> m_ip {2,2,1,2,2,2,1};
-	ntl_t m_ntl_base {"C"};
+	std::vector<int> m_ip {2,2,1,2,2,2,1};  // Chromatic steps between adjacent scds
 	int m_mode_idx {0};
-	int m_shift_basentl {0};  // the spn scd that generates m_scale_ntl(0)
 
 	std::vector<ntl_t> m_ntls {};
-
 };
 

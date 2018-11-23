@@ -74,7 +74,7 @@
     <ClInclude Include="types\ntl_t.h" />
     <ClInclude Include="types\nv_t.h" />
     <ClInclude Include="types\rp_t.h" />
-    <ClInclude Include="types\scd3_t.h" />
+    <ClInclude Include="types\scale_iterator.h" />
     <ClInclude Include="types\scd_t.h" />
     <ClInclude Include="types\teejee.h" />
     <ClInclude Include="types\ts_t.h" />

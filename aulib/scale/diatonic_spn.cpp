@@ -3,6 +3,7 @@
 #include "spn.h"
 #include "..\types\ntl_t.h"
 #include "..\types\frq_t.h"
+#include "..\types\scale_iterator.h"
 #include "..\util\au_util.h"  // bsprintf()
 #include <string>
 #include <vector>
@@ -27,7 +28,7 @@ void diatonic_spn::build_sc(spn sc_base, ntl_t ntl_base, mode m) {
 	m_mode_idx = static_cast<int>(m);
 	spn::scd3_t spn_scd = m_sc_base.to_scd(ntl_base,octn_t{0});
 	for (int i=0; i<m_n; ++i) {
-		if (i>0) { 
+		if (i>0) {  // TODO:  std::rotate() m_ip and simplify this
 			// Note this weird i>0 condition:  The first ntl (idx==0) is just ntl_base;
 			// adding m_ip[0] to the spn_scd corresponding to ntl_base yields the _second_
 			// ntl of the scale (m_ntls[1]).  
@@ -36,10 +37,7 @@ void diatonic_spn::build_sc(spn sc_base, ntl_t ntl_base, mode m) {
 		m_ntls.push_back((*spn_scd).ntl);
 	}
 
-	// Always 0, since i am rewriting the m_ntls vector in the loop above
-	m_shift_basentl = 0;  // TODO:  Therefore i don't need it...
-
-	m_name = "Diatonic scale " + m_ntl_base.print() + " ...";
+	m_name = "Diatonic scale " + m_ntls[0].print() + " ...";
 	m_description = "Constructed from spn:  \n";
 	m_description += m_sc_base.name() + "\n" + m_sc_base.description();
 }
@@ -88,7 +86,12 @@ std::string diatonic_spn::print(int from, int to) const {
 	return s;
 }
 
-
+note_t diatonic_spn::operator[](int i) const {
+	return to_note(i);
+}
+diatonic_spn::iterator diatonic_spn::zero() const {
+	return diatonic_spn::iterator {0,this};
+}
 diatonic_spn::scd3_t diatonic_spn::to_scd(const int& i) const {
 	return diatonic_spn::scd3_t {i,this};
 }
@@ -133,12 +136,13 @@ std::vector<diatonic_spn::scd3_t> diatonic_spn::to_scd(const std::vector<frq_t>&
 
 // Getter called by diatonic_spn::scd3_t::operator*()
 note_t diatonic_spn::to_note(int scd_idx) const {
-	int ntl_idx = ((scd_idx%m_n)+m_n)%m_n-m_shift_basentl;
+	int ntl_idx = ((scd_idx%m_n)+m_n)%m_n;
 	octn_t octn {static_cast<int>(std::floor(static_cast<double>(scd_idx)/static_cast<double>(m_n)))};
 	frq_t frq = (*m_sc_base.to_scd(m_ntls[ntl_idx],octn)).frq;
 	
 	return note_t {m_ntls[ntl_idx],octn,frq};
 }
+
 
 diatonic_spn::scd3_t::scd3_t(int i, const diatonic_spn *sc) {
 	m_val = i;

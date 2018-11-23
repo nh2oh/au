@@ -215,13 +215,13 @@
     <ClInclude Include="util\au_meta.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="types\scd3_t.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="scale\spn.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="scale\diatonic_spn.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="types\scale_iterator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
