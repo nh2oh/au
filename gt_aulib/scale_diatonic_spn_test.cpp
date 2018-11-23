@@ -106,8 +106,8 @@ TEST(scaleDiatonicSpnTests, NtlSequenceBAllModes) {
 // of root note for the scale, nor the mode.  This is required by the dfn of "spn."  
 TEST(scaleDiatonicSpnTests, ExpectedScdNtlRelationships) {
 	spn sc_cchrom {};
-	auto scd48_cchrom = sc_cchrom.to_scd(48);
-	auto scd60_cchrom = sc_cchrom.to_scd(60);
+	auto scd48_cchrom = sc_cchrom.zero() + 48;//sc_cchrom.to_scd(48);
+	auto scd60_cchrom = sc_cchrom.zero() + 60;//sc_cchrom.to_scd(60);
 	
 	diatonic_spn sc_cmaj {};
 	auto C4_cmaj = sc_cmaj.to_scd("C"_ntl, octn_t{4});

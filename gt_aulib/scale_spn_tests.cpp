@@ -17,8 +17,8 @@ TEST(scaleSpnTests, DefaultCtorNtlMembers) {
 	for (int i=0; i<ntls_in_sc.size(); ++i) {
 		EXPECT_TRUE(sc.isinsc(ntls_in_sc[i]));
 		for (int o=-4; o<5; ++o) {
-			auto scd = sc.to_scd(ntls_in_sc[i],octn_t{o});
-			auto nt = *scd;
+			auto it = sc.zero() + sc.to_scd(ntls_in_sc[i],octn_t{o});
+			auto nt = *it;
 			EXPECT_TRUE(sc.isinsc(nt));
 			EXPECT_TRUE(nt.ntl == ntls_in_sc[i]);
 			EXPECT_TRUE(nt.oct == octn_t{o});
@@ -52,13 +52,13 @@ TEST(scaleSpnTests, LocationOctaveBreaks) {
 			}
 
 			// A4-440Hz---------------------------------------------------
-			auto curr_note = *scd_a4;
+			auto curr_note = sca4[scd_a4];
 			EXPECT_TRUE(curr_note.ntl == ntls_in_sc[i%ntls_in_sc.size()]);
 			EXPECT_TRUE(curr_note.oct == oct_expected);
 			++scd_a4;
 
 			// C#5-330Hz---------------------------------------------------
-			auto curr_note_cs = *scd_cs5;
+			auto curr_note_cs = sc_cs_5_330[scd_cs5];
 			EXPECT_TRUE(curr_note_cs.ntl == ntls_in_sc[i%ntls_in_sc.size()]);
 			EXPECT_TRUE(curr_note_cs.oct == oct_expected);
 			++scd_cs5;
@@ -72,17 +72,17 @@ TEST(scaleSpnTests, LocationOctaveBreaks) {
 TEST(scaleSpnTests, MultipleScdDeref) {
 	spn sc {};
 	auto scd_a4 = sc.to_scd(ntl_t{"A"},octn_t{4});
-	auto n_a4 = *scd_a4;
+	auto n_a4 = sc[scd_a4];
 	EXPECT_TRUE(n_a4.frq == frq_t{440});
 	EXPECT_TRUE(n_a4.ntl == ntl_t{"A"});
 	EXPECT_TRUE(n_a4.oct == octn_t{4});
 
-	n_a4 = *scd_a4;
+	n_a4 = sc[scd_a4];
 	EXPECT_TRUE(n_a4.frq == frq_t{440});
 	EXPECT_TRUE(n_a4.ntl == ntl_t{"A"});
 	EXPECT_TRUE(n_a4.oct == octn_t{4});
 
-	n_a4 = *scd_a4;
+	n_a4 = sc[scd_a4];
 	EXPECT_TRUE(n_a4.frq == frq_t{440});
 	EXPECT_TRUE(n_a4.ntl == ntl_t{"A"});
 	EXPECT_TRUE(n_a4.oct == octn_t{4});
@@ -119,7 +119,7 @@ TEST(scaleSpnTests, ConstructDiffPStdsNtlMembers) {
 			EXPECT_TRUE(curr_sc.isinsc(ntl_yes));
 
 			auto curr_scd = curr_sc.to_scd(e.ref_note.ntl, e.ref_note.oct);
-			auto curr_note = *curr_scd;
+			auto curr_note = curr_sc[curr_scd];
 			EXPECT_TRUE(curr_note.ntl == e.ref_note.ntl);
 			EXPECT_TRUE(curr_note.frq == e.ref_note.frq);
 			EXPECT_TRUE(curr_note.oct == e.ref_note.oct);
@@ -153,16 +153,16 @@ TEST(scaleSpnTests, ScdNoteNtlOctInterconversionDefaultCtor) {
 		//
 		octn_t ans_curr_octn {static_cast<int>(std::floor(std::abs(i)/12))};
 		ntl_t ans_curr_ntl {ntls_in_sc[((i%12)+12)%12]};
-		auto ans_curr_scd = sc.to_scd(ans_curr_ntl,ans_curr_octn);
-		auto ans_curr_note = *ans_curr_scd;
+		auto it_from_scd = sc.zero() + sc.to_scd(ans_curr_ntl,ans_curr_octn);
+		auto ans_curr_note = *it_from_scd;
 		frq_t ans_curr_frq = ans_curr_note.frq;
 
 		EXPECT_TRUE(ans_curr_note.ntl == ans_curr_ntl);
 		EXPECT_TRUE(ans_curr_note.oct == ans_curr_octn);
 
 		// Get a new scd/note from the frq.  It should be the same as the initial note
-		auto scd_from_frq = sc.to_scd(ans_curr_frq);
-		auto nt_from_frq = *scd_from_frq;
+		auto it_from_frq = sc.zero() + sc.to_scd(ans_curr_frq);
+		auto nt_from_frq = *it_from_frq;
 		EXPECT_TRUE(nt_from_frq.ntl == ans_curr_ntl);
 		EXPECT_TRUE(nt_from_frq.oct == ans_curr_octn);
 		EXPECT_TRUE(nt_from_frq.frq == ans_curr_frq);
@@ -171,13 +171,13 @@ TEST(scaleSpnTests, ScdNoteNtlOctInterconversionDefaultCtor) {
 			// obviously should not be entered.   
 			auto xsf = i+1;
 			auto dbg_scd_from_frq = sc.to_scd(ans_curr_frq);
-			auto dbg_nt_from_frq = *scd_from_frq;
+			auto dbg_nt_from_frq = *it_from_frq;
 		}
 
 		// Get a new scd/note from the note.{ntl,octave}.  It should be the same as
 		// the initial ntl and oct
-		auto scd_from_ntlo = sc.to_scd(ans_curr_note.ntl,ans_curr_note.oct);
-		auto nt_from_ntlo = *scd_from_ntlo;
+		auto it_from_ntlo = sc.zero() + sc.to_scd(ans_curr_note.ntl,ans_curr_note.oct);
+		auto nt_from_ntlo = *it_from_ntlo;
 		EXPECT_TRUE(nt_from_ntlo.ntl == ans_curr_ntl);
 		EXPECT_TRUE(nt_from_ntlo.oct == ans_curr_octn);
 		EXPECT_TRUE(nt_from_ntlo.frq == ans_curr_frq);
@@ -212,16 +212,16 @@ TEST(scaleSpnTests, ScdNoteNtlOctInterconversionCSharpFive330Hz) {
 		//
 		octn_t ans_curr_octn {static_cast<int>(std::floor(std::abs(i)/12))};
 		ntl_t ans_curr_ntl {ntls_in_sc[((i%12)+12)%12]};
-		auto ans_curr_scd = sc.to_scd(ans_curr_ntl,ans_curr_octn);
-		auto ans_curr_note = *ans_curr_scd;
+		auto it_from_scd = sc.zero() + sc.to_scd(ans_curr_ntl,ans_curr_octn);
+		auto ans_curr_note = *it_from_scd;
 		frq_t ans_curr_frq = ans_curr_note.frq;
 
 		EXPECT_TRUE(ans_curr_note.ntl == ans_curr_ntl);
 		EXPECT_TRUE(ans_curr_note.oct == ans_curr_octn);
 
 		// Get a new scd/note from the frq.  It should be the same as the initial note
-		auto scd_from_frq = sc.to_scd(ans_curr_frq);
-		auto nt_from_frq = *scd_from_frq;
+		auto it_from_frq = sc.zero() + sc.to_scd(ans_curr_frq);
+		auto nt_from_frq = *it_from_frq;
 		EXPECT_TRUE(nt_from_frq.ntl == ans_curr_ntl);
 		EXPECT_TRUE(nt_from_frq.oct == ans_curr_octn);
 		EXPECT_TRUE(nt_from_frq.frq == ans_curr_frq);
@@ -230,13 +230,13 @@ TEST(scaleSpnTests, ScdNoteNtlOctInterconversionCSharpFive330Hz) {
 			// obviously should not be entered.   
 			auto xsf = i+1;
 			auto dbg_scd_from_frq = sc.to_scd(ans_curr_frq);
-			auto dbg_nt_from_frq = *scd_from_frq;
+			auto dbg_nt_from_frq = *it_from_frq;
 		}
 
 		// Get a new scd/note from the note.{ntl,octave}.  It should be the same as
 		// the initial ntl and oct
-		auto scd_from_ntlo = sc.to_scd(ans_curr_note.ntl,ans_curr_note.oct);
-		auto nt_from_ntlo = *scd_from_ntlo;
+		auto it_from_ntlo = sc.zero() + sc.to_scd(ans_curr_note.ntl,ans_curr_note.oct);
+		auto nt_from_ntlo = *it_from_ntlo;
 		EXPECT_TRUE(nt_from_ntlo.ntl == ans_curr_ntl);
 		EXPECT_TRUE(nt_from_ntlo.oct == ans_curr_octn);
 		EXPECT_TRUE(nt_from_ntlo.frq == ans_curr_frq);
@@ -250,13 +250,13 @@ TEST(scaleSpnTests, ScdNoteNtlOctInterconversionCSharpFive330Hz) {
 TEST(scaleSpnTests, ExpectedScdNtlRelationships) {
 	spn sc {};
 	
-	auto scd48_from_int = sc.to_scd(48);
-	auto scd48_from_ntloct = sc.to_scd("C"_ntl, octn_t{4});
-	EXPECT_EQ(*scd48_from_int,*scd48_from_ntloct);
+	auto it48_from_int = sc.zero() + 48;
+	auto it48_from_ntloct = sc.zero() + sc.to_scd("C"_ntl, octn_t{4});
+	EXPECT_EQ(*it48_from_int,*it48_from_ntloct);
 
-	auto scd60_from_int = sc.to_scd(60);
-	auto scd60_from_ntloct = sc.to_scd("C"_ntl, octn_t{5});
-	EXPECT_EQ(*scd60_from_int,*scd60_from_ntloct);
+	auto it60_from_int = sc.zero() + 60;
+	auto it60_from_ntloct = sc.zero() + sc.to_scd("C"_ntl, octn_t{5});
+	EXPECT_EQ(*it60_from_int,*it60_from_ntloct);
 }
 
 

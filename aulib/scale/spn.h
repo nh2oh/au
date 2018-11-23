@@ -2,6 +2,7 @@
 #include "scale.h"
 #include "..\types\frq_t.h"
 #include "..\types\ntl_t.h"
+#include "..\types\scale_iterator.h"
 #include <vector>
 #include <string>
 
@@ -21,35 +22,11 @@
 // nor the location of the octave breaks.  See the note above.  
 //
 // TODO:  Should pitch-std be a template param for the scale ?
-// TODO:  Rename to spn?  Put in namespace scale => scale::spn ???
+//
 //
 class spn {
 public:
-	class scd3_t {
-	public:
-		// Note these ctors are public... in general scale scd3_t's need not provide
-		// public ctors...
-		scd3_t()=default;
-		explicit scd3_t(int,const spn*);
-
-		note_t operator*() const;
-		scd3_t& operator++();  // prefix
-		scd3_t operator++(int);  // postfix
-		scd3_t& operator--();  // prefix
-		scd3_t operator--(int);  // postfix
-		scd3_t& operator-=(const scd3_t&);
-		scd3_t& operator-=(const int&);
-		scd3_t& operator+=(const int&);
-		friend int operator-(const scd3_t&,const scd3_t&);
-		//bool operator==(const scd3_t&) const;
-		//bool operator>(const scd3_t&) const;
-		//bool operator<(const scd3_t&) const;
-	private:
-		int m_val {0};
-		const spn *m_sc {};
-	};
-	
-
+	using iterator = typename scale_const_iterator<spn>;
 	// Constructors
 	spn()=default;  // Generates A440 ("A(4)" == 440 Hz)
 	explicit spn(pitch_std);
@@ -63,16 +40,20 @@ public:
 	bool isinsc(const ntl_t&) const;
 	bool isinsc(const frq_t&) const;
 	bool isinsc(const note_t&) const;
-	
-	spn::scd3_t zero() const;
 
-	spn::scd3_t to_scd(const ntl_t&, const octn_t&) const;
-	spn::scd3_t to_scd(const note_t&) const;
-	spn::scd3_t to_scd(const frq_t&) const;
-	spn::scd3_t to_scd(const int&) const;
-		// to_scd(0) is analagous to getting a vector iterator by calling .front()
-		// to_scd(5) is alalagous to auto it = myvec.front()+5;
-	std::vector<spn::scd3_t> to_scd(const std::vector<note_t>&) const;
+	int to_scd(const ntl_t&, const octn_t&) const;
+	int to_scd(const note_t&) const;
+	int to_scd(const frq_t&) const;
+	std::vector<int> to_scd(const std::vector<note_t>&) const;
+
+	template<typename T>
+	note_t to_note(const T& query) const {  // Getter called by scd3_t::operator*()
+		int scd = this->to_scd(query);
+		return this->operator[](scd);
+	};
+
+	note_t operator[](int) const;
+	iterator zero() const;
 private:
 	struct base_ntl_idx_t {
 		bool is_valid {false};
@@ -85,8 +66,6 @@ private:
 	// Methods
 	base_ntl_idx_t base_ntl_idx(const ntl_t&, const octn_t&) const;
 	base_ntl_idx_t base_ntl_idx(const frq_t&) const;
-
-	note_t to_note(int) const;  // Getter called by scd3_t::operator*()
 	
 	// Data
 	pitch_std m_pstd {};

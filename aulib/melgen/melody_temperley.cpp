@@ -62,8 +62,8 @@ std::vector<note_t> melody_temperley(const melody_temperley_params& p) {
 	// KP[2] == KP_ base[1], ...  KP[key_rscd+12n] == KP_base[0] for all n.  
 	//
 	// Note that i am naming the scd obtained from the "0" octave the "r"scd
-	spn::scd3_t key_rscd = sc.to_scd(p.key_ntl,octn_t{0});
-	if ((key_rscd-sc.to_scd(0)) >= 12 || (key_rscd-sc.to_scd(0)) < 0) {
+	int key_rscd = sc.to_scd(p.key_ntl,octn_t{0});
+	if (key_rscd >= 12 || key_rscd < 0) {
 		// Obviously spn12tet should never cause this, but in the future this function
 		// might be refactored to allow the caller to pass in any random scale.  An out-
 		// of-bounds key_rscd will break the vector indexing in some of the loops below.  
@@ -71,8 +71,7 @@ std::vector<note_t> melody_temperley(const melody_temperley_params& p) {
 	}
 	std::vector<double> KP;  KP.reserve(scdpool.size());
 	for (int i=0; i<scdpool.size(); ++i) {
-		int val_key_rscd = key_rscd-sc.to_scd(0);
-		KP.push_back(KP_base[(i-val_key_rscd+12)%12]);  // Same idxing as in ks_key()
+		KP.push_back(KP_base[(i-key_rscd+12)%12]);  // Same idxing as in ks_key()
 	}
 
 	// The Range Profile (RP)
@@ -85,14 +84,14 @@ std::vector<note_t> melody_temperley(const melody_temperley_params& p) {
 	
 	std::vector<note_t> melody {};  melody.reserve(p.nnts);
 	int newest_scd = scdpool[randset(1,RPKP,re)[0]];
-	melody.push_back(*sc.to_scd(newest_scd));
+	melody.push_back(sc[newest_scd]);
 	for (int i=1; i<p.nnts; ++i) {
 		auto curr_PP = normpdf(scdpool,newest_scd,p.PP_stdev); // Mean is the previous pitch
 
 		std::vector<double> curr_RPKPPP = vprod(RPKP,curr_PP);
 		curr_RPKPPP = normalize_probvec(curr_RPKPPP);
 		newest_scd = scdpool[randset(1,curr_RPKPPP,re)[0]];
-		melody.push_back(*sc.to_scd(newest_scd));
+		melody.push_back(sc[newest_scd]);
 	}
 
 

@@ -11,12 +11,12 @@
 #include <numeric>  // std::round()
 
 TEST(ks_key_tests, CmajorScaleOnePassZeroOctave) {
-	spn sc3 {};
+	spn sc {};
 	std::vector<ntl_t> cmaj_ntls {"C"_ntl,"D"_ntl,"E"_ntl,"F"_ntl,"G"_ntl,"A"_ntl,"B"_ntl};
 
 	std::vector<note_t> melody_notes {};
 	for (const auto& e : cmaj_ntls) {
-		melody_notes.push_back(*(sc3.to_scd(e,octn_t{0})));
+		melody_notes.push_back(sc[sc.to_scd(e,octn_t{0})]);
 	}
 	rp_t melody_rp {ts_t{4_bt,d::q},std::vector<d_t>(melody_notes.size(),d::q)};
 	line_t melody {melody_notes,melody_rp};
@@ -44,7 +44,7 @@ TEST(ks_key_tests, CminorScaleOnePassZeroOctave) {
 
 	std::vector<note_t> melody_notes {};
 	for (const auto& e : cmin_ntls) {
-		melody_notes.push_back(*(sc.to_scd(e,octn_t{0})));
+		melody_notes.push_back(sc[sc.to_scd(e,octn_t{0})]);
 	}
 	rp_t melody_rp {ts_t{4_bt,d::q},std::vector<d_t>(melody_notes.size(),d::q)};
 	line_t melody {melody_notes,melody_rp};
@@ -100,7 +100,7 @@ TEST(ks_key_tests, ChildO5Notes) {
 		d_t curr_nv {(offtime[i]-ontime[i])/1000.0};
 		nvs.push_back(curr_nv);
 
-		melody_notes.push_back(*(sc.to_scd(midi_code[i])));
+		melody_notes.push_back(sc[midi_code[i]]);
 	}
 	rp_t melody_rp {ts,nvs};
 	line_t<note_t> melody {melody_notes,melody_rp};

@@ -26,7 +26,7 @@ void diatonic_spn::build_sc(spn sc_base, ntl_t ntl_base, mode m) {
 	if (!m_sc_base.isinsc(ntl_base)) { std::abort(); }
 	
 	m_mode_idx = static_cast<int>(m);
-	spn::scd3_t spn_scd = m_sc_base.to_scd(ntl_base,octn_t{0});
+	int spn_scd = m_sc_base.to_scd(ntl_base,octn_t{0});
 	for (int i=0; i<m_n; ++i) {
 		if (i>0) {  // TODO:  std::rotate() m_ip and simplify this
 			// Note this weird i>0 condition:  The first ntl (idx==0) is just ntl_base;
@@ -34,7 +34,7 @@ void diatonic_spn::build_sc(spn sc_base, ntl_t ntl_base, mode m) {
 			// ntl of the scale (m_ntls[1]).  
 			spn_scd += m_ip[(i-1+m_mode_idx)%m_ip.size()];  // TODO:  Replace w/ ring
 		}
-		m_ntls.push_back((*spn_scd).ntl);
+		m_ntls.push_back(m_sc_base[spn_scd].ntl);
 	}
 
 	m_name = "Diatonic scale " + m_ntls[0].print() + " ...";
@@ -57,7 +57,7 @@ diatonic_spn::base_ntl_idx_t diatonic_spn::base_ntl_idx(const ntl_t& ntl, const 
 	return res;
 }
 diatonic_spn::base_ntl_idx_t diatonic_spn::base_ntl_idx(const frq_t& frq) const {
-	note_t spn_nt = *m_sc_base.to_scd(frq);
+	note_t spn_nt = m_sc_base.to_note(frq);
 	return base_ntl_idx(spn_nt.ntl,spn_nt.oct);
 }
 
@@ -88,8 +88,8 @@ std::string diatonic_spn::print(int from, int to) const {
 note_t diatonic_spn::operator[](int i) const {
 	int ntl_idx = ((i%m_n)+m_n)%m_n;
 	octn_t octn {static_cast<int>(std::floor(static_cast<double>(i)/static_cast<double>(m_n)))};
-	frq_t frq = (*m_sc_base.to_scd(m_ntls[ntl_idx],octn)).frq;
-
+	auto it = m_sc_base.zero() + m_sc_base.to_scd(m_ntls[ntl_idx],octn);
+	frq_t frq = (*it).frq;
 	return note_t {m_ntls[ntl_idx],octn,frq};
 }
 diatonic_spn::iterator diatonic_spn::zero() const {

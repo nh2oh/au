@@ -51,12 +51,11 @@ public:
 	int to_scd(const note_t&) const;
 	int to_scd(const ntl_t&, const octn_t&) const;
 	int to_scd(const frq_t&) const;
-	int to_scd(const int&) const;
 	std::vector<int> to_scd(const std::vector<note_t>&) const;
 	std::vector<int> to_scd(const std::vector<frq_t>&) const;
 
 	template<typename T>
-	note_t to_note(const T& query) const {  // Getter called by scd3_t::operator*()
+	note_t to_note(const T& query) const {
 		int scd = this->to_scd(query);
 		return this->operator[](scd);
 	};
