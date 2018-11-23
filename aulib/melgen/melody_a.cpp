@@ -1,6 +1,5 @@
 #pragma once
 #include "randmel_gens.h"
-#include "..\types\line_t.h"
 #include "..\util\au_random.h"
 #include "..\util\au_algs.h"  // unique_n() in score()
 #include "..\util\au_algs_math.h"  // aprx_eq() in score()
@@ -24,11 +23,7 @@
 //    repeats from step (1).  
 //
 // This algorithm is written only in terms of scd_t (all the p members are expressed 
-// in terms of scd_t).  Hence there is no dependence on any sort of scale, and the
-// line_t returned will always be a line_t<scd_t>.  It is of course possible to 
-// generalize the algorithm to arbitrary "param" structs and score functions, but the
-// origional "melody_a()" from the matlab implementation of automus was strictly an
-// scd function, so I want to keep melody_a() that way as well.  
+// in terms of scd_t).  Hence there is no dependence on any sort of scale.  
 //
 //
 // Scoring function
@@ -51,15 +46,11 @@
 // - Settings ma_params p {}:
 //   p.npass=100; p.sc_adjnts=-0.5; p.sc_rptnts=-0.5; p.sc_stepsize=-1; p.optimstep=1.5;
 //
-
+//
 std::vector<scd_t> melody_a(ma_params p) {
-	// The score actually isn't a function of scd_t - it can be entirely
-	// represented as a function of scdpool idx values provided all elements
-	// of scdpool are uq.  
 	auto score = [&](const std::vector<scd_t>& m) {
 		double s {0};
 		for (int i=1; i<m.size(); ++i) {  // NB: starts @ 1
-			//double curr_delta = std::abs((m[i]-m[i-1]).to_double());
 			double curr_delta = std::abs(m[i]-m[i-1]);
 			if (aprx_eq(curr_delta,0.0)) {
 				s += p.sc_adjnts;
@@ -77,7 +68,6 @@ std::vector<scd_t> melody_a(ma_params p) {
 	};
 
 	// The scdpool is the "domain" of notes from which the melody is drawn
-	//std::vector<scd_t> scdpool((p.max-p.min).to_int(),scd_t{0});
 	std::vector<scd_t> scdpool(p.max-p.min,scd_t{0});
 	std::iota(scdpool.begin(),scdpool.end(),p.min);
 

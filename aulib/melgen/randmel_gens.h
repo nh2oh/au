@@ -1,4 +1,5 @@
 #pragma once
+#include "..\types\scd_t.h"
 #include "..\types\line_t.h"
 #include "..\types\ntl_t.h"
 #include "..\types\frq_t.h"
@@ -62,7 +63,6 @@ struct ks_key_result {
 	ntl_t key {};
 	bool ismajor {false};
 	double score {0};
-	//bool istie {false};
 	dbk::contigumap<ntl_t,ks_key_result::major_minor_pair> all_scores {};
 };
 

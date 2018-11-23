@@ -16,49 +16,23 @@ public:
 	scd_t(int i);
 	operator int() const;
 
-	scd_t& operator++(); // prefix
-	scd_t operator++(int); // postfix
-	scd_t& operator--(); // prefix
-	scd_t operator--(int); // postfix
+	scd_t& operator++();  // prefix
+	scd_t operator++(int);  // postfix
+	scd_t& operator--();  // prefix
+	scd_t operator--(int);  // postfix
 	scd_t& operator+=(const int&);
 	scd_t& operator-=(const int&);
 	scd_t& operator+=(const scd_t&);
 	scd_t& operator-=(const scd_t&);
+
+	bool operator==(const scd_t&) const;
+	bool operator<(const scd_t&) const;
+	bool operator>(const scd_t&) const;
+	bool operator>=(const scd_t&) const;
+	bool operator<=(const scd_t&) const;
 private:
 	int m_value {0};
 };
-
-/*
-class scd_t {
-public:
-	scd_t() = default;
-	explicit scd_t(int);
-
-	std::string print() const;
-	int to_int() const;
-	double to_double() const;
-
-	scd_t& operator++(); // prefix
-	scd_t operator++ (int); // postfix
-	scd_t& operator+=(scd_t const&);
-	scd_t& operator-=(scd_t const&);
-private:
-	int m_scd {0};
-};
-
-scd_t operator+(scd_t const&, scd_t const&);
-scd_t operator-(scd_t const&, scd_t const&);
-scd_t operator*(int const&, scd_t const&);
-double operator/(scd_t const&, scd_t const&);
-double operator/(scd_t const&, double const&);
-double operator/(double const&, scd_t const&);
-
-bool operator==(scd_t const&, scd_t const&);
-bool operator<(scd_t const&, scd_t const&);
-bool operator>(scd_t const&, scd_t const&);
-bool operator>=(scd_t const&, scd_t const&);
-bool operator<=(scd_t const&, scd_t const&);
-*/
 
 //-----------------------------------------------------------------------------
 // The octn_t class
