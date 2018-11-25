@@ -1,6 +1,4 @@
 #include "ntl_t.h"
-#include "scd_t.h"  // Defines octn_t
-#include "..\util\au_error.h"  // TODO:  Drop
 #include <string>
 #include <regex>
 
@@ -11,24 +9,20 @@ const char *ntl_t::m_allowed {"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvw
 ntl_t::ntl_t(const std::string& str_in) {
 	set_ntl(str_in);
 }
-
 ntl_t::ntl_t(const char* char_in) {
 	set_ntl(std::string(char_in));
 }
-
 bool ntl_t::valid_string(const std::string& str_in) {
 	if (str_in.size() == 0) { return false; }
 	auto pos_illegal = str_in.find_first_not_of(m_allowed,0);
 	return pos_illegal == std::string::npos;
 }
-
 void ntl_t::set_ntl(const std::string& str_in) {
 	if (!valid_string(str_in)) {
 		std::abort();
 	}
 	m_ntl = str_in;
 }
-
 std::string ntl_t::print() const {
 	return m_ntl;
 }
@@ -39,7 +33,6 @@ bool ntl_t::operator==(const ntl_t& rhs) const {
 bool operator!=(const ntl_t& lhs, const ntl_t& rhs) {
 	return !(lhs == rhs);
 }
-
 ntl_t operator""_ntl(const char *literal_in, size_t length) {
 	return ntl_t {literal_in};
 }
@@ -92,6 +85,39 @@ spn_ntstr_parsed parse_spn_ntstr(const std::string& s) {
 
 
 
+
+octn_t::octn_t(int octn_in) {
+	m_octn = octn_in;
+}
+int octn_t::to_int() const {
+	return m_octn;
+}
+std::string octn_t::print() const {
+	return std::to_string(m_octn);
+}
+
+bool octn_t::operator==(const octn_t& rhs) const {
+	return m_octn==rhs.m_octn;
+}
+bool octn_t::operator!=(const octn_t& rhs) const {
+	return !(m_octn==rhs.m_octn);
+}
+bool octn_t::operator<(const octn_t& rhs) const {
+	return  m_octn<rhs.m_octn;
+}
+bool octn_t::operator<=(const octn_t& rhs) const {
+	return  m_octn<=rhs.m_octn;
+}
+bool octn_t::operator>(const octn_t& rhs) const {
+	return  m_octn>rhs.m_octn;
+}
+bool octn_t::operator>=(const octn_t& rhs) const {
+	return  m_octn>=rhs.m_octn;
+}
+
+
+
+
 note_t::note_t(ntl_t n, octn_t o, frq_t f) {
 	ntl = n;
 	oct = o;
@@ -106,7 +132,7 @@ std::string note_t::print(note_t::fmt f) const {
 			break;
 		}
 		case fmt::ntlo: {
-			s += ntl.print() + "(" + std::to_string(oct.to_int()) + ")";
+			s += ntl.print() + "(" + oct.print() + ")";
 			break;
 		}
 	}

@@ -1,5 +1,4 @@
 #pragma once
-#include "scd_t.h"  // declares/defines octn_t
 #include "frq_t.h"
 #include <string>
 
@@ -24,6 +23,37 @@ private:
 bool operator!=(const ntl_t&, const ntl_t&);
 
 ntl_t operator""_ntl(const char*, size_t);
+
+
+
+//
+// The octn_t class
+//
+// An octn_t represents an absolute "octave _number_" on whatever scale the user
+// is working with.  Since scales are free to define the concept of "octave" any 
+// way they please, an octn_t in general has no relationship with frequency or
+// frequency ratios (see oct_t for this).  
+//
+class octn_t {
+public:
+	octn_t() = default;
+	explicit octn_t(int);
+
+	int to_int() const;
+	std::string print() const;
+
+	bool operator==(const octn_t&) const;
+	bool operator!=(const octn_t&) const;
+	bool operator<(const octn_t&) const;
+	bool operator<=(const octn_t&) const;
+	bool operator>(const octn_t&) const;
+	bool operator>=(const octn_t&) const;
+	
+private:
+	int m_octn {0};
+};
+
+
 
 struct spn_ntstr_parsed {
 	bool is_valid {false};
