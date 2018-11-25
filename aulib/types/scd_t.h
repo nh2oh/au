@@ -26,6 +26,7 @@ public:
 	scd_t& operator-=(const scd_t&);
 
 	bool operator==(const scd_t&) const;
+	bool operator!=(const scd_t&) const;
 	bool operator<(const scd_t&) const;
 	bool operator>(const scd_t&) const;
 	bool operator>=(const scd_t&) const;

@@ -49,6 +49,25 @@ scd_t& scd_t::operator-=(const int& rhs) {
 }
 
 
+bool scd_t::operator==(const scd_t& rhs) const {
+	return m_value==rhs.m_value;
+}
+bool scd_t::operator!=(const scd_t& rhs) const {
+	return !(m_value==rhs.m_value);
+}
+bool scd_t::operator<(const scd_t& rhs) const {
+	return m_value<rhs.m_value;
+}
+bool scd_t::operator>(const scd_t& rhs) const {
+	return m_value>rhs.m_value;
+}
+bool scd_t::operator>=(const scd_t& rhs) const {
+	return !(m_value<rhs.m_value);
+}
+bool scd_t::operator<=(const scd_t& rhs) const {
+	return !(m_value>rhs.m_value);
+}
+
 //-----------------------------------------------------------------------------
 // Class octn_t
 

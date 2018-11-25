@@ -15,7 +15,6 @@ struct pitch_std {
 	int gen_int {2};
 	int ntet {12};
 };
-
 // ref-frq, ntet, gint
 std::vector<frq_t> frq_eqt(const std::vector<int>&,frq_t,int,int);
 
@@ -24,6 +23,13 @@ frq_t frq_eqt(int, frq_t,int,int);
 
 // ref-frq, ntet, gint
 double n_eqt(frq_t, frq_t,int,int);
+
+
+// scd (dn), ref-frq
+frq_t frq_pythag12t(int, frq_t);
+
+// ref-frq, test_frq
+double n_pythag12t(frq_t, frq_t);
 
 
 //

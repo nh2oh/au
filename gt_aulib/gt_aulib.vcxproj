@@ -159,7 +159,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="frq_t_cent_t_test.cpp" />
+    <ClCompile Include="cent_t_test.cpp" />
+    <ClCompile Include="frq_t_test.cpp" />
     <ClCompile Include="ks_key_test.cpp" />
     <ClCompile Include="line_t_test.cpp" />
     <ClCompile Include="melody_a_testcpp.cpp" />

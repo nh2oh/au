@@ -5,10 +5,7 @@
 #include <regex>
 
 
-
-//-----------------------------------------------------------------------------
-// The ntl_t class
-
+// The set of chars allowed in an ntl_t
 const char *ntl_t::m_allowed {"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234567989_-[]#&"};
 
 ntl_t::ntl_t(const std::string& str_in) {
@@ -26,7 +23,9 @@ bool ntl_t::valid_string(const std::string& str_in) {
 }
 
 void ntl_t::set_ntl(const std::string& str_in) {
-	if (!valid_string(str_in)) { std::abort(); }
+	if (!valid_string(str_in)) {
+		std::abort();
+	}
 	m_ntl = str_in;
 }
 
@@ -45,6 +44,51 @@ ntl_t operator""_ntl(const char *literal_in, size_t length) {
 	return ntl_t {literal_in};
 }
 
+
+//
+// TODO:  In principle the &,# modifiers could change the octave specified in
+// the ntstr, for example C&(5) is B(4).  
+// Is it best to leave this up to the caller to deal with?  In all cases the 
+// presence of net & or # chars change the ntl, but i don't worry about returning
+// the set of alternative ntls.  
+//
+spn_ntstr_parsed parse_spn_ntstr(const std::string& s) {
+	spn_ntstr_parsed res {};
+
+	ntstr_parsed ntstr_parse_res = parse_ntstr(s);
+	res.is_valid = ntstr_parse_res.is_valid;
+	res.is_oct_set = ntstr_parse_res.is_oct_set;
+	res.ntl = ntstr_parse_res.ntl;
+	res.oct = ntstr_parse_res.oct;
+	res.ntl_base = ntstr_parse_res.ntl;
+	if (!res.is_valid) {
+		return res;
+	}
+
+	std::string ntstr_nooct = ntstr_parse_res.ntl.print();
+	std::regex rx("([ABCDEFG]{1,1})([&#]*)?");
+	// ntstr_nooct so as not to pass a temporary to regex_match()
+	std::smatch rx_matches {};
+	if (!std::regex_match(ntstr_nooct, rx_matches, rx)) {
+		res.nflat = 0;
+		res.nsharp = 0;
+		res.ntl_base = res.ntl;  // No parsable &,# modifiers
+		res.is_valid_spn = false;
+		res.ntl = ntstr_parse_res.ntl;
+	} else {
+		res.is_valid_spn = true;
+		res.ntl_base = ntl_t {rx_matches[1].str()};
+	}
+
+	if (rx_matches[2].matched) {
+		for (int i=0; i<rx_matches[2].str().size(); ++i) {
+			if (rx_matches[2].str()[i] == '#') { ++res.nsharp; }
+			if (rx_matches[2].str()[i] == '&') { ++res.nflat; }
+		}
+	}
+
+	return res;
+}
 
 
 
@@ -103,4 +147,5 @@ ntstr_parsed parse_ntstr(const std::string& s) {
 
 	return result;
 }
+
 

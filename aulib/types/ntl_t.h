@@ -1,6 +1,6 @@
 #pragma once
 #include "scd_t.h"  // declares/defines octn_t
-#include "frq_t.h"  // declares/defines octn_t
+#include "frq_t.h"
 #include <string>
 
 class ntl_t {
@@ -15,7 +15,7 @@ public:
 
 	bool operator==(const ntl_t&) const;
 private:
-	void set_ntl(const std::string&);  //  Essentially a delegated constructor
+	void set_ntl(const std::string&);  // Essentially a delegated constructor
 
 	static const char *m_allowed;
 	std::string m_ntl {"C"};
@@ -25,7 +25,25 @@ bool operator!=(const ntl_t&, const ntl_t&);
 
 ntl_t operator""_ntl(const char*, size_t);
 
+struct spn_ntstr_parsed {
+	bool is_valid {false};
+	bool is_oct_set {false};
+	bool is_valid_spn {false};
+	ntl_t ntl {};
+	ntl_t ntl_base {};  // No sharp or flat modifiers
+	int nsharp {0};
+	int nflat {0};
+	octn_t oct {};
+};
+spn_ntstr_parsed parse_spn_ntstr(const std::string&);
 
+struct ntstr_parsed {
+	bool is_valid {false};
+	bool is_oct_set {false};
+	ntl_t ntl {};
+	octn_t oct {};
+};
+ntstr_parsed parse_ntstr(const std::string&);
 
 // 
 // A note_t is a concrete, absolute, standalone representation of a pitch that associates
@@ -60,12 +78,6 @@ private:  // Turns out a note_t has no invariants!
 };
 bool operator!=(const note_t&, const note_t&);
 
-struct ntstr_parsed {
-	bool is_valid {false};
-	bool is_oct_set {false};
-	ntl_t ntl {};
-	octn_t oct {};
-};
-ntstr_parsed parse_ntstr(const std::string&);
+
 
 

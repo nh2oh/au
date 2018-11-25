@@ -44,14 +44,31 @@ class frq_t;
 // cent_t.   
 //
 
+// TODO:  Template on tuning and compute semintones to get the name; default
+// 12tet
 
 //
 // TODO:  whatever()- > to_acname()
+//
+
+//
+// About names:
+// The most common naming scheme for intervals describes two properties of the interval: 
+//   1)  The "quality" ("perfect," "major," ...)
+//   2)  The "number" ("unison," "second," "third," ...)
+// Names depend on both the difference in semitones between the pair of notes, and how
+// the interval is spelled (frequency ratios of enharmonic intervals such as G–G# and G–A& 
+// are named differently).  Hence an interval of N semitones may have more than one name.  
+// Intervals cannot be named by counting semitones alone.
+//
+//
+//
 //
 class cent_t {
 public:
 	cent_t() = default;
 	explicit cent_t(frq_t, frq_t);  // Interpret as a frq_t ratio
+	explicit cent_t(int);  // Interpret as a number-of-cents
 	explicit cent_t(double);  // Interpret as a number-of-cents
 	cent_t(oct_t); // Number-of-octaves, not octave-number...
 	// Not explicit:  An oct_t will silently convert into a cent_t if needed

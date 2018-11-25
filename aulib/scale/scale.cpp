@@ -1,6 +1,7 @@
 #include "scale.h"
-
-
+#include "..\types\frq_t.h"
+#include <vector>
+#include <cmath>  // std::log(), std::pow()
 
 //
 // Return a frq vector corresponding to some equal-tempered scale.  
@@ -46,6 +47,45 @@ frq_t frq_eqt(int dn, frq_t ref_frq, int ntet, int gint) {
 // The inverse:  Takes in a frq_t and returns a double corresponding to the scd_t
 double n_eqt(frq_t frq_in, frq_t ref_frq, int ntet, int gint) {
 	return ntet*(std::log(frq_in/ref_frq)/std::log(static_cast<double>(gint)));
+}
+
+
+
+//
+// Generalized version
+// Terms:
+// Equal temperament:  A system of tuning in which the frequency interval between every 
+//     pair of adjacent notes has the same ratio. 
+//
+//
+//
+//
+
+// Pythagorean tuning:  Frequency ratios of all intervals are = ((3/2)^a)*((1/2)^b)
+// for some a,b.  
+// 
+
+frq_t frq_pythag12t(int dn, frq_t ref_frq) {
+	double I = std::pow(3,7)/std::pow(2,11);
+	double J = std::pow(3,-5)/std::pow(2,-8);
+	// J - I - J - I - J - I - I - J - I - J  - I  - [I-...]
+	// 1 - 2 - 3 - 4 - 5 - 6 - 7 - 8 - 9 - 10 - 11 - 12
+	
+	int ptwo=0;
+	double base_fctr = 0.0;
+	for (int i=dn; i>0; --i) {
+		if (i%12 == 0) {
+			ptwo = i%12;
+			base_fctr = 1;
+		}
+	}
+
+	return frq_t {0.0};
+}
+// Pythagorean tuning:
+// Takes in a frq_t and returns a double corresponding to the scd_t
+double n_pythag12t(frq_t frq_in, frq_t ref_frq) {
+	return 0;
 }
 
 
