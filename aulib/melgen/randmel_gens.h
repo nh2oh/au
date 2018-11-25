@@ -48,6 +48,25 @@ std::vector<scd_t> melody_a(ma_params);
 
 
 //
+// melody_hiller()
+//
+// Based on the description by Hiller & Isaacson on p. 74-... of "Experimental 
+// Music Composition with an Electronic Computer)" 1959
+//
+// Their alg works on the white notes of the piano, hence the internal scale is
+// diatonic_spn, and i return note_t's, not scd_t's.  
+//
+//
+struct melody_hiller_params {
+	int nnts {12};
+	std::string min {"C(3)"};
+	std::string max {"C(5)"};
+};
+std::vector<note_t> melody_hiller(const melody_hiller_params&);
+
+
+
+//
 // ks_key()
 //
 struct ks_key_params {

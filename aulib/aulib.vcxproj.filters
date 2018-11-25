@@ -108,6 +108,9 @@
     <ClCompile Include="scale\spn.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="melgen\melody_hiller.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="util\au_algs.h">

@@ -22,6 +22,7 @@
     <ClCompile Include="input\notefile.cpp" />
     <ClCompile Include="ks_key.cpp" />
     <ClCompile Include="melgen\melody_a.cpp" />
+    <ClCompile Include="melgen\melody_hiller.cpp" />
     <ClCompile Include="melgen\melody_temperley.cpp" />
     <ClCompile Include="numeric_simple_uih.cpp" />
     <ClCompile Include="nv_t_uih.cpp" />
