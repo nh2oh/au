@@ -1,0 +1,7 @@
+\contentsline {section}{\numberline {1}Introduction}{2}
+\contentsline {subsection}{\numberline {1.1}YAY \texttt {auto}{\relax \fontsize {14.4}{18}\selectfont $\mu $}\textsl {sic}{}}{2}
+\contentsline {subsection}{\numberline {1.2}Quickstart: An \texttt {auto}{\relax \fontsize {14.4}{18}\selectfont $\mu $}\textsl {sic}{} crash-course}{2}
+\contentsline {subsubsection}{\numberline {1.2.1}Types}{2}
+\contentsline {section}{\numberline {2}Design thoughts}{2}
+\contentsline {section}{\numberline {3}To-do critical}{2}
+\contentsline {section}{\numberline {4}To-do not critical}{2}

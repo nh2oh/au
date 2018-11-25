@@ -1,0 +1,73 @@
+\documentclass[12pt,letterpaper,titlepage]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{makeidx}
+\usepackage{graphicx}
+\usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
+\usepackage{geometry}
+\geometry{textwidth = 5.5in}
+
+\newcommand{\automus}{\texttt{auto}{\large $\mu$}\textsl{sic}}
+\newcommand{\dq}[1]{``#1''}
+
+
+\begin{document}
+\author{Ben Knowles}
+\title{The \texttt{auto}{\Huge $\mu$}\textsl{sic} Manual}
+\maketitle
+\tableofcontents
+\newpage
+
+
+
+\section{Introduction}
+\automus{} is a thing
+
+\subsection{YAY \automus{}}
+I recommend that...
+
+\subsection{Quickstart: An \automus{} crash-course} \label{s:quickStart}
+\subsubsection{Types}
+To use \automus{}, open 
+
+
+
+\section{Design thoughts}
+\begin{enumerate}
+\item what
+
+\item Introspection for ntstrs at the level of the sharp, flat specifier.  
+\subitem Allow scales to define a set of ntls for each nt
+It is more than a purely display issue; if someone is working in sc.cchrom and has ntstrs which mix say E\# and F, functions like ntstr2frq() need to interpret this correctly.  
+
+\end{enumerate}
+
+\section{To-do critical}
+\begin{enumerate}
+\item The manual...
+\end{enumerate}
+
+\section{To-do not critical}
+\begin{enumerate}
+\item Function to calc Plomp consonance.  
+\item nbar() should return incomplete subsequences at the start of the bar.  The br output argument currently only returns the residual at the end of the bar.  Could make br more informative by also returning indices of elements.  
+\item notedict()...
+\item notedict should optionally define a note as including a duration.  Can implement a fuzz parameter to call nonidentical sequences the same.  
+\item intcns, comparison of intcns.  
+\item rpmetg():  mg.pg factorizations based on row splitting as well as column splitting.  It is always possible to pick a single note and generate two tg's see p. 114 of my NB2.  Should solve all the speed/memory problems associated with mg's.  Alternatively, there are probably repeated submatricies internal to the segments of any segmented pg.  Will the factoring alg currently implemented in rpmetg() work for a pg with no cmn ptrs?  Look at the factorization of: rdurmetg([1;2;4;8],[],2,6,[],[3;4]);
+\item Tuplets???
+\item Some way to store \dq{data} ... rhythmic mode specifications, names of metric feet, option sets, eg, for melody\_a(), etc.  
+\item rp\_temperley().  
+\end{enumerate}
+
+
+
+
+\end{document}
+
+
+
+
+

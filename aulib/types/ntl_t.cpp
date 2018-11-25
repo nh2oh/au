@@ -37,13 +37,20 @@ ntl_t operator""_ntl(const char *literal_in, size_t length) {
 	return ntl_t {literal_in};
 }
 
-
 //
-// TODO:  In principle the &,# modifiers could change the octave specified in
-// the ntstr, for example C&(5) is B(4).  
-// Is it best to leave this up to the caller to deal with?  In all cases the 
-// presence of net & or # chars change the ntl, but i don't worry about returning
-// the set of alternative ntls.  
+// Determines if a string represents a valid SPN note (A,B,...G), whether or 
+// not it contains an octave specifier, and whether or not it contains one or 
+// more sharp,flat modifiers ('#' or '&' immediately following the note-letter but
+// preceeding the octave-specifier, if present).  Parses the octave specifier if and
+// sharp,flat modifiers, if present.  Note that '#' or '&' chars in the string are
+// only considered to be sharp,flat modifiers if the string qualifies as a valid SPN
+// note letter, since '#' and '&' are valid chars for general (non-SPN) note-letters.  
+//
+// Note also that in principle the &,# modifiers could change the octave specified in
+// the ntstr, for example C&(5) is the same as B(4).  The octave returned is always
+// that specified in the input string (the presence of net & or # chars also change the
+// ntl, but this is much too complex an issue to deal with in a simple string parsing
+// function; the caller needs to deal with it).  
 //
 spn_ntstr_parsed parse_spn_ntstr(const std::string& s) {
 	spn_ntstr_parsed res {};
@@ -59,8 +66,9 @@ spn_ntstr_parsed parse_spn_ntstr(const std::string& s) {
 	}
 
 	std::string ntstr_nooct = ntstr_parse_res.ntl.print();
-	std::regex rx("([ABCDEFG]{1,1})([&#]*)?");
 	// ntstr_nooct so as not to pass a temporary to regex_match()
+	
+	std::regex rx("([ABCDEFG]{1,1})([&#]*)?");
 	std::smatch rx_matches {};
 	if (!std::regex_match(ntstr_nooct, rx_matches, rx)) {
 		res.nflat = 0;
@@ -147,6 +155,11 @@ bool operator!=(const note_t& lhs, const note_t& rhs) {
 	return !(lhs==rhs);
 }
 
+//
+// Determines if a string represents a valid note and whether or not it contains
+// an octave specifier (a number surrounded by '(' and ')' at the end of the 
+// string); parses the octave specifier if present.  
+//
 ntstr_parsed parse_ntstr(const std::string& s) {
 	ntstr_parsed result {false, false, ntl_t{"C"}, octn_t{0}};
 
