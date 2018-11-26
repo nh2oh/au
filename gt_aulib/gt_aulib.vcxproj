@@ -183,9 +183,6 @@
     <ProjectReference Include="..\aulib\aulib.vcxproj">
       <Project>{0ffa5ec5-e53d-4f20-ace1-ac704d0be313}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\googletest-au\googletest-au.vcxproj">
-      <Project>{8d61f937-5e1b-47d5-a6b8-326b345d19c7}</Project>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
