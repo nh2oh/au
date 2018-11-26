@@ -96,7 +96,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="resource.h" />
     <ClInclude Include="scr.h" />
     <ClInclude Include="scr2.h" />
   </ItemGroup>
@@ -104,9 +103,6 @@
     <ClCompile Include="au.cpp" />
     <ClCompile Include="scr.cpp" />
     <ClCompile Include="scr2.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="au.rc" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\aulib\aulib.vcxproj">
