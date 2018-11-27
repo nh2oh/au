@@ -3,7 +3,7 @@
 #include "nv_t.h"
 #include <string>
 #include <numeric>  // std::accumulate()
-#include <vector>  // cum_nbar()
+#include <vector>
 #include <regex>
 #include "..\util\au_algs_math.h"  // ksum<T> in err_nbeat_accum()
 
@@ -18,14 +18,13 @@ ts_t::ts_t(const beat_t& num, const d_t& denom, bool is_compound_in) {
 		m_bpb = num;
 		m_beat_unit = denom;
 	} else {  // Compound time signature
-		// The numerator is the "number of into-3 subdivisions of the beat"-per
-		// bar.  Thus, dividing by 3 yields the number of beats-per bar.  
+		// The numerator is the "number of into-3 subdivisions of the beat"-per bar.  Thus, 
+		// dividing by 3 yields the number of beats-per bar.  
 		m_bpb = num/3.0;
 
-		// The denominator is the "note-value per (3-part) beat subdivision."
-		// That is, 3 notes of value denom == 1 beat.  
-		// A group of three identical note-values x is equivalent a single nv
-		// having twice the duration of x, 2x, dotted once: (2x).
+		// The denominator is the "note-value per (3-part) beat subdivision."  That is, 3 notes 
+		// of value denom == 1 beat.  A group of three identical note-values d is equivalent to a
+		// single nv of duration of 2*d, dotted once:  (2d).
 		d_t beat_unit = 2*denom;
 		if (!beat_unit.add_dots(1)) {
 			std::abort();
@@ -43,7 +42,7 @@ ts_t::ts_t(const std::string& str_in) {
 // 
 void ts_t::from_string(const std::string& str_in) {
 	std::regex rx {"(\\d+)/(\\d+)(c)?"};
-	std::smatch rx_matches {};  // std::match_results<std::string::const_interator>
+	std::smatch rx_matches {};  // std::smatch == std::match_results<std::string::const_interator>
 	if (!std::regex_match(str_in,rx_matches,rx)) {
 		std::abort();
 	}
@@ -88,6 +87,31 @@ bool ts_t::operator==(const ts_t& rhs) const {
 }
 bool operator!=(const ts_t& lhs, const ts_t& rhs) {
 	return !(lhs == rhs);
+}
+
+ts_str_parsed parse_ts_string(const std::string& str_in) {
+	ts_str_parsed res {};
+	std::regex rx {"(\\d+)/(\\d+)(c)?"};
+	std::smatch rx_matches {};  // std::smatch == std::match_results<std::string::const_interator>
+	if (!std::regex_match(str_in,rx_matches,rx)) {
+		res.is_valid = false;
+		return res;
+	}
+	double bt_per_bar {std::stod(rx_matches[1].str())};
+	double inv_dv_per_bt = std::stod(rx_matches[2].str());
+	if (bt_per_bar <= 0.0 || inv_dv_per_bt <= 0.0) {
+		// 0 is forbidden for num or denom (values < 0 will not match the regex).  
+		res.is_valid = false;
+		return res;
+	}
+
+	res.is_valid = true;
+	res.num = bt_per_bar;
+	res.denom = 1.0/inv_dv_per_bt;
+	res.is_compound = rx_matches[3].matched;
+	res.ts = ts_t {beat_t{res.num},d_t{res.denom},res.is_compound};
+
+	return res;
 }
 
 
