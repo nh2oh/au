@@ -30,6 +30,11 @@
 //   three (1/6). notes == (1/8).. (an eighth note w/ 2 dots).  
 //
 //
+
+//
+// TODO:  Why can i not introspect is_compound() ?
+//
+//
 class ts_t {
 public:
 	ts_t() = default;
@@ -53,8 +58,7 @@ public:
 
 	bool operator==(const ts_t&) const;
 private:
-	void from_string(const std::string&);
-		// Called by ts_t(std::string const&);
+	void from_string(const std::string&);  // Called by ts_t(std::string const&);
 
 	d_t m_beat_unit {1.0/4.0};  // The d_t corresponding to one beat
 	beat_t m_bpb {4.0};  // Beats per bar (numerator)

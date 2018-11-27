@@ -1,20 +1,20 @@
 #include "ts_t.h"
 #include "beat_bar_t.h"
 #include "nv_t.h"
-#include "..\util\au_error.h"
-//#include "..\util\au_util.h"
 #include <string>
 #include <numeric>  // std::accumulate()
 #include <vector>  // cum_nbar()
 #include <regex>
-#include "..\util\au_algs_math.h"
+#include "..\util\au_algs_math.h"  // ksum<T> in err_nbeat_accum()
 
 
 ts_t::ts_t(const beat_t& num, const d_t& denom, bool is_compound_in) {
-	au_assert(num > 0_bt);
+	if (num <= 0_bt || denom <= d_t{d::z}) {
+		std::abort();
+	}
 
 	m_compound = is_compound_in;
-	if (!is_compound_in) { // "Simple" time signature
+	if (!is_compound_in) {  // "Simple" time signature
 		m_bpb = num;
 		m_beat_unit = denom;
 	} else {  // Compound time signature
@@ -26,7 +26,10 @@ ts_t::ts_t(const beat_t& num, const d_t& denom, bool is_compound_in) {
 		// That is, 3 notes of value denom == 1 beat.  
 		// A group of three identical note-values x is equivalent a single nv
 		// having twice the duration of x, 2x, dotted once: (2x).
-		auto beat_unit = 2*denom; au_assert(beat_unit.add_dots(1));
+		d_t beat_unit = 2*denom;
+		if (!beat_unit.add_dots(1)) {
+			std::abort();
+		}
 		m_beat_unit = beat_unit;
 	}
 }
@@ -109,7 +112,6 @@ d_t duration(const ts_t& ts_in, beat_t nbeats_in) {
 }
 
 bar_t nbar(const ts_t& ts_in, const d_t& d_in) {
-	//return nbar(ts_in, nbeat(ts_in,d_in));
 	return bar_t {d_in/ts_in.bar_unit()};
 }
 bar_t nbar(const ts_t& ts_in, const beat_t& nbts_in) {
@@ -123,9 +125,9 @@ bar_t nbar(const ts_t& ts_in, const std::vector<d_t>& vdt_in) {
 }
 
 std::vector<bar_t> cum_nbar(const ts_t& ts_in, const std::vector<d_t>& vdt_in) {
-	std::vector<bar_t> nbar_cum {}; nbar_cum.reserve(vdt_in.size());
+	std::vector<bar_t> nbar_cum {};  nbar_cum.reserve(vdt_in.size());
 	d_t curr_tot_duration {0};
-	// The assumption here is that d_t's summ more accurately than bar_t's.  Otherwise,
+	// The assumption here is that d_t's sum more accurately than bar_t's.  Otherwise,
 	// I could: curr += nbar(ts,d_t); push_back(curr);
 	for (const auto& e : vdt_in) {
 		curr_tot_duration += e;

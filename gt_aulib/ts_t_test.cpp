@@ -4,7 +4,12 @@
 #include "..\aulib\util\au_algs_math.h"
 #include <vector>
 
+//
 // TODO:  Currently there are no tests for compound signatures.  
+// TODO:  See the ts_t {_bt,d_t,bool} ctor.  For compound signatures, std::abort()
+//        is called if d_t.add_dots(1) returns false, which currently is the case if
+//        d_t.singlet_exists() == false; do i want this?  
+//
 
 // Default ts is 4/4 simple
 TEST(ts_t_tests, DefaultConstructor) {
