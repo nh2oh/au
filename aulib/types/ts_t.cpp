@@ -2,10 +2,11 @@
 #include "beat_bar_t.h"
 #include "nv_t.h"
 #include "..\util\au_error.h"
-#include "..\util\au_util.h"
+//#include "..\util\au_util.h"
 #include <string>
-#include <numeric>  // accumulate()
+#include <numeric>  // std::accumulate()
 #include <vector>  // cum_nbar()
+#include <regex>
 #include "..\util\au_algs_math.h"
 
 
@@ -34,22 +35,23 @@ ts_t::ts_t(const std::string& str_in) {
 	from_string(str_in);
 }
 
-// TODO:  this is essentially replicated in the ts_t uih
-// Called by the constructor ts_t(std::string const&)
-// Defined as its own function because ... ???
-void ts_t::from_string(const std::string& str_in) {  
-	auto o_matches = rx_match_captures("(\\d+)/(\\d+)(c)?",str_in);
-	if (!o_matches || (*o_matches).size() != 4) {
-		au_error("Could not parse ts string literal");
+//
+// Called by the constructor ts_t(const std::string&)
+// 
+void ts_t::from_string(const std::string& str_in) {
+	std::regex rx {"(\\d+)/(\\d+)(c)?"};
+	std::smatch rx_matches {};  // std::match_results<std::string::const_interator>
+	if (!std::regex_match(str_in,rx_matches,rx)) {
+		std::abort();
 	}
-	auto matches = *o_matches;
-
-	double bt_per_bar {std::stod(*(matches[1]))};
-	double dv_per_bt = 1.0/std::stod(*(matches[2]));
-	au_assert((bt_per_bar > 0 && dv_per_bt > 0), "No (-) values in a ts");
-	
-	bool is_compound {false};
-	if (matches[3]) { is_compound = true; }
+	double bt_per_bar {std::stod(rx_matches[1].str())};
+	double inv_dv_per_bt = std::stod(rx_matches[2].str());
+	if (bt_per_bar <= 0.0 || inv_dv_per_bt <= 0.0) {
+		// 0 is forbidden for num or denom (values < 0 will not match the regex).  
+		std::abort();  
+	}
+	double dv_per_bt = 1.0/inv_dv_per_bt;
+	bool is_compound {rx_matches[3].matched};
 
 	m_beat_unit = d_t {dv_per_bt};
 	m_bpb = beat_t {bt_per_bar};

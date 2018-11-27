@@ -4,6 +4,7 @@
 #include "..\aulib\util\au_algs_math.h"
 #include <vector>
 
+// TODO:  Currently there are no tests for compound signatures.  
 
 // Default ts is 4/4 simple
 TEST(ts_t_tests, DefaultConstructor) {
@@ -45,6 +46,46 @@ TEST(ts_t_tests, TwelveEightSimpleCompound) {
 	EXPECT_TRUE(tes.bar_unit() == d_t{d::wd});
 	EXPECT_TRUE(tec.bar_unit() == d_t{d::wd});
 }
+
+
+// Tests the ctor from a std::string for non-compound ts_t's
+TEST(ts_t_tests, StringCtorNotCompound) {
+	struct ts_str_ans {
+		std::string str {};
+		ts_t ans {};
+	};
+	
+	std::vector<ts_str_ans> tests {
+		{"4/4", ts_t {4_bt,d::q,false}}, {"04/04", ts_t {4_bt,d::q,false}}, 
+		{"0004/00004", ts_t {4_bt,d::q,false}},
+		{"6/8", ts_t {6_bt,d::e,false}}, {"06/08", ts_t {6_bt,d::e,false}},
+		{"0006/00008", ts_t {6_bt,d::e,false}},
+		{"12/16", ts_t {12_bt,d::sx,false}},{"012/016", ts_t {12_bt,d::sx,false}},
+		{"00012/000016", ts_t {12_bt,d::sx,false}},
+	};
+	
+	for (const auto& e : tests) {
+		if (ts_t {e.str} != e.ans) {
+			ts_t from_str {e.str};
+			int y = 34;
+		}
+		EXPECT_EQ(ts_t {e.str}, e.ans);
+	}
+
+}
+
+
+/*
+	std::vector<ts_str_ans> tests {
+		{"4/4", ts_t {4_bt,d::q,false}}, {"4/4c", ts_t {4_bt,d::q,true}}, {"04/04", ts_t {4_bt,d::q,false}}, 
+		{"0004/00004c", ts_t {4_bt,d::q,true}},
+		{"6/8", ts_t {6_bt,d::e,false}}, {"6/8c", ts_t {6_bt,d::e,true}}, {"06/08", ts_t {4_bt,d::q,false}},
+		{"0006/00008c", ts_t {6_bt,d::e,true}},
+		{"12/16", ts_t {12_bt,d::sx,false}}, {"12/16c", ts_t {12_bt,d::sx,true}},
+		{"012/016", ts_t {12_bt,d::sx,false}},	{"00012/000016c", ts_t {12_bt,d::sx,true}},
+	};
+	*/
+
 
 // Tests nbeat(ts_t,d_t), duration(ts_t,beat_t), nbar(ts_t,d_t) with different 
 // d_t, ts_t values known to yield the same output.  
