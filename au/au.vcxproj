@@ -61,7 +61,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(dbk_proj_path)\dbklib</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(dbk_proj_path)\dbklib; $(dbk_include_path)\fmt-dbk\include</AdditionalIncludeDirectories>
       <AdditionalUsingDirectories>%(AdditionalUsingDirectories)</AdditionalUsingDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <EnablePREfast>false</EnablePREfast>
@@ -70,7 +70,8 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(OutDir)aulib.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(OutDir)aulib.lib;fmt-dbk.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(dbk_include_path)\fmt-dbk\$(Platform)\$(Configuration)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -83,7 +84,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(dbk_proj_path)\dbklib</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(dbk_proj_path)\dbklib; $(dbk_include_path)\fmt-dbk\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -92,7 +93,8 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <Profile>true</Profile>
-      <AdditionalDependencies>$(OutDir)aulib.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(OutDir)aulib.lib;fmt-dbk.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(dbk_include_path)\fmt-dbk\$(Platform)\$(Configuration)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
