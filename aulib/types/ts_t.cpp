@@ -5,9 +5,16 @@
 #include <numeric>  // std::accumulate()
 #include <vector>
 #include <regex>
-#include "..\util\au_algs_math.h"  // ksum<T> in err_nbeat_accum()
+#include <iostream>  // operator<<
 
-
+//
+// If compound:
+// -> The numerator is the "number of into-3 subdivisions of the beat"-per bar.  Thus, 
+//    dividing the input beat_t 'num' by 3 yields the number of beats-per bar.  
+// -> The denominator is the "note-value per (3-part) beat subdivision."  That is, 3 notes 
+//    of value denom == 1 beat.  A group of three identical note-values d is equivalent to a
+//    single nv of duration of 2*d, dotted once:  (2d).
+//
 ts_t::ts_t(const beat_t& num, const d_t& denom, bool is_compound_in) {
 	if (num <= 0_bt || denom <= d_t{d::z}) {
 		std::abort();
@@ -18,13 +25,7 @@ ts_t::ts_t(const beat_t& num, const d_t& denom, bool is_compound_in) {
 		m_bpb = num;
 		m_beat_unit = denom;
 	} else {  // Compound time signature
-		// The numerator is the "number of into-3 subdivisions of the beat"-per bar.  Thus, 
-		// dividing by 3 yields the number of beats-per bar.  
 		m_bpb = num/3.0;
-
-		// The denominator is the "note-value per (3-part) beat subdivision."  That is, 3 notes 
-		// of value denom == 1 beat.  A group of three identical note-values d is equivalent to a
-		// single nv of duration of 2*d, dotted once:  (2d).
 		d_t beat_unit = 2*denom;
 		if (!beat_unit.add_dots(1)) {
 			std::abort();
@@ -41,23 +42,16 @@ ts_t::ts_t(const std::string& str_in) {
 // Called by the constructor ts_t(const std::string&)
 // 
 void ts_t::from_string(const std::string& str_in) {
-	std::regex rx {"(\\d+)/(\\d+)(c)?"};
-	std::smatch rx_matches {};  // std::smatch == std::match_results<std::string::const_interator>
-	if (!std::regex_match(str_in,rx_matches,rx)) {
+	// I am going through parse_ts_string() b/c it passes to the 3-arg ctor.  The 3-arg ctor
+	// is the only function containing the logic to deal w/ compount ts's.  
+	ts_str_parsed ts_parsed = parse_ts_string(str_in);
+	if (!ts_parsed.is_valid) {
 		std::abort();
 	}
-	double bt_per_bar {std::stod(rx_matches[1].str())};
-	double inv_dv_per_bt = std::stod(rx_matches[2].str());
-	if (bt_per_bar <= 0.0 || inv_dv_per_bt <= 0.0) {
-		// 0 is forbidden for num or denom (values < 0 will not match the regex).  
-		std::abort();  
-	}
-	double dv_per_bt = 1.0/inv_dv_per_bt;
-	bool is_compound {rx_matches[3].matched};
 
-	m_beat_unit = d_t {dv_per_bt};
-	m_bpb = beat_t {bt_per_bar};
-	m_compound = is_compound;
+	m_beat_unit = ts_parsed.ts.beat_unit();
+	m_bpb = ts_parsed.ts.beats_per_bar();
+	m_compound = ts_parsed.is_compound;
 }
 
 ts_t operator""_ts(const char *literal_in, size_t length) {
@@ -75,9 +69,25 @@ beat_t ts_t::beats_per_bar() const {
 }
 
 std::string ts_t::print() const {
-	std::string s = m_bpb.print() + "/(" + m_beat_unit.print() + ")";
-	if (m_compound) { s += "c"; }
+	std::string s {};
+	d_t::opts dt_propts {};
+	dt_propts.denom_only = true;
+
+	if (!m_compound) {
+		s = m_bpb.print() + "/" + m_beat_unit.print(dt_propts);
+	} else {
+		beat_t bpb {m_bpb*3};
+		d_t beat_unit = m_beat_unit; 
+		beat_unit.rm_dots(1);  beat_unit/=2.0;
+
+		s = bpb.print() + "/" + beat_unit.print(dt_propts) + "c";
+	}
+
 	return s;
+}
+std::ostream& operator<<(std::ostream& os, const ts_t& ts) {
+    os << ts.print();
+    return os;
 }
 
 bool ts_t::operator==(const ts_t& rhs) const {
@@ -160,28 +170,31 @@ std::vector<bar_t> cum_nbar(const ts_t& ts_in, const std::vector<d_t>& vdt_in) {
 	return nbar_cum;
 }
 
-
-// Looks at the accumulation of "error" for repeated summing of a single nv_t
-// in calculating a number-of-bars.  This type of thing sometimes has to be
-// be done when working with rp's, ie, sequences of nv_t's.  
-// Calculte the error every record_every iterations.  Each record_every
-// iterations should add exactly nbars_every bars to the total.  
+//
+// Demonstrates the accumulation of "error" for repeated summing of a single d_t nv in calculating the
+// number-of-bars spanned by niter nv's.  This type of sum sometimes has to be be carried out when  
+// working with rp's, ie, sequences of d_t's.  
+// The error is calculated every record_every iterations.  nbars_every is the number of bars added 
+// to the total every record_every interations (the number of bars spanned by record_every nv's).  
+// nv and record_every should be chosen so that nbars_every is exact.  
+//
 err_accum err_nbeat_accum(ts_t ts, d_t nv, int niter, int record_every, bar_t nbars_every) {
 	std::vector<double> err_nbar {};
 	//std::vector<double> err_nbeat {};
 
-	ksum<bar_t> cum_nbar_ks {};
+	// ksum<bar_t> cum_nbar_ks {};
 	bar_t cum_nbar {0};
 	//beat_t cum_nbeat {0};
 	for (int i=1; i<niter; ++i) {
 		cum_nbar += nbar(ts,nv);
-		cum_nbar_ks += nbar(ts,nv);
-		//cum_nbeat += nbeat(ts,nv);
+		// cum_nbar_ks += nbar(ts,nv);
+		// cum_nbeat += nbeat(ts,nv);
 
 		if (i%record_every == 0) {
 			double cum_nbar_exact = ((i/record_every)*nbars_every)/1_br;
 			//double cum_nbeat_exact = (i/record_every)*nbeat(ts,nbars_every)/1_bt;
-			err_nbar.push_back(cum_nbar_exact-(cum_nbar_ks.value)/1_br);
+			
+			err_nbar.push_back(cum_nbar_exact-cum_nbar/1_br);
 			//err_nbeat.push_back(cum_nbeat_exact-cum_nbeat/1_bt);
 		}
 	}

@@ -9,6 +9,7 @@
 // TODO:  See the ts_t {_bt,d_t,bool} ctor.  For compound signatures, std::abort()
 //        is called if d_t.add_dots(1) returns false, which currently is the case if
 //        d_t.singlet_exists() == false; do i want this?  
+// TODO:  Add tests for string ctor w/ dotted note durations
 //
 
 // Default ts is 4/4 simple
@@ -70,26 +71,34 @@ TEST(ts_t_tests, StringCtorNotCompound) {
 	};
 	
 	for (const auto& e : tests) {
-		if (ts_t {e.str} != e.ans) {
-			ts_t from_str {e.str};
-			int y = 34;
-		}
 		EXPECT_EQ(ts_t {e.str}, e.ans);
 	}
 
 }
 
-
-/*
-	std::vector<ts_str_ans> tests {
-		{"4/4", ts_t {4_bt,d::q,false}}, {"4/4c", ts_t {4_bt,d::q,true}}, {"04/04", ts_t {4_bt,d::q,false}}, 
-		{"0004/00004c", ts_t {4_bt,d::q,true}},
-		{"6/8", ts_t {6_bt,d::e,false}}, {"6/8c", ts_t {6_bt,d::e,true}}, {"06/08", ts_t {4_bt,d::q,false}},
-		{"0006/00008c", ts_t {6_bt,d::e,true}},
-		{"12/16", ts_t {12_bt,d::sx,false}}, {"12/16c", ts_t {12_bt,d::sx,true}},
-		{"012/016", ts_t {12_bt,d::sx,false}},	{"00012/000016c", ts_t {12_bt,d::sx,true}},
+// Tests ts_t.print(); the output of which, if fed into ts_t(std::string), should produce
+// the same ts.  
+TEST(ts_t_tests, PrintFnAndStringCtor) {
+	struct ts_str_ans {
+		std::string str {};
+		ts_t ans {};
 	};
-	*/
+	
+	std::vector<ts_str_ans> tests {
+		{"4/4", ts_t {4_bt,d::q,false}}, {"04/04", ts_t {4_bt,d::q,false}}, 
+		{"4/4c", ts_t {4_bt,d::q,true}}, {"04/04c", ts_t {4_bt,d::q,true}},
+		{"6/8", ts_t {6_bt,d::e,false}}, {"06/08c", ts_t {6_bt,d::e,true}},
+		{"0006/00008", ts_t {6_bt,d::e,false}},
+		{"12/16", ts_t {12_bt,d::sx,false}},{"012/016", ts_t {12_bt,d::sx,true}},
+		{"00012/000016", ts_t {12_bt,d::sx,false}},
+	};
+
+	for (const auto& e : tests) {
+		ts_t from_print {e.ans.print()};
+		EXPECT_EQ(e.ans, from_print);
+		EXPECT_EQ(e.ans.print(), from_print.print());
+	}
+}
 
 
 // Tests nbeat(ts_t,d_t), duration(ts_t,beat_t), nbar(ts_t,d_t) with different 

@@ -32,6 +32,10 @@
 //
 // TODO:  Why can i not introspect is_compound() ?
 // TODO:  Unit tests for parse_ts_string().  
+// TODO:  The string ctor does not support dotted notes
+// TODO:  The ts_t(std::string) ctor delegates to parse_ts_string(), which calls the normal
+//        3-arg ctor.  This is gross.  
+// TODO:  from_string() probably does not need to exist
 //
 class ts_t {
 public:
@@ -40,21 +44,18 @@ public:
 	explicit ts_t(const std::string&);  // Calls ts_t.from_string()
 
 	d_t beat_unit() const;
-		// The d_t corresponding to one beat (== m_beat_unit).  
-		// If the ts is simple, this is the denominator.  If compound,
-		// it's the d_t w/ twice the duration of the denominator, then
-		// dotted once.  
-
+		// The d_t corresponding to one beat (== m_beat_unit).  If the ts n/d is simple, this
+		// is the denominator d_t{d}.  If compound, it is d_t{2*d+d} (the d_t w/ twice the 
+		// duration of the denominator, then dotted once.)  
 	d_t bar_unit() const;
-		// The note value that spans exactly 1 bar
-	
+		// The note value that spans exactly 1 bar.  
 	beat_t beats_per_bar() const;
-		// The number of beats per bar:  For a simple ts, this is the
-		// numerator; for a compound ts, it's (1/3)*(the numerator).  
-
+		// The number of beats per bar.  If the ts n/d is simple, this the numerator beat_t {n}.  
+		// If compound, it is beat_t {(1/3)*(n)}.  
 	std::string print() const;
 
 	bool operator==(const ts_t&) const;
+	friend std::ostream& operator<<(std::ostream&, const ts_t&);
 private:
 	void from_string(const std::string&);  // Called by ts_t(std::string const&);
 
@@ -64,8 +65,8 @@ private:
 };
 
 ts_t operator""_ts(const char*, size_t);
-
 bool operator!=(const ts_t&, const ts_t&);
+
 
 //
 // If !ts_str_parsed.is_valid, the values of all other fields should be regarded as "undefined."  
