@@ -33,8 +33,8 @@
 class ts_t {
 public:
 	ts_t() = default;
-	explicit ts_t(beat_t const&, d_t const&, bool const& =false); // num, denom, is-compound
-	explicit ts_t(std::string const&);  // Calls ts_t.from_string()
+	explicit ts_t(const beat_t&, const d_t&, bool =false);  // num, denom, is-compound
+	explicit ts_t(const std::string&);  // Calls ts_t.from_string()
 
 	d_t beat_unit() const;
 		// The d_t corresponding to one beat (== m_beat_unit).  
@@ -51,9 +51,9 @@ public:
 
 	std::string print() const;
 
-	bool operator==(ts_t const&) const;
+	bool operator==(const ts_t&) const;
 private:
-	void from_string(std::string const&);
+	void from_string(const std::string&);
 		// Called by ts_t(std::string const&);
 
 	d_t m_beat_unit {1.0/4.0};  // The d_t corresponding to one beat
@@ -63,20 +63,20 @@ private:
 
 ts_t operator""_ts(const char*, size_t);
 
-bool operator!=(ts_t const&, ts_t const&);
+bool operator!=(const ts_t&, const ts_t&);
 
 
 
 // Number of beats spanned by a given nv_t or bar_t.  
-beat_t nbeat(ts_t const&, d_t const&);
-beat_t nbeat(ts_t const&, bar_t const&);
-beat_t nbeat(const ts_t&, const std::vector<d_t>&); // _Total_ nbts
+beat_t nbeat(const ts_t&, const d_t&);
+beat_t nbeat(const ts_t&, const bar_t&);
+beat_t nbeat(const ts_t&, const std::vector<d_t>&);  // _Total_ nbts
 d_t duration(const ts_t&, beat_t);
 
-bar_t nbar(ts_t const&, d_t const&); // _Total_ nbars
-bar_t nbar(ts_t const&, beat_t const&);
+bar_t nbar(const ts_t&, const d_t&);  // _Total_ nbars
+bar_t nbar(const ts_t&, const beat_t&);
 bar_t nbar(const ts_t&, const std::vector<d_t>&);
-std::vector<bar_t> cum_nbar(ts_t const&, std::vector<d_t> const&);
+std::vector<bar_t> cum_nbar(const ts_t&, const std::vector<d_t>&);
 
 
 struct err_accum {
