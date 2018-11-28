@@ -43,7 +43,7 @@ public:
 		// Note:  Silent conversion!
 
 	// Getters 
-	double to_int() const;
+	int to_int() const;
 	std::string print() const;
 
 	bool operator==(const cent_t&) const;
@@ -106,9 +106,7 @@ public:
 
 	std::string print() const;
 	double to_double() const;
-	double to_int() const;
-
-	explicit operator cent_t();
+	int to_int() const;
 
 	bool operator==(const oct_t&) const;
 	bool operator!=(const oct_t&) const;

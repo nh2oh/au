@@ -104,6 +104,7 @@
     <ClCompile Include="note_t_tests.cpp" />
     <ClCompile Include="ntl_t_test.cpp" />
     <ClCompile Include="nv_t_test.cpp" />
+    <ClCompile Include="oct_t_test.cpp" />
     <ClCompile Include="randrp_metg_test.cpp" />
     <ClCompile Include="rp_t_test.cpp" />
     <ClCompile Include="scale_diatonic_spn_test.cpp" />

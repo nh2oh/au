@@ -12,14 +12,13 @@ cent_t::cent_t(int cents_in) {
 	m_cents = cents_in;
 }
 cent_t::cent_t(oct_t oct_in) { 
-	//m_cents = static_cast<int>(std::round(1200*oct_in.to_double()));
-	m_cents = (cent_t {oct_in}).to_int();
+	m_cents = static_cast<int>(std::round(1200*oct_in.to_double()));
 }
 cent_t operator""_cent(unsigned long long literal_in) {
 	return cent_t {static_cast<int>(literal_in)};
 }
 
-double cent_t::to_int() const {
+int cent_t::to_int() const {
 	return m_cents;
 }
 std::string cent_t::print() const {
@@ -79,7 +78,6 @@ cent_t operator-(cent_t lhs, const cent_t& rhs) {
 
 
 
-
 oct_t::oct_t(double num_octs) {
 	m_num_cents = static_cast<int>(std::round(num_octs*1200.0));
 }
@@ -100,17 +98,12 @@ oct_t operator""_octs(unsigned long long literal_in) {
 std::string oct_t::print() const {
 	return std::to_string(m_num_cents/1200.0);
 }
-double oct_t::to_double() const {
+double oct_t::to_double() const {  // FP divide - round - truncate - return
 	return static_cast<double>(m_num_cents/1200.0);
 }
-double oct_t::to_int() const {  // FP divide
+int oct_t::to_int() const {  // FP divide - round - truncate - return
 	return static_cast<int>(std::round(m_num_cents/1200.0));
 }
-
-oct_t::operator cent_t() {
-	return cent_t {m_num_cents};
-}
-
 
 bool oct_t::operator==(const oct_t& rhs) const {
 	return m_num_cents==rhs.m_num_cents;
@@ -138,12 +131,13 @@ oct_t oct_t::operator-=(const oct_t& rhs) {
 	m_num_cents -= rhs.m_num_cents;
 	return *this;
 }
-oct_t oct_t::operator*=(double rhs) {
-	m_num_cents *= rhs;
+oct_t oct_t::operator*=(double rhs) {  // FP mult - round - truncate - return
+	//m_num_cents *= rhs;
+	m_num_cents = std::round(static_cast<double>(m_num_cents) * rhs);
 	return *this;
 }
-oct_t oct_t::operator/=(double denom) {
-	m_num_cents /= denom;
+oct_t oct_t::operator/=(double denom) {  // FP divide - round - truncate - return
+	m_num_cents = std::round(static_cast<double>(m_num_cents)/denom);
 	return *this;
 }
 
