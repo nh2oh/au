@@ -145,10 +145,3 @@ TEST(oct_t_tests, OctIntTimesDivideOperators) {
 	EXPECT_TRUE(oresult == oct_t{-3.0/54.0});
 }
 
-
-
-
-
-
-
-

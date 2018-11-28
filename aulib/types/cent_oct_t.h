@@ -69,6 +69,9 @@ cent_t operator*(int, cent_t);
 cent_t operator+(cent_t, const cent_t&);
 cent_t operator-(cent_t, const cent_t&);
 
+frq_t operator+(frq_t, const cent_t&);
+frq_t operator-(frq_t, const cent_t&);
+
 // Deleted operators
 void operator+(const cent_t&, const frq_t&)=delete;
 void operator-(const cent_t&, const frq_t&)=delete;
@@ -96,6 +99,9 @@ Tresult operator/(Tnum, cent_t)=delete;  // Involves 1/cent_t
 // cent_t rely on this silent conversion.  
 //
 
+//
+// TODO:  Since fractional octs are so frequent, it seems stupid to provide a to_int()
+//
 class oct_t {
 public:
 	oct_t() = default;
@@ -130,6 +136,9 @@ oct_t operator*(oct_t, double);
 oct_t operator*(double, oct_t);
 oct_t operator+(oct_t, const oct_t&);
 oct_t operator-(oct_t, const oct_t&);
+
+frq_t operator+(frq_t, const oct_t&);
+frq_t operator-(frq_t, const oct_t&);
 
 // Deleted operators
 void operator+(const oct_t&, const frq_t&)=delete;

@@ -76,6 +76,16 @@ cent_t operator-(cent_t lhs, const cent_t& rhs) {
 	return lhs-=rhs;
 }
 
+frq_t operator+(frq_t lhs, const cent_t& rhs) {
+	double exp = std::round(static_cast<double>(rhs.to_int())/1200.0);
+	return lhs *= std::pow(2,exp);
+}
+frq_t operator-(frq_t lhs, const cent_t& rhs) {
+	double exp = -1*std::round(static_cast<double>(rhs.to_int())/1200.0);
+	return lhs *= std::pow(2,exp);
+}
+
+
 
 
 oct_t::oct_t(double num_octs) {
@@ -157,5 +167,12 @@ oct_t operator-(oct_t lhs, const oct_t& rhs) {
 	return lhs-=rhs;
 }
 
-
+frq_t operator+(frq_t lhs, const oct_t& rhs) {
+	double exp = std::round(rhs.to_double()/1200.0);
+	return lhs *= std::pow(2,exp);
+}
+frq_t operator-(frq_t lhs, const oct_t& rhs) {
+	double exp = -1*std::round(rhs.to_double()/1200.0);
+	return lhs *= std::pow(2,exp);
+}
 

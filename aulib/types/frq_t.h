@@ -43,6 +43,11 @@ class oct_t;
 // frq_t +,- double,int, etc
 //
 //
+
+//
+// TODO:  Just put in the same file as cent_oct_t... othwerwise don't get the +/- cent operators
+//
+
 class frq_t {
 public:
 	enum class unit : int {
@@ -81,6 +86,5 @@ bool operator!=(frq_t const&, frq_t const&);
 bool operator>=(frq_t const&, frq_t const&);
 bool operator<=(frq_t const&, frq_t const&);
 
-frq_t operator+(frq_t, cent_t const&);
-frq_t operator-(frq_t, cent_t const&);
+
 
