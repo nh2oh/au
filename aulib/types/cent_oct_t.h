@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 
-class oct_t;
+class oct_t; 
 class frq_t; 
 //
 // The cent_t class
@@ -34,7 +34,8 @@ public:
 	cent_t() = default;
 	explicit cent_t(const frq_t&, const frq_t&);  // Interpret as a frq_t ratio arg1/arg2
 	explicit cent_t(int);  // Interpret as a number-of-cents
-	explicit cent_t(oct_t);  // Number-of-octaves, not "absolute" octave-number...
+	cent_t(oct_t);  // Number-of-octaves, not "absolute" "octave-number"
+		// Note:  Silent conversion!
 
 	// Getters 
 	double to_int() const;
@@ -64,57 +65,74 @@ cent_t operator+(cent_t, const cent_t&);
 cent_t operator-(cent_t, const cent_t&);
 
 // Deleted operators
-auto operator+(const cent_t&, const frq_t&)=delete;
-auto operator-(const cent_t&, const frq_t&)=delete;
-
-double operator*(cent_t, cent_t) = delete;
+void operator+(const cent_t&, const frq_t&)=delete;
+void operator-(const cent_t&, const frq_t&)=delete;
+void operator*(cent_t, cent_t)=delete;
 
 template <typename Tnum, typename Tresult>
 Tresult operator/(Tnum, cent_t)=delete;  // Involves 1/cent_t
 
 
-
-
-
-//-----------------------------------------------------------------------------
+//
 // The oct_t class
-// Exactly like cents, but represents an interval between two frequencies in 
-// units of octaves, rather than cents.  
+// Exactly like cents, but represents an interval between two frequencies in "units" of 
+// octaves, rather than cents.  Internally represented as an integer number-of-cents.  This
+// makes it easy to convert reversibly to and from cents.  
 //
-// Very important:  oct_t represents a frq interval in terms of cents/1200: it
-// does _not_ represent the "absolute" octave number of a scale (ie, a range of
-// frqs), which i call octn_t.  The latter indicates some sort of absolute 
-// position in frq space relative to some standard set of reference frqs defined
-// to belong to the "0 octave" (defining this set is the job of a scale).  The
-// former is just a mathematical operation defined on frq_t's.  A scale is 
-// allowed to do crazy things, including span more than one octave:  In this
-// case, several frq_t's may have the same octn_t, but at the same time be 
-// > 1 oct_t apart.  
+// Very important:  oct_t represents a frq interval in terms of cents/1200.  It does _not_
+// represent the "absolute" "octave number" defined by a scale to denote a range of frqs,
+// which i call octn_t.  The latter refers to an absolute range in frq space which a scale 
+// is allowed to define in any way it likes; in particular, a scale is free to assign 
+// frq_t's f1 and f2 where f2 = 4*f1 (or any other factor) to the same octn_t.  However, 
+// f1 and f2 thus defined are always 2 oct_t's apart.  
 //
-// A possibly valid alternative to declaring oct_t its own class is to
-// introduce a "units" field in cent_t, so that a cent_t can have units of
-// "cents," "milicents," "kilocents," "octaves," etc.  
+// The cent_t class contains a single-argument non-explicit ctor from oct_t, so that an oct_t
+// will spontaneously convert to a cent_t.  All mathematical operations between oct_t and 
+// cent_t rely on this silent conversion.  
 //
-// Since an oct_t spontaniously converts to a cent_t, no conversion or
-// heterogeneous +,-,etc operators really need to be defined.  
-//
-
-
-// 
-// It'd be good if oct_t could be put completely in terms of cent_t
-//
-
 
 class oct_t {
 public:
-	explicit oct_t() = default;
-	explicit oct_t(cent_t);
+	oct_t() = default;
+	explicit oct_t(const cent_t&);
 	explicit oct_t(frq_t, frq_t);  // Interpret as a frq_t ratio
-	explicit oct_t(double);  // Interpret as a number-of-octaves
+	explicit oct_t(double);  // Interpret as a number-of-octs
+	explicit oct_t(int);  // Interpret as a number-of-octs
 
+	std::string print() const;
 	double to_double() const;
-private:
-	double m_oct {0};
-};
+	double to_int() const;
 
+	explicit operator cent_t();
+
+	bool operator==(const oct_t&) const;
+	bool operator!=(const oct_t&) const;
+	bool operator<(const oct_t&) const;
+	bool operator>(const oct_t&) const;
+	bool operator<=(const oct_t&) const;
+	bool operator>=(const oct_t&) const;
+	oct_t operator+=(const oct_t&);
+	oct_t operator-=(const oct_t&);
+	oct_t operator*=(const oct_t&)=delete;
+	oct_t operator/=(const oct_t&)=delete;
+	oct_t operator*=(double);
+	oct_t operator/=(double);
+private:
+	int m_num_cents {0};
+};
+oct_t operator""_octs(unsigned long long);
+
+oct_t operator/(oct_t, double);
+oct_t operator*(oct_t, double);
+oct_t operator*(double, oct_t);
+oct_t operator+(oct_t, const oct_t&);
+oct_t operator-(oct_t, const oct_t&);
+
+// Deleted operators
+void operator+(const oct_t&, const frq_t&)=delete;
+void operator-(const oct_t&, const frq_t&)=delete;
+void operator*(oct_t, oct_t)=delete;
+
+template <typename Tnum, typename Tresult>
+Tresult operator/(Tnum, oct_t)=delete;  // Involves 1/oct_t
 
