@@ -103,10 +103,10 @@ bool operator<=(frq_t const& lhs, frq_t const& rhs) {
 }
 
 frq_t operator+(frq_t lhs, cent_t const& rhs) {
-	return lhs *= std::pow(2,(rhs.to_double()/1200));
+	return lhs *= std::pow(2,(rhs.to_int()/1200));
 }
 frq_t operator-(frq_t lhs, cent_t const& rhs) {
-	return lhs *= std::pow(2,((-rhs).to_double()/1200));
+	return lhs *= std::pow(2,((-1*rhs).to_int()/1200));
 }
 
 

@@ -9,10 +9,15 @@ class frq_t;
 // A special numeric type representing frq ratios in "cents."  A "cent" is 1200*std::log2(frqr),
 // where 1200 ~ "cents per octave" and log2(frqr) is the (dimensionless) log2 of a frequency 
 // ratio, which is the number of octaves separating the two frequencies.  Only integral "number
-// of cent's" values are allowed.  
+// of cent's" values are allowed.  For this reason i do not declare arithmetic operators with
+// doubles; only ints.  The only point of such operators would be to effect the operation in double-
+// precision and then round, as opposed to the usual c++ way of truncating then carrying out an int
+// operation, but this behavior is unexpected from the perspective of most s++ programmers.  You 
+// want double-precision math, do it yourself:  static_cast<double>(cent_t.to_int()) ...
+// Note that there is no ctor from double to hammer home this point; the user has to explictly 
+// cast back to int.  
 //
-// This class is essentially just a thin wrapper around an int, but it defines special 
-// arithmetic with frq_t:  
+// cent_t has special arithmetic with frq_t:  
 // frq_t operator+(frq_t,cent_t) => std::pow(2,(cent_t/1200))*frq_t
 // Note that order-of-operations matter!!
 // (frq_a + cent_a) + (frq_b + cent_b)		~[a*fa + b*fb]
@@ -51,16 +56,16 @@ public:
 	cent_t operator-=(const cent_t&);
 	cent_t operator*=(const cent_t&)=delete;
 	cent_t operator/=(const cent_t&)=delete;
-	cent_t operator*=(double);
-	cent_t operator/=(double);
+	cent_t operator*=(int);
+	cent_t operator/=(int);
 private:
 	int m_cents {0};
 };
 cent_t operator""_cent(unsigned long long);
 
-cent_t operator/(cent_t, double);
-cent_t operator*(cent_t, double);
-cent_t operator*(double, cent_t);
+cent_t operator/(cent_t, int);
+cent_t operator*(cent_t, int);
+cent_t operator*(int, cent_t);
 cent_t operator+(cent_t, const cent_t&);
 cent_t operator-(cent_t, const cent_t&);
 

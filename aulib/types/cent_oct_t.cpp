@@ -5,8 +5,8 @@
 
 
 
-cent_t::cent_t(const frq_t& frq_from, const frq_t& frq_to) { 
-	m_cents = static_cast<int>(std::round(1200*std::log2(frq_to/frq_from)));
+cent_t::cent_t(const frq_t& from, const frq_t& to) { 
+	m_cents = static_cast<int>(std::round(1200*std::log2(to/from)));
 }
 cent_t::cent_t(int cents_in) { 
 	m_cents = cents_in;
@@ -52,22 +52,22 @@ cent_t cent_t::operator-=(const cent_t& rhs) {
 	m_cents -= rhs.m_cents;
 	return *this;
 }
-cent_t cent_t::operator*=(double rhs) {
+cent_t cent_t::operator*=(int rhs) {
 	m_cents *= rhs;
 	return *this;
 }
-cent_t cent_t::operator/=(double denom) {
+cent_t cent_t::operator/=(int denom) {
 	m_cents /= denom;
 	return *this;
 }
 
-cent_t operator/(cent_t num, double denom) {
+cent_t operator/(cent_t num, int denom) {
 	return num/=denom;
 }
-cent_t operator*(cent_t lhs, double rhs) {
+cent_t operator*(cent_t lhs, int rhs) {
 	return lhs*=rhs;
 }
-cent_t operator*(double lhs, cent_t rhs) {
+cent_t operator*(int lhs, cent_t rhs) {
 	return rhs*=lhs;
 }
 cent_t operator+(cent_t lhs, const cent_t& rhs) {

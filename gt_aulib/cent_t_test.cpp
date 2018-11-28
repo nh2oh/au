@@ -1,38 +1,128 @@
 #include "gtest/gtest.h"
 #include "..\aulib\types\cent_oct_t.h"
-#include <vector>
-#include <string>
-#include <cmath>
+#include "..\aulib\types\frq_t.h"
 
 
-/*
-// 
-TEST(centTests, ACnameCompoundIntervals) {
-	
-	struct st_acname {
-		int n {0};
-		std::string acname {};
-		std::string fcname {};
-	};
-	// 18 => d12 && A11; 24 => P15, double-octave
-	std::vector<st_acname> ans {{1200,"d9","Diminished 9'th"},{1300,"m9","Minor 9'th"},
-		{1400,"M9","Major 9'th"},{1500,"m10","Minor 10'th"},{1600,"M10","Major 10'th"},
-		{1700,"P11","Perfect 11'th"},{1800,"d12","Diminished 12'th"},
-		{1900,"P12","Perfect 12'th"},{2000,"m13","Minor 13'th"},{2100,"M13","Major 13'th"},
-		{2200,"m14","Minor 14'th"},{2300,"M14","Major 14'th"},{2400,"P15","Perfect 15'th"},
-		{2500,"A15","Augmented 15'th"}
-	};
-
-	for (const auto& e : ans) {
-		cent_t curr_cent {e.n};
-		std::string curr_acname = curr_cent.whatever();
-
-		EXPECT_EQ(curr_acname, e.acname)
-
-	// Default-constructed value is 1 Hz
-	frq_t one_hz {1,frq_t::unit::Hz};
-	frq_t zeroargs {};
-	EXPECT_TRUE(zeroargs == one_hz);
+// Default ctor
+TEST(cent_t_tests, DefaultCtor) {
+	cent_t c {};
+	EXPECT_EQ(c.to_int(),0);
+	EXPECT_EQ(c,cent_t{0});
 }
-*/
+
+// Ctor frq ratios
+TEST(cent_t_tests, FrqFrqCtor) {
+	cent_t ca {frq_t{1},frq_t{2}};
+	EXPECT_EQ(ca,cent_t{1200});
+
+	cent_t cb {frq_t{1},frq_t{3}};  // 1901.96
+	EXPECT_EQ(cb,cent_t{1902});
+
+	cent_t cc {frq_t{2},frq_t{1}};
+	EXPECT_EQ(cc,cent_t{-1200});
+
+	cent_t cd {frq_t{38979},frq_t{711}};  // -6932.04
+	EXPECT_EQ(cd,cent_t{-6932});
+
+	cent_t ce {frq_t{2},frq_t{3}};  // 701.955
+	EXPECT_EQ(ce,cent_t{702});
+}
+
+// Comparison operators
+TEST(cent_t_tests, ComparisonOperators) {
+	cent_t cn1 {-1};
+	cent_t cz {0};
+	cent_t cz2 {0};
+	cent_t cp1 {1};
+
+	EXPECT_TRUE(cp1 > cz);
+	EXPECT_TRUE(cp1 >= cz);
+	EXPECT_TRUE(cp1 != cz);
+	EXPECT_FALSE(cp1 == cz);
+	EXPECT_FALSE(cp1 < cz);
+	EXPECT_FALSE(cp1 <= cz);
+
+	EXPECT_TRUE(cp1 > cn1);
+	EXPECT_TRUE(cp1 >= cn1);
+	EXPECT_TRUE(cp1 != cn1);
+	EXPECT_FALSE(cp1 == cn1);
+	EXPECT_FALSE(cp1 < cn1);
+	EXPECT_FALSE(cp1 <= cn1);
+
+	EXPECT_TRUE(cz == cz2);
+	EXPECT_TRUE(cz <= cz2);
+	EXPECT_TRUE(cz >= cz2);
+	EXPECT_FALSE(cz != cz2);
+	EXPECT_FALSE(cz < cz2);
+	EXPECT_FALSE(cz > cz2);
+
+}
+
+// +=,-=,*=,/= operators
+TEST(cent_t_tests, PeMeTeDeCentCentOperators) {
+	cent_t c {-1234};
+	cent_t c1 {1};
+	cent_t c2 {2};
+	cent_t cn1k {-1000};
+	cent_t cp3k {3000};
+
+	c+=c1;
+	EXPECT_TRUE(c == cent_t{-1233});
+	c-=c2;
+	EXPECT_TRUE(c == cent_t{-1235});
+	c-=cn1k;
+	EXPECT_TRUE(c == cent_t{-235});
+	c+=cp3k;
+	EXPECT_TRUE(c == cent_t{2765});
+}
+
+
+// *=int,/=int operators
+TEST(cent_t_tests, TeDeCentIntOperators) {
+	cent_t c1 {-1234};
+	cent_t c2 {2};
+
+	c1*=-1;
+	EXPECT_TRUE(c1 == cent_t{1234});
+	c1*=-1;
+	EXPECT_TRUE(c1 == cent_t{-1234});
+	c1/=-1;
+	EXPECT_TRUE(c1 == cent_t{1234});
+	c1/=-1;
+	EXPECT_TRUE(c1 == cent_t{-1234});
+
+	c2/=2;
+	EXPECT_TRUE(c2 == cent_t{1});
+	c2*=55;
+	EXPECT_TRUE(c2 == cent_t{55});
+	c2/=-55;
+	EXPECT_TRUE(c2 == cent_t{-1});
+	c2*=-55;
+	EXPECT_TRUE(c2 == cent_t{55});
+}
+
+
+// cent_t/int, cent_t*int operators
+TEST(cent_t_tests, CentIntTimesDivideOperators) {
+	cent_t c1 {-1234};
+	cent_t cresult {0};
+
+	cresult = c1/-1;
+	EXPECT_TRUE(cresult == cent_t{1234});
+	cresult = cresult*(-1);
+	EXPECT_TRUE(cresult == cent_t{-1234});
+	cresult = cresult/-1;
+	EXPECT_TRUE(cresult == cent_t{1234});
+	cresult = c1/51;
+	EXPECT_TRUE(cresult == cent_t{-24});
+	cresult = c1/54;
+	EXPECT_TRUE(cresult == cent_t{-22});
+}
+
+
+
+
+
+
+
 
