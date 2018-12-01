@@ -63,7 +63,7 @@ struct melody_hiller_params {
 	std::string max {"C(5)"};
 };
 std::vector<note_t> melody_hiller(const melody_hiller_params&);
-
+std::vector<note_t> melody_hiller_ex21(const melody_hiller_params&);  // "Experiment 2, part 1"
 
 
 //
