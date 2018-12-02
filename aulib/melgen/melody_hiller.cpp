@@ -122,6 +122,9 @@ std::vector<std::vector<note_t>> melody_hiller_ex21() {
 		return m[voice_idx];
 	};
 
+	// 1 => m2 || M2
+	// 2 => m3 || M3
+	// 3 => 
 	auto num_interval = [&sc](const note_t& from, const note_t& to) -> int {
 		return sc.to_scd(to)-sc.to_scd(from);
 	};
@@ -130,7 +133,7 @@ std::vector<std::vector<note_t>> melody_hiller_ex21() {
 	// The max interval spanned by the lowest and highest notes on a given line must 
 	// be <= 1 octave.  
 	auto span_geq_oct = [&m,&midx,min_frq,max_frq](const note_t& new_nt) -> bool { 
-		if (midx.ch_idx <= 1) { return false; }
+		if (midx.ch_idx == 0) { return false; }
 		double ratio_lowest = (new_nt.frq)/(min_frq(m[midx.v_idx]).frq);
 		double ratio_highest = (max_frq(m[midx.v_idx]).frq)/(new_nt.frq);
 		return (ratio_lowest > 2.0 || ratio_highest > 2.0);
@@ -145,25 +148,31 @@ std::vector<std::vector<note_t>> melody_hiller_ex21() {
 	// be either a repeat of the prev nt or differ from the prev nt by an m2 (a "step").  If the 
 	// prev two notes are a step, new_nt must be either a step or a skip.  
 	auto skip_step_rule = [&m,&midx,num_interval](const note_t& new_nt) -> bool { 
-		if (midx.ch_idx <= 1) { return false; }
+		if (midx.ch_idx < 2) { return false; }
 		auto ci = midx.ch_idx;
 		auto vi = midx.v_idx;
-		int prev_int = num_interval(m[vi][ci-1],m[vi][ci]);
-		int new_int = num_interval(m[vi][ci],new_nt);
-		if (std::abs(prev_int) >= 3) {  // Prev 2 notes are a "skip"
-			return !(new_nt.ntl == m[vi][ci].ntl || std::abs(new_int)==2);
-		} else if (std::abs(prev_int)==2) {  // Prev 2 notes are a "step"
-			return !(std::abs(new_int)==2 || std::abs(new_int)==3);
+		std::cout << m[vi][ci-2].print() << ", " << m[vi][ci-1].print() << ", " << new_nt.print() << std::endl;
+		int prev_int = num_interval(m[vi][ci-2],m[vi][ci-1]);
+		int new_int = num_interval(m[vi][ci-1],new_nt);
+		if (std::abs(prev_int) >= 2) {  // Prev 2 notes are a "skip;"  2 => m3||M3
+			bool tf = !(new_nt.ntl == m[vi][ci-1].ntl || std::abs(new_int)==1);
+			return tf;
+		} else if (std::abs(prev_int)==1) {  // Prev 2 notes are a "step;"  1 => m2||M2
+			bool tf = !(std::abs(new_int)==1 || std::abs(new_int)==2);
+			return tf;
 		}
 		return false;
 	};
 
 	// Rule 6
-	// No more than one successive repeat of a note is allowed in a given voice
+	// No more than one successive repeat of a note is allowed in a given voice.  Require that
+	// both the oct and ntl be the same to fail tur rule (return true)
 	auto rpts_gt_one = [&m,&midx](const note_t& new_nt) -> bool { 
-		if (midx.ch_idx <= 1) {	return false; }
-		return (m[midx.v_idx][midx.ch_idx-1].ntl == new_nt.ntl 
-			&& m[midx.v_idx][midx.ch_idx].ntl == new_nt.ntl);
+		if (midx.ch_idx < 2) {	return false; }
+		note_t pprev_nt = m[midx.v_idx][midx.ch_idx-2];
+		note_t prev_nt = m[midx.v_idx][midx.ch_idx-1];
+		return ((pprev_nt.ntl==new_nt.ntl && pprev_nt.oct==new_nt.oct)
+			&& (prev_nt.ntl==new_nt.ntl && prev_nt.oct==new_nt.oct));
 	};
 
 	// Rule 7
@@ -195,30 +204,46 @@ std::vector<std::vector<note_t>> melody_hiller_ex21() {
 	// Forbidden are m2, M2, m7, M7, tritone
 	// TODO:  How to include tritone?
 	auto harmonic_consonant = [&m,&midx,num_interval](const note_t& new_nt) -> bool {
-		if (midx.ch_idx < 1 || midx.v_idx == 0) { return false; }
-		for (const auto& e : m[midx.v_idx]) {
-			if (std::abs(num_interval(e,new_nt)) == 7  // m7, M7
-				|| std::abs(num_interval(e,new_nt)) == 2) { // M2, m2
-				return true;
+		if (midx.v_idx == 0) { return false; }
+
+		for (int i=0; i<midx.v_idx; ++i) {  // m.size() == nvoices
+			int curr_int = std::abs(num_interval(m[i][midx.ch_idx],new_nt));
+			if (curr_int == 6 || curr_int == 1) {
+				return true;  // Illegal harmonic interval
 			}
 		}
+
 		return false;
 	};
 
 	// Rule 9
 	// For each chord, a P4 is allowed iff it does not occur between the lowest note of the
-	// chord and an upper voice.  
-	// This rule returns false unless new_nt completes the chord, in which case it is 
-	// is evaluated and may return true.  
-	auto harmonic_p4 = [&m,&midx,num_interval](const note_t& new_nt) -> bool {
-		if (midx.v_idx != midx.nvoices) { return false; }
-		// new_nt is the lowest note of the chord
-		for (const auto& e : m[midx.v_idx]) {
-			if (std::abs(num_interval(e,new_nt)) == 4) {
-				return true;
+	// chord and an upper voice.  C-F is a perfect 4'th.  
+	// This rule always returns false unless the working chord midx.ch_idx is complete, in which  
+	// case the rule is evaluated and may return true.  
+	auto harmonic_p4 = [&m,&midx,get_chord,min_frq]() -> bool {
+		if (midx.v_idx < midx.nvoices) { return false; }
+
+		bool found_c {false}; bool found_cf {false};
+		note_t low_c_of_p4 {};
+		std::vector<note_t> curr_chord = get_chord(midx.ch_idx);
+		for (const auto& e : curr_chord) {
+			if (e.ntl == ntl_t{"C"} && !found_c) {
+				found_c = true;  // This is the first C we've found
+				low_c_of_p4 = e;
+			} else if (e.ntl == ntl_t{"C"} && found_c) {   // This is ! the first C we've found
+				if (e.frq < low_c_of_p4.frq) { 
+					low_c_of_p4 = e;
+				}
 			}
+
+			if (e.ntl == ntl_t{"F"} && found_c) { found_cf = true; }
 		}
-		return false;
+
+		return found_cf && (min_frq(curr_chord) == low_c_of_p4);
+		// If the chord contains a C-F, the rule is broken (return true) if the C is the
+		// offending interval is the low note of the chord.  
+		// This test will forbid legitimate new_nt's unless it is only made on completed chords
 	};
 
 	// Rule 10
@@ -258,8 +283,10 @@ std::vector<std::vector<note_t>> melody_hiller_ex21() {
 	// Always returns false unless midx indicates that the second-to-last chord has been 
 	// completed, at which point returns true if the rule is violated.  
 	auto ch_nxtlast_contains_b = [&m,&midx,get_chord,ntl_ismember]() -> bool {
-		if (midx.v_idx != midx.nvoices  // chord is not complete
-			|| midx.ch_idx != (midx.nnts-1)) { return false; }
+		if (midx.v_idx < midx.nvoices  // present chord midx.ch_idx is not complete
+			|| midx.ch_idx != (midx.nnts-1)) {  // present chord is not the second-last
+			return false;
+		}
 		std::vector<note_t> ch = get_chord(midx.ch_idx);
 		int num_b {0};
 		for (const auto& e : ch) {
@@ -283,16 +310,31 @@ std::vector<std::vector<note_t>> melody_hiller_ex21() {
 		return true;  
 	};
 
+	struct mel_rules {
+		bool r1 {false};
+		bool r4 {false};
+		bool r5 {false};
+		bool r6 {false};
+		bool r8 {false};
+	};
+	struct har_rules {
+		bool r9 {false};
+		bool r10 {false};
+		bool r12 {false};
+	};
+
 	std::vector<note_t> curr_ntpool {};
 	// Position 'counters' midx.{v_idx,ch_idx} are incremented in such a way that at all  
-	// locations in the loop, m[midx.v_idx][midx.ch_idx] is valid.  
+	// locations in the loop, m[midx.v_idx][midx.ch_idx] is _not_ valid.  It's what's
+	// presently being worked on; the address to which new_nt will be placed if it passes
+	// all the rules.  
 	bool give_up {false};
 	int titer {0};
 	while (!give_up) {
 		while (midx.ch_idx < midx.nnts) {  // m[voice][note-num]
 			while (midx.v_idx < midx.nvoices) {  // m[voice][note-num]
 				++titer;
-				if (titer > 100) {
+				if (titer > 500) {
 					std::cout << "titer > 100" << std::endl;
 				}
 				//
@@ -334,19 +376,25 @@ std::vector<std::vector<note_t>> melody_hiller_ex21() {
 				//
 				// Draw potential note m[v_idx][ch_idx]
 				//
-				note_t new_nt = curr_ntpool[rd(re)%curr_ntpool.size()];
+				int ridx = rd(re);
+				note_t new_nt = curr_ntpool[ridx%curr_ntpool.size()];
 
 				//
 				// Compare new_nt against the rule set
 				//
 				// Rules 2,3,11 implicit through ntpool.  Rule 7 defined only on the completed melody
 				//
+				mel_rules curr_mr {span_geq_oct(new_nt),
+					std::abs(num_interval(m[midx.v_idx][midx.ch_idx],new_nt))==6,
+					skip_step_rule(new_nt),
+					rpts_gt_one(new_nt),
+					harmonic_consonant(new_nt)
+				};
 				if (span_geq_oct(new_nt)  // Rule 1
-					|| std::abs(num_interval(m[midx.v_idx][midx.ch_idx],new_nt))==7  // Rule 4
+					|| std::abs(num_interval(m[midx.v_idx][midx.ch_idx],new_nt))==6  // Rule 4; 6 => 7'th
 					|| skip_step_rule(new_nt)   // Rule 5
 					|| rpts_gt_one(new_nt)   // Rule 6
-					|| harmonic_consonant(new_nt)  // Rule 8
-					|| harmonic_p4(new_nt))  // Rule 9
+					|| harmonic_consonant(new_nt))  // Rule 8
 				{  
 					// reject new_nt; midx.v_idx not incremented
 					midx.nt_rejects_curr_voice += 1;
@@ -357,15 +405,20 @@ std::vector<std::vector<note_t>> melody_hiller_ex21() {
 					}
 				} else {
 					// accept the new nt by moving to the next voice
-					//midx.v_idx = midx.v_idx==midx.nvoices ? 0 : midx.v_idx+1;
+					m[midx.v_idx][midx.ch_idx] = new_nt;
 					midx.v_idx += 1;
 					midx.nt_rejects_curr_voice = 0;
 				}
 			}  // to next voice of present chord
 			midx.nt_rejects_curr_chord = 0;
 
+			har_rules curr_hr {tritone(),
+				ch_nxtlast_contains_b() || lastch_contains_rsln_from_b(),
+				harmonic_p4()
+			};
 			if (ch_nxtlast_contains_b() || lastch_contains_rsln_from_b()  // Rule 12
-				|| tritone())  // Rule 10
+				|| tritone()  // Rule 10
+				|| harmonic_p4())  // Rule 9
 			{
 				// reject the present chord
 				midx.ch_rejects_curr_ch += 1;
