@@ -402,7 +402,12 @@ std::vector<std::vector<note_t>> melody_hiller_ex21() {
 					midx.nt_rejects_tot += 1;
 					if (midx.nt_rejects_curr_voice > 15 || midx.nt_rejects_curr_chord > 15) {
 						std::cout << "midx.nt_rejects_curr_voice > 15 || midx.nt_rejects_curr_chord > 15" << std::endl;
+						midx.ch_idx = std::max(midx.ch_idx-1,0);
+						midx.v_idx = 0;
+						midx.nt_rejects_curr_voice = 0;
+						midx.nt_rejects_curr_chord = 0;
 					}
+
 				} else {
 					// accept the new nt by moving to the next voice
 					m[midx.v_idx][midx.ch_idx] = new_nt;
@@ -421,9 +426,10 @@ std::vector<std::vector<note_t>> melody_hiller_ex21() {
 				|| harmonic_p4())  // Rule 9
 			{
 				// reject the present chord
+				midx.ch_idx = std::max(midx.ch_idx-1,0);
 				midx.ch_rejects_curr_ch += 1;
 				midx.ch_rejects_tot += 1;
-				if (midx.ch_rejects_tot > 5) {
+				if (midx.ch_rejects_curr_ch > 15) {
 					std::cout << "midx.ch_rejects_tot > 5" << std::endl;
 				}
 			} else {
