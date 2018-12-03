@@ -102,24 +102,25 @@ std::vector<std::vector<note_t>> melody_hiller_ex21() {
 		return false;
 	};
 
-	// m[voice][note]
+	// Gets from v_idx == 0 to midx.v_idx if requesting chord_idx == midx.ch_idx, or from
+	// v_idx == 0 to midx.nvoices if chord_idx < midx.ch_idx.  
 	auto get_chord = [&midx, &m](int chord_idx) -> std::vector<note_t> {
-		if (chord_idx > midx.ch_idx 
-			|| (chord_idx == midx.ch_idx && midx.v_idx < midx.nvoices)) {
+		int max_v_idx {0};
+		if (chord_idx > midx.ch_idx) {
 			std::abort();
-			// chord_idx > midx.ch_idx => Requesting a ch not yet started
-			// chord_idx == midx.ch_idx => requesting the working chord, but
-			// midx.v_idx < midx.nvoices => said chord is not yet complete.  
+		} else if (chord_idx < midx.ch_idx) {
+			// Requesting a ch prior to the working ch
+			max_v_idx = midx.nvoices;
+		} else {  // (chord_idx == midx.ch_idx)
+			// Requesting the working ch 
+			max_v_idx = midx.v_idx;
 		}
-		std::vector<note_t> result {}; result.reserve(midx.nvoices);
-		for (int i=0; i<midx.nvoices; ++i) {  // m.size() == nvoices
-			result.push_back(m[i][chord_idx]);
+
+		std::vector<note_t> ch {};
+		for (int i=0; i<max_v_idx; ++i) {  // m.size() == nvoices
+			ch.push_back(m[i][chord_idx]);  // m[voice][note]
 		}
-		return result;
-	};
-	// m[voice][note]
-	auto get_voice = [&m](int voice_idx) -> std::vector<note_t> {
-		return m[voice_idx];
+		return ch;
 	};
 
 	// 1 => m2 || M2
@@ -131,7 +132,7 @@ std::vector<std::vector<note_t>> melody_hiller_ex21() {
 
 	// Rule 1
 	// The max interval spanned by the lowest and highest notes on a given line must 
-	// be <= 1 octave.  
+	// be <= 1 oct.  
 	auto span_geq_oct = [&m,&midx,min_frq,max_frq](const note_t& new_nt) -> bool { 
 		if (midx.ch_idx == 0) { return false; }
 		double ratio_lowest = (new_nt.frq)/(min_frq(m[midx.v_idx]).frq);
@@ -139,8 +140,33 @@ std::vector<std::vector<note_t>> melody_hiller_ex21() {
 		return (ratio_lowest > 2.0 || ratio_highest > 2.0);
 	};
 
-	// Rule 2 - Implemented implictly
-	// Rule 3 - Implemented implictly
+	// Rule 2
+	// cf begins+ends on the tonic
+	auto cf_beginend_tonic = [&m,&midx](const note_t& new_nt) -> bool { 
+		if (midx.ch_idx > 0 || midx.ch_idx < (midx.nnts-1) 
+			|| midx.v_idx > 0) { 
+			return false;
+		}
+		return new_nt.ntl != ntl_t {"C"};
+	};
+
+	// Rule 3, 11
+	// Non-cf voices begin+end on tonic triad root position notes
+	auto noncf_beginend_tonictriad = [&m,&midx](const note_t& new_nt) -> bool { 
+		if (midx.ch_idx > 0 || midx.ch_idx < (midx.nnts-1) 
+			|| midx.v_idx == 0) { 
+			return false;
+		}
+
+		if (midx.v_idx == (midx.nvoices-1)) {  // The lowest voice
+			return new_nt.ntl != ntl_t {"C"};
+		}
+		return !(new_nt.ntl == ntl_t {"C"} || new_nt.ntl == ntl_t {"E"} 
+			|| new_nt.ntl == ntl_t {"G"});
+	};
+
+
+
 	// Rule 4 - Direct call to seventh()
 
 	// Rule 5
@@ -149,9 +175,9 @@ std::vector<std::vector<note_t>> melody_hiller_ex21() {
 	// prev two notes are a step, new_nt must be either a step or a skip.  
 	auto skip_step_rule = [&m,&midx,num_interval](const note_t& new_nt) -> bool { 
 		if (midx.ch_idx < 2) { return false; }
-		auto ci = midx.ch_idx;
-		auto vi = midx.v_idx;
-		std::cout << m[vi][ci-2].print() << ", " << m[vi][ci-1].print() << ", " << new_nt.print() << std::endl;
+		int ci = midx.ch_idx;
+		int vi = midx.v_idx;
+		//std::cout << m[vi][ci-2].print() << ", " << m[vi][ci-1].print() << ", " << new_nt.print() << std::endl;
 		int prev_int = num_interval(m[vi][ci-2],m[vi][ci-1]);
 		int new_int = num_interval(m[vi][ci-1],new_nt);
 		if (std::abs(prev_int) >= 2) {  // Prev 2 notes are a "skip;"  2 => m3||M3
@@ -166,7 +192,7 @@ std::vector<std::vector<note_t>> melody_hiller_ex21() {
 
 	// Rule 6
 	// No more than one successive repeat of a note is allowed in a given voice.  Require that
-	// both the oct and ntl be the same to fail tur rule (return true)
+	// both the oct and ntl be the same to fail the rule (return true).  
 	auto rpts_gt_one = [&m,&midx](const note_t& new_nt) -> bool { 
 		if (midx.ch_idx < 2) {	return false; }
 		note_t pprev_nt = m[midx.v_idx][midx.ch_idx-2];
