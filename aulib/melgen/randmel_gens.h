@@ -7,7 +7,6 @@
 #include "..\types\beat_bar_t.h"
 #include "dbklib\contigumap.h"
 #include <vector>
-#include <array>
 
 
 //
@@ -71,6 +70,10 @@ struct hiller21_status {
 		// calls to resize() on the first several loop iterations, manually resize to the number
 		// of rules before starting.  
 
+	bool first_ch() const;
+	bool last_ch() const;
+	bool first_v() const;
+	bool last_v() const;
 	bool any_failed() const;
 	void set_result(size_t, bool);
 	void clear_rules();

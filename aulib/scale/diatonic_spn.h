@@ -76,9 +76,10 @@ private:
 	std::string m_name {"Diatonic scale"};
 	std::string m_description {"whatever"};
 	spn m_sc_base {};  // C-chromatic 12-tet
-	int m_n = 7;
+	int m_n = 7;  // TODO:  const
 	std::vector<int> m_ip {2,2,1,2,2,2,1};  // Chromatic steps between adjacent scds
-	int m_mode_idx {0};
-	std::vector<ntl_t> m_ntls {};
+		// TODO:  const
+	int m_mode_idx {0};  // TODO:  const
+	std::vector<ntl_t> m_ntls {};    // TODO:  const??
 };
 
