@@ -1,6 +1,6 @@
 #include "randmel_gens.h"
 #include "..\util\au_random.h";
-#include "..\scale\spn.h";
+#include "..\scale\spn.h";  // To compute semitone difference between nt pairs
 #include "..\scale\diatonic_spn.h";
 #include "..\types\ntl_t.h";
 #include "..\types\frq_t.h";
@@ -10,23 +10,8 @@
 #include <exception>
 #include <algorithm>
 #include <random>
-#include <cmath>
+#include <cmath>  // std::abs()
 #include <array>
-
-/*
-std::vector<note_t> melody_hiller_ex11(const melody_hiller_params& p) {
-	// 1)  No tritones
-	// 2)  No sevenths
-	// 3)  Start, end on middle C
-	// 4)  max(melody)-min(melody) <= 1 octave
-
-	bool passed {false};
-	while (!passed) {
-		//...
-	}
-
-}*/
-
 
 
 //
@@ -36,85 +21,29 @@ std::vector<note_t> melody_hiller_ex11(const melody_hiller_params& p) {
 //
 // Better method:  Use the rules to set the ntpool, then any selection will work.  
 //
-std::vector<std::vector<note_t>> melody_hiller_ex21() {
+std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& p) {
 	spn sc_cchrom {};
 	diatonic_spn sc {ntl_t {"C"}, diatonic_spn::mode::major};
-	int scd_min = sc.to_scd(ntl_t{"C"},octn_t{3});
-	int scd_max = sc.to_scd(ntl_t{"C"},octn_t{5});
 
-	struct m_status {
-		int nnts {12};  // TODO:   Not the best name... nchs?
-		int nvoices {3};
-
-		int ch_idx {0};  // TODO:  vi,ci ??  v,c ??
-		int v_idx {0};
-		note_t new_nt {};
-		int rejects_curr_ch {0};
-		int rejects_tot {0};
-		std::array<int,12> rule {0};  // -1=>fail, 0=>ne, 1=>pass
-
-		void set_result(size_t r, bool pass) {
-			rule[r-1] = pass ? 1 : -1;
-		}
-
-		bool any_failed() const {
-			for (const auto& e : rule) {
-				if (e == -1) { return true; }
-			}
-			return false;
-		}
-		void set_for_new_attempt_curr_nt() {
-			rule.fill(0);
-			++rejects_curr_ch; ++rejects_tot;
-		}
-		void set_for_next() {
-			rule.fill(0);
-			if (v_idx < (nvoices-1)) {  // To next v in present ch
-				++v_idx;
-			} else {  // To next ch
-				rejects_curr_ch = 0;
-				v_idx=0; ++ch_idx;
-			}
-		}
-		void set_for_new_attempt_prev_ch() {
-			rule.fill(0);
-			rejects_curr_ch = 0; ++rejects_tot;
-			v_idx = 0; ch_idx = std::max(0,ch_idx-1);
-		}
-		
-		std::string print(const std::vector<std::vector<note_t>>& m) const { 
-			std::string s {};
-
-			for (int v=0; v<nvoices; ++v) {  // v<nvoices => always print 2 rows
-				s += std::to_string(v) + ":  ";
-				for (int ch=0; ch<=ch_idx; ++ch) {  // NB:  leq! ch<=ch_idx
-					if (ch==ch_idx && v >= v_idx) { continue; }
-					s += m[v][ch].print() + "  ";
-				}
-				if (v == v_idx) { s+= " *  <-" + new_nt.print(); }
-				s += "\n";
-			}
-
-			std::string failstr {}; std::string passstr {}; std::string nestr {};
-			for (int i=0; i<rule.size(); ++i) {
-				if (rule[i] == -1) {
-					if (failstr.size() > 0) { failstr += ", "; }  // add sep iff have found prior
-					failstr += std::to_string(i+1);
-				} else if (rule[i] == 0) {
-					if (nestr.size() > 0) { nestr += ", "; }  // add sep iff have found prior
-					nestr += std::to_string(i+1);
-				} else if (rule[i] == 1) {
-					if (passstr.size() > 0) { passstr += ", "; }  // add sep iff have found prior
-					passstr += std::to_string(i+1);
-				}
-			}
-			s += "Passed:  " + passstr + "\n" + "Failed:  " + failstr + "\n" + "NE:  " + nestr + "\n";
-			s += failstr.size()>0 ? "Overall Failed " : "Overall Passed ";
-			s += "(" + std::to_string(ch_idx) + "," + std::to_string(v_idx) + ")\n";
-			return s;
-		}
-	};
-	m_status midx {};  // Current position in the developing m
+	auto ntstr_min_parse = parse_spn_ntstr(p.min);
+	auto ntstr_max_parse = parse_spn_ntstr(p.max);
+	bool min_valid = (ntstr_min_parse.is_valid && ntstr_min_parse.is_oct_set 
+		&& (ntstr_min_parse.ntl == ntstr_min_parse.ntl_base));
+	bool max_valid = (ntstr_max_parse.is_valid && ntstr_max_parse.is_oct_set 
+		&& (ntstr_max_parse.ntl == ntstr_max_parse.ntl_base));
+	if (!min_valid || !max_valid) {
+		std::abort();
+	}
+	int scd_min = sc.to_scd(ntstr_min_parse.ntl_base,ntstr_min_parse.oct);
+	int scd_max = sc.to_scd(ntstr_max_parse.ntl_base,ntstr_max_parse.oct);
+	if (scd_max-scd_min < 8) {
+		std::abort();
+	}
+	
+	melody_hiller_internal::hiller21_status midx {};
+	midx.nnts = p.nnts;
+	midx.nvoices = p.nvoice;
+	midx.rule.resize(10,0);
 
 	std::vector<note_t> ntpool {};
 	for (int s = scd_min; s<=scd_max; ++s) {
@@ -416,7 +345,7 @@ std::vector<std::vector<note_t>> melody_hiller_ex21() {
 		return true;
 	};
 
-	while (midx.rejects_tot < 500 && midx.ch_idx < midx.nnts) {
+	while (midx.rejects_tot < p.max_rejects_tot && midx.ch_idx < midx.nnts) {
 		// Draw potential nt to occupy m[v_idx][ch_idx]
 		note_t new_nt = ntpool[rd(re)];
 		midx.new_nt = new_nt;
@@ -432,21 +361,132 @@ std::vector<std::vector<note_t>> melody_hiller_ex21() {
 		midx.set_result(8,!harmonic_consonant(new_nt));
 		midx.set_result(9,!harmonic_p4(new_nt));
 		midx.set_result(10,!tritone(new_nt));
+		// Rule 3 => Rule 11
 		midx.set_result(12,!(ch_nxtlast_contains_b(new_nt) && lastch_contains_rsln_from_b(new_nt)));
-		
-		std::cout << midx.print(m) << std::endl;
-		if (midx.any_failed() && midx.rejects_curr_ch < 20) {
-			midx.set_for_new_attempt_curr_nt();
-		} else if (midx.any_failed() && midx.rejects_curr_ch >= 20) {
-			std::cout << "rejects_curr_ch >= 20;  midx.set_for_new_attempt_prev_ch();" << std::endl;
-			midx.set_for_new_attempt_prev_ch();
+
+		if (midx.any_failed()) {
+			if (p.debug_lvl == 2 || p.debug_lvl == 3) {
+				std::cout << midx.print(m) << std::endl;
+			}
+			if (midx.rejects_curr_ch < p.rejects_regen_ch) {
+				midx.set_for_new_attempt_curr_nt();
+			} else {
+				if (p.debug_lvl == 2 || p.debug_lvl == 3) {
+					std::cout << "rejects_curr_ch >= " + std::to_string(p.rejects_regen_ch) 
+						+ ";  midx.set_for_new_attempt_prev_ch();" << std::endl;
+				}
+				midx.set_for_new_attempt_prev_ch();
+			}
 		} else {  // success
+			if (p.debug_lvl == 1 || p.debug_lvl == 3) {
+				std::cout << midx.print(m) << std::endl;
+			}
 			m[midx.v_idx][midx.ch_idx] = new_nt;
 			midx.set_for_next();
 		}
 	}
 
+	std::string lpout {};
+	for (int ch=0; ch<p.nnts; ++ch) {
+		lpout += "<";
+		for (int v=0; v<p.nvoice; ++v) {
+			lpout += m[v][ch].print(note_t::fmt::lp);
+			if (v < (p.nvoice-1)) { lpout += " "; }
+		}
+		lpout += "> ";
+	}
+	std::cout << std::endl << lpout << std::endl;
 	return m;
 }
+
+
+bool melody_hiller_internal::hiller21_status::any_failed() const {
+	for (const auto& e : rule) {
+		if (e == -1) { return true; }
+	}
+	return false;
+}
+
+// Set the result of evaluating rule r;  "Rule r" => rule[r-1]
+void melody_hiller_internal::hiller21_status::set_result(size_t r, bool pass) {
+	if ((r-1) >= rule.size()) {
+		rule.resize(r,0);  // Require size==(r+1) to store into [r], thus size==r for [r-1], 
+	}
+	rule[r-1] = pass ? 1 : -1;
+}
+
+// Set the result of all rules to 0
+void melody_hiller_internal::hiller21_status::clear_rules() {
+	for (auto e : rule) { e=0; }
+}
+
+// Called when new_nt is rejected (1 or more rules did not pass)
+// Reset all rule pass/fail results & increment the curr_ch & total reject counters
+void melody_hiller_internal::hiller21_status::set_for_new_attempt_curr_nt() {
+	clear_rules();
+	++rejects_curr_ch; ++rejects_tot;
+}
+
+// Called when new_nt is rejected (1 or more rules did not pass) and when the curr_ch reject
+// counter indicates that there have been melody_hiller_params.rejects_regen_ch rejections for
+// the present chord.  This begins the process of overwriting chord ch_idx-1.  
+//
+// Reset all rule pass/fail results, reset the curr_ch reject counter, increment the total
+// total rejects counter, decrement ch_idx and set v_idx == 0
+void melody_hiller_internal::hiller21_status::set_for_new_attempt_prev_ch() {
+	clear_rules();
+	rejects_curr_ch = 0; ++rejects_tot;
+	v_idx = 0; ch_idx = std::max(0,ch_idx-1);
+}
+
+// Called when new_nt is accepted into the growing sequence.  
+// Reset all rule pass/fail results & increment v_idx.
+// Iff v_idx was the final voice of the ch_idx, increment ch_idx and zero the curr_ch 
+// reject counter.  
+void melody_hiller_internal::hiller21_status::set_for_next() {
+	clear_rules();
+	if (v_idx < (nvoices-1)) {  // To next v in present ch
+		++v_idx;
+	} else {  // To next ch
+		rejects_curr_ch = 0;
+		v_idx=0; ++ch_idx;
+	}
+}
+
+// Prints the present sequence m, the candidate nt new_nt, and the results of the tests on
+// new_nt.  
+// TODO:  Not sure this needs to be a member?
+std::string melody_hiller_internal::hiller21_status::print(const std::vector<std::vector<note_t>>& m) const { 
+	std::string s {};
+
+	for (int v=0; v<nvoices; ++v) {  // v<nvoices => always print 2 rows
+		s += std::to_string(v) + ":  ";
+		for (int ch=0; ch<=ch_idx; ++ch) {  // NB:  leq! ch<=ch_idx
+			if (ch==ch_idx && v >= v_idx) { continue; }
+			s += m[v][ch].print() + "  ";
+		}
+		if (v == v_idx) { s+= " *  <-" + new_nt.print(); }
+		s += "\n";
+	}
+
+	std::string failstr {}; std::string passstr {}; std::string nestr {};
+	for (int i=0; i<rule.size(); ++i) {
+		if (rule[i] == -1) {
+			if (failstr.size() > 0) { failstr += ", "; }  // add sep iff have found prior
+			failstr += std::to_string(i+1);
+		} else if (rule[i] == 0) {
+			if (nestr.size() > 0) { nestr += ", "; }  // add sep iff have found prior
+			nestr += std::to_string(i+1);
+		} else if (rule[i] == 1) {
+			if (passstr.size() > 0) { passstr += ", "; }  // add sep iff have found prior
+			passstr += std::to_string(i+1);
+		}
+	}
+	s += "Passed:  " + passstr + "\n" + "Failed:  " + failstr + "\n" + "NE:  " + nestr + "\n";
+	s += failstr.size()>0 ? "Overall Failed " : "Overall Passed ";
+	s += "(" + std::to_string(ch_idx) + "," + std::to_string(v_idx) + ")\n";
+	return s;
+}
+
 
 

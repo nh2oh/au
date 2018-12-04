@@ -57,13 +57,42 @@ std::vector<scd_t> melody_a(ma_params);
 // diatonic_spn, and i return note_t's, not scd_t's.  
 //
 //
-struct melody_hiller_params {
-	int nnts {12};
-	std::string min {"C(3)"};
-	std::string max {"C(5)"};
+namespace melody_hiller_internal {
+struct hiller21_status {
+	int nnts {24};  // TODO:  Not the best name... nchs?
+	int nvoices {3};
+	int ch_idx {0};  // TODO:  vi,ci ??  v,c ??
+	int v_idx {0};
+	note_t new_nt {};
+	int rejects_curr_ch {0};  // Zeroed upon changing ch_idx
+	int rejects_tot {0};  // Never zeroed
+	std::vector<int> rule {};
+		// Expands to size() == r for the largest r passed to set_result(); to avoid repeated
+		// calls to resize() on the first several loop iterations, manually resize to the number
+		// of rules before starting.  
+
+	bool any_failed() const;
+	void set_result(size_t, bool);
+	void clear_rules();
+	void set_for_new_attempt_curr_nt();
+	void set_for_new_attempt_prev_ch();
+	void set_for_next();
+	std::string print(const std::vector<std::vector<note_t>>&) const;
 };
-std::vector<note_t> melody_hiller(const melody_hiller_params&);
-std::vector<std::vector<note_t>> melody_hiller_ex21();  // "Experiment 2, part 1"
+};  // namespace melody_hiller_internal
+
+struct melody_hiller_params {
+	int nnts {24};  // nnts per voice
+	int nvoice {3};
+	std::string min {"C(3)"};  // Must be valid for Cmaj-SPN
+	std::string max {"C(5)"};
+	int max_rejects_tot {1000};  // Before aborting the entire operation
+	int rejects_regen_ch {20};  // Before dropping+regenerating the prev. ch
+	int debug_lvl {3};
+		// 0 => No messages, 1 => Only successfull iterations,
+		// 2 => Only failed iterations, 3 => All iterations
+};
+std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params&);  // "Experiment 2, part 1"
 
 
 //

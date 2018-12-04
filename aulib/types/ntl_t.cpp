@@ -1,7 +1,8 @@
 #include "ntl_t.h"
 #include <string>
 #include <regex>
-
+#include <ctype.h>  // std::tolower()
+#include <algorithm>
 
 // The set of chars allowed in an ntl_t
 const char *ntl_t::m_allowed {"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234567989_-[]#&"};
@@ -141,6 +142,20 @@ std::string note_t::print(note_t::fmt f) const {
 		}
 		case fmt::ntlo: {
 			s += ntl.print() + "(" + oct.print() + ")";
+			break;
+		}
+		case fmt::lp: {  // TODO:  Gross
+			// in "\absolute" mode, c' (middle C) => C(4) in SPN
+			int n_mod = oct.to_int()-3;
+			std::string mods {};
+			if (n_mod > 0) {
+				mods = std::string(n_mod,'\'');
+			} else if (n_mod < 0) {
+				mods = std::string(n_mod,',');
+			}
+			s += ntl.print();
+			std::transform(s.begin(),s.end(),s.begin(), ::tolower);
+			s += mods;
 			break;
 		}
 	}

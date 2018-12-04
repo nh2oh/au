@@ -95,7 +95,8 @@ public:
 
 	enum class fmt {
 		ntl,
-		ntlo
+		ntlo,
+		lp
 	};
 	std::string print(note_t::fmt=note_t::fmt::ntlo) const;
 
