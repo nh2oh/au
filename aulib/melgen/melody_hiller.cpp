@@ -1,5 +1,6 @@
 #include "randmel_gens.h"
 #include "..\util\au_random.h";
+#include "..\scale\spn.h";
 #include "..\scale\diatonic_spn.h";
 #include "..\types\ntl_t.h";
 #include "..\types\frq_t.h";
@@ -36,20 +37,21 @@ std::vector<note_t> melody_hiller_ex11(const melody_hiller_params& p) {
 // Better method:  Use the rules to set the ntpool, then any selection will work.  
 //
 std::vector<std::vector<note_t>> melody_hiller_ex21() {
+	spn sc_cchrom {};
 	diatonic_spn sc {ntl_t {"C"}, diatonic_spn::mode::major};
 	int scd_min = sc.to_scd(ntl_t{"C"},octn_t{3});
 	int scd_max = sc.to_scd(ntl_t{"C"},octn_t{5});
 
 	struct m_status {
 		int nnts {12};  // TODO:   Not the best name... nchs?
-		int nvoices {2};
+		int nvoices {3};
 
 		int ch_idx {0};  // TODO:  vi,ci ??  v,c ??
 		int v_idx {0};
 		note_t new_nt {};
 		int rejects_curr_ch {0};
 		int rejects_tot {0};
-		std::array<int,11> rule {0};  // -1=>fail, 0=>ne, 1=>pass
+		std::array<int,12> rule {0};  // -1=>fail, 0=>ne, 1=>pass
 
 		void set_result(size_t r, bool pass) {
 			rule[r-1] = pass ? 1 : -1;
@@ -107,8 +109,8 @@ std::vector<std::vector<note_t>> melody_hiller_ex21() {
 				}
 			}
 			s += "Passed:  " + passstr + "\n" + "Failed:  " + failstr + "\n" + "NE:  " + nestr + "\n";
-			s += failstr.size()>0 ? "Overall Failed\n" : "Overall Passed\n";
-
+			s += failstr.size()>0 ? "Overall Failed " : "Overall Passed ";
+			s += "(" + std::to_string(ch_idx) + "," + std::to_string(v_idx) + ")\n";
 			return s;
 		}
 	};
@@ -175,8 +177,11 @@ std::vector<std::vector<note_t>> melody_hiller_ex21() {
 	// 1 => m2 || M2
 	// 2 => m3 || M3
 	// 3 => 
-	auto num_interval = [&sc](const note_t& from, const note_t& to) -> int {
+	auto n_staff = [&sc](const note_t& from, const note_t& to) -> int {
 		return sc.to_scd(to)-sc.to_scd(from);
+	};
+	auto n_semi = [&sc_cchrom](const note_t& from, const note_t& to) -> int {
+		return sc_cchrom.to_scd(to.ntl,to.oct)-sc_cchrom.to_scd(from.ntl,from.oct);
 	};
 
 	// Rule 1
@@ -216,27 +221,30 @@ std::vector<std::vector<note_t>> melody_hiller_ex21() {
 
 	// Rule 4
 	// For any voice, no intervals == m7 || M7
-	auto no_mel_sevenths = [&m,&midx,num_interval](const note_t& new_nt) -> bool { 
+	auto no_mel_sevenths = [&m,&midx,n_staff,n_semi](const note_t& new_nt) -> bool { 
 		if (midx.ch_idx == 0) { return false; }
-		return std::abs(num_interval(m[midx.v_idx][(midx.ch_idx-1)],new_nt))==6;
+		int delta_staff = std::abs(n_staff(m[midx.v_idx][(midx.ch_idx-1)],new_nt));
+		int delta_semi = std::abs(n_semi(m[midx.v_idx][(midx.ch_idx-1)],new_nt));
+		return delta_staff == 6 && (delta_semi == 10 || delta_semi == 11);
 	};
 
 	// Rule 5
 	// For the current voice, if the prev. two notes are >= an m3 apart (a "skip"), new_nt must 
 	// be either a repeat of the prev nt or differ from the prev nt by an m2 (a "step").  If the 
 	// prev two notes are a step, new_nt must be either a step or a skip.  
-	auto skip_step_rule = [&m,&midx,num_interval](const note_t& new_nt) -> bool { 
+	auto skip_step_rule = [&m,&midx,n_staff](const note_t& new_nt) -> bool { 
 		if (midx.ch_idx < 2) { return false; }
 		int ci = midx.ch_idx;
 		int vi = midx.v_idx;
 		//std::cout << m[vi][ci-2].print() << ", " << m[vi][ci-1].print() << ", " << new_nt.print() << std::endl;
-		int prev_int = num_interval(m[vi][ci-2],m[vi][ci-1]);
-		int new_int = num_interval(m[vi][ci-1],new_nt);
+		int prev_int = n_staff(m[vi][ci-2],m[vi][ci-1]);
+		int new_int = n_staff(m[vi][ci-1],new_nt);
 		if (std::abs(prev_int) >= 2) {  // Prev 2 notes are a "skip;"  2 => m3||M3
 			bool tf = !(new_nt.ntl == m[vi][ci-1].ntl || std::abs(new_int)==1);
 			return tf;
 		} else if (std::abs(prev_int)==1) {  // Prev 2 notes are a "step;"  1 => m2||M2
-			bool tf = !(std::abs(new_int)==1 || std::abs(new_int)==2);
+			//bool tf = !(std::abs(new_int)==1 || std::abs(new_int)==2);
+			bool tf = !(std::abs(new_int)>=1);
 			return tf;
 		}
 		return false;
@@ -294,16 +302,21 @@ std::vector<std::vector<note_t>> melody_hiller_ex21() {
 	};
 
 	// Rule 8
-	// For each chord, the only harmonic intervals permitted are U, O, P5, m3, M3, 6'ths.  
+	// For each chord, the only harmonic intervals permitted are U, m3, M3, P5, 6'ths, O.  
 	// Forbidden are m2, M2, m7, M7, tritone
 	// TODO:  How to include tritone?
-	auto harmonic_consonant = [&m,&midx,num_interval](const note_t& new_nt) -> bool {
+	auto harmonic_consonant = [&m,&midx,n_staff,n_semi](const note_t& new_nt) -> bool {
 		if (midx.v_idx == 0) { return false; }
 
 		for (int i=0; i<midx.v_idx; ++i) {  // m.size() == nvoices
-			int curr_int = std::abs(num_interval(m[i][midx.ch_idx],new_nt));
+			int curr_int = std::abs(n_staff(m[i][midx.ch_idx],new_nt));
+			int curr_ns = std::abs(n_semi(m[i][midx.ch_idx],new_nt));
 			if (curr_int == 6 || curr_int == 1) {
-				return true;  // Illegal harmonic interval
+				return true;  // m2 || M2 || m7 || M7
+			}
+			if (curr_int == 3 && curr_ns == 5) {
+				auto conflict_nt = m[i][midx.ch_idx];
+				return true;  // P4
 			}
 		}
 
