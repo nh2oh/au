@@ -9,8 +9,28 @@
 //
 // Represents a chord: a vertical note-group
 // 1)  All members are unique
+//     => A chord_t represents a chord sounded by a single voice and not an "effective" chord
+//     resulting from many voices sounding together.  
+//     => What of insturments where the same note can be sounded > once simultaniously?  Ex, tune
+//     two strings of a guitar to the saem frq.  
 // 2)  There is no associated duration
 // 
+// - What methods does a chord need that other containers-of-notes do not?
+// - What level of genericity is needed to implement those methods for _all_ T?
+//
+// Methods unique to chords:
+// - Special printing format: <...>
+// - Naming, but not possible unless associated w/ scale, diatonic key
+// - Identification of bass, high nt (not nec. as usefull for a hosizontal nt group; also
+//   maybe not possible for scales w/ crazy scd ordering)
+// - Iterator from low->high instead of t=0 -> t=end, as for an h-line
+// - Equality independent of note order (ie, notes are always sorted)
+// - Interval calculation for all pairs of intervals
+// - Invert method
+//
+//
+//
+//
 // (1) => that an == operator exists for note-type T.  For scd_t, ntl_t,
 // ntstr_t, and frq_t, equality is defined independent of scale, despite the
 // fact that a scale may map different note-type elements to the same frq.  
