@@ -79,6 +79,7 @@ struct hiller21_status {
 	void clear_rules();
 	void set_for_new_attempt_curr_nt();
 	void set_for_new_attempt_prev_ch();
+	void set_for_new_attempt_mel();
 	void set_for_next();
 	std::string print(const std::vector<std::vector<note_t>>&) const;
 };
@@ -89,7 +90,7 @@ struct melody_hiller_params {
 	int nvoice {3};
 	std::string min {"C(3)"};  // Must be valid for Cmaj-SPN
 	std::string max {"C(5)"};
-	int max_rejects_tot {2000};  // Before aborting the entire operation
+	int max_rejects_tot {10000};  // Before aborting the entire operation
 	int rejects_regen_ch {20};  // Before dropping+regenerating the prev. ch
 	int debug_lvl {3};
 		// 0 => No messages, 1 => Only successfull iterations,

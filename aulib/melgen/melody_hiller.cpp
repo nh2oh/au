@@ -247,7 +247,7 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 				continue;  // spare some indentation below
 			}
 			// max_nt is repeated at chords i-1->i
-			if (max_nt.ntl != ntl_t {"C"}) {
+			if (max_nt.ntl != ntl_t {"C"}) { 
 				return true;  // The i-1->i repeat is not the tonic
 			}
 			// The i-1->i repeat is the tonic
@@ -391,7 +391,7 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 	};
 
 	// Begin melody generation
-	std::vector<int> failcounts(12,0);
+	int total_melody_resets {0};
 	while (s.rejects_tot < p.max_rejects_tot && s.ch_idx < s.nnts) {
 		// Draw potential nt to occupy m[v_idx][ch_idx]
 		note_t new_nt = ntpool[rd(re)];
@@ -415,7 +415,16 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 			if (p.debug_lvl == 2 || p.debug_lvl == 3) {
 				std::cout << s.print(m) << std::endl;
 			}
-			if (s.rejects_curr_ch < p.rejects_regen_ch) {
+
+			if (s.rejects_tot > 0 && s.rejects_tot%((p.rejects_regen_ch)*(p.nnts))==0) {
+				if (p.debug_lvl == 2 || p.debug_lvl == 3) {
+					std::cout << "For the current mel, tot rejects >= " 
+						<< std::to_string((p.rejects_regen_ch)*(p.nnts)) 
+						<< ";  s.set_for_new_attempt_mel();" << std::endl;
+				}
+				s.set_for_new_attempt_mel();
+				++total_melody_resets;
+			} else if (s.rejects_curr_ch < p.rejects_regen_ch) {
 				s.set_for_new_attempt_curr_nt();
 			} else {
 				if (p.debug_lvl == 2 || p.debug_lvl == 3) {
@@ -439,7 +448,7 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 			<< std::to_string(p.max_rejects_tot) 
 			<< ".  \nHere is how far the process got, including junk nts @ the end\n";
 	} else {
-		std::cout << "Success!\n";
+		std::cout << "\nSuccess!  " << std::to_string(s.rejects_tot) << " total note-rejections\n";
 	}
 
 	std::string lpout {};
@@ -506,6 +515,19 @@ void melody_hiller_internal::hiller21_status::set_for_new_attempt_prev_ch() {
 	clear_rules();
 	rejects_curr_ch = 0; ++rejects_tot;
 	v_idx = 0; ch_idx = std::max(0,ch_idx-1);
+}
+
+
+// Called when new_nt is rejected (1 or more rules did not pass) and when the total rejects
+// counter indicates that there have been a multiple of:
+// melody_hiller_params.rejects_regen_ch * melody_hiller_params.nnts rejections.  
+//
+// Reset all rule pass/fail results, reset the curr_ch reject counter, increment the total
+// total rejects counter, set ch_idx == 0 and set v_idx == 0
+void melody_hiller_internal::hiller21_status::set_for_new_attempt_mel() {
+	clear_rules();
+	rejects_curr_ch = 0; ++rejects_tot;
+	v_idx = 0; ch_idx = 0;
 }
 
 // Called when new_nt is accepted into the growing sequence.  
