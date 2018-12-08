@@ -23,7 +23,7 @@
 std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& p) {
 	//
 	// Melody accumulated in m; status object s
-	// Voice 0 (m[ch][0], s.v_idx==0) is the cf
+	// Voice 0 (m[0][ch], s.v_idx==0) is the cf
 	//
 	spn sc_cchrom {};
 	diatonic_spn sc {ntl_t {"C"}, diatonic_spn::mode::major};
@@ -111,6 +111,7 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 
 	// If the chord represented by the inut note_t vector contains the notes B(i) and
 	// F(j) with j==i+1, returns true.  This is the only tritone in the Cmaj scale.  
+	// TODO:  Can i just check for 6 semitones???
 	auto ch_contains_tritone = [ntlo_eq](const std::vector<note_t>& ch) -> bool {
 		if (ch.size() > 2) { return false; }
 
@@ -234,25 +235,25 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 	// of the line is being evaluated.  
 	auto rpt_high_nt = [&m,&s,max_frq,get_chord,ch_contains_tritone](const note_t& new_nt) -> bool { 
 		if (!s.last_ch()) { return false; }  // melody not complete
-		// TODO:  Condition needs to also check for completed final line...
-		//     ??? This rule applies to all voices...
-
-		for (int i=0; i<m.size(); ++i) {  // i ~ current voice
-			std::vector<note_t> curr_voice = m[i];  curr_voice.push_back(new_nt);
+		
+		auto m_cpy = m;  m_cpy[s.ch_idx][s.v_idx]=new_nt;
+		for (int i=0; i<m_cpy.size(); ++i) {  // i ~ current voice
+			std::vector<note_t> curr_voice = m_cpy[i];  curr_voice.push_back(new_nt);
 			note_t max_nt = max_frq(curr_voice);  // Highest nt of curr voice i
 			for (int j=1; j<curr_voice.size(); ++j) {  // j ~ current nt of voice i
-				if (curr_voice[j-1] == max_nt && curr_voice[j] == max_nt) {
-					if (max_nt.ntl != ntl_t {"C"}) {
-						// max_nt is repeated at chords j-1->j and is not the tonic
-						return true;  
-					}
-					// max_nt is repeated at chords j->j+1 and is the tonic.  
-					// Now must check that the repeat involves a tritone resolution or
-					// a cadence to the high tonic.  
-					if (ch_contains_tritone(get_chord(j-1))) { return false; }
-					// Now check for cadence to high tonic.  
-					return true;
+				if (!(curr_voice[j-1] == max_nt && curr_voice[j] == max_nt)) {
+					continue;  // spare some indentation below
 				}
+				// max_nt is repeated at chords j->j+1
+				if (max_nt.ntl != ntl_t {"C"}) {
+					return true;  // The j-1->j repeat is not the tonic
+				}
+				// The j-1->j repeat is the tonic
+				// Now must check that the repeat involves a tritone resolution or
+				// a cadence to the high tonic.  
+				if (ch_contains_tritone(get_chord(j-1))) { return false; }
+				// Now check for cadence to high tonic.  
+				return true;
 			}  // to next nt j of voice i
 		}  // to next voice i
 		return false;
@@ -261,48 +262,43 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 	// Rule 8
 	// For each chord, the only harmonic intervals permitted are U, m3, M3, P5, 6'ths, O.  
 	// Forbidden are m2, M2, m7, M7, tritone
-	// TODO:  How to include tritone?
-	auto harmonic_consonant = [&m,&s,abs_staffdiff_cmn,abs_semidiff](const note_t& new_nt) -> bool {
-		if (s.v_idx == 0) { return false; }
-		for (int i=0; i<s.v_idx; ++i) {
-			int staffint = abs_staffdiff_cmn(m[i][s.ch_idx],new_nt);
-			int ns = abs_semidiff(m[i][s.ch_idx],new_nt);
+	auto harmonic_consonant = [&m,&s,abs_staffdiff_cmn,abs_semidiff,get_chord,ch_contains_tritone](const note_t& new_nt) -> bool {
+		if (s.first_v()) { return false; }
+		
+		std::vector<note_t> curr_ch = get_chord(s.ch_idx);
+		for (const auto& e : curr_ch) {
+			int staffint = abs_staffdiff_cmn(e,new_nt);
+			int ns = abs_semidiff(e,new_nt);
 			if (staffint==7 || staffint==2 || (staffint==4 && ns==5)) {
 				return true;  //  m7 || M7 || m2 || M2 || P4
 			}
 		}
-
+		curr_ch.push_back(new_nt);
+		if (ch_contains_tritone(curr_ch)) { return true; }
 		return false;
 	};
 
 	// Rule 9
-	// TODO:  Calc as:  (staffint==4 && ns==5)
-	// For each chord, a P4 is allowed iff it does not occur between the lowest note of the
-	// chord and an upper voice.  C-F is a perfect 4'th.  
-	auto harmonic_p4 = [&m,&s,get_chord,min_frq](const note_t& new_nt) -> bool {
-		if (s.first_v()) { return false; }
+	// For each chord, a P4 is allowed iff it does not occur between the lowest 
+	// note of the chord and an upper voice (TODO:  compat w/ rule 8?). 
+	// Returns false until s.v_idx is the last voice of the chord; only then is 
+	// it possible to define "lowest note of the chord."
+	auto harmonic_p4 = [&m,&s,get_chord,min_frq,abs_staffdiff_cmn,
+						abs_semidiff,ntlo_eq](const note_t& new_nt) -> bool {
+		if (!s.last_v()) { return false; }
 
-		bool found_c {false}; bool found_cf {false};
-		note_t low_c_of_p4 {};
-		std::vector<note_t> curr_chord = get_chord(s.ch_idx);
-		curr_chord.push_back(new_nt);
-		for (const auto& e : curr_chord) {
-			if (e.ntl == ntl_t{"C"} && !found_c) {
-				found_c = true;  // This is the first C we've found
-				low_c_of_p4 = e;
-			} else if (e.ntl == ntl_t{"C"} && found_c) {   // This is ! the first C we've found
-				if (e.frq < low_c_of_p4.frq) { 
-					low_c_of_p4 = e;
-				}
+		std::vector<note_t> curr_ch = get_chord(s.ch_idx);// curr_chord.push_back(new_nt);
+		for (const auto& e : curr_ch) {
+			int staffint = abs_staffdiff_cmn(e,new_nt);
+			int ns = abs_semidiff(e,new_nt);
+			if (!(staffint==4 && ns==5)) { continue; }  // Not a p4
+
+			note_t lowest_nt = min_frq(curr_ch);
+			if (ntlo_eq(lowest_nt,e) || ntlo_eq(lowest_nt,new_nt)) {
+				return true;
 			}
-
-			if (e.ntl == ntl_t{"F"} && found_c) { found_cf = true; }
 		}
-
-		return found_cf && (min_frq(curr_chord) == low_c_of_p4);
-		// If the chord contains a C-F, the rule is broken (return true) if the C is the
-		// offending interval is the low note of the chord.  
-		// This test will forbid legitimate new_nt's unless it is only made on completed chords
+		return false;
 	};
 
 	// Rule 10
@@ -392,7 +388,7 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 		s.set_result(4,!no_mel_sevenths(new_nt));
 		s.set_result(5,!skip_step_rule(new_nt));
 		s.set_result(6,!rpts_gt_one(new_nt));
-		s.set_result(7,!rpt_high_nt());
+		s.set_result(7,!rpt_high_nt(new_nt));
 		s.set_result(8,!harmonic_consonant(new_nt));
 		s.set_result(9,!harmonic_p4(new_nt));
 		s.set_result(10,!tritone(new_nt));
