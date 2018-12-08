@@ -60,8 +60,8 @@ namespace melody_hiller_internal {
 struct hiller21_status {
 	int nnts {24};  // TODO:  Not the best name... nchs?
 	int nvoices {3};
-	int ch_idx {0};  // TODO:  vi,ci ??  v,c ??
-	int v_idx {0};
+	int ch_idx {0};  // The current working chord
+	int v_idx {0};  // The current working note
 	note_t new_nt {};
 	int rejects_curr_ch {0};  // Zeroed upon changing ch_idx
 	int rejects_tot {0};  // Never zeroed

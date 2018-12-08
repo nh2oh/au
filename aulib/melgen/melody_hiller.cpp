@@ -21,6 +21,10 @@
 // Better method:  Use the rules to set the ntpool, then any selection will work.  
 //
 std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& p) {
+	//
+	// Melody accumulated in m; status object s
+	// Voice 0 (m[ch][0], s.v_idx==0) is the cf
+	//
 	spn sc_cchrom {};
 	diatonic_spn sc {ntl_t {"C"}, diatonic_spn::mode::major};
 
@@ -52,7 +56,9 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 	auto re = new_randeng(true);
 	std::uniform_int_distribution rd {size_t {0}, ntpool.size()-1};
 
-	// m[voice][note]
+	// m[voice][note] contains the melody
+	// Preallocation with all elements == C(0), probably outside of the range specified by
+	// the caller (though i do not rely on this assumption).  
 	std::vector<std::vector<note_t>> m {};
 	m.insert(m.begin(),s.nvoices,std::vector<note_t>(s.nnts,sc[0]));
 	
@@ -64,57 +70,57 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 		return *std::max_element(nts.begin(),nts.end(),
 			[](const note_t& lhs, const note_t& rhs){return rhs.frq<rhs.frq;});
 	};
-	// Usefull for using std::find on a std::vector<note_t> to find a particular ntl
+	// Used for std::find(std::vector<note_t>) to find a particular ntl
 	auto ntl_eq = [](const note_t& lhs, const note_t& rhs) -> bool {
 		return lhs.ntl == rhs.ntl;
 	};
-	// Used in calling std::sort() on a std::vector<note_t> to sort by frq
+	// Used for std::sort(std::vector<note_t>) to sort by frq
 	auto ntl_lt_frq = [](const note_t& lhs, const note_t& rhs) -> bool {
 		return lhs.frq < rhs.frq;
 	};
 	auto ntl_ismember = [](const std::vector<note_t>& nts, const ntl_t& nt) -> bool {
 		for (int i=0; i<nts.size(); ++i) {
-			if (nts[i].ntl==nt) {
-				return true;
-			}
+			if (nts[i].ntl==nt) { return true; }
 		}
 		return false;
 	};
 
-	// Gets from v_idx == 0 to s.v_idx if requesting chord_idx == s.ch_idx, or from
-	// v_idx == 0 to s.nvoices if chord_idx < s.ch_idx.  
+	// If chord_idx == s.ch_idx, returns notes [0,s.vidx), ie, only the completed notes
+	// of the working chord.  If chord_idx < s.ch_idx, gets all the notes of that chord:
+	// [0,s.nvoices).  
 	auto get_chord = [&s, &m](int chord_idx) -> std::vector<note_t> {
 		int max_v_idx {0};
 		if (chord_idx > s.ch_idx) {
 			std::abort();
-		} else if (chord_idx < s.ch_idx) {
-			// Requesting a ch prior to the working ch
+		} else if (chord_idx < s.ch_idx) { // Requesting a ch prior to the working ch
 			max_v_idx = s.nvoices;
-		} else {  // (chord_idx == s.ch_idx)
-			// Requesting the working ch 
+		} else {  // Requesting the working ch (chord_idx == s.ch_idx)
 			max_v_idx = s.v_idx;
 		}
 
 		std::vector<note_t> ch {};
-		for (int i=0; i<max_v_idx; ++i) {  // m.size() == nvoices
+		for (int i=0; i<max_v_idx; ++i) {
 			ch.push_back(m[i][chord_idx]);  // m[voice][note]
 		}
 		return ch;
 	};
 
-	// 1 => m2 || M2
-	// 2 => m3 || M3
-	// 3 => 
+	// Number of staff positions between two notes 
+	// 1 => m2 || M2; 2 => m3 || M3;  ...
 	auto n_staff = [&sc](const note_t& from, const note_t& to) -> int {
 		return sc.to_scd(to)-sc.to_scd(from);
 	};
+	// Number of semitones between two notes 
 	auto n_semi = [&sc_cchrom](const note_t& from, const note_t& to) -> int {
 		return sc_cchrom.to_scd(to.ntl,to.oct)-sc_cchrom.to_scd(from.ntl,from.oct);
 	};
-	// NB:  A repeat (from == to) => 1, not 0
+	// Absolute value of the number of staff positions between two notes PLUS ONE.  
+	// Thus for C(3)->D(3) returns 2; C(3)->C(3) returns 1.  Never returns 0.  
+	// "cmn" => "common"
 	auto abs_staffdiff_cmn = [&sc](const note_t& from, const note_t& to) -> int {
 		return std::abs(sc.to_scd(to)-sc.to_scd(from))+1;
 	};
+	// Absolute value of the number of semitones between two notes 
 	auto abs_semidiff = [&sc_cchrom](const note_t& from, const note_t& to) -> int {
 		return std::abs(sc_cchrom.to_scd(to.ntl,to.oct)-sc_cchrom.to_scd(from.ntl,from.oct));
 	};
@@ -132,8 +138,8 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 	// Rule 2
 	// cf begins+ends on the tonic
 	auto cf_beginend_tonic = [&m,&s](const note_t& new_nt) -> bool { 
-		if (!s.first_ch() && !s.last_ch() && !s.first_v()) {
-			return false;
+		if (!s.first_v() || !(s.first_ch() || s.last_ch())) {
+			return false;  // non-cf and/or internal chord
 		}
 		return new_nt.ntl != ntl_t {"C"};
 	};
@@ -141,8 +147,8 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 	// Rule 3, 11
 	// Non-cf voices begin+end on tonic triad root position notes
 	auto noncf_beginend_tonictriad = [&m,&s](const note_t& new_nt) -> bool { 
-		if (!s.first_ch() && !s.last_ch() && s.first_v()) {
-			return false;
+		if (s.first_v() || !(s.first_ch() || s.last_ch())) {
+			return false;  // cf and/or internal chord
 		}
 
 		if (s.v_idx == (s.nvoices-1)) {  // The lowest voice
@@ -310,6 +316,18 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 		return false;
 	};
 
+	// Rule 11
+	// The lowest note in the first and last chords must be the tonic
+	auto beginend_tonictriad_rootpos = [&m,&s,get_chord,min_frq](const note_t& new_nt) -> bool { 
+		if (!s.last_v() || !(s.first_ch() || s.last_ch())) {
+			return false;  // curr pos != last-voice and/or curr pos == an internal chord
+		}
+		// new_nt represents the last note being added to the first chord, or the last
+		// note being added to the last chord.  
+		auto curr_ch = get_chord(s.ch_idx);  curr_ch.push_back(new_nt);
+		return (min_frq(curr_ch).ntl != ntl_t{"C"});
+	};
+
 	// Rule 12 - part a, part b
 	// The second-last chord must contain the note B in exactly one voice.  In the last chord,
 	// this voice must be the note C.  
@@ -359,7 +377,7 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 		s.set_result(8,!harmonic_consonant(new_nt));
 		s.set_result(9,!harmonic_p4(new_nt));
 		s.set_result(10,!tritone(new_nt));
-		// Rule 3 => Rule 11
+		s.set_result(11,!beginend_tonictriad_rootpos(new_nt));
 		s.set_result(12,!(ch_nxtlast_contains_b(new_nt) && lastch_contains_rsln_from_b(new_nt)));
 
 		if (s.any_failed()) {
