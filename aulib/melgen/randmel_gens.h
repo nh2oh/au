@@ -85,11 +85,11 @@ struct hiller21_status {
 };  // namespace melody_hiller_internal
 
 struct melody_hiller_params {
-	int nnts {24};  // nnts per voice
+	int nnts {12};  // nnts per voice
 	int nvoice {3};
 	std::string min {"C(3)"};  // Must be valid for Cmaj-SPN
 	std::string max {"C(5)"};
-	int max_rejects_tot {1000};  // Before aborting the entire operation
+	int max_rejects_tot {2000};  // Before aborting the entire operation
 	int rejects_regen_ch {20};  // Before dropping+regenerating the prev. ch
 	int debug_lvl {3};
 		// 0 => No messages, 1 => Only successfull iterations,

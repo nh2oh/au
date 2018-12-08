@@ -2,6 +2,7 @@
 #include <string>
 #include <regex>
 #include <ctype.h>  // std::tolower()
+#include <cmath>  // std::abs()
 #include <algorithm>
 
 // The set of chars allowed in an ntl_t
@@ -151,7 +152,7 @@ std::string note_t::print(note_t::fmt f) const {
 			if (n_mod > 0) {
 				mods = std::string(n_mod,'\'');
 			} else if (n_mod < 0) {
-				mods = std::string(n_mod,',');
+				mods = std::string(std::abs(n_mod),',');
 			}
 			s += ntl.print();
 			std::transform(s.begin(),s.end(),s.begin(), ::tolower);

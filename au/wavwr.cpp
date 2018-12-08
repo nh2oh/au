@@ -1,3 +1,4 @@
+/*
 #include "wavwr.h"
 #include <filesystem>
 #include <vector>
@@ -141,5 +142,5 @@ binfile readfile(std::filesystem::path fp) {
 	return binfile {fp, fdata_uc};
 }
 
-
+*/
 
