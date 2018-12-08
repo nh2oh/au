@@ -21,6 +21,9 @@
     <ClInclude Include="scr2.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="wavwr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="au.cpp">
@@ -30,6 +33,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="scr2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="wavwr.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
