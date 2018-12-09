@@ -498,6 +498,7 @@ bool rpt_high_nt(const hiller21_status& s, const hiller_melody& m, const note_t&
 // Forbid:  m2, M2, m7, M7
 // The tritone is dissonant, but is allowed in some cases; see rule 10 for enforcement
 // of this.  
+// He is considering _reduced_ intervals.  C(3)->D(5) is an M2.  See p.103-105.  
 bool harmonic_consonant(const hiller21_status& s, const hiller_melody& m, const note_t& new_nt) {
 	if (s.first_v()) { return false; }
 
