@@ -506,23 +506,21 @@ bool harmonic_consonant(const hiller21_status& s, const hiller_melody& m, const 
 
 // Rule 9
 // For each chord, a P4 is allowed iff it does not occur between the lowest 
-// note of the chord and an upper voice.  
-// Returns false until s.v_idx is the last voice of the chord; only then is 
-// it possible to define "lowest note of the chord."
+// note of the chord and an upper voice.  Returns false until s.last_voice(); only 
+// then is it possible to define the "lowest note of the chord."
 bool harmonic_p4(const hiller21_status& s, const hiller_melody& m, const note_t& new_nt) {
 	if (!s.last_v()) { return false; }
 
-	std::vector<note_t> curr_ch = get_chord(s,m,s.ch_idx);
+	std::vector<note_t> curr_ch = get_chord(s,m,s.ch_idx);  curr_ch.push_back(new_nt);
 	note_t lowest_nt = min_frq(curr_ch);
+	// Alternative:  Increment lowest_nt by 4 staff positions; search for the
+	// resultant note in curr_ch.  
 	for (const auto& e : curr_ch) {
-		int staffint = abs_staffdiff_cmn(e,new_nt);
-		int ns = abs_semidiff(e,new_nt);
-		if (!(staffint==4 && ns==5)) { continue; }  // Not a p4
-
-		// e->new_nt _is_ a P4; is either e or new_nt the lowest nt of the chord?
-		if (ntlo_eq(lowest_nt,e) || ntlo_eq(lowest_nt,new_nt)) {
+		int staffint = abs_staffdiff_cmn(e,lowest_nt);
+		int ns = abs_semidiff(e,lowest_nt);
+		if (staffint==4 && ns==5) {  // p4 w/the bass note; fail rule
 			return true;
-		}
+		}  
 	}
 	return false;
 }
