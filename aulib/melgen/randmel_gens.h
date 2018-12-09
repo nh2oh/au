@@ -57,8 +57,10 @@ std::vector<scd_t> melody_a(ma_params);
 //
 //
 namespace melody_hiller_internal {
+
+// Status object to keep track of the growing melody
 struct hiller21_status {
-	int nnts {24};  // TODO:  Not the best name... nchs?
+	int nnts {24};  // number of notes (== number of chords if nvoices > 1)
 	int nvoices {3};
 	int ch_idx {0};  // The current working chord
 	int v_idx {0};  // The current working note
@@ -66,27 +68,33 @@ struct hiller21_status {
 	int rejects_curr_ch {0};  // Zeroed upon changing ch_idx
 	int rejects_tot {0};  // Never zeroed
 	std::vector<int> rule {};
-		// Expands to size() == r for the largest r passed to set_result(); to avoid repeated
-		// calls to resize() on the first several loop iterations, manually resize to the number
-		// of rules before starting.  
+		// Expands dynamically such that rule.size()==(r-1) for the largest r passed
+		// to set_result(r).  Set to 0 by clear_rules().  
+		// set_result(r) sets rule[r-1];  Melody passes rule => 1, fails rule => -1,
+		// rule not evaluated => 0
 
-	bool first_ch() const;
-	bool last_ch() const;
-	bool first_v() const;
-	bool last_v() const;
-	bool any_failed() const;
-	void set_result(size_t, bool);
+	bool first_ch() const;  // True if ch_idx == 0
+	bool last_ch() const;  // True if ch_idx == nnts-1
+	bool first_v() const;  // True if v_idx == 0
+	bool last_v() const;  // True if v_idx == nvoices-1
+	bool any_failed() const;  // True iff 1 or more of rule ==-1
+	void set_result(size_t, bool);  // True => melody _passes_ rule
 	void clear_rules();
-	void set_for_new_attempt_curr_nt();
-	void set_for_new_attempt_prev_ch();
-	void set_for_new_attempt_mel();
-	void set_for_next();
+	void set_for_new_attempt_curr_nt();  // ++rejects_curr_ch;  ++rejects_tot
+	void set_for_new_attempt_prev_ch();  // rejects_curr_ch=0; ++rejects_tot; ch_idx-=1; v_idx=0
+	void set_for_new_attempt_mel();  // rejects_curr_ch=0; ++rejects_tot; v_idx=0; ch_idx=0
+	void set_for_next();  // rejects_curr_ch=0; ++v_idx; ch_idx+=1 or =0 depending
 	std::string print(const std::vector<std::vector<note_t>>&) const;
 };
+
+
+// Rule functions
+
+
 };  // namespace melody_hiller_internal
 
 struct melody_hiller_params {
-	int nnts {12};  // nnts per voice
+	int nnts {24};  // nnts per voice
 	int nvoice {3};
 	std::string min {"C(3)"};  // Must be valid for Cmaj-SPN
 	std::string max {"C(5)"};

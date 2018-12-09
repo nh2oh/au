@@ -18,9 +18,8 @@
 // generating a completely random 2-d array of notes, scoring according to the counterpoint
 // rules, mutating, re-scoring, etc...
 //
-// Better method:  Use the rules to set the ntpool, then any selection will work.  
+// Better method:  Use the rules to set the ntpool, then any random note selection will work.  
 //
-// TODO:  My rules evaluating chords for interval distances are written to forbid oct. equivs
 // 
 std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& p) {
 	//
@@ -391,6 +390,29 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 	};
 
 	// Begin melody generation
+	// Each iteration of the loop is responsible for adding a single note new_nt chosen
+	// randomly from ntpool.  The target location for new_nt in the melody, managed by the
+	// status object s, is m[s.v_idx][s.ch_idx].  Note that s does not contain, and does 
+	// not ever mutate m; adding new_nt to m (if it passes all tests) is done manually in
+	// the loop.  The status object s effects rejecting notes and rewriting pervious portions
+	// of the melody as needed by setting the position indicies s.v_idx, s.ch_idx:
+	// s.set_for_next(); advances v_idx,ch_idx by one note
+	// s.set_for_new_attempt_prev_ch(); sets v_idx==0,ch_idx==ch_idx-1
+	// s.set_for_new_attempt_mel(); sets v_idx==0,ch_idx==ch_idx==0
+	// In the latter two cases the "rejected" notes in m, which on subsequent iterations 
+	// will be rewritten, are not cleared in any way.  If melody generation stops 
+	// prematurely for some reason, there may be notes in m ahead of m[s.v_idx][s.ch_idx]
+	// not == to the value m was initialized with.  
+	// The decision of which s.set_for_*() function to call is made by the loop, not the status
+	// object.  This is because settings like the maximum number of total attempts etc live
+	// in parameters passes in by the caller (melody_hiller_params p) and are not part of the
+	// "status" per se of the process.  Further, this makes the status object useful in other
+	// hiller-like functions with different rules, or with situations in which certain rules 
+	// apply only on selected iterations or in combination with other rules.  I think that 
+	// the "status" object should just keep track of the status, not be responsible for 
+	// building m; this is the job of the algorithm writer.  
+	// 
+	//
 	int total_melody_resets {0};
 	while (s.rejects_tot < p.max_rejects_tot && s.ch_idx < s.nnts) {
 		// Draw potential nt to occupy m[v_idx][ch_idx]
@@ -433,7 +455,7 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 				}
 				s.set_for_new_attempt_prev_ch();
 			}
-		} else {  // success
+		} else {  // Success:  Go to next note
 			if (p.debug_lvl == 1 || p.debug_lvl == 3) {
 				std::cout << s.print(m) << std::endl;
 			}
@@ -441,26 +463,29 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 			s.set_for_next();
 		}
 	}
-
-	if (s.rejects_tot >= p.max_rejects_tot) {
-		std::cout << "Failed to generate melody; " << std::to_string(s.rejects_tot)
-			<< " total rejected iterations exceeded the maximum of "
-			<< std::to_string(p.max_rejects_tot) 
-			<< ".  \nHere is how far the process got, including junk nts @ the end\n";
-	} else {
-		std::cout << "\nSuccess!  " << std::to_string(s.rejects_tot) << " total note-rejections\n";
-	}
-
-	std::string lpout {};
-	for (int ch=0; ch<p.nnts; ++ch) {
-		lpout += "<";
-		for (int v=0; v<p.nvoice; ++v) {
-			lpout += m[v][ch].print(note_t::fmt::lp);
-			if (v < (p.nvoice-1)) { lpout += " "; }
+	
+	if (p.debug_lvl > 1) {
+		if (s.rejects_tot >= p.max_rejects_tot) {
+			std::cout << "Failed to generate melody; " << std::to_string(s.rejects_tot)
+				<< " total rejected iterations exceeded the maximum of "
+				<< std::to_string(p.max_rejects_tot) 
+				<< ".  \nHere is how far the process got (including junk notes at the end)\n";
+		} else {
+			std::cout << "\nSuccess!  " << std::to_string(s.rejects_tot) << " total note-rejections\n";
 		}
-		lpout += "> ";
+
+		std::string lpout {};
+		for (int ch=0; ch<p.nnts; ++ch) {
+			lpout += "<";
+			for (int v=0; v<p.nvoice; ++v) {
+				lpout += m[v][ch].print(note_t::fmt::lp);
+				if (v < (p.nvoice-1)) { lpout += " "; }
+			}
+			lpout += "> ";
+		}
+		std::cout << std::endl << lpout << std::endl;
 	}
-	std::cout << std::endl << lpout << std::endl;
+
 	return m;
 }
 
