@@ -94,6 +94,11 @@ struct hiller21_status {
 
 note_t max_frq (const std::vector<note_t>&);
 note_t min_frq (const std::vector<note_t>&);
+int abs_staffdiff_cmn(const note_t&,const note_t&);
+int abs_semidiff(const note_t&,const note_t&);
+bool ntlo_eq(const note_t&, const note_t&);
+bool ntl_lt_byfrq(const note_t&, const note_t&);
+
 
 // If chord_idx == s.ch_idx, returns notes [0,s.vidx), ie, only the completed notes
 // of the working chord.  If chord_idx < s.ch_idx, gets all the notes of that chord:
@@ -105,6 +110,34 @@ bool ch_contains_tritone (const std::vector<note_t>&);
 // Rules
 // Rule 1
 bool line_spans_gt_oct(const hiller21_status&, const hiller_melody&, const note_t&);
+// Rule 2
+bool cf_beginend_tonic(const hiller21_status&, const hiller_melody&, const note_t&);
+// Rule 3
+bool noncf_beginend_tonictriad(const hiller21_status&, const hiller_melody&, const note_t&);
+// Rule 4
+bool no_mel_sevenths(const hiller21_status&, const hiller_melody&, const note_t&);
+// Rule 5
+bool skip_step_rule(const hiller21_status&, const hiller_melody&, const note_t&);
+// Rule 6
+bool rpts_gt_one(const hiller21_status&, const hiller_melody&, const note_t&);
+// Rule 7
+bool rpt_high_nt(const hiller21_status&, const hiller_melody&, const note_t&);
+// Rule 8
+bool harmonic_consonant(const hiller21_status&, const hiller_melody&, const note_t&);
+// Rule 9
+bool harmonic_p4(const hiller21_status&, const hiller_melody&, const note_t&);
+// Rule 10
+bool d_below_tritone(const hiller21_status&, const hiller_melody&, const note_t&);
+// Rule 11
+bool beginend_tonictriad_rootpos(const hiller21_status&, const hiller_melody&, const note_t&);
+// Rule 12a
+bool ch_nxtlast_contains_b(const hiller21_status&, const hiller_melody&, const note_t&);
+// Rule 12b
+bool lastch_contains_rsln_from_b(const hiller21_status&, const hiller_melody&, const note_t&);
+
+
+
+
 
 
 };  // namespace melody_hiller_internal
