@@ -22,6 +22,7 @@
 //
 // 
 std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& p) {
+	using namespace melody_hiller_internal;
 	//
 	// Melody accumulated in m; status object s
 	// Voice 0 (m[0][ch], s.v_idx==0) is the cf
@@ -63,14 +64,7 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 	std::vector<std::vector<note_t>> m {};
 	m.insert(m.begin(),s.nvoices,std::vector<note_t>(s.nnts,sc[0]));
 	
-	auto min_frq = [](const std::vector<note_t>& nts) -> note_t {
-		return *std::min_element(nts.begin(),nts.end(),
-			[](const note_t& lhs, const note_t& rhs){return rhs.frq<rhs.frq;});
-	};
-	auto max_frq = [](const std::vector<note_t>& nts) -> note_t {
-		return *std::max_element(nts.begin(),nts.end(),
-			[](const note_t& lhs, const note_t& rhs){return rhs.frq<rhs.frq;});
-	};
+
 	// Used for std::find(std::vector<note_t>) to find a particular ntl
 	auto ntl_eq = [](const note_t& lhs, const note_t& rhs) -> bool {
 		return lhs.ntl == rhs.ntl;
@@ -92,25 +86,7 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 
 
 
-	// If the chord represented by the inut note_t vector contains the notes B(i) and
-	// F(j) with j==i+1, returns true.  This is the only tritone in the Cmaj scale.  
-	// TODO:  Can i just check for 6 semitones???
-	auto ch_contains_tritone = [ntlo_eq](const std::vector<note_t>& ch) -> bool {
-		if (ch.size() > 2) { return false; }
 
-		note_t nt_F {ntl_t{"F"},octn_t{0},frq_t{1}};
-		for (const auto& e : ch) {
-			if (e.ntl == ntl_t {"B"}) {
-				nt_F.oct = e.oct;
-				auto it = std::find_if(ch.begin(),ch.end(),
-					[&nt_F](const note_t& nt){ return nt.ntl==nt_F.ntl && nt.oct==nt_F.oct;});
-				if (it!=ch.end()) {
-					return true;
-				}
-			}
-		}
-		return false;
-	};
 
 	// Number of staff positions between two notes 
 	// 1 => m2 || M2; 2 => m3 || M3;  ...
@@ -132,15 +108,7 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 		return std::abs(sc_cchrom.to_scd(to.ntl,to.oct)-sc_cchrom.to_scd(from.ntl,from.oct));
 	};
 
-	// Rule 1
-	// The max interval spanned by the lowest and highest notes on a given line must 
-	// be <= 1 oct.  
-	auto span_geq_oct = [&m,&s,min_frq,max_frq](const note_t& new_nt) -> bool { 
-		if (s.first_ch()) { return false; }
-		double ratio_lowest = (new_nt.frq)/(min_frq(m[s.v_idx]).frq);
-		double ratio_highest = (max_frq(m[s.v_idx]).frq)/(new_nt.frq);
-		return (ratio_lowest > 2.0 || ratio_highest > 2.0);
-	};
+
 
 	// Rule 2
 	// cf begins+ends on the tonic
@@ -218,7 +186,7 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 	// This rule is only defined on a completed line, since only then is it possible to 
 	// decide f a given repeat is a repeat of the "highest note of the line."  Returns 
 	// false until the working note is the final note of the line.  
-	auto rpt_high_nt = [&m,&s,max_frq,ch_contains_tritone](const note_t& new_nt) -> bool { 
+	auto rpt_high_nt = [&m,&s](const note_t& new_nt) -> bool { 
 		if (!s.last_ch()) { return false; }  // line is not complete
 		
 		std::vector<note_t> curr_voice = m[s.v_idx];  curr_voice.push_back(new_nt);
@@ -257,7 +225,7 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 	// not limited to: U, m3, M3, P5, 6'ths, O).  
 	// Forbid:  m2, M2, m7, M7
 	// The tritone is dissonant, but is allowed in some cases; see rule 10
-	auto harmonic_consonant = [&m,&s,abs_staffdiff_cmn,abs_semidiff,ch_contains_tritone]
+	auto harmonic_consonant = [&m,&s,abs_staffdiff_cmn,abs_semidiff]
 								(const note_t& new_nt) -> bool {
 		if (s.first_v()) { return false; }
 		
@@ -279,7 +247,7 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 	// note of the chord and an upper voice.  
 	// Returns false until s.v_idx is the last voice of the chord; only then is 
 	// it possible to define "lowest note of the chord."
-	auto harmonic_p4 = [&m,&s,min_frq,abs_staffdiff_cmn,
+	auto harmonic_p4 = [&m,&s,abs_staffdiff_cmn,
 						abs_semidiff,ntlo_eq](const note_t& new_nt) -> bool {
 		if (!s.last_v()) { return false; }
 
@@ -305,7 +273,7 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 	// TODO:  Part b not implemented.  
 	// Always returns false if s.v_idx indicates that the present chord is incomplete, since
 	// only then is it possible to know if a D occurs below the B involved in the tritone.  
-	auto d_below_tritone = [&m,&s,ch_contains_tritone,
+	auto d_below_tritone = [&m,&s,
 							ntl_lt_frq](const note_t& new_nt) -> bool {
 		if (!s.last_v()) { return false; }
 		
@@ -333,7 +301,7 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 
 	// Rule 11
 	// The lowest note in the first and last chords must be the tonic
-	auto beginend_tonictriad_rootpos = [&m,&s,min_frq](const note_t& new_nt) -> bool { 
+	auto beginend_tonictriad_rootpos = [&m,&s](const note_t& new_nt) -> bool { 
 		if (!s.last_v() || !(s.first_ch() || s.last_ch())) {
 			return false;  // curr pos != last-voice and/or curr pos == an internal chord
 		}
@@ -402,7 +370,7 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 		s.new_nt = new_nt;
 
 		// Comparison against the rule set
-		s.set_result(1,!span_geq_oct(new_nt));
+		s.set_result(1,!line_spans_gt_oct(s,m,new_nt));
 		s.set_result(2,!cf_beginend_tonic(new_nt));
 		s.set_result(3,!noncf_beginend_tonictriad(new_nt));
 		s.set_result(4,!no_mel_sevenths(new_nt));
@@ -588,6 +556,16 @@ std::string melody_hiller_internal::hiller21_status::print(const std::vector<std
 
 
 namespace melody_hiller_internal {
+
+note_t min_frq (const std::vector<note_t>& nts) {
+	return *std::min_element(nts.begin(),nts.end(),
+		[](const note_t& lhs,const note_t& rhs){return rhs.frq<rhs.frq;});
+};
+note_t max_frq (const std::vector<note_t>& nts) {
+	return *std::max_element(nts.begin(),nts.end(),
+		[](const note_t& lhs,const note_t& rhs){return rhs.frq<rhs.frq;});
+};
+
 std::vector<note_t> get_chord(const hiller21_status& s, const hiller_melody& m, const int chord_idx) {
 	int max_v_idx{0};
 	if(chord_idx > s.ch_idx) {
@@ -603,9 +581,59 @@ std::vector<note_t> get_chord(const hiller21_status& s, const hiller_melody& m, 
 		ch.push_back(m[i][chord_idx]);  // m[voice][note]
 	}
 	return ch;
+}
+
+// Get notes from ch 0 up to and including the current ch, but, for the urrent ch,
+// only get the note if the voice being requested v_idx is < s.v_idx, ie, if that note has
+// already been generated.  
+// Assumes voices are generated starting from 0.
+std::vector<note_t> get_voice(const hiller21_status& s, const hiller_melody& m, const int v_idx) {
+	std::vector<note_t> voice {};
+	for (int i=0; i<=s.ch_idx; ++i) {
+		if (v_idx >= s.v_idx && i==s.ch_idx) { break; }
+		voice.push_back(m[v_idx][i]);
+	}
+	return voice;
+}
+
+// True iff the input note_t vector contains the notes F(i) and B(i).  This is the
+// only tritone in the Cmaj scale.  Alternatively, one could also consider the 
+// interval B(i) -> F(i+1) (also 6 semitones) to be a tritone, but i don't think 
+// Hiller does.  
+bool ch_contains_tritone (const std::vector<note_t>& ch) {
+	if(ch.size() < 2) { return false; }
+
+	note_t nt_F {ntl_t{"F"},octn_t{0},frq_t{1}};
+	for(const auto& e : ch) {
+		if (e.ntl != ntl_t {"B"}) { continue; }
+		
+		// e is a B-note
+		nt_F.oct = e.oct;
+		auto it = std::find_if(ch.begin(),ch.end(),
+			[&nt_F](const note_t& nt){ return nt.ntl==nt_F.ntl && nt.oct==nt_F.oct;});
+		if(it!=ch.end()) { return true; }
+	}
+	return false;
+}
+
+// Rule 1
+// The max interval spanned by the lowest and highest notes on a given line must 
+// be <= 1 oct.  
+bool line_spans_gt_oct(const hiller21_status& s, const hiller_melody& m, const note_t& new_nt) {
+	if (s.first_ch()) { return false; }
+	auto curr_v = get_voice(s,m,s.v_idx);
+	double ratio_lowest = (new_nt.frq)/(min_frq(curr_v).frq);
+	double ratio_highest = (max_frq(curr_v).frq)/(new_nt.frq);
+	return (ratio_lowest > 2.0 || ratio_highest > 2.0);
 };
 
-}
+
+
+
+
+
+
+}  // namespace melody_hiller_internal
 
 
 

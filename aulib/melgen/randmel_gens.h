@@ -92,10 +92,20 @@ struct hiller21_status {
 
 // Utility functions, required by the rule functions
 
+note_t max_frq (const std::vector<note_t>&);
+note_t min_frq (const std::vector<note_t>&);
+
 // If chord_idx == s.ch_idx, returns notes [0,s.vidx), ie, only the completed notes
 // of the working chord.  If chord_idx < s.ch_idx, gets all the notes of that chord:
 // [0,s.nvoices).  
 std::vector<note_t> get_chord(const hiller21_status&, const hiller_melody&, const int);
+std::vector<note_t> get_voice(const hiller21_status&, const hiller_melody&, const int);
+bool ch_contains_tritone (const std::vector<note_t>&);
+
+// Rules
+// Rule 1
+bool line_spans_gt_oct(const hiller21_status&, const hiller_melody&, const note_t&);
+
 
 };  // namespace melody_hiller_internal
 
