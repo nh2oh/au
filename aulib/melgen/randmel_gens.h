@@ -148,7 +148,7 @@ struct melody_hiller_params {
 	int rejects_regen_ch {20};  // Before dropping+regenerating the prev. ch
 	int debug_lvl {3};
 		// 0 => No messages
-		// 1 => Only the final summary message & melody
+		// 1 => Only the melody
 		// 2 => Melody on successfull iterations only
 		// 3 => Melody on also on failed iterations
 		// 4 => ??

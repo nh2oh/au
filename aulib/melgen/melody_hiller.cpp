@@ -80,6 +80,7 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 	hiller21_status s {};
 	s.nnts = p.nnts; s.nvoices = p.nvoice; s.rule.resize(10,0);
 
+	std::vector<int> rule_fail_counts(15,0);
 	while (s.rejects_tot < p.max_rejects_tot && s.ch_idx < s.nnts) {
 		// Draw potential nt to occupy m[v_idx][ch_idx]
 		note_t new_nt = ntpool[rd(re)];
@@ -98,6 +99,10 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 		s.set_result(10,!d_below_tritone(s,m,new_nt));
 		s.set_result(11,!beginend_tonictriad_rootpos(s,m,new_nt));
 		s.set_result(12,!(ch_nxtlast_contains_b(s,m,new_nt) || lastch_contains_rsln_from_b(s,m,new_nt)));
+
+		for (int i=0; i<s.rule.size(); ++i) {
+			if (s.rule[i] == -1) { ++(rule_fail_counts[i]); }
+		}
 
 		if (s.any_failed()) {
 			if (p.debug_lvl == 3 || p.debug_lvl == 4) {
@@ -130,14 +135,14 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 	}
 	
 	if (p.debug_lvl >= 1) {
-		if (s.rejects_tot >= p.max_rejects_tot) {
+		/*if (s.rejects_tot >= p.max_rejects_tot) {
 			std::cout << "Failed to generate melody; " << std::to_string(s.rejects_tot)
 				<< " total rejected iterations exceeded the maximum of "
 				<< std::to_string(p.max_rejects_tot) 
 				<< ".  \nHere is how far the process got (including junk notes at the end)\n";
 		} else {
 			std::cout << "\nSuccess!  " << std::to_string(s.rejects_tot) << " total note-rejections\n";
-		}
+		}*/
 
 		std::string lpout {};
 		for (int ch=0; ch<p.nnts; ++ch) {
@@ -338,6 +343,8 @@ std::vector<note_t> get_voice(const hiller21_status& s, const hiller_melody& m, 
 // only tritone in the Cmaj scale.  Alternatively, one could also consider the 
 // interval B(i) -> F(i+1) (also 6 semitones) to be a tritone, but i don't think 
 // Hiller does.  
+// Actually he does:  See p.97.  This routine can be changed to return true for any
+// chord containing both a B and an F.  
 bool ch_contains_tritone(const std::vector<note_t>& ch) {
 	if(ch.size() < 2) { return false; }
 
@@ -412,16 +419,18 @@ bool no_mel_sevenths(const hiller21_status& s, const hiller_melody& m, const not
 // either a step or a skip.  It follows that the only way to break out of this
 // skip-step || skip-rpt || step-skip || step-step condition is for the previous 
 // interval to be a repeat.  
+//
+// This description is bad.  See the better description on p.97-98; if the prev
+// two notes are a repeat or a step, new_nt is unconstrained.  
+//
 bool skip_step_rule(const hiller21_status& s, const hiller_melody& m, const note_t& new_nt) {
 	if (s.ch_idx < 2) { return false; }
 	note_t prev_nt = m[s.v_idx][s.ch_idx-1];
 	note_t pprev_nt = m[s.v_idx][s.ch_idx-2];
 	int prev_int = abs_staffdiff_cmn(pprev_nt,prev_nt);  // NB 1 => ntl's are ==
-	int new_int = abs_staffdiff_cmn(prev_nt,new_nt);
-	if(prev_int >= 3) {  // Prev 2 notes are a "skip;"  3 => m3||M3
+	if (prev_int >= 3) {  // Prev 2 notes are a "skip;"  3 => m3||M3
+		int new_int = abs_staffdiff_cmn(prev_nt,new_nt);
 		return !(new_int==1 || new_int==2);
-	} else if(prev_int==2) {  // Prev 2 notes are a "step;"  2 => m2||M2
-		return !(new_int>=2);;
 	}
 	return false;
 }
