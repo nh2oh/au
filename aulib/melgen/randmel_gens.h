@@ -69,6 +69,7 @@ struct hiller21_status {
 	note_t new_nt {};
 	int rejects_curr_ch {0};  // Zeroed upon changing ch_idx
 	int rejects_tot {0};  // Never zeroed
+	int full_resets_tot {0};
 	std::vector<int> rule {};
 		// Expands dynamically such that rule.size()==(r-1) for the largest r passed
 		// to set_result(r).  Set to 0 by clear_rules().  
@@ -99,10 +100,6 @@ int abs_semidiff(const note_t&,const note_t&);
 bool ntlo_eq(const note_t&, const note_t&);
 bool ntl_lt_byfrq(const note_t&, const note_t&);
 
-
-// If chord_idx == s.ch_idx, returns notes [0,s.vidx), ie, only the completed notes
-// of the working chord.  If chord_idx < s.ch_idx, gets all the notes of that chord:
-// [0,s.nvoices).  
 std::vector<note_t> get_chord(const hiller21_status&, const hiller_melody&, const int);
 std::vector<note_t> get_voice(const hiller21_status&, const hiller_melody&, const int);
 bool ch_contains_tritone (const std::vector<note_t>&);

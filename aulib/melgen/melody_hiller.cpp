@@ -19,17 +19,16 @@
 // rules, mutating, re-scoring, etc...
 //
 // Better method:  Use the rules to set the ntpool, then any random note selection will work.  
+// 
+// More than one of the rules relies implictly on the asumption that voice 0 is the cf.
+// More than one of the rules relies implictly on the asumption that notes are added to
+// m from low->high idx.
 //
 // 
 std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& p) {
 	using namespace melody_hiller_internal;
-	//
-	// Melody accumulated in m; status object s
-	// Voice 0 (m[0][ch], s.v_idx==0) is the cf
-	//
-	spn sc_cchrom {};
-	diatonic_spn sc {ntl_t {"C"}, diatonic_spn::mode::major};
 
+	diatonic_spn sc {ntl_t {"C"}, diatonic_spn::mode::major};
 	auto ntstr_min_parse = parse_spn_ntstr(p.min);
 	auto ntstr_max_parse = parse_spn_ntstr(p.max);
 	bool min_valid = (ntstr_min_parse.is_valid && ntstr_min_parse.is_oct_set 
@@ -39,53 +38,19 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 	if (!min_valid || !max_valid) {
 		std::abort();
 	}
+
+	// Note pool; range must span at least 1 octave
+	std::vector<note_t> ntpool {};
 	int scd_min = sc.to_scd(ntstr_min_parse.ntl_base,ntstr_min_parse.oct);
 	int scd_max = sc.to_scd(ntstr_max_parse.ntl_base,ntstr_max_parse.oct);
-	if (scd_max-scd_min < 8) {
-		std::abort();
-	}
-	
-	melody_hiller_internal::hiller21_status s {};
-	s.nnts = p.nnts;
-	s.nvoices = p.nvoice;
-	s.rule.resize(10,0);
-
-	std::vector<note_t> ntpool {};
-	for (int s = scd_min; s<=scd_max; ++s) {
-		ntpool.push_back(sc[s]);
+	if (scd_max-scd_min < 8) { std::abort(); }
+	for (int scd=scd_min; scd<=scd_max; ++scd) {
+		ntpool.push_back(sc[scd]);
 	}
 
-	auto re = new_randeng(true);
-	std::uniform_int_distribution rd {size_t {0}, ntpool.size()-1};
-
-	// m[voice][note] contains the melody
-	// Preallocation with all elements == C(0), probably outside of the range specified by
-	// the caller (though i do not rely on this assumption).  
+	// m[voice idx][note,ch idx] contains the melody;  Preallocation dummy value C(0)
 	std::vector<std::vector<note_t>> m {};
-	m.insert(m.begin(),s.nvoices,std::vector<note_t>(s.nnts,sc[0]));
-	
-	/*
-	// Used for std::find(std::vector<note_t>) to find a particular ntl
-	auto ntl_eq = [](const note_t& lhs, const note_t& rhs) -> bool {
-		return lhs.ntl == rhs.ntl;
-	};
-
-	auto ntl_ismember = [](const std::vector<note_t>& nts, const ntl_t& nt) -> bool {
-		for (int i=0; i<nts.size(); ++i) {
-			if (nts[i].ntl==nt) { return true; }
-		}
-		return false;
-	};
-
-	// Number of staff positions between two notes 
-	// 1 => m2 || M2; 2 => m3 || M3;  ...
-	auto n_staff = [&sc](const note_t& from, const note_t& to) -> int {
-		return sc.to_scd(to)-sc.to_scd(from);
-	};
-	// Number of semitones between two notes 
-	auto n_semi = [&sc_cchrom](const note_t& from, const note_t& to) -> int {
-		return sc_cchrom.to_scd(to.ntl,to.oct)-sc_cchrom.to_scd(from.ntl,from.oct);
-	};*/
+	std::fill_n(std::back_inserter(m),p.nvoice,std::vector<note_t>(p.nnts,sc[0]));
 
 	// Begin melody generation
 	// Each iteration of the loop is responsible for adding a single note new_nt chosen
@@ -110,8 +75,11 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 	// the "status" object should just keep track of the status, not be responsible for 
 	// building m; this is the job of the algorithm writer.  
 	// 
-	//
-	int total_melody_resets {0};
+	auto re = new_randeng(true);
+	std::uniform_int_distribution rd {size_t {0}, ntpool.size()-1};
+	hiller21_status s {};
+	s.nnts = p.nnts; s.nvoices = p.nvoice; s.rule.resize(10,0);
+
 	while (s.rejects_tot < p.max_rejects_tot && s.ch_idx < s.nnts) {
 		// Draw potential nt to occupy m[v_idx][ch_idx]
 		note_t new_nt = ntpool[rd(re)];
@@ -143,7 +111,6 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 						<< ";  s.set_for_new_attempt_mel();" << std::endl;
 				}
 				s.set_for_new_attempt_mel();
-				++total_melody_resets;
 			} else if (s.rejects_curr_ch < p.rejects_regen_ch) {
 				s.set_for_new_attempt_curr_nt();
 			} else {
@@ -246,10 +213,10 @@ void melody_hiller_internal::hiller21_status::set_for_new_attempt_prev_ch() {
 // melody_hiller_params.rejects_regen_ch * melody_hiller_params.nnts rejections.  
 //
 // Reset all rule pass/fail results, reset the curr_ch reject counter, increment the total
-// total rejects counter, set ch_idx == 0 and set v_idx == 0
+// total rejects counter, the full resets counter, set ch_idx == 0 and set v_idx == 0
 void melody_hiller_internal::hiller21_status::set_for_new_attempt_mel() {
 	clear_rules();
-	rejects_curr_ch = 0; ++rejects_tot;
+	rejects_curr_ch = 0; ++rejects_tot;  ++full_resets_tot;
 	v_idx = 0; ch_idx = 0;
 }
 
@@ -334,6 +301,9 @@ bool ntl_lt_byfrq(const note_t& lhs, const note_t& rhs) {
 	return lhs.frq < rhs.frq;
 }
 
+// If chord_idx == s.ch_idx, returns notes [0,s.vidx), ie, only the completed notes
+// of the working chord.  If chord_idx < s.ch_idx, gets all the notes of that chord:
+// [0,s.nvoices).  
 std::vector<note_t> get_chord(const hiller21_status& s, const hiller_melody& m, const int chord_idx) {
 	int max_v_idx{0};
 	if(chord_idx > s.ch_idx) {
@@ -406,17 +376,23 @@ bool cf_beginend_tonic(const hiller21_status& s, const hiller_melody& m, const n
 
 // Rule 3
 // Non-cf voices begin+end on tonic triad root position notes
-// Assumes m[nvoices-1] is the lowest voice
 bool noncf_beginend_tonictriad(const hiller21_status& s, const hiller_melody& m, const note_t& new_nt) {
 	if (s.first_v() || !(s.first_ch() || s.last_ch())) {
 		return false;  // cf and/or internal chord
 	}
 
-	if (s.v_idx == (s.nvoices-1)) {  // The lowest voice
-		return new_nt.ntl != ntl_t {"C"};
+	if (!(new_nt.ntl == ntl_t {"C"} || new_nt.ntl == ntl_t {"E"}
+		|| new_nt.ntl == ntl_t {"G"})) {
+		return true;  // fails the rule
 	}
-	return !(new_nt.ntl == ntl_t {"C"} || new_nt.ntl == ntl_t {"E"}
-		|| new_nt.ntl == ntl_t {"G"});
+
+	if (s.last_v()) {
+		auto curr_ch = get_chord(s,m,s.ch_idx);
+		return (min_frq(curr_ch).ntl != ntl_t {"C"});
+		// If the lowest note is a C, passes rule (return false)
+	}
+
+	return false;
 }
 
 // Rule 4
