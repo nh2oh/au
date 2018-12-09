@@ -90,25 +90,7 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 		return false;
 	};
 
-	// If chord_idx == s.ch_idx, returns notes [0,s.vidx), ie, only the completed notes
-	// of the working chord.  If chord_idx < s.ch_idx, gets all the notes of that chord:
-	// [0,s.nvoices).  
-	auto get_chord = [&s,&m](int chord_idx) -> std::vector<note_t> {
-		int max_v_idx {0};
-		if (chord_idx > s.ch_idx) {
-			std::abort();
-		} else if (chord_idx < s.ch_idx) { // Requesting a ch prior to the working ch
-			max_v_idx = s.nvoices;
-		} else {  // Requesting the working ch (chord_idx == s.ch_idx)
-			max_v_idx = s.v_idx;
-		}
 
-		std::vector<note_t> ch {};
-		for (int i=0; i<max_v_idx; ++i) {
-			ch.push_back(m[i][chord_idx]);  // m[voice][note]
-		}
-		return ch;
-	};
 
 	// If the chord represented by the inut note_t vector contains the notes B(i) and
 	// F(j) with j==i+1, returns true.  This is the only tritone in the Cmaj scale.  
@@ -275,11 +257,11 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 	// not limited to: U, m3, M3, P5, 6'ths, O).  
 	// Forbid:  m2, M2, m7, M7
 	// The tritone is dissonant, but is allowed in some cases; see rule 10
-	auto harmonic_consonant = [&m,&s,abs_staffdiff_cmn,abs_semidiff,ch_contains_tritone,
-								get_chord](const note_t& new_nt) -> bool {
+	auto harmonic_consonant = [&m,&s,abs_staffdiff_cmn,abs_semidiff,ch_contains_tritone]
+								(const note_t& new_nt) -> bool {
 		if (s.first_v()) { return false; }
 		
-		std::vector<note_t> curr_ch = get_chord(s.ch_idx);
+		std::vector<note_t> curr_ch = get_chord(s,m,s.ch_idx);
 		for (const auto& e : curr_ch) {
 			int staffint = abs_staffdiff_cmn(e,new_nt);
 			int ns = abs_semidiff(e,new_nt);
@@ -297,11 +279,11 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 	// note of the chord and an upper voice.  
 	// Returns false until s.v_idx is the last voice of the chord; only then is 
 	// it possible to define "lowest note of the chord."
-	auto harmonic_p4 = [&m,&s,get_chord,min_frq,abs_staffdiff_cmn,
+	auto harmonic_p4 = [&m,&s,min_frq,abs_staffdiff_cmn,
 						abs_semidiff,ntlo_eq](const note_t& new_nt) -> bool {
 		if (!s.last_v()) { return false; }
 
-		std::vector<note_t> curr_ch = get_chord(s.ch_idx);
+		std::vector<note_t> curr_ch = get_chord(s,m,s.ch_idx);
 		note_t lowest_nt = min_frq(curr_ch);
 		for (const auto& e : curr_ch) {
 			int staffint = abs_staffdiff_cmn(e,new_nt);
@@ -323,11 +305,11 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 	// TODO:  Part b not implemented.  
 	// Always returns false if s.v_idx indicates that the present chord is incomplete, since
 	// only then is it possible to know if a D occurs below the B involved in the tritone.  
-	auto d_below_tritone = [&m,&s,ch_contains_tritone,get_chord,
+	auto d_below_tritone = [&m,&s,ch_contains_tritone,
 							ntl_lt_frq](const note_t& new_nt) -> bool {
 		if (!s.last_v()) { return false; }
 		
-		auto curr_ch = get_chord(s.ch_idx);  curr_ch.push_back(new_nt);
+		auto curr_ch = get_chord(s,m,s.ch_idx);  curr_ch.push_back(new_nt);
 		if (!ch_contains_tritone(curr_ch)) { return false; }
 		
 		// Build test_ch, containing all notes from curr_ch except B notes above 
@@ -351,11 +333,11 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 
 	// Rule 11
 	// The lowest note in the first and last chords must be the tonic
-	auto beginend_tonictriad_rootpos = [&m,&s,get_chord,min_frq](const note_t& new_nt) -> bool { 
+	auto beginend_tonictriad_rootpos = [&m,&s,min_frq](const note_t& new_nt) -> bool { 
 		if (!s.last_v() || !(s.first_ch() || s.last_ch())) {
 			return false;  // curr pos != last-voice and/or curr pos == an internal chord
 		}
-		auto curr_ch = get_chord(s.ch_idx);  curr_ch.push_back(new_nt);
+		auto curr_ch = get_chord(s,m,s.ch_idx);  curr_ch.push_back(new_nt);
 		return (min_frq(curr_ch).ntl != ntl_t{"C"});
 	};
 
@@ -364,21 +346,21 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 	// this voice must be the note C.  
 	// Always returns false if the working note is not the final note of the second-to-last
 	// chord.  
-	auto ch_nxtlast_contains_b = [&m,&s,get_chord,ntl_ismember](const note_t& new_nt) -> bool {
+	auto ch_nxtlast_contains_b = [&m,&s,ntl_ismember](const note_t& new_nt) -> bool {
 		if (!s.last_v() || s.ch_idx != (s.nnts-2)) { 
 			return false;
 		}
-		std::vector<note_t> ch = get_chord(s.ch_idx);  ch.push_back(new_nt);
+		std::vector<note_t> ch = get_chord(s,m,s.ch_idx);  ch.push_back(new_nt);
 		int num_b {0};
 		for (const auto& e : ch) {
 			if (e.ntl == ntl_t{"B"}) { ++num_b; }
 		}
 		return num_b != 1;
 	};
-	auto lastch_contains_rsln_from_b = [&m,&s,get_chord](const note_t& new_nt) -> bool {
+	auto lastch_contains_rsln_from_b = [&m,&s](const note_t& new_nt) -> bool {
 		if (!s.last_v() || !s.last_ch()) { return false; }
-		std::vector<note_t> ch_nxtlast = get_chord(s.ch_idx-1);
-		std::vector<note_t> ch_last = get_chord(s.ch_idx); ch_last.push_back(new_nt);
+		std::vector<note_t> ch_nxtlast = get_chord(s,m,s.ch_idx-1);
+		std::vector<note_t> ch_last = get_chord(s,m,s.ch_idx); ch_last.push_back(new_nt);
 		for (int i=0; i<ch_nxtlast.size(); ++i) {  // ch_nxtlast.size() == ch_last.size()
 			if (ch_nxtlast[i].ntl == ntl_t{"B"}) { 
 				return ch_last[i].ntl != ntl_t {"C"};
@@ -434,12 +416,12 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 		s.set_result(12,!(ch_nxtlast_contains_b(new_nt) || lastch_contains_rsln_from_b(new_nt)));
 
 		if (s.any_failed()) {
-			if (p.debug_lvl == 2 || p.debug_lvl == 3) {
+			if (p.debug_lvl == 3 || p.debug_lvl == 4) {
 				std::cout << s.print(m) << std::endl;
 			}
 
 			if (s.rejects_tot > 0 && s.rejects_tot%((p.rejects_regen_ch)*(p.nnts))==0) {
-				if (p.debug_lvl == 2 || p.debug_lvl == 3) {
+				if (p.debug_lvl == 3 || p.debug_lvl == 4) {
 					std::cout << "For the current mel, tot rejects >= " 
 						<< std::to_string((p.rejects_regen_ch)*(p.nnts)) 
 						<< ";  s.set_for_new_attempt_mel();" << std::endl;
@@ -449,14 +431,14 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 			} else if (s.rejects_curr_ch < p.rejects_regen_ch) {
 				s.set_for_new_attempt_curr_nt();
 			} else {
-				if (p.debug_lvl == 2 || p.debug_lvl == 3) {
+				if (p.debug_lvl == 3 || p.debug_lvl == 4) {
 					std::cout << "rejects_curr_ch >= " + std::to_string(p.rejects_regen_ch) 
 						+ ";  s.set_for_new_attempt_prev_ch();" << std::endl;
 				}
 				s.set_for_new_attempt_prev_ch();
 			}
 		} else {  // Success:  Go to next note
-			if (p.debug_lvl == 1 || p.debug_lvl == 3) {
+			if (p.debug_lvl >= 2) {
 				std::cout << s.print(m) << std::endl;
 			}
 			m[s.v_idx][s.ch_idx] = new_nt;
@@ -464,7 +446,7 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 		}
 	}
 	
-	if (p.debug_lvl > 1) {
+	if (p.debug_lvl >= 1) {
 		if (s.rejects_tot >= p.max_rejects_tot) {
 			std::cout << "Failed to generate melody; " << std::to_string(s.rejects_tot)
 				<< " total rejected iterations exceeded the maximum of "
@@ -603,6 +585,28 @@ std::string melody_hiller_internal::hiller21_status::print(const std::vector<std
 	s += "(" + std::to_string(ch_idx) + "," + std::to_string(v_idx) + ")\n";
 	return s;
 }
+
+
+namespace melody_hiller_internal {
+std::vector<note_t> get_chord(const hiller21_status& s, const hiller_melody& m, const int chord_idx) {
+	int max_v_idx{0};
+	if(chord_idx > s.ch_idx) {
+		std::abort();
+	} else if(chord_idx < s.ch_idx) { // Requesting a ch prior to the working ch
+		max_v_idx = s.nvoices;
+	} else {  // Requesting the working ch (chord_idx == s.ch_idx)
+		max_v_idx = s.v_idx;
+	}
+
+	std::vector<note_t> ch {};
+	for(int i=0; i<max_v_idx; ++i) {
+		ch.push_back(m[i][chord_idx]);  // m[voice][note]
+	}
+	return ch;
+};
+
+}
+
 
 
 

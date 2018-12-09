@@ -58,6 +58,8 @@ std::vector<scd_t> melody_a(ma_params);
 //
 namespace melody_hiller_internal {
 
+using hiller_melody = std::vector<std::vector<note_t>>;
+
 // Status object to keep track of the growing melody
 struct hiller21_status {
 	int nnts {24};  // number of notes (== number of chords if nvoices > 1)
@@ -88,8 +90,12 @@ struct hiller21_status {
 };
 
 
-// Rule functions
+// Utility functions, required by the rule functions
 
+// If chord_idx == s.ch_idx, returns notes [0,s.vidx), ie, only the completed notes
+// of the working chord.  If chord_idx < s.ch_idx, gets all the notes of that chord:
+// [0,s.nvoices).  
+std::vector<note_t> get_chord(const hiller21_status&, const hiller_melody&, const int);
 
 };  // namespace melody_hiller_internal
 
@@ -101,8 +107,11 @@ struct melody_hiller_params {
 	int max_rejects_tot {10000};  // Before aborting the entire operation
 	int rejects_regen_ch {20};  // Before dropping+regenerating the prev. ch
 	int debug_lvl {3};
-		// 0 => No messages, 1 => Only successfull iterations,
-		// 2 => Only failed iterations, 3 => All iterations
+		// 0 => No messages
+		// 1 => Only the final summary message & melody
+		// 2 => Melody on successfull iterations only
+		// 3 => Melody on also on failed iterations
+		// 4 => ??
 };
 std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params&);  // "Experiment 2, part 1"
 
