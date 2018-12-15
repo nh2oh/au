@@ -65,16 +65,9 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 			&harmonic_consonant,
 			&harmonic_p4,
 			&d_below_tritone,
-			&beginend_tonictriad_rootpos
+			&beginend_tonictriad_rootpos,
+			&ending_cadence
 	};
-	// Skipping 12 for now
-	//s.set_result(12,!(ch_nxtlast_contains_b(s,m,new_nt) || lastch_contains_rsln_from_b(s,m,new_nt)));
-
-
-
-
-
-
 
 	// Begin melody generation
 	// Each iteration of the loop is responsible for adding a single note new_nt chosen
@@ -114,22 +107,8 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 		for (int i=0; i<ruleset.size(); ++i) {
 			bool pass = !((*ruleset[i])(s,m,new_nt));
 			s.set_result(i+1,pass);
-			//if (!pass) { break; }
+			if (!pass) { break; }
 		}
-
-		
-		s.set_result(1,!line_spans_gt_oct(s,m,new_nt));
-		s.set_result(2,!cf_beginend_tonic(s,m,new_nt));
-		s.set_result(3,!noncf_beginend_tonictriad(s,m,new_nt));
-		s.set_result(4,!no_mel_sevenths(s,m,new_nt));
-		s.set_result(5,!skip_step_rule(s,m,new_nt));
-		s.set_result(6,!rpts_gt_one(s,m,new_nt));
-		s.set_result(7,!rpt_high_nt(s,m,new_nt));
-		s.set_result(8,!harmonic_consonant(s,m,new_nt));
-		s.set_result(9,!harmonic_p4(s,m,new_nt));
-		s.set_result(10,!d_below_tritone(s,m,new_nt));
-		s.set_result(11,!beginend_tonictriad_rootpos(s,m,new_nt));
-		s.set_result(12,!(ch_nxtlast_contains_b(s,m,new_nt) || lastch_contains_rsln_from_b(s,m,new_nt)));
 
 		for (int i=0; i<s.rule.size(); ++i) {
 			if (s.rule[i] == -1) { ++(rule_fail_counts[i]); }
@@ -187,6 +166,7 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 		std::cout << std::endl << lpout << std::endl;
 	}
 
+	//std::cout << "\n" << rule_fail_counts[0] << "\n" << rule_fail_counts[4] << "\n";
 	return m;
 }
 
@@ -612,13 +592,17 @@ bool beginend_tonictriad_rootpos(const hiller21_status& s, const hiller_melody& 
 	return (min_frq(curr_ch).ntl != ntl_t {"C"});
 }
 
-// Rule 12 - part a, part b
+// Rule 12
 // The second-last chord must contain the note B in exactly one voice.  In the last chord,
 // this voice must be the note C.  
 // Always returns false if the working note is not the final note of the second-to-last
 // chord.  
+//s.set_result(12,!(ch_nxtlast_contains_b(s,m,new_nt) || lastch_contains_rsln_from_b(s,m,new_nt)));
+bool ending_cadence(const hiller21_status& s, const hiller_melody& m, const note_t& new_nt) {
+	return ch_nxtlast_contains_b(s,m,new_nt) || lastch_contains_rsln_from_b(s,m,new_nt);
+};
 bool ch_nxtlast_contains_b(const hiller21_status& s, const hiller_melody& m, const note_t& new_nt) {
-	if (!s.last_v() || s.ch_idx != (s.nnts-2)) {
+	if (!(s.last_v() && s.ch_idx == (s.nnts-2))) {  // !s.last_v() || s.ch_idx != (s.nnts-2)
 		return false;
 	}
 	std::vector<note_t> ch = get_chord(s,m,s.ch_idx);  ch.push_back(new_nt);
@@ -630,7 +614,7 @@ bool ch_nxtlast_contains_b(const hiller21_status& s, const hiller_melody& m, con
 };
 bool lastch_contains_rsln_from_b(const hiller21_status& s, const hiller_melody& m,
 	const note_t& new_nt) {
-	if (!s.last_v() || !s.last_ch()) { return false; }
+	if (!(s.last_v() && s.last_ch())) { return false; }  // (!s.last_v() || !s.last_ch())
 	std::vector<note_t> ch_nxtlast = get_chord(s,m,s.ch_idx-1);
 	std::vector<note_t> ch_last = get_chord(s,m,s.ch_idx); ch_last.push_back(new_nt);
 	for(int i=0; i<ch_nxtlast.size(); ++i) {  // ch_nxtlast.size() == ch_last.size()
@@ -642,6 +626,7 @@ bool lastch_contains_rsln_from_b(const hiller21_status& s, const hiller_melody& 
 	// Means ch_nxtlast did not contain a B; rule 12a should prevent this
 	return true;
 };
+
 
 
 

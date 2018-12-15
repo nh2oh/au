@@ -127,9 +127,11 @@ bool harmonic_p4(const hiller21_status&, const hiller_melody&, const note_t&);
 bool d_below_tritone(const hiller21_status&, const hiller_melody&, const note_t&);
 // Rule 11
 bool beginend_tonictriad_rootpos(const hiller21_status&, const hiller_melody&, const note_t&);
-// Rule 12a
+// Rule 12
+bool ending_cadence(const hiller21_status&, const hiller_melody&, const note_t&);
+// Rule 12a (only used internally by Rule 12)
 bool ch_nxtlast_contains_b(const hiller21_status&, const hiller_melody&, const note_t&);
-// Rule 12b
+// Rule 12b (only used internally by Rule 12)
 bool lastch_contains_rsln_from_b(const hiller21_status&, const hiller_melody&, const note_t&);
 
 
