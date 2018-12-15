@@ -5,6 +5,7 @@
 #include "..\types\frq_t.h"
 #include "..\types\ts_t.h"
 #include "..\types\beat_bar_t.h"
+#include "..\scale\diatonic_spn.h"
 #include "dbklib\contigumap.h"
 #include <vector>
 
@@ -62,15 +63,19 @@ using hiller_melody = std::vector<std::vector<note_t>>;
 
 // Status object to keep track of the growing melody
 struct hiller21_status {
+	diatonic_spn *cmaj;
+
 	int nnts {24};  // number of notes (== number of chords if nvoices > 1)
 	int nvoices {3};
 	int ch_idx {0};  // The current working chord
 	int v_idx {0};  // The current working note
 	note_t new_nt {};
+	//std::vector<note_t> curr_voice {};
+
 	int rejects_curr_ch {0};  // Zeroed upon changing ch_idx
 	int rejects_tot {0};  // Never zeroed
 	int full_resets_tot {0};
-	std::vector<int> rule {};
+	std::vector<int> rule {};  // Pass/fail/not-evaluated result for each rule
 		// Expands dynamically such that rule.size()==(r-1) for the largest r passed
 		// to set_result(r).  Set to 0 by clear_rules().  
 		// set_result(r) sets rule[r-1];  Melody passes rule => 1, fails rule => -1,
@@ -149,11 +154,12 @@ struct melody_hiller_params {
 	int max_rejects_tot {10000};  // Before aborting the entire operation
 	int rejects_regen_ch {20};  // Before dropping+regenerating the prev. ch
 	int debug_lvl {3};
-		// 0 => No messages
-		// 1 => Only the melody
-		// 2 => Melody on successfull iterations only
-		// 3 => Melody on also on failed iterations
-		// 4 => ??
+		// 0 => No messages, not even the melody
+		// 1 => Only the melody, no messages (failure => no output)
+		// 2 => Melody + summary message
+		// 3 => Progress each successfull iteration; melody + summary message
+		// 4 => Progress each iteration;  success/failure message
+		// 5 => ??
 };
 std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params&);  // "Experiment 2, part 1"
 

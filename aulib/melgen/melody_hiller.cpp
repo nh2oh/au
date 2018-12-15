@@ -28,7 +28,7 @@
 std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& p) {
 	using namespace melody_hiller_internal;
 
-	diatonic_spn sc {ntl_t {"C"}, diatonic_spn::mode::major};
+	diatonic_spn cmaj {ntl_t {"C"}, diatonic_spn::mode::major};
 	auto ntstr_min_parse = parse_spn_ntstr(p.min);
 	auto ntstr_max_parse = parse_spn_ntstr(p.max);
 	bool min_valid = (ntstr_min_parse.is_valid && ntstr_min_parse.is_oct_set 
@@ -41,16 +41,16 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 
 	// Note pool; range must span at least 1 octave
 	std::vector<note_t> ntpool {};
-	int scd_min = sc.to_scd(ntstr_min_parse.ntl_base,ntstr_min_parse.oct);
-	int scd_max = sc.to_scd(ntstr_max_parse.ntl_base,ntstr_max_parse.oct);
+	int scd_min = cmaj.to_scd(ntstr_min_parse.ntl_base,ntstr_min_parse.oct);
+	int scd_max = cmaj.to_scd(ntstr_max_parse.ntl_base,ntstr_max_parse.oct);
 	if (scd_max-scd_min < 8) { std::abort(); }
 	for (int scd=scd_min; scd<=scd_max; ++scd) {
-		ntpool.push_back(sc[scd]);
+		ntpool.push_back(cmaj[scd]);
 	}
 
 	// m[voice idx][note,ch idx] contains the melody;  Preallocation dummy value C(0)
 	std::vector<std::vector<note_t>> m {};
-	std::fill_n(std::back_inserter(m),p.nvoice,std::vector<note_t>(p.nnts,sc[0]));
+	std::fill_n(std::back_inserter(m),p.nvoice,std::vector<note_t>(p.nnts,cmaj[0]));
 
 	// Rules
 	std::vector<bool (*)(const hiller21_status&, const hiller_melody&, const note_t&)> 
@@ -95,9 +95,10 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 	auto re = new_randeng(true);
 	std::uniform_int_distribution rd {size_t {0}, ntpool.size()-1};
 	hiller21_status s {};
-	s.nnts = p.nnts; s.nvoices = p.nvoice; s.rule.resize(10,0);
+	s.cmaj = &cmaj; s.nnts = p.nnts; s.nvoices = p.nvoice;
+	s.rule.resize(ruleset.size(),0);
 
-	std::vector<int> rule_fail_counts(15,0);
+	std::vector<int> rule_fail_counts(ruleset.size(),0);
 	while (s.rejects_tot < p.max_rejects_tot && s.ch_idx < s.nnts) {
 		// Draw potential nt to occupy m[v_idx][ch_idx]
 		note_t new_nt = ntpool[rd(re)];
@@ -107,7 +108,9 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 		for (int i=0; i<ruleset.size(); ++i) {
 			bool pass = !((*ruleset[i])(s,m,new_nt));
 			s.set_result(i+1,pass);
-			if (!pass) { break; }
+			if (!pass) {
+				break;
+			}
 		}
 
 		for (int i=0; i<s.rule.size(); ++i) {
@@ -115,28 +118,19 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 		}
 
 		if (s.any_failed()) {
-			if (p.debug_lvl == 3 || p.debug_lvl == 4) {
+			if (p.debug_lvl >= 4) {
 				std::cout << s.print(m) << std::endl;
 			}
 
 			if (s.rejects_tot > 0 && s.rejects_tot%((p.rejects_regen_ch)*(p.nnts))==0) {
-				if (p.debug_lvl == 3 || p.debug_lvl == 4) {
-					std::cout << "For the current mel, tot rejects >= " 
-						<< std::to_string((p.rejects_regen_ch)*(p.nnts)) 
-						<< ";  s.set_for_new_attempt_mel();" << std::endl;
-				}
 				s.set_for_new_attempt_mel();
 			} else if (s.rejects_curr_ch < p.rejects_regen_ch) {
 				s.set_for_new_attempt_curr_nt();
 			} else {
-				if (p.debug_lvl == 3 || p.debug_lvl == 4) {
-					std::cout << "rejects_curr_ch >= " + std::to_string(p.rejects_regen_ch) 
-						+ ";  s.set_for_new_attempt_prev_ch();" << std::endl;
-				}
 				s.set_for_new_attempt_prev_ch();
 			}
 		} else {  // Success:  Go to next note
-			if (p.debug_lvl >= 2) {
+			if (p.debug_lvl >= 3) {
 				std::cout << s.print(m) << std::endl;
 			}
 			m[s.v_idx][s.ch_idx] = new_nt;
@@ -144,16 +138,18 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 		}
 	}
 	
-	if (p.debug_lvl >= 1) {
-		/*if (s.rejects_tot >= p.max_rejects_tot) {
+	if (p.debug_lvl >= 2) {
+		if (s.rejects_tot >= p.max_rejects_tot) {
 			std::cout << "Failed to generate melody; " << std::to_string(s.rejects_tot)
 				<< " total rejected iterations exceeded the maximum of "
 				<< std::to_string(p.max_rejects_tot) 
 				<< ".  \nHere is how far the process got (including junk notes at the end)\n";
 		} else {
 			std::cout << "\nSuccess!  " << std::to_string(s.rejects_tot) << " total note-rejections\n";
-		}*/
+		}
+	}
 
+	if (p.debug_lvl >= 1) {
 		std::string lpout {};
 		for (int ch=0; ch<p.nnts; ++ch) {
 			lpout += "<";
@@ -163,7 +159,7 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 			}
 			lpout += "> ";
 		}
-		std::cout << std::endl << lpout << std::endl;
+		std::cout << "\n" << lpout << std::endl;
 	}
 
 	//std::cout << "\n" << rule_fail_counts[0] << "\n" << rule_fail_counts[4] << "\n";
@@ -201,7 +197,7 @@ void melody_hiller_internal::hiller21_status::set_result(size_t r, bool pass) {
 
 // Set the result of all rules to 0
 void melody_hiller_internal::hiller21_status::clear_rules() {
-	for (auto e : rule) { e=0; }
+	for (auto& e : rule) { e=0; }
 }
 
 // Called when new_nt is rejected (1 or more rules did not pass)
@@ -298,9 +294,9 @@ note_t max_frq (const std::vector<note_t>& nts) {
 }
 // Staff line of the given note [1,7]; essentally a "reduced common scale degree."
 // Only works if nt corresponds to an scd >= 0
-int reduced_staffln(const note_t& nt) {
-	const diatonic_spn sc_cmaj {};
-	auto scd = sc_cmaj.to_scd(nt);
+int reduced_staffln(const diatonic_spn *sc_cmaj, const note_t& nt) {
+	//const diatonic_spn sc_cmaj {};
+	auto scd = (*sc_cmaj).to_scd(nt);
 	return (scd+1)%8;
 }
 
@@ -327,7 +323,7 @@ std::vector<note_t> get_chord(const hiller21_status& s, const hiller_melody& m, 
 		max_v_idx = s.v_idx;
 	}
 
-	std::vector<note_t> ch {};
+	std::vector<note_t> ch {};  ch.reserve(s.nvoices);
 	for(int i=0; i<max_v_idx; ++i) {
 		ch.push_back(m[i][chord_idx]);  // m[voice][note]
 	}
@@ -339,7 +335,7 @@ std::vector<note_t> get_chord(const hiller21_status& s, const hiller_melody& m, 
 // already been generated.  
 // Assumes voices are generated starting from 0.
 std::vector<note_t> get_voice(const hiller21_status& s, const hiller_melody& m, const int v_idx) {
-	std::vector<note_t> voice {};
+	std::vector<note_t> voice {};  voice.reserve(s.nnts);
 	for (int i=0; i<=s.ch_idx; ++i) {
 		if (v_idx >= s.v_idx && i==s.ch_idx) { break; }
 		voice.push_back(m[v_idx][i]);
@@ -412,8 +408,8 @@ bool noncf_beginend_tonictriad(const hiller21_status& s, const hiller_melody& m,
 // No melodic intervals == m7 || M7
 bool no_mel_sevenths(const hiller21_status& s, const hiller_melody& m, const note_t& new_nt) { 
 	if (s.first_ch()) { return false; }
-	int staffln_prev_nt = reduced_staffln(m[s.v_idx][(s.ch_idx-1)]);
-	int staffln_new_nt = reduced_staffln(new_nt);
+	int staffln_prev_nt = reduced_staffln(s.cmaj, m[s.v_idx][(s.ch_idx-1)]);
+	int staffln_new_nt = reduced_staffln(s.cmaj, new_nt);
 	return ((staffln_new_nt-staffln_prev_nt) == 7);
 }
 
@@ -433,10 +429,10 @@ bool skip_step_rule(const hiller21_status& s, const hiller_melody& m, const note
 	//	return !(new_int==1 || new_int==2);
 	//}
 	//return false;
-	diatonic_spn sc {};
-	int prev_int = std::abs(sc.to_scd(prev_nt) - sc.to_scd(pprev_nt));
+	//diatonic_spn sc {};
+	int prev_int = std::abs((*s.cmaj).to_scd(prev_nt) - (*s.cmaj).to_scd(pprev_nt));
 	if (prev_int >= 2) {
-		int new_int = std::abs(sc.to_scd(new_nt) - sc.to_scd(prev_nt));
+		int new_int = std::abs((*s.cmaj).to_scd(new_nt) - (*s.cmaj).to_scd(prev_nt));
 		return !(new_int == 0 || new_int == 1);
 	}
 	return false;
@@ -509,10 +505,10 @@ bool rpt_high_nt(const hiller21_status& s, const hiller_melody& m, const note_t&
 bool harmonic_consonant(const hiller21_status& s, const hiller_melody& m, const note_t& new_nt) {
 	if (s.first_v()) { return false; }
 
-	int rstaffln_newnt = reduced_staffln(new_nt);
+	int rstaffln_newnt = reduced_staffln(s.cmaj, new_nt);
 	std::vector<note_t> curr_ch = get_chord(s,m,s.ch_idx);
 	for (const auto& e : curr_ch) {
-		int rstaffdist = rstaffln_newnt-reduced_staffln(e);
+		int rstaffdist = rstaffln_newnt-reduced_staffln(s.cmaj, e);
 		if (rstaffdist == 7 || rstaffdist == 2) {
 			return true;
 		}
@@ -539,9 +535,9 @@ bool harmonic_p4(const hiller21_status& s, const hiller_melody& m, const note_t&
 		return false;
 	}
 
-	diatonic_spn sc {};
+	//diatonic_spn sc {};
 	for (const auto& e : curr_ch) {
-		int staff_interval = sc.to_scd(e)-sc.to_scd(lowest_nt);
+		int staff_interval = (*s.cmaj).to_scd(e)-(*s.cmaj).to_scd(lowest_nt);
 		if (staff_interval==3) {
 			return true;  // NB: A dist of 3 staff positions is a "fourth"
 		}
