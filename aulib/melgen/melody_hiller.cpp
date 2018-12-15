@@ -52,6 +52,30 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 	std::vector<std::vector<note_t>> m {};
 	std::fill_n(std::back_inserter(m),p.nvoice,std::vector<note_t>(p.nnts,sc[0]));
 
+	// Rules
+	std::vector<bool (*)(const hiller21_status&, const hiller_melody&, const note_t&)> 
+		ruleset {
+			&line_spans_gt_oct,
+			&cf_beginend_tonic,
+			&noncf_beginend_tonictriad,
+			&no_mel_sevenths,
+			&skip_step_rule,
+			&rpts_gt_one,
+			&rpt_high_nt,
+			&harmonic_consonant,
+			&harmonic_p4,
+			&d_below_tritone,
+			&beginend_tonictriad_rootpos
+	};
+	// Skipping 12 for now
+	//s.set_result(12,!(ch_nxtlast_contains_b(s,m,new_nt) || lastch_contains_rsln_from_b(s,m,new_nt)));
+
+
+
+
+
+
+
 	// Begin melody generation
 	// Each iteration of the loop is responsible for adding a single note new_nt chosen
 	// randomly from ntpool.  The target location for new_nt in the melody, managed by the
@@ -87,6 +111,13 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 		s.new_nt = new_nt;
 
 		// Comparison against the rule set
+		for (int i=0; i<ruleset.size(); ++i) {
+			bool pass = !((*ruleset[i])(s,m,new_nt));
+			s.set_result(i+1,pass);
+			//if (!pass) { break; }
+		}
+
+		
 		s.set_result(1,!line_spans_gt_oct(s,m,new_nt));
 		s.set_result(2,!cf_beginend_tonic(s,m,new_nt));
 		s.set_result(3,!noncf_beginend_tonictriad(s,m,new_nt));
@@ -279,24 +310,21 @@ namespace melody_hiller_internal {
 
 note_t min_frq (const std::vector<note_t>& nts) {
 	return *std::min_element(nts.begin(),nts.end(),
-		[](const note_t& lhs,const note_t& rhs){return rhs.frq<rhs.frq;});
+		[](const note_t& lhs,const note_t& rhs){return lhs.frq<rhs.frq;});
 }
 note_t max_frq (const std::vector<note_t>& nts) {
 	return *std::max_element(nts.begin(),nts.end(),
-		[](const note_t& lhs,const note_t& rhs){return rhs.frq<rhs.frq;});
+		[](const note_t& lhs,const note_t& rhs){return lhs.frq<rhs.frq;});
 }
-// Absolute value of the number of staff positions between two notes PLUS ONE.  
-// Thus for C(3)->D(3) returns 2; C(3)->C(3) returns 1.  Never returns 0.  
-// "cmn" => "common"
-int abs_staffdiff_cmn(const note_t& from,const note_t& to) {
-	const diatonic_spn sc_cmaj {};  
-	return std::abs(sc_cmaj.to_scd(to)-sc_cmaj.to_scd(from))+1;
+// Staff line of the given note [1,7]; essentally a "reduced common scale degree."
+// Only works if nt corresponds to an scd >= 0
+int reduced_staffln(const note_t& nt) {
+	const diatonic_spn sc_cmaj {};
+	auto scd = sc_cmaj.to_scd(nt);
+	return (scd+1)%8;
 }
-// Absolute value of the number of semitones between two notes 
-int abs_semidiff(const note_t& from,const note_t& to) {
-	const spn sc_cchrom {};
-	return std::abs(sc_cchrom.to_scd(to.ntl,to.oct)-sc_cchrom.to_scd(from.ntl,from.oct));
-}
+
+
 // Used for std::find(std::vector<note_t>) to find a particular ntlo
 bool ntlo_eq(const note_t& lhs, const note_t& rhs) {
 	return lhs.ntl == rhs.ntl && lhs.oct == rhs.oct;
@@ -366,10 +394,8 @@ bool ch_contains_tritone(const std::vector<note_t>& ch) {
 // be <= 1 oct.  
 bool line_spans_gt_oct(const hiller21_status& s, const hiller_melody& m, const note_t& new_nt) {
 	if (s.first_ch()) { return false; }
-	auto curr_v = get_voice(s,m,s.v_idx);
-	double ratio_lowest = (new_nt.frq)/(min_frq(curr_v).frq);
-	double ratio_highest = (max_frq(curr_v).frq)/(new_nt.frq);
-	return (ratio_lowest > 2.0 || ratio_highest > 2.0);
+	auto curr_v = get_voice(s,m,s.v_idx);  curr_v.push_back(new_nt);
+	return (max_frq(curr_v).frq/min_frq(curr_v).frq > 2.001);  // TODO:  aprx_gt()
 }
 
 // Rule 2
@@ -406,31 +432,32 @@ bool noncf_beginend_tonictriad(const hiller21_status& s, const hiller_melody& m,
 // No melodic intervals == m7 || M7
 bool no_mel_sevenths(const hiller21_status& s, const hiller_melody& m, const note_t& new_nt) { 
 	if (s.first_ch()) { return false; }
-
-	int delta_staff = abs_staffdiff_cmn(m[s.v_idx][(s.ch_idx-1)],new_nt);
-	int delta_semi = abs_semidiff(m[s.v_idx][(s.ch_idx-1)],new_nt);
-	return (delta_staff == 7 && (delta_semi == 10 || delta_semi == 11));
+	int staffln_prev_nt = reduced_staffln(m[s.v_idx][(s.ch_idx-1)]);
+	int staffln_new_nt = reduced_staffln(new_nt);
+	return ((staffln_new_nt-staffln_prev_nt) == 7);
 }
 
 // Rule 5
 // For the current voice, if the prev. two notes are >= an m3 apart (a "skip"), 
 // new_nt must be either a repeat of the prev nt or differ from the prev nt by 
-// an m2||M2 (a "step").  If the prev two notes are a "step," new_nt must be 
-// either a step or a skip.  It follows that the only way to break out of this
-// skip-step || skip-rpt || step-skip || step-step condition is for the previous 
-// interval to be a repeat.  
-//
-// This description is bad.  See the better description on p.97-98; if the prev
-// two notes are a repeat or a step, new_nt is unconstrained.  
+// an m2||M2 (a "step").  Their intial description of this rule is confusing; 
+// see the better description on p.97-98.  
 //
 bool skip_step_rule(const hiller21_status& s, const hiller_melody& m, const note_t& new_nt) {
 	if (s.ch_idx < 2) { return false; }
 	note_t prev_nt = m[s.v_idx][s.ch_idx-1];
 	note_t pprev_nt = m[s.v_idx][s.ch_idx-2];
-	int prev_int = abs_staffdiff_cmn(pprev_nt,prev_nt);  // NB 1 => ntl's are ==
-	if (prev_int >= 3) {  // Prev 2 notes are a "skip;"  3 => m3||M3
-		int new_int = abs_staffdiff_cmn(prev_nt,new_nt);
-		return !(new_int==1 || new_int==2);
+	//int prev_int = abs_staffdiff_cmn(pprev_nt,prev_nt);  // NB 1 => ntl's are ==
+	//if (prev_int >= 3) {  // Prev 2 notes are a "skip;"  3 => m3||M3
+	//	int new_int = abs_staffdiff_cmn(prev_nt,new_nt);
+	//	return !(new_int==1 || new_int==2);
+	//}
+	//return false;
+	diatonic_spn sc {};
+	int prev_int = std::abs(sc.to_scd(prev_nt) - sc.to_scd(pprev_nt));
+	if (prev_int >= 2) {
+		int new_int = std::abs(sc.to_scd(new_nt) - sc.to_scd(prev_nt));
+		return !(new_int == 0 || new_int == 1);
 	}
 	return false;
 }
@@ -502,12 +529,12 @@ bool rpt_high_nt(const hiller21_status& s, const hiller_melody& m, const note_t&
 bool harmonic_consonant(const hiller21_status& s, const hiller_melody& m, const note_t& new_nt) {
 	if (s.first_v()) { return false; }
 
+	int rstaffln_newnt = reduced_staffln(new_nt);
 	std::vector<note_t> curr_ch = get_chord(s,m,s.ch_idx);
 	for (const auto& e : curr_ch) {
-		int staffint = abs_staffdiff_cmn(e,new_nt);
-		int ns = abs_semidiff(e,new_nt);
-		if (staffint==7 || staffint==2) {
-			return true;  //  m7 || M7 || m2 || M2
+		int rstaffdist = rstaffln_newnt-reduced_staffln(e);
+		if (rstaffdist == 7 || rstaffdist == 2) {
+			return true;
 		}
 	}
 
@@ -523,14 +550,21 @@ bool harmonic_p4(const hiller21_status& s, const hiller_melody& m, const note_t&
 
 	std::vector<note_t> curr_ch = get_chord(s,m,s.ch_idx);  curr_ch.push_back(new_nt);
 	note_t lowest_nt = min_frq(curr_ch);
-	// Alternative:  Increment lowest_nt by 4 staff positions; search for the
-	// resultant note in curr_ch.  
+	
+	if (lowest_nt.ntl == ntl_t {"F"}) {
+		// In the Cmaj scale, the note 3 staff positions above F is B, but F->B is 6
+		// semitones and thus is not a "perfect" 4'th.  For all other possible values
+		// of lowest_nt, the note 3 staff positions higher is 5 semitones away, thus 
+		// the interval is a perfect fourth.  
+		return false;
+	}
+
+	diatonic_spn sc {};
 	for (const auto& e : curr_ch) {
-		int staffint = abs_staffdiff_cmn(e,lowest_nt);
-		int ns = abs_semidiff(e,lowest_nt);
-		if (staffint==4 && ns==5) {  // p4 w/the bass note; fail rule
-			return true;
-		}  
+		int staff_interval = sc.to_scd(e)-sc.to_scd(lowest_nt);
+		if (staff_interval==3) {
+			return true;  // NB: A dist of 3 staff positions is a "fourth"
+		}
 	}
 	return false;
 }
