@@ -23,7 +23,8 @@
 // More than one of the rules relies implictly on the asumption that voice 0 is the cf.
 // More than one of the rules relies implictly on the asumption that notes are added to
 // m from low->high idx.
-//
+// 
+// TODO:  Rule funcs can use s.new_nt
 // 
 std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& p) {
 	using namespace melody_hiller_internal;
@@ -48,11 +49,14 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 		ntpool.push_back(cmaj[scd]);
 	}
 
+	// TODO:  No need to manually fill; can call reserve().  Then can use clear()
+	// to reset the melody.  
 	// m[voice idx][note,ch idx] contains the melody;  Preallocation dummy value C(0)
 	std::vector<std::vector<note_t>> m {};
 	std::fill_n(std::back_inserter(m),p.nvoice,std::vector<note_t>(p.nnts,cmaj[0]));
 
 	// Rules
+	// TODO:  Add namespace qualifiers
 	std::vector<bool (*)(const hiller21_status&, const hiller_melody&, const note_t&)> 
 		ruleset {
 			&line_spans_gt_oct,
@@ -74,7 +78,7 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 	// randomly from ntpool.  The target location for new_nt in the melody, managed by the
 	// status object s, is m[s.v_idx][s.ch_idx].  Note that s does not contain, and does 
 	// not ever mutate m; adding new_nt to m (if it passes all tests) is done manually in
-	// the loop.  The status object s effects rejecting notes and rewriting pervious portions
+	// the loop.  The status object s effects rejecting notes and rewriting previous portions
 	// of the melody as needed by setting the position indicies s.v_idx, s.ch_idx:
 	// s.set_for_next(); advances v_idx,ch_idx by one note
 	// s.set_for_new_attempt_prev_ch(); sets v_idx==0,ch_idx==ch_idx-1
@@ -85,7 +89,7 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 	// not == to the value m was initialized with.  
 	// The decision of which s.set_for_*() function to call is made by the loop, not the status
 	// object.  This is because settings like the maximum number of total attempts etc live
-	// in parameters passes in by the caller (melody_hiller_params p) and are not part of the
+	// in parameters passed in by the caller (melody_hiller_params p) and are not part of the
 	// "status" per se of the process.  Further, this makes the status object useful in other
 	// hiller-like functions with different rules, or with situations in which certain rules 
 	// apply only on selected iterations or in combination with other rules.  I think that 
@@ -162,7 +166,6 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 		std::cout << "\n" << lpout << std::endl;
 	}
 
-	//std::cout << "\n" << rule_fail_counts[0] << "\n" << rule_fail_counts[4] << "\n";
 	return m;
 }
 
@@ -294,8 +297,8 @@ note_t max_frq (const std::vector<note_t>& nts) {
 }
 // Staff line of the given note [1,7]; essentally a "reduced common scale degree."
 // Only works if nt corresponds to an scd >= 0
+// TODO:  Passing a *; possible to pass a & ???
 int reduced_staffln(const diatonic_spn *sc_cmaj, const note_t& nt) {
-	//const diatonic_spn sc_cmaj {};
 	auto scd = (*sc_cmaj).to_scd(nt);
 	return (scd+1)%8;
 }
@@ -347,6 +350,7 @@ std::vector<note_t> get_voice(const hiller21_status& s, const hiller_melody& m, 
 // only tritone in the Cmaj scale.  Alternatively, one could also consider the 
 // interval B(i) -> F(i+1) (also 6 semitones) to be a tritone, but i don't think 
 // Hiller does.  
+// TODO:
 // Actually he does:  See p.97.  This routine can be changed to return true for any
 // chord containing both a B and an F.  
 bool ch_contains_tritone(const std::vector<note_t>& ch) {
@@ -418,18 +422,10 @@ bool no_mel_sevenths(const hiller21_status& s, const hiller_melody& m, const not
 // new_nt must be either a repeat of the prev nt or differ from the prev nt by 
 // an m2||M2 (a "step").  Their intial description of this rule is confusing; 
 // see the better description on p.97-98.  
-//
 bool skip_step_rule(const hiller21_status& s, const hiller_melody& m, const note_t& new_nt) {
 	if (s.ch_idx < 2) { return false; }
 	note_t prev_nt = m[s.v_idx][s.ch_idx-1];
 	note_t pprev_nt = m[s.v_idx][s.ch_idx-2];
-	//int prev_int = abs_staffdiff_cmn(pprev_nt,prev_nt);  // NB 1 => ntl's are ==
-	//if (prev_int >= 3) {  // Prev 2 notes are a "skip;"  3 => m3||M3
-	//	int new_int = abs_staffdiff_cmn(prev_nt,new_nt);
-	//	return !(new_int==1 || new_int==2);
-	//}
-	//return false;
-	//diatonic_spn sc {};
 	int prev_int = std::abs((*s.cmaj).to_scd(prev_nt) - (*s.cmaj).to_scd(pprev_nt));
 	if (prev_int >= 2) {
 		int new_int = std::abs((*s.cmaj).to_scd(new_nt) - (*s.cmaj).to_scd(prev_nt));
@@ -535,7 +531,6 @@ bool harmonic_p4(const hiller21_status& s, const hiller_melody& m, const note_t&
 		return false;
 	}
 
-	//diatonic_spn sc {};
 	for (const auto& e : curr_ch) {
 		int staff_interval = (*s.cmaj).to_scd(e)-(*s.cmaj).to_scd(lowest_nt);
 		if (staff_interval==3) {
@@ -593,7 +588,6 @@ bool beginend_tonictriad_rootpos(const hiller21_status& s, const hiller_melody& 
 // this voice must be the note C.  
 // Always returns false if the working note is not the final note of the second-to-last
 // chord.  
-//s.set_result(12,!(ch_nxtlast_contains_b(s,m,new_nt) || lastch_contains_rsln_from_b(s,m,new_nt)));
 bool ending_cadence(const hiller21_status& s, const hiller_melody& m, const note_t& new_nt) {
 	return ch_nxtlast_contains_b(s,m,new_nt) || lastch_contains_rsln_from_b(s,m,new_nt);
 };
@@ -622,12 +616,6 @@ bool lastch_contains_rsln_from_b(const hiller21_status& s, const hiller_melody& 
 	// Means ch_nxtlast did not contain a B; rule 12a should prevent this
 	return true;
 };
-
-
-
-
-
-
 
 }  // namespace melody_hiller_internal
 

@@ -70,7 +70,6 @@ struct hiller21_status {
 	int ch_idx {0};  // The current working chord
 	int v_idx {0};  // The current working note
 	note_t new_nt {};
-	//std::vector<note_t> curr_voice {};
 
 	int rejects_curr_ch {0};  // Zeroed upon changing ch_idx
 	int rejects_tot {0};  // Never zeroed
@@ -100,8 +99,6 @@ struct hiller21_status {
 
 note_t max_frq (const std::vector<note_t>&);
 note_t min_frq (const std::vector<note_t>&);
-int abs_staffdiff_cmn(const note_t&,const note_t&);
-int abs_semidiff(const note_t&,const note_t&);
 bool ntlo_eq(const note_t&, const note_t&);
 bool ntl_lt_byfrq(const note_t&, const note_t&);
 
