@@ -108,39 +108,35 @@ bool ch_contains_tritone (const std::vector<note_t>&);
 
 // Rules
 // Rule 1
-bool line_spans_gt_oct(const hiller21_status&, const hiller_melody&, const note_t&);
+bool line_spans_gt_oct(const hiller21_status&, const hiller_melody&);
 void line_spans_gt_oct_allowed(const hiller21_status&, const hiller_melody&, std::vector<note_t>&);
 // Rule 2
-bool cf_beginend_tonic(const hiller21_status&, const hiller_melody&, const note_t&);
+bool cf_beginend_tonic(const hiller21_status&, const hiller_melody&);
 // Rule 3
-bool noncf_beginend_tonictriad(const hiller21_status&, const hiller_melody&, const note_t&);
+bool noncf_beginend_tonictriad(const hiller21_status&, const hiller_melody&);
 // Rule 4
-bool no_mel_sevenths(const hiller21_status&, const hiller_melody&, const note_t&);
+bool no_mel_sevenths(const hiller21_status&, const hiller_melody&);
 // Rule 5
-bool skip_step_rule(const hiller21_status&, const hiller_melody&, const note_t&);
+bool skip_step_rule(const hiller21_status&, const hiller_melody&);
 void skip_step_allowed(const hiller21_status&, const hiller_melody&, std::vector<note_t>&);
 // Rule 6
-bool rpts_gt_one(const hiller21_status&, const hiller_melody&, const note_t&);
+bool rpts_gt_one(const hiller21_status&, const hiller_melody&);
 // Rule 7
-bool rpt_high_nt(const hiller21_status&, const hiller_melody&, const note_t&);
+bool rpt_high_nt(const hiller21_status&, const hiller_melody&);
 // Rule 8
-bool harmonic_consonant(const hiller21_status&, const hiller_melody&, const note_t&);
+bool harmonic_consonant(const hiller21_status&, const hiller_melody&);
 // Rule 9
-bool harmonic_p4(const hiller21_status&, const hiller_melody&, const note_t&);
+bool harmonic_p4(const hiller21_status&, const hiller_melody&);
 // Rule 10
-bool d_below_tritone(const hiller21_status&, const hiller_melody&, const note_t&);
+bool d_below_tritone(const hiller21_status&, const hiller_melody&);
 // Rule 11
-bool beginend_tonictriad_rootpos(const hiller21_status&, const hiller_melody&, const note_t&);
+bool beginend_tonictriad_rootpos(const hiller21_status&, const hiller_melody&);
 // Rule 12
-bool ending_cadence(const hiller21_status&, const hiller_melody&, const note_t&);
+bool ending_cadence(const hiller21_status&, const hiller_melody&);
 // Rule 12a (only used internally by Rule 12)
-bool ch_nxtlast_contains_b(const hiller21_status&, const hiller_melody&, const note_t&);
+bool ch_nxtlast_contains_b(const hiller21_status&, const hiller_melody&);
 // Rule 12b (only used internally by Rule 12)
-bool lastch_contains_rsln_from_b(const hiller21_status&, const hiller_melody&, const note_t&);
-
-
-
-
+bool lastch_contains_rsln_from_b(const hiller21_status&, const hiller_melody&);
 
 
 };  // namespace melody_hiller_internal

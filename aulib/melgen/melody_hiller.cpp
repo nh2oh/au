@@ -24,7 +24,6 @@
 // More than one of the rules relies implictly on the asumption that notes are added to
 // m from low->high idx.
 // 
-// TODO:  Rule funcs can use s.new_nt
 // 
 std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& p) {
 	using namespace melody_hiller_internal;
@@ -57,7 +56,7 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 
 	// Rules
 	// TODO:  Add namespace qualifiers
-	std::vector<bool (*)(const hiller21_status&, const hiller_melody&, const note_t&)> 
+	std::vector<bool (*)(const hiller21_status&, const hiller_melody&)> 
 		ruleset {
 			&line_spans_gt_oct,
 			&cf_beginend_tonic,
@@ -108,18 +107,25 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 		// it passes all the rules, will occupy m[s.v_idx][s.ch_idx].  
 		curr_ntpool = ntpool;
 		skip_step_allowed(s,m,curr_ntpool);
-		line_spans_gt_oct_allowed(s,m,curr_ntpool);
+		if (curr_ntpool.size() > 8) {
+			// skip_step_allowed() is so constraining that there is no point in applying
+			// the octave range constraint if skip_step_allowed() has acted on curr_ntpool
+			// (if so, curr_ntpool.size() will == 3).  line_spans_gt_oct_allowed() is
+			// much more expensive.  
+			line_spans_gt_oct_allowed(s,m,curr_ntpool);
+		}
 		if (curr_ntpool.size() == 0) {
 			s.set_for_new_attempt_prev_ch();
 			continue;
 		}
-		note_t new_nt = curr_ntpool[rd(re)%curr_ntpool.size()];
-		
-		s.new_nt = new_nt;
+
+		decltype(rd.param()) curr_rd_params {0,curr_ntpool.size()-1};
+		rd.param(curr_rd_params);
+		s.new_nt = curr_ntpool[rd(re)];
 
 		// Comparison against the rule set
 		for (int i=0; i<ruleset.size(); ++i) {
-			bool pass = !((*ruleset[i])(s,m,new_nt));
+			bool pass = !((*ruleset[i])(s,m));
 			s.set_result(i+1,pass);
 			if (!pass) {
 				break;
@@ -146,7 +152,7 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 			if (p.debug_lvl >= 3) {
 				std::cout << s.print(m) << std::endl;
 			}
-			m[s.v_idx][s.ch_idx] = new_nt;
+			m[s.v_idx][s.ch_idx] = s.new_nt;
 			s.set_for_next();
 		}
 	}
@@ -381,9 +387,9 @@ bool ch_contains_tritone(const std::vector<note_t>& ch) {
 // Rule 1
 // The max interval spanned by the lowest and highest notes on a given line must 
 // be <= 1 oct.  
-bool line_spans_gt_oct(const hiller21_status& s, const hiller_melody& m, const note_t& new_nt) {
+bool line_spans_gt_oct(const hiller21_status& s, const hiller_melody& m) {
 	if (s.first_ch()) { return false; }
-	auto curr_v = get_voice(s,m,s.v_idx);  curr_v.push_back(new_nt);
+	auto curr_v = get_voice(s,m,s.v_idx);  curr_v.push_back(s.new_nt);
 	return (max_frq(curr_v).frq/min_frq(curr_v).frq > 2.001);  // TODO:  aprx_gt()
 }
 void line_spans_gt_oct_allowed(const hiller21_status& s, const hiller_melody& m,
@@ -414,22 +420,22 @@ void line_spans_gt_oct_allowed(const hiller21_status& s, const hiller_melody& m,
 
 // Rule 2
 // cf (voice 0) begins+ends on the tonic
-bool cf_beginend_tonic(const hiller21_status& s, const hiller_melody& m, const note_t& new_nt) {
+bool cf_beginend_tonic(const hiller21_status& s, const hiller_melody& m) {
 	if (!s.first_v() || !(s.first_ch() || s.last_ch())) {
 		return false;  // non-cf and/or internal chord
 	}
-	return new_nt.ntl != ntl_t{"C"};
+	return s.new_nt.ntl != ntl_t{"C"};
 }
 
 // Rule 3
 // Non-cf voices begin+end on tonic triad root position notes
-bool noncf_beginend_tonictriad(const hiller21_status& s, const hiller_melody& m, const note_t& new_nt) {
+bool noncf_beginend_tonictriad(const hiller21_status& s, const hiller_melody& m) {
 	if (s.first_v() || !(s.first_ch() || s.last_ch())) {
 		return false;  // cf and/or internal chord
 	}
 
-	if (!(new_nt.ntl == ntl_t {"C"} || new_nt.ntl == ntl_t {"E"}
-		|| new_nt.ntl == ntl_t {"G"})) {
+	if (!(s.new_nt.ntl == ntl_t {"C"} || s.new_nt.ntl == ntl_t {"E"}
+		|| s.new_nt.ntl == ntl_t {"G"})) {
 		return true;  // fails the rule
 	}
 
@@ -444,25 +450,25 @@ bool noncf_beginend_tonictriad(const hiller21_status& s, const hiller_melody& m,
 
 // Rule 4
 // No melodic intervals == m7 || M7
-bool no_mel_sevenths(const hiller21_status& s, const hiller_melody& m, const note_t& new_nt) { 
+bool no_mel_sevenths(const hiller21_status& s, const hiller_melody& m) { 
 	if (s.first_ch()) { return false; }
 	int staffln_prev_nt = reduced_staffln(s.cmaj, m[s.v_idx][(s.ch_idx-1)]);
-	int staffln_new_nt = reduced_staffln(s.cmaj, new_nt);
+	int staffln_new_nt = reduced_staffln(s.cmaj, s.new_nt);
 	return ((staffln_new_nt-staffln_prev_nt) == 7);
 }
 
 // Rule 5
 // For the current voice, if the prev. two notes are >= an m3 apart (a "skip"), 
-// new_nt must be either a repeat of the prev nt or differ from the prev nt by 
+// s.new_nt must be either a repeat of the prev nt or differ from the prev nt by 
 // an m2||M2 (a "step").  Their intial description of this rule is confusing; 
 // see the better description on p.97-98.  
-bool skip_step_rule(const hiller21_status& s, const hiller_melody& m, const note_t& new_nt) {
+bool skip_step_rule(const hiller21_status& s, const hiller_melody& m) {
 	if (s.ch_idx < 2) { return false; }
 	note_t prev_nt = m[s.v_idx][s.ch_idx-1];
 	note_t pprev_nt = m[s.v_idx][s.ch_idx-2];
 	int prev_int = std::abs((*s.cmaj).to_scd(prev_nt) - (*s.cmaj).to_scd(pprev_nt));
 	if (prev_int >= 2) {
-		int new_int = std::abs((*s.cmaj).to_scd(new_nt) - (*s.cmaj).to_scd(prev_nt));
+		int new_int = std::abs((*s.cmaj).to_scd(s.new_nt) - (*s.cmaj).to_scd(prev_nt));
 		return !(new_int == 0 || new_int == 1);
 	}
 	return false;
@@ -491,12 +497,12 @@ void skip_step_allowed(const hiller21_status& s, const hiller_melody& m,
 // Rule 6
 // No more than one successive repeat of a note is allowed in a given voice.  Require 
 // that both the oct and ntl be the same to fail the rule (return true).  
-bool rpts_gt_one(const hiller21_status& s, const hiller_melody& m, const note_t& new_nt) {
+bool rpts_gt_one(const hiller21_status& s, const hiller_melody& m) {
 	if (s.ch_idx < 2) { return false; }
 	note_t pprev_nt = m[s.v_idx][s.ch_idx-2];
 	note_t prev_nt = m[s.v_idx][s.ch_idx-1];
-	return ((pprev_nt.ntl==new_nt.ntl && pprev_nt.oct==new_nt.oct)
-		&& (prev_nt.ntl==new_nt.ntl && prev_nt.oct==new_nt.oct));
+	return ((pprev_nt.ntl==s.new_nt.ntl && pprev_nt.oct==s.new_nt.oct)
+		&& (prev_nt.ntl==s.new_nt.ntl && prev_nt.oct==s.new_nt.oct));
 }
 
 // Rule 7
@@ -509,11 +515,11 @@ bool rpts_gt_one(const hiller21_status& s, const hiller_melody& m, const note_t&
 // This rule is only defined on a completed line, since only then is it possible to 
 // decide if a given repeat is a repeat of the "highest note of the line."  Returns 
 // false until the working note is the final note of the line.  
-bool rpt_high_nt(const hiller21_status& s, const hiller_melody& m, const note_t& new_nt) {
+bool rpt_high_nt(const hiller21_status& s, const hiller_melody& m) {
 	if (!s.last_ch()) { return false; }  // line is not complete
 
-	//std::vector<note_t> curr_voice = m[s.v_idx];  curr_voice.push_back(new_nt);
-	std::vector<note_t> curr_voice = get_voice(s,m,s.v_idx);  curr_voice.push_back(new_nt);
+	//std::vector<note_t> curr_voice = m[s.v_idx];  curr_voice.push_back(s.new_nt);
+	std::vector<note_t> curr_voice = get_voice(s,m,s.v_idx);  curr_voice.push_back(s.new_nt);
 	note_t max_nt = max_frq(curr_voice);
 	for (int i=1; i<curr_voice.size(); ++i) {  // i ~ current nt of voice
 		if (!(curr_voice[i-1] == max_nt && curr_voice[i] == max_nt)) {
@@ -552,10 +558,10 @@ bool rpt_high_nt(const hiller21_status& s, const hiller_melody& m, const note_t&
 // The tritone is dissonant, but is allowed in some cases; see rule 10 for enforcement
 // of this.  
 // He is considering _reduced_ intervals.  C(3)->D(5) is an M2.  See p.103-105.  
-bool harmonic_consonant(const hiller21_status& s, const hiller_melody& m, const note_t& new_nt) {
+bool harmonic_consonant(const hiller21_status& s, const hiller_melody& m) {
 	if (s.first_v()) { return false; }
 
-	int rstaffln_newnt = reduced_staffln(s.cmaj, new_nt);
+	int rstaffln_newnt = reduced_staffln(s.cmaj, s.new_nt);
 	std::vector<note_t> curr_ch = get_chord(s,m,s.ch_idx);
 	for (const auto& e : curr_ch) {
 		int rstaffdist = rstaffln_newnt-reduced_staffln(s.cmaj, e);
@@ -571,10 +577,10 @@ bool harmonic_consonant(const hiller21_status& s, const hiller_melody& m, const 
 // For each chord, a P4 is allowed iff it does not occur between the lowest 
 // note of the chord and an upper voice.  Returns false until s.last_voice(); only 
 // then is it possible to define the "lowest note of the chord."
-bool harmonic_p4(const hiller21_status& s, const hiller_melody& m, const note_t& new_nt) {
+bool harmonic_p4(const hiller21_status& s, const hiller_melody& m) {
 	if (!s.last_v()) { return false; }
 
-	std::vector<note_t> curr_ch = get_chord(s,m,s.ch_idx);  curr_ch.push_back(new_nt);
+	std::vector<note_t> curr_ch = get_chord(s,m,s.ch_idx);  curr_ch.push_back(s.new_nt);
 	note_t lowest_nt = min_frq(curr_ch);
 	
 	if (lowest_nt.ntl == ntl_t {"F"}) {
@@ -601,10 +607,10 @@ bool harmonic_p4(const hiller21_status& s, const hiller_melody& m, const note_t&
 // TODO:  Part b not implemented.  
 // Always returns false if s.v_idx indicates that the present chord is incomplete, since
 // only then is it possible to know if a D occurs below the B involved in the tritone.  
-bool d_below_tritone(const hiller21_status& s, const hiller_melody& m, const note_t& new_nt) {
+bool d_below_tritone(const hiller21_status& s, const hiller_melody& m) {
 	if (!s.last_v()) { return false; }
 
-	auto curr_ch = get_chord(s,m,s.ch_idx);  curr_ch.push_back(new_nt);
+	auto curr_ch = get_chord(s,m,s.ch_idx);  curr_ch.push_back(s.new_nt);
 	if (!ch_contains_tritone(curr_ch)) { return false; }
 
 	// Build test_ch, containing all notes from curr_ch except B notes above 
@@ -628,12 +634,11 @@ bool d_below_tritone(const hiller21_status& s, const hiller_melody& m, const not
 
 // Rule 11
 // The lowest note in the first and last chords must be the tonic
-bool beginend_tonictriad_rootpos(const hiller21_status& s, const hiller_melody& m,
-	const note_t& new_nt)  {
+bool beginend_tonictriad_rootpos(const hiller21_status& s, const hiller_melody& m)  {
 	if (!s.last_v() || !(s.first_ch() || s.last_ch())) {
 		return false;  // curr pos != last-voice and/or curr pos == an internal chord
 	}
-	auto curr_ch = get_chord(s,m,s.ch_idx);  curr_ch.push_back(new_nt);
+	auto curr_ch = get_chord(s,m,s.ch_idx);  curr_ch.push_back(s.new_nt);
 	return (min_frq(curr_ch).ntl != ntl_t {"C"});
 }
 
@@ -642,25 +647,24 @@ bool beginend_tonictriad_rootpos(const hiller21_status& s, const hiller_melody& 
 // this voice must be the note C.  
 // Always returns false if the working note is not the final note of the second-to-last
 // chord.  
-bool ending_cadence(const hiller21_status& s, const hiller_melody& m, const note_t& new_nt) {
-	return ch_nxtlast_contains_b(s,m,new_nt) || lastch_contains_rsln_from_b(s,m,new_nt);
+bool ending_cadence(const hiller21_status& s, const hiller_melody& m) {
+	return ch_nxtlast_contains_b(s,m) || lastch_contains_rsln_from_b(s,m);
 };
-bool ch_nxtlast_contains_b(const hiller21_status& s, const hiller_melody& m, const note_t& new_nt) {
+bool ch_nxtlast_contains_b(const hiller21_status& s, const hiller_melody& m) {
 	if (!(s.last_v() && s.ch_idx == (s.nnts-2))) {  // !s.last_v() || s.ch_idx != (s.nnts-2)
 		return false;
 	}
-	std::vector<note_t> ch = get_chord(s,m,s.ch_idx);  ch.push_back(new_nt);
+	std::vector<note_t> ch = get_chord(s,m,s.ch_idx);  ch.push_back(s.new_nt);
 	int num_b {0};
 	for(const auto& e : ch) {
 		if (e.ntl == ntl_t {"B"}) { ++num_b; }
 	}
 	return num_b != 1;
 };
-bool lastch_contains_rsln_from_b(const hiller21_status& s, const hiller_melody& m,
-	const note_t& new_nt) {
+bool lastch_contains_rsln_from_b(const hiller21_status& s, const hiller_melody& m) {
 	if (!(s.last_v() && s.last_ch())) { return false; }  // (!s.last_v() || !s.last_ch())
 	std::vector<note_t> ch_nxtlast = get_chord(s,m,s.ch_idx-1);
-	std::vector<note_t> ch_last = get_chord(s,m,s.ch_idx); ch_last.push_back(new_nt);
+	std::vector<note_t> ch_last = get_chord(s,m,s.ch_idx); ch_last.push_back(s.new_nt);
 	for(int i=0; i<ch_nxtlast.size(); ++i) {  // ch_nxtlast.size() == ch_last.size()
 		if (ch_nxtlast[i].ntl == ntl_t {"B"}) {
 			return ch_last[i].ntl != ntl_t {"C"};
