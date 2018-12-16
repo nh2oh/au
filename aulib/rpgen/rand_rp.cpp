@@ -23,6 +23,7 @@
 //
 // TODO:  Will this work if nbars = 0.5 ???  Always generates exactly 1 bar at a time?
 //
+// TODO:  No more std::optional
 //
 std::optional<rp_t> rand_rp(ts_t ts_in, 
 	std::vector<d_t> dp_in, std::vector<double> pd_in, int nnts_in, 

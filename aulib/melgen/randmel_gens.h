@@ -105,6 +105,7 @@ bool ntl_lt_byfrq(const note_t&, const note_t&);
 std::vector<note_t> get_chord(const hiller21_status&, const hiller_melody&, const int);
 std::vector<note_t> get_voice(const hiller21_status&, const hiller_melody&, const int);
 bool ch_contains_tritone (const std::vector<note_t>&);
+int last_nonzero_idx(const std::vector<std::vector<int>>&, int, int);
 
 // Rules
 // Rule 1
@@ -155,9 +156,10 @@ struct melody_hiller_params {
 		// 3 => Progress each successfull iteration; melody + summary message
 		// 4 => Progress each iteration;  success/failure message
 		// 5 => ??
+	bool use_hiller_rp {false};
 };
 std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params&);  // "Experiment 2, part 1"
-
+std::vector<std::vector<int>> rhythm_hiller_ex3(const melody_hiller_params&);
 
 //
 // ks_key()

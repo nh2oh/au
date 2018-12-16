@@ -17,7 +17,7 @@ struct rand_rp_opts {
 struct randrp_input {
 	randrp_input()=default;
 	ts_t ts {};
-	std::set<d_t> nvset {};
+	std::set<d_t> nvset {};  // TODO:  srd::set => gross
 	std::vector<double> pd {};
 	int n_nts {};
 	bar_t n_bars {};

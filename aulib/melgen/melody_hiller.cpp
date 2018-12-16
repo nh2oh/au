@@ -13,6 +13,67 @@
 #include <cmath>  // std::abs()
 
 
+
+
+//
+// p.110:
+// ts == 4/8;  8'th note is the smallest possible time interval
+//
+// procedure a
+// For the present measure of the present voice:  
+// 1) generate a random permutation of a 4-binary digit sequence, 
+//    ex: 0000, 0001, 0010, ..., 0011, ... 1111
+//    where each 1 corresponds to an 8'th note, each 0 to an 8'th note rest or
+//    a continuation of the final note from the prior measure.  
+// 2) generate an integer on [1,12]
+//    The 1-measure rp generated in (1) is repeated for this many measures
+//    for the present voice then a new rp and int are generated.
+//
+//
+//
+//
+std::vector<std::vector<int>> rhythm_hiller_ex3(const melody_hiller_params& p) {
+	auto re = new_randeng(true);
+	std::uniform_int_distribution rd_note_on {0,1};
+	std::uniform_int_distribution rd_nrep {0,12};
+	std::uniform_int_distribution rd_n_voicecorr {0,p.nvoice};
+	
+	if (p.nnts%4 != 0) {
+		std::abort();
+	}
+	int n_measures = p.nnts/4; 
+
+	std::vector<std::vector<int>> rp {};
+	for (int i=0; i<p.nvoice; ++i) {
+
+		std::vector<int> curr_voice {};
+		int curr_measure_n = 0;
+		while (curr_measure_n < n_measures) {
+			std::vector<int> curr_seg {};
+			int corr_with_voice = rd_n_voicecorr(re);
+			if (i>0 && corr_with_voice < i) {
+				// Require that this segment be the same as that for the prev voice
+				for (int j=0; j<4; ++j) { curr_seg.push_back(rp[corr_with_voice][4*curr_measure_n+j]); }
+			} else {
+				// This segment is completely random
+				for (int j=0; j<4; ++j) { curr_seg.push_back(rd_note_on(re)); }
+			}
+			
+			int nrep = rd_nrep(re);
+			int ncopies = std::min(nrep+1,std::abs(n_measures-curr_measure_n));
+			for (int j=0; j<ncopies; ++j) {
+				std::copy(curr_seg.begin(),curr_seg.end(),std::back_inserter(curr_voice));
+			}
+			curr_measure_n += ncopies;
+		}
+
+		rp.push_back(curr_voice);
+	}
+
+	return rp;
+}
+
+
 //
 // It should also be possible to implement this in the same way as melody_a(), ie, by first
 // generating a completely random 2-d array of notes, scoring according to the counterpoint
@@ -48,11 +109,16 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 		ntpool.push_back(cmaj[scd]);
 	}
 
-	// TODO:  No need to manually fill; can call reserve().  Then can use clear()
-	// to reset the melody.  
 	// m[voice idx][note,ch idx] contains the melody;  Preallocation dummy value C(0)
 	std::vector<std::vector<note_t>> m {};
 	std::fill_n(std::back_inserter(m),p.nvoice,std::vector<note_t>(p.nnts,cmaj[0]));
+
+	std::vector<std::vector<int>> rp {};
+	if (p.use_hiller_rp) {
+		rp = rhythm_hiller_ex3(p);
+	} else {
+		std::fill_n(std::back_inserter(rp),p.nvoice,std::vector<int>(p.nnts,1));
+	}
 
 	// Rules
 	// TODO:  Add namespace qualifiers
@@ -105,7 +171,18 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 	while (s.rejects_tot < p.max_rejects_tot && s.ch_idx < s.nnts) {
 		// Set the notepool from which new_nt will be drawn, then draw new_nt, which, if 
 		// it passes all the rules, will occupy m[s.v_idx][s.ch_idx].  
+		
 		curr_ntpool = ntpool;
+		/*if (p.use_hiller_rp && rp[s.v_idx][s.ch_idx] == 0) {
+			curr_ntpool.clear();
+			for (int chidx_last_nt=s.ch_idx; chidx_last_nt>0; --chidx_last_nt) {
+				if (chidx_last_nt==1) {
+					curr_ntpool.push_back(m[s.v_idx][chidx_last_nt]);
+					break;
+				}
+			}
+		}*/
+		
 		skip_step_allowed(s,m,curr_ntpool);
 		if (curr_ntpool.size() > 8) {
 			// skip_step_allowed() is so constraining that there is no point in applying
@@ -118,7 +195,7 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 			s.set_for_new_attempt_prev_ch();
 			continue;
 		}
-
+		
 		decltype(rd.param()) curr_rd_params {0,curr_ntpool.size()-1};
 		rd.param(curr_rd_params);
 		s.new_nt = curr_ntpool[rd(re)];
@@ -173,6 +250,7 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 		for (int ch=0; ch<p.nnts; ++ch) {
 			lpout += "<";
 			for (int v=0; v<p.nvoice; ++v) {
+				if (v > 0 && rp[v][ch]==0) { continue; }
 				lpout += m[v][ch].print(note_t::fmt::lp);
 				if (v < (p.nvoice-1)) { lpout += " "; }
 			}
@@ -383,6 +461,14 @@ bool ch_contains_tritone(const std::vector<note_t>& ch) {
 	}
 	return false;
 }
+
+int last_nonzero_idx(const std::vector<std::vector<int>>& rp, int v_idx, int ch_idx) {
+	for (int i=ch_idx; i>0; --i) {
+		if (rp[v_idx][i]==1) { return i; }
+	}
+	std::abort();
+}
+
 
 // Rule 1
 // The max interval spanned by the lowest and highest notes on a given line must 
