@@ -101,11 +101,20 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 	hiller21_status s {};
 	s.cmaj = &cmaj; s.nnts = p.nnts; s.nvoices = p.nvoice;
 	s.rule.resize(ruleset.size(),0);
-
+	std::vector<note_t> curr_ntpool = ntpool;
 	std::vector<int> rule_fail_counts(ruleset.size(),0);
 	while (s.rejects_tot < p.max_rejects_tot && s.ch_idx < s.nnts) {
-		// Draw potential nt to occupy m[v_idx][ch_idx]
-		note_t new_nt = ntpool[rd(re)];
+		// Set the notepool from which new_nt will be drawn, then draw new_nt, which, if 
+		// it passes all the rules, will occupy m[s.v_idx][s.ch_idx].  
+		curr_ntpool = ntpool;
+		skip_step_allowed(s,m,curr_ntpool);
+		line_spans_gt_oct_allowed(s,m,curr_ntpool);
+		if (curr_ntpool.size() == 0) {
+			s.set_for_new_attempt_prev_ch();
+			continue;
+		}
+		note_t new_nt = curr_ntpool[rd(re)%curr_ntpool.size()];
+		
 		s.new_nt = new_nt;
 
 		// Comparison against the rule set
@@ -377,6 +386,31 @@ bool line_spans_gt_oct(const hiller21_status& s, const hiller_melody& m, const n
 	auto curr_v = get_voice(s,m,s.v_idx);  curr_v.push_back(new_nt);
 	return (max_frq(curr_v).frq/min_frq(curr_v).frq > 2.001);  // TODO:  aprx_gt()
 }
+void line_spans_gt_oct_allowed(const hiller21_status& s, const hiller_melody& m,
+	std::vector<note_t>& ntpool) {
+	if (s.first_ch()) { return; }
+
+	auto curr_v = get_voice(s,m,s.v_idx);
+	note_t curr_max_nt = max_frq(curr_v);  int curr_max_scd = (*s.cmaj).to_scd(curr_max_nt);
+	note_t curr_min_nt = min_frq(curr_v);  int curr_min_scd = (*s.cmaj).to_scd(curr_min_nt);
+	int curr_range = curr_max_scd - curr_min_scd;  // curr_range is always <= 7
+	int headroom = 7 - curr_range;
+	
+	int max_scd = curr_max_scd + headroom; int min_scd = curr_min_scd - headroom;
+	std::vector<note_t> allow {};  allow.reserve(max_scd-min_scd+1);
+	for (int i = min_scd; i<= max_scd; ++i) {
+		allow.push_back((*s.cmaj)[i]);
+	}
+
+	std::vector<note_t> allow_pool {};  allow_pool.reserve(allow.size());
+	std::set_intersection(allow.begin(),allow.end(),ntpool.begin(),ntpool.end(),
+		std::back_inserter(allow_pool), melody_hiller_internal::ntl_lt_byfrq);
+
+	ntpool.clear();
+	ntpool.insert(ntpool.end(),allow_pool.begin(),allow_pool.end());
+
+	return;
+}
 
 // Rule 2
 // cf (voice 0) begins+ends on the tonic
@@ -432,6 +466,26 @@ bool skip_step_rule(const hiller21_status& s, const hiller_melody& m, const note
 		return !(new_int == 0 || new_int == 1);
 	}
 	return false;
+}
+void skip_step_allowed(const hiller21_status& s, const hiller_melody& m,
+	std::vector<note_t>& ntpool) {
+	
+	if (s.ch_idx < 2) { return; }
+	int prev_nt = (*s.cmaj).to_scd(m[s.v_idx][s.ch_idx-1]);
+	int pprev_nt = (*s.cmaj).to_scd(m[s.v_idx][s.ch_idx-2]);
+	
+	if (std::abs(prev_nt - pprev_nt) >= 2) {
+		std::vector<note_t> allow {(*s.cmaj)[prev_nt-1], (*s.cmaj)[prev_nt], (*s.cmaj)[prev_nt+1]};
+
+		std::vector<note_t> allow_pool {};  allow_pool.reserve(allow.size());
+		std::set_intersection(allow.begin(),allow.end(),ntpool.begin(),ntpool.end(),
+			std::back_inserter(allow_pool), melody_hiller_internal::ntl_lt_byfrq);
+
+		ntpool.clear();
+		ntpool.insert(ntpool.end(),allow_pool.begin(),allow_pool.end());
+	}
+	
+	return;
 }
 
 // Rule 6

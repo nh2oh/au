@@ -109,6 +109,7 @@ bool ch_contains_tritone (const std::vector<note_t>&);
 // Rules
 // Rule 1
 bool line_spans_gt_oct(const hiller21_status&, const hiller_melody&, const note_t&);
+void line_spans_gt_oct_allowed(const hiller21_status&, const hiller_melody&, std::vector<note_t>&);
 // Rule 2
 bool cf_beginend_tonic(const hiller21_status&, const hiller_melody&, const note_t&);
 // Rule 3
@@ -117,6 +118,7 @@ bool noncf_beginend_tonictriad(const hiller21_status&, const hiller_melody&, con
 bool no_mel_sevenths(const hiller21_status&, const hiller_melody&, const note_t&);
 // Rule 5
 bool skip_step_rule(const hiller21_status&, const hiller_melody&, const note_t&);
+void skip_step_allowed(const hiller21_status&, const hiller_melody&, std::vector<note_t>&);
 // Rule 6
 bool rpts_gt_one(const hiller21_status&, const hiller_melody&, const note_t&);
 // Rule 7
