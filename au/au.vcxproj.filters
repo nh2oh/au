@@ -24,6 +24,9 @@
     <ClInclude Include="wavwr.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="escd_t.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="au.cpp">
@@ -36,6 +39,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="wavwr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="escd_t.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
