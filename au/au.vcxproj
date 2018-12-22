@@ -101,14 +101,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="escd_t.h" />
     <ClInclude Include="scr.h" />
     <ClInclude Include="scr2.h" />
     <ClInclude Include="wavwr.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="au.cpp" />
-    <ClCompile Include="escd_t.cpp" />
     <ClCompile Include="scr.cpp" />
     <ClCompile Include="scr2.cpp" />
     <ClCompile Include="wavwr.cpp" />
