@@ -2,42 +2,36 @@
 #include "..\types\nv_t.h"
 #include "..\types\ts_t.h"
 #include "..\types\beat_bar_t.h"
-#include "..\uih.h"
 #include "..\types\rp_t.h"
 #include <vector>
 #include <chrono>
-#include <string>
-#include <set>
-#include <optional>
-
-struct rand_rp_opts {
-	std::chrono::seconds maxt {3};
-};
 
 struct randrp_input {
-	randrp_input()=default;
 	ts_t ts {};
-	std::set<d_t> nvset {};  // TODO:  srd::set => gross
+	std::vector<d_t> nvset {};
 	std::vector<double> pd {};
-	int n_nts {};
-	bar_t n_bars {};
+	int nnts {0};
+	bar_t nbars {0};
+	std::chrono::seconds maxt {3};  // timeout
 
 	bool operator==(randrp_input const& rhs) const {
 		return (ts==rhs.ts && nvset==rhs.nvset && pd==rhs.pd &&
-			n_nts == rhs.n_nts && n_bars == rhs.n_bars);
+			nnts == rhs.nnts && nbars == rhs.nbars);
+		// TODO:  chck maxt
+		// TODO:  Also == if the elements of nvset are the same but out of order
 	};
 };
 
+struct randrp_result {
+	bool success {false};
+	rp_t rp {};
+};
 
-std::optional<rp_t> rand_rp(ts_t,std::vector<d_t>,
-	std::vector<double>,int,bar_t);
-
-std::optional<rp_t> rand_rp(ts_t,std::vector<d_t>,
-	std::vector<double>,int,bar_t,rand_rp_opts);
-
-std::optional<rp_t> rand_rp(randrp_input);
+randrp_result rand_rp(const randrp_input&);
+randrp_result rand_rp(ts_t,std::vector<d_t>,std::vector<double>,int,bar_t,std::chrono::seconds);
 
 
+/*
 //
 // My randrp_input parser
 // As w/ all uih parsers, returns a uih_parser_result struct. Member 
@@ -54,4 +48,7 @@ struct parse_randrp_input {
 	using PIType = typename randrp_input const&;
 	au::uih_parser_result<randrp_input> operator()(randrp_input const&) const;
 };
+
+*/
+
 

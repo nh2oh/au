@@ -106,10 +106,12 @@
     <ClCompile Include="nv_t_test.cpp" />
     <ClCompile Include="oct_t_test.cpp" />
     <ClCompile Include="randrp_metg_test.cpp" />
+    <ClCompile Include="rand_rp_test.cpp" />
     <ClCompile Include="rp_t_test.cpp" />
     <ClCompile Include="scale_diatonic_spn_test.cpp" />
     <ClCompile Include="scale_spn_tests.cpp" />
     <ClCompile Include="scd_t_test.cpp" />
+    <ClCompile Include="Source.cpp" />
     <ClCompile Include="tg_t_test.cpp" />
     <ClCompile Include="tmetg_t_test.cpp" />
     <ClCompile Include="ts_t_test.cpp" />

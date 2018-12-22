@@ -31,7 +31,6 @@
 
 //
 // TODO:  Why can i not inspect is_compound() ?
-// TODO:  Unit tests for parse_ts_string().  
 // TODO:  The string ctor does not support dotted notes
 //
 class ts_t {
