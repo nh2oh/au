@@ -30,12 +30,9 @@
 //
 
 //
-// TODO:  Why can i not introspect is_compound() ?
+// TODO:  Why can i not inspect is_compound() ?
 // TODO:  Unit tests for parse_ts_string().  
 // TODO:  The string ctor does not support dotted notes
-// TODO:  The ts_t(std::string) ctor delegates to parse_ts_string(), which calls the normal
-//        3-arg ctor.  This is gross.  
-// TODO:  from_string() probably does not need to exist
 //
 class ts_t {
 public:
@@ -57,7 +54,7 @@ public:
 	bool operator==(const ts_t&) const;
 	friend std::ostream& operator<<(std::ostream&, const ts_t&);
 private:
-	void from_string(const std::string&);  // Called by ts_t(std::string const&);
+	void from_parts(beat_t, d_t, bool);  // numerator, denominator, is_compound
 
 	d_t m_beat_unit {1.0/4.0};  // The d_t corresponding to one beat
 	beat_t m_bpb {4.0};  // Beats per bar (numerator)
@@ -69,22 +66,16 @@ bool operator!=(const ts_t&, const ts_t&);
 
 
 //
-// If !ts_str_parsed.is_valid, the values of all other fields should be regarded as "undefined."  
+// If !ts_str_parsed.is_valid, all other fields have whatever they were default-constructed
+// with... this should be regarded as "undefined."  
 //
-// Note that if the input string is valid, parse_ts_string() calls the ts_t(beat_t,d_t,bool)
-// ctor to populate ts_str_parsed.ts.  Thus, the ts_t(std::string) ctor can not (or rather
-// _should_ not) delegate to this function.  
-//
-// The numerator and denominator fields of the input str are returned as doubles in 
-// ts_str_parsed.  If the caller wants these as a beat_t, d_t, they can just call ts.beat_unit,
-// ts.bar_unit(), etc.  
+// ts_t(std::string) -> parse_ts_string(std::string)
 //
 struct ts_str_parsed {
 	bool is_valid {false};
 	bool is_compound {false};
-	double num {0};  
+	double num {0};
 	double denom {0};
-	ts_t ts {};
 };
 ts_str_parsed parse_ts_string(const std::string&);
 

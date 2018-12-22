@@ -7,7 +7,23 @@
 #include <regex>
 #include <iostream>  // operator<<
 
+
+ts_t::ts_t(const beat_t& num, const d_t& denom, bool is_compound) {
+	from_parts(num,denom,is_compound);
+}
+
+ts_t::ts_t(const std::string& str_in) {
+	ts_str_parsed ts_parsed = parse_ts_string(str_in);
+	if (!ts_parsed.is_valid) {
+		std::abort();
+	}
+
+	from_parts(beat_t{ts_parsed.num}, d_t{ts_parsed.denom}, ts_parsed.is_compound);
+}
+
 //
+// Called by the constructor ts_t(beat_t, d_t, bool) && from_string()
+// 
 // If compound:
 // -> The numerator is the "number of into-3 subdivisions of the beat"-per bar.  Thus, 
 //    dividing the input beat_t 'num' by 3 yields the number of beats-per bar.  
@@ -15,13 +31,11 @@
 //    of value denom == 1 beat.  A group of three identical note-values d is equivalent to a
 //    single nv of duration of 2*d, dotted once:  (2d).
 //
-ts_t::ts_t(const beat_t& num, const d_t& denom, bool is_compound_in) {
-	if (num <= 0_bt || denom <= d_t{d::z}) {
-		std::abort();
-	}
+void ts_t::from_parts(beat_t num, d_t denom, bool is_compound) {
+	if (num <= 0_bt || denom <= d_t{d::z}) { std::abort(); }
 
-	m_compound = is_compound_in;
-	if (!is_compound_in) {  // "Simple" time signature
+	m_compound = is_compound;
+	if (!is_compound) {  // "Simple" time signature
 		m_bpb = num;
 		m_beat_unit = denom;
 	} else {  // Compound time signature
@@ -34,25 +48,6 @@ ts_t::ts_t(const beat_t& num, const d_t& denom, bool is_compound_in) {
 	}
 }
 
-ts_t::ts_t(const std::string& str_in) {
-	from_string(str_in);
-}
-
-//
-// Called by the constructor ts_t(const std::string&)
-// 
-void ts_t::from_string(const std::string& str_in) {
-	// I am going through parse_ts_string() b/c it passes to the 3-arg ctor.  The 3-arg ctor
-	// is the only function containing the logic to deal w/ compount ts's.  
-	ts_str_parsed ts_parsed = parse_ts_string(str_in);
-	if (!ts_parsed.is_valid) {
-		std::abort();
-	}
-
-	m_beat_unit = ts_parsed.ts.beat_unit();
-	m_bpb = ts_parsed.ts.beats_per_bar();
-	m_compound = ts_parsed.is_compound;
-}
 
 ts_t operator""_ts(const char *literal_in, size_t length) {
 	return ts_t {std::string {literal_in}};
@@ -99,6 +94,9 @@ bool operator!=(const ts_t& lhs, const ts_t& rhs) {
 	return !(lhs == rhs);
 }
 
+// 
+// Delegared to by ts_t(std::string)
+//
 ts_str_parsed parse_ts_string(const std::string& str_in) {
 	ts_str_parsed res {};
 	std::regex rx {"(\\d+)/(\\d+)(c)?"};
@@ -119,7 +117,6 @@ ts_str_parsed parse_ts_string(const std::string& str_in) {
 	res.num = bt_per_bar;
 	res.denom = 1.0/inv_dv_per_bt;
 	res.is_compound = rx_matches[3].matched;
-	res.ts = ts_t {beat_t{res.num},d_t{res.denom},res.is_compound};
 
 	return res;
 }
