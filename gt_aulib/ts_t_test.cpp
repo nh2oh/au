@@ -100,6 +100,52 @@ TEST(ts_t_tests, PrintFnAndStringCtor) {
 	}
 }
 
+// Tests ts_t.print(); the output of which, if fed into ts_t(std::string), should produce
+// the same ts.  
+TEST(ts_t_tests, ParseTsString) {
+	struct pts_tests {  // "parse-ts-string tests"
+		std::string str {};
+		ts_str_parsed ans {};
+	};
+	
+	std::vector<pts_tests> tests {
+		{"4/4", {true,false,4,4}}, {"04/04", {true,false,4,4}}, 
+		{"4/4c", {true,true,4,4}}, {"04/04c", {true,true,4,4}},
+		{"6/8", {true,false,6,8}}, {"06/08c", {true,true,6,8}},
+		{"0006/00008", {true,false,6,8}},
+		{"12/16", {true,false,12,16}},{"012/016", {true,false,12,16}},
+		{"00012/000016", {true,false,12,16}},
+	};
+
+	for (const auto& e : tests) {
+		EXPECT_TRUE(e.ans.is_valid);
+		ts_t curr_ts {beat_t{e.ans.num},d_t{e.ans.denom},e.ans.is_compound};
+
+		if (!e.ans.is_compound) {
+			EXPECT_EQ(beat_t{e.ans.num}, curr_ts.beats_per_bar()) 
+				<< e.str << " : " << beat_t{e.ans.num}.print() << ", " 
+				<< curr_ts.beats_per_bar().print();
+
+			EXPECT_EQ(d_t{(e.ans.denom)*(e.ans.num)}, curr_ts.bar_unit())
+				<< e.str << " : " << d_t{e.ans.denom}.print() << ", " 
+				<< curr_ts.bar_unit().print();
+
+			EXPECT_EQ(d_t{e.ans.denom}, curr_ts.beat_unit()) << e.str;
+		} else {  // compound
+			EXPECT_EQ(beat_t{(1.0/3.0)*e.ans.num}, curr_ts.beats_per_bar())
+				<< e.str << " : " << beat_t{e.ans.num}.print() << ", " 
+				<< curr_ts.beats_per_bar().print();
+
+				EXPECT_EQ(d_t{(e.ans.denom)*(e.ans.num)}, curr_ts.bar_unit())
+				<< e.str << " : " << d_t{e.ans.denom}.print() << ", " 
+				<< curr_ts.bar_unit().print();
+
+			EXPECT_EQ(d_t{2*e.ans.denom + e.ans.denom}, curr_ts.beat_unit());
+			
+		}
+	}
+}
+
 
 // Tests nbeat(ts_t,d_t), duration(ts_t,beat_t), nbar(ts_t,d_t) with different 
 // d_t, ts_t values known to yield the same output.  

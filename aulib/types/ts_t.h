@@ -46,6 +46,7 @@ public:
 		// duration of the denominator, then dotted once.)  
 	d_t bar_unit() const;
 		// The note value that spans exactly 1 bar.  
+		// == d_t{(denom)*(num)} for both compound and non-compound
 	beat_t beats_per_bar() const;
 		// The number of beats per bar.  If the ts n/d is simple, this the numerator beat_t {n}.  
 		// If compound, it is beat_t {(1/3)*(n)}.  
