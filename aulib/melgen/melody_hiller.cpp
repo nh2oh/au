@@ -13,8 +13,6 @@
 #include <cmath>  // std::abs()
 
 
-
-
 //
 // p.110:
 // ts == 4/8;  8'th note is the smallest possible time interval
@@ -113,13 +111,6 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 	std::vector<std::vector<note_t>> m {};
 	std::fill_n(std::back_inserter(m),p.nvoice,std::vector<note_t>(p.nnts,cmaj[0]));
 
-	std::vector<std::vector<int>> rp {};
-	if (p.use_hiller_rp) {
-		rp = rhythm_hiller_ex3(p);
-	} else {
-		std::fill_n(std::back_inserter(rp),p.nvoice,std::vector<int>(p.nnts,1));
-	}
-
 	// Rules
 	// TODO:  Add namespace qualifiers
 	std::vector<bool (*)(const hiller21_status&, const hiller_melody&)> 
@@ -173,15 +164,6 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 		// it passes all the rules, will occupy m[s.v_idx][s.ch_idx].  
 		
 		curr_ntpool = ntpool;
-		/*if (p.use_hiller_rp && rp[s.v_idx][s.ch_idx] == 0) {
-			curr_ntpool.clear();
-			for (int chidx_last_nt=s.ch_idx; chidx_last_nt>0; --chidx_last_nt) {
-				if (chidx_last_nt==1) {
-					curr_ntpool.push_back(m[s.v_idx][chidx_last_nt]);
-					break;
-				}
-			}
-		}*/
 		
 		skip_step_allowed(s,m,curr_ntpool);
 		if (curr_ntpool.size() > 8) {
@@ -250,7 +232,6 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 		for (int ch=0; ch<p.nnts; ++ch) {
 			lpout += "<";
 			for (int v=0; v<p.nvoice; ++v) {
-				if (v > 0 && rp[v][ch]==0) { continue; }
 				lpout += m[v][ch].print(note_t::fmt::lp);
 				if (v < (p.nvoice-1)) { lpout += " "; }
 			}
