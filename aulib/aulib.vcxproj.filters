@@ -227,5 +227,8 @@
     <ClInclude Include="types\scale_iterator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="melgen\hiller.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

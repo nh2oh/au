@@ -1,4 +1,4 @@
-#include "randmel_gens.h"
+#include "hiller.h"
 #include "..\util\au_random.h"  // new_randeng()
 #include "..\scale\spn.h"  // To compute semitone difference between nt pairs
 #include "..\scale\diatonic_spn.h"

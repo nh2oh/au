@@ -11,5 +11,5 @@
 
 #include "randrp_metg.h"
 #include "melgen\randmel_gens.h"
-
+#include "melgen\hiller.h"
 
