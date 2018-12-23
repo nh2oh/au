@@ -1,7 +1,6 @@
 #pragma once
 #include "randmel_gens.h"
 #include "..\util\au_random.h"
-//#include "..\util\au_algs.h"  // unique_n() in score()
 #include "dbklib\algs.h"
 #include "..\util\au_algs_math.h"  // aprx_eq() in score()
 #include <vector>
@@ -60,9 +59,8 @@ std::vector<scd_t> melody_a(ma_params p) {
 		}
 		auto uqs = unique_n(m);
 		for (const auto& e : uqs) {
-			// e.first => the scd; e.second => number of occurences
-			if (e.second > 1) {
-				s += (e.second-1)*p.sc_rptnts;
+			if (e.count > 1) {
+				s += (e.count-1)*p.sc_rptnts;
 			}
 		}
 		return s;

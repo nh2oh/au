@@ -4,13 +4,6 @@
 #include <random>
 #include <optional>
 
-// Regression
-struct linreg_result {
-	double slope {0.0};
-	double intercept {0.0};
-	double regcoef {0.0}; // r-squared
-};
-std::optional<linreg_result> linreg(std::vector<double> const&, std::vector<double> const&);
 
 
 // Kahan summation

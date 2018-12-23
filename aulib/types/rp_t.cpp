@@ -4,7 +4,6 @@
 #include "ts_t.h"
 #include "..\util\au_util.h"  // bsprintf()
 #include "..\util\au_error.h"  // bsprintf()
-#include "..\util\au_algs.h"  // unique_n() in nv_members()
 #include "..\util\au_algs_math.h"  // aprx_int()
 #include <string>
 #include <vector>

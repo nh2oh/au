@@ -1,7 +1,7 @@
 #include "notefile.h"
 #include "..\util\au_util.h"
 #include "..\util\au_error.h"
-#include "..\util\au_algs.h"
+#include "dbklib\algs.h"
 #include "..\util\au_algs_math.h"
 #include "..\types\line_t.h" // for notefile2line()
 #include "..\types\scd_t.h" // for notefile2line()
