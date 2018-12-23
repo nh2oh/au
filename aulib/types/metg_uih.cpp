@@ -7,7 +7,6 @@
 #include "teejee.h"
 #include "..\util\au_error.h"
 #include "..\util\au_random.h"
-#include "..\util\au_algs_math.h"
 #include "dbklib\algs.h"
 #include "..\util\au_util.h"  // wait()
 #include <vector>

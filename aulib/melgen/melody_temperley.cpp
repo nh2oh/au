@@ -3,7 +3,7 @@
 #include "..\scale\spn.h"
 #include "..\types\ntl_t.h"
 #include "..\util\au_random.h"
-#include "..\util\au_algs_math.h"
+#include "dbklib\math.h"
 #include <vector>
 
 //

@@ -1,5 +1,4 @@
 #include "au_frac.h"
-#include "au_algs_math.h"  // isapproxeq() in rapprox()
 #include <numeric>  // lcm(), gcd()
 #include <vector> // comdenom
 

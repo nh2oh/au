@@ -107,9 +107,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="util\au_algs_math.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="util\au_error.h">
       <Filter>Header Files</Filter>
     </ClInclude>
