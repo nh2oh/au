@@ -4,7 +4,6 @@
 #include "util\au_random.h"  // corr()
 #include "dbklib\contigumap.h"
 
-
 //
 // The Krumhansl-Schmuckler key-finding algorithm as described by p.52
 // of Music and Probability (MIT Press) 2007 by David Temperly.  
