@@ -3,6 +3,7 @@
 #include "types\ntl_t.h"
 #include "util\au_random.h"  // corr()
 #include "dbklib\contigumap.h"
+#include "dbklib\stats.h"
 
 //
 // The Krumhansl-Schmuckler key-finding algorithm as described by p.52
