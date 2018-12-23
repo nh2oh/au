@@ -4,17 +4,16 @@
 #include "..\types\beat_bar_t.h"
 #include "..\types\rp_t.h"
 #include "..\util\au_random.h"
-#include "..\util\au_util.h"
-#include "..\util\au_error.h"
+#include "..\util\au_algs.h"
 #include <vector>
 #include <chrono>
 #include <random>
 #include <exception>
 
 //
-// rand_rp() ~ rdur()
-// The rp returned will always span an integer number of bars since the algorithm appends randomly
-// generated 1-bar "segments" to a growing rp.  
+// rand_rp()
+// Generates an rp that will always span an integer number of bars.  The algorithm appends randomly
+// generated 1-bar "segments" to a growing rp.  Corresponds to rdur() of the Matlab implementation.  
 //
 // TODO:  Ignores pd_in
 // TODO:  Will not work for fractional nbars
@@ -107,13 +106,59 @@ randrp_result rand_rp(const randrp_input& p) {
 	return result;
 }
 
-
 randrp_result rand_rp(ts_t ts, std::vector<d_t> nvset,
 	std::vector<double> pd, int nnts, bar_t nbars, std::chrono::seconds maxt) {
 	randrp_input input {};
 	input.ts = ts; input.nvset = nvset; input.pd = pd;
 	input.nnts = nnts; input.nbars = nbars; input.maxt = maxt;
 	return rand_rp(input);
+}
+
+rrpinput_validator_result validate_randrp_input(const randrp_input& rrp_inp) {
+	rrpinput_validator_result result {};
+
+	if (rrp_inp.nvset.size() == 0) {
+		result.nvset_is_valid = false;
+		result.msg += "Must supply at least one nv.\n";
+	} else {
+		if (n_unique_nosort(rrp_inp.nvset) == rrp_inp.nvset.size()) {
+			result.nvset_is_valid = true;
+		} else {
+			result.nvset_is_valid = false;
+			result.msg += "All elements of nvset must be unique.\n";
+		}
+	}
+
+	// TODO:  Elements of pd_in should be > 0
+	if (rrp_inp.pd.size() == 0 || (rrp_inp.pd.size() > 0 && rrp_inp.pd.size()==rrp_inp.nvset.size())) {
+		result.pd_is_valid = true;
+	} else { // otherwise, pd_is_valid == false
+		result.pd_is_valid = false;
+		result.msg += "pd.size() == 0 or pd.size == nvset.size().  \n";
+	}
+
+	if (rrp_inp.nnts < 0) {
+		result.nnts_is_valid = false;
+		result.msg += "nnts must be >= 0.\n";
+	}
+	if (rrp_inp.nbars < 0_br) {
+		result.nbars_is_valid = false;
+		result.msg += "nbars must be >= 0.\n";
+	}
+	if (rrp_inp.nnts == 0 && rrp_inp.nbars == 0_br) {
+		result.nnts_is_valid = false;
+		result.nbars_is_valid = false;
+		result.msg += "One of nnts, nbars > 0.\n";
+	}
+	if (rrp_inp.maxt < std::chrono::seconds {0}) {
+		result.maxt_is_valid = false;
+		result.msg += "maxt must be >= 0 seconds.\n";
+	}
+
+	result.input_is_valid = result.maxt_is_valid && result.nbars_is_valid && result.nnts_is_valid 
+		&& result.nvset_is_valid && result.pd_is_valid;
+	
+	return result;
 }
 
 /*

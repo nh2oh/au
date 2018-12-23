@@ -31,6 +31,20 @@ randrp_result rand_rp(const randrp_input&);
 randrp_result rand_rp(ts_t,std::vector<d_t>,std::vector<double>,int,bar_t,std::chrono::seconds);
 
 
+struct rrpinput_validator_result {
+	bool input_is_valid {false};
+	bool nvset_is_valid {false};
+	bool pd_is_valid {false};
+	bool nnts_is_valid {false};
+	bool nbars_is_valid {false};
+	bool maxt_is_valid {false};
+
+	std::string msg {};
+};
+
+rrpinput_validator_result validate_randrp_input(const randrp_input&);
+
+
 /*
 //
 // My randrp_input parser

@@ -67,6 +67,9 @@ struct spn_ntstr_parsed {
 };
 spn_ntstr_parsed parse_spn_ntstr(const std::string&);
 
+
+// TODO:  Don't embed ntl_t, octn_t; let the user run the ctor manually (?)
+// See the ts_t version...
 struct ntstr_parsed {
 	bool is_valid {false};
 	bool is_oct_set {false};

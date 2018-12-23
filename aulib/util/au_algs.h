@@ -3,6 +3,10 @@
 #include <algorithm>
 #include <map>
 
+// TODO:  Unt tests
+// TODO:  Move to dbklib...
+
+
 // TODO:  Template this so it works w/ arrays
 template<typename T>
 bool ismember(T const& e, std::vector<T> const& s) {
@@ -60,6 +64,32 @@ size_t n_unique(std::vector<T> s) {
     std::sort(s.begin(),s.end());
     auto last = std::unique(s.begin(),s.end());
     return last-s.begin();
+};
+
+// n_unique_nosort():  Counts the # of unique elements in s without
+// sorting s
+template<typename T>
+int n_unique_nosort(const std::vector<T>& s) {
+	int nuq {0};
+	std::vector<T> s_repeated_elements {};
+	for (auto it1 = s.begin(); it1<(s.end()-1); ++it1) {
+		if (ismember(*it1,s_repeated_elements)) {
+			continue;
+		}
+		bool unique {true};
+		for (auto it2 = it1+1; it2<s.end(); ++it2) {
+			if (*it1 == *it2) {
+				unique = false;
+				s_repeated_elements.push_back(*it1);
+				break;
+			}
+		}
+		if (unique) {
+			++nuq;
+		}
+	}
+    
+    return nuq;
 };
 
 // Returns a vector containing each unique element in s along with the 

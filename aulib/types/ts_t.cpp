@@ -95,7 +95,7 @@ bool operator!=(const ts_t& lhs, const ts_t& rhs) {
 }
 
 // 
-// Delegared to by ts_t(std::string)
+// Delegated to by ts_t(std::string)
 //
 ts_str_parsed parse_ts_string(const std::string& str_in) {
 	ts_str_parsed res {};
