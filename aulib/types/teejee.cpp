@@ -4,7 +4,8 @@
 #include "nv_t.h"
 #include "rp_t.h"
 #include "..\util\au_algs_math.h"
-#include "..\util\au_algs.h"
+//#include "..\util\au_algs.h"
+#include "dbklib\algs.h"
 #include "..\util\au_error.h"
 #include "..\util\au_util.h"
 #include <vector>

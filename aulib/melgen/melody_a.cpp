@@ -1,7 +1,8 @@
 #pragma once
 #include "randmel_gens.h"
 #include "..\util\au_random.h"
-#include "..\util\au_algs.h"  // unique_n() in score()
+//#include "..\util\au_algs.h"  // unique_n() in score()
+#include "dbklib\algs.h"
 #include "..\util\au_algs_math.h"  // aprx_eq() in score()
 #include <vector>
 #include <numeric>  // std::iota() to generate scdpool

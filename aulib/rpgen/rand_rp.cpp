@@ -4,7 +4,7 @@
 #include "..\types\beat_bar_t.h"
 #include "..\types\rp_t.h"
 #include "..\util\au_random.h"
-#include "..\util\au_algs.h"
+#include "dbklib\algs.h"
 #include <vector>
 #include <chrono>
 #include <random>
