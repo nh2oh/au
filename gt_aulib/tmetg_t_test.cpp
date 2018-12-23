@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 #include "..\aulib\types\metg_t.h"
 #include "..\aulib\util\au_algs_math.h"
+#include "dbklib\math.h"
 #include "..\aulib\util\au_random.h"
 #include <vector>
 #include <string>

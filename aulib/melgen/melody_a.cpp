@@ -2,7 +2,8 @@
 #include "randmel_gens.h"
 #include "..\util\au_random.h"
 #include "dbklib\algs.h"
-#include "..\util\au_algs_math.h"  // aprx_eq() in score()
+#include "dbklib\math.h"
+#include "dbklib\algs.h"
 #include <vector>
 #include <numeric>  // std::iota() to generate scdpool
 #include <cmath>  // std::abs() (not in <numeric>)

@@ -1,10 +1,7 @@
 #include "frq_t.h"
 #include "cent_oct_t.h"
-#include "..\util\au_algs_math.h"
-//#include "..\util\au_util.h" // bsprintf()
+#include "dbklib\math.h"
 #include <string>
-//#include <cmath>  // pow(), log2()
-//#include <cstdlib> // div()... not in <cmath>
 #include <exception>
 
 // Static members

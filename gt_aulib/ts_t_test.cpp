@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 #include "..\aulib\types\ts_t.h"
 #include "..\aulib\types\beat_bar_t.h"
-#include "..\aulib\util\au_algs_math.h"
+#include "dbklib\math.h"
 #include <vector>
 
 //

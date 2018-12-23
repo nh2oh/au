@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include "..\aulib\util\au_algs_math.h"  // transpose()
+#include "dbklib\math.h"  // transpose()
 #include "..\aulib\types\beat_bar_t.h"
 #include "..\aulib\types\nv_t.h"
 #include "..\aulib\types\ts_t.h"

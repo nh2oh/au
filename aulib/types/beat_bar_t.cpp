@@ -1,5 +1,5 @@
 #include "beat_bar_t.h"
-#include "..\util\au_algs_math.h"  // aprx_eq()
+#include "dbklib\math.h"
 #include "..\util\au_util.h"  // bsprintf() for  *.print()
 #include <string>
 #include <chrono>

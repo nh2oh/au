@@ -1,6 +1,6 @@
 #include "nv_t.h"
 #include "../util/au_util.h"
-#include "../util/au_algs_math.h"
+#include "dbklib\math.h"
 #include <string>
 #include <vector>
 #include <cmath>  // std::pow(), std::log2, std::round

@@ -2,7 +2,7 @@
 #include "..\util\au_util.h"
 #include "..\util\au_error.h"
 #include "dbklib\algs.h"
-#include "..\util\au_algs_math.h"
+#include "dbklib\math.h"
 #include "..\types\line_t.h" // for notefile2line()
 #include "..\types\scd_t.h" // for notefile2line()
 #include "..\types\ts_t.h" // for notefile2line()

@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include "..\aulib\util\au_algs_math.h"
+#include "dbklib\math.h"
 #include "..\aulib\types\teejee.h"
 #include <vector>
 

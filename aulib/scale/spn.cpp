@@ -1,6 +1,6 @@
 #include "spn.h"
 #include "scale.h"  // n_eqt(), etc
-#include "..\util\au_algs_math.h"  // aprx_int()
+#include "dbklib\math.h"  // aprx_int()
 #include "..\util\au_util.h"  // bsprintf()
 #include "..\types\frq_t.h"
 #include "..\types\ntl_t.h"
