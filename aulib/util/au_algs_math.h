@@ -68,66 +68,6 @@ bool is_mersenne(T a, int ulp=4) {
 	return aprx_int(std::log2(a+1),ulp);
 };
 
-// subject-to-round, step
-template<typename T> T roundquant(T const&, T const&);
-
-// subject-to-round, step
-template<typename T>
-T roundquant(T const& subject, T const& step) {
-	auto n = std::round((subject/step));
-	return std::abs(n)*step;
-};
-
-
-// distance; always >= 0
-template<typename T> T dist(T const&, T const&);
-
-// distance; always >= 0
-template<typename T>
-T dist(T const& a, T const& b) {
-	if (a < b) {
-		return (b-a);
-	}
-	return (a-b);
-};
-
-
-// subject, set
-template<typename T> T nearest(T const&, std::vector<T> const&);
-
-// subject, set
-template<typename T>
-T nearest(T const& subject, std::vector<T> const& set) {
-	T nearest_elem = set[0];
-	T d_nearest = dist(subject,set[0]);
-	for (int i=0; i<set.size(); ++i) {
-		auto d = dist(subject,set[i]);
-		if (d < d_nearest) {
-			nearest_elem = set[i];
-			d_nearest = d;
-		}
-	}
-	return nearest_elem;
-};
-
-// subject, set
-template<typename T> int nearest_idx(T const&, std::vector<T> const&);
-
-// subject, set
-template<typename T>
-int nearest_idx(T const& subject, std::vector<T> const& set) {
-	int nearest_elem_idx = 0;
-	T d_nearest = dist(subject,set[nearest_elem_idx]);
-	for (int i=0; i<set.size(); ++i) {
-		auto d = dist(subject,set[i]);
-		if (d < d_nearest) {
-			nearest_elem_idx = i;
-			d_nearest = d;
-		}
-	}
-	return nearest_elem_idx;
-};
-
 
 template <typename T>
 std::vector<std::vector<T>> transpose(const std::vector<std::vector<T>>& m) {
