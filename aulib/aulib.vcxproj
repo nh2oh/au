@@ -36,7 +36,6 @@
     <ClCompile Include="types\teejee.cpp" />
     <ClCompile Include="types\ts_t.cpp" />
     <ClCompile Include="types\ts_t_uih.cpp" />
-    <ClCompile Include="util\au_algs_math.cpp" />
     <ClCompile Include="util\au_error.cpp" />
     <ClCompile Include="util\au_frac.cpp" />
     <ClCompile Include="util\au_meta.cpp" />
