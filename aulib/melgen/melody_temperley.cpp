@@ -2,7 +2,7 @@
 #include "randmel_gens.h"
 #include "..\scale\spn.h"
 #include "..\types\ntl_t.h"
-#include "..\util\au_random.h"
+#include "dbklib\stats.h"
 #include "dbklib\math.h"
 #include <vector>
 #include <cmath>  // std::round()

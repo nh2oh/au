@@ -58,12 +58,18 @@ std::vector<scd_t> melody_a(ma_params p) {
 			}
 			s += std::abs(curr_delta-p.optimstep)*p.sc_stepsize;
 		}
-		auto uqs = unique_n(m);
+
+		auto mcpy = m;
+		std::sort(mcpy.begin(),mcpy.end());
+		auto last = std::unique(mcpy.begin(),mcpy.end());
+		auto n_rptd_nts = last - mcpy.begin();
+		s += (p.sc_rptnts)*static_cast<int>(n_rptd_nts);
+		/*auto uqs = unique_n(m);
 		for (const auto& e : uqs) {
 			if (e.count > 1) {
 				s += (e.count-1)*p.sc_rptnts;
 			}
-		}
+		}*/
 		return s;
 	};
 

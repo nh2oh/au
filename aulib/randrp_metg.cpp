@@ -2,9 +2,8 @@
 #include "types/beat_bar_t.h"
 #include "types/metg_t.h"
 #include "types/rp_t.h"
-#include "util/au_random.h"
+#include "dbklib\stats.h"
 #include "util/au_util.h"
-//#include "..\util\au_algs.h"
 #include "dbklib\algs.h"
 #include <vector>
 #include <algorithm> // std::max()

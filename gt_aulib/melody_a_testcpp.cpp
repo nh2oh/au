@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 #include "..\aulib\melgen\randmel_gens.h"
 #include "..\aulib\types\scd_t.h"
-#include "..\aulib\util\au_random.h"
+#include "dbklib\stats.h"
 #include <random>
 
 // ...
