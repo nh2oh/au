@@ -1,5 +1,4 @@
 #include "scd_t.h"
-#include "..\util\au_error.h"
 #include "..\util\au_util.h"
 #include <string>
 #include <cmath>  // floor()

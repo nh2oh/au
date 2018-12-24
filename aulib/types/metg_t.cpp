@@ -4,7 +4,6 @@
 #include "beat_bar_t.h"
 #include "rp_t.h"
 #include "teejee.h"
-#include "..\util\au_error.h"
 #include "..\util\au_random.h"
 #include "dbklib\math.h"
 #include "dbklib\algs.h"
@@ -14,6 +13,7 @@
 #include <iostream>
 #include <algorithm>
 #include <numeric> // lcm, gcd, accumulate() for summing prob vectors
+#include <exception>
 
 
 // Constructor from an rp_t
@@ -28,7 +28,9 @@ tmetg_t::tmetg_t(ts_t ts_in, rp_t rp_in) {
 	ksum<beat_t> curr_beat = {}; int curr_step = 0;
 	for (const auto& e : vdt) {
 		teejee::nv_ph curr_nvph {e,duration(m_tg.ts(),curr_beat.value)};
-		au_assert(m_tg.onset_allowed_at(curr_nvph,curr_beat.value),"what");
+		if (!m_tg.onset_allowed_at(curr_nvph,curr_beat.value)) {
+			std::abort();
+		}
 		auto r = nvph2level(curr_nvph);
 		m_pg[curr_step][r] = 1.0;
 		curr_step += level2stride(r);
@@ -43,7 +45,9 @@ tmetg_t::tmetg_t(ts_t ts_in, rp_t rp_in) {
 // TODO:  This should take an options type-arg to set if bar-spanning elements 
 // should be allowed.  
 tmetg_t::tmetg_t(ts_t ts_in, std::vector<d_t> nvs_in, std::vector<beat_t> ph_in) {
-	au_assert(ph_in.size()==nvs_in.size(),"ph_in.size() != nv_ts_in.size()");
+	if (ph_in.size()!=nvs_in.size()) {
+		std::abort();
+	}
 
 	m_tg = teejee {ts_in,nvs_in,ph_in};
 	m_btstart = 0_bt;
@@ -54,7 +58,9 @@ tmetg_t::tmetg_t(ts_t ts_in, std::vector<d_t> nvs_in, std::vector<beat_t> ph_in)
 }
 
 tmetg_t::tmetg_t(ts_t ts_in, std::vector<teejee::nv_ph> nvph) {
-	au_assert(nvph.size()>0,"nvph.size() < 1");
+	if (nvph.size()<=0) {
+		std::abort();
+	}
 
 	m_tg = teejee {ts_in,nvph};
 	m_btstart = 0_bt;
@@ -79,22 +85,25 @@ tmetg_t::tmetg_t(teejee tg) {
 			pg[c][nvph2level(curr_allowed_lvls[r])] = 1.0/curr_allowed_lvls.size();
 		}
 	}
-	au_assert(!(internal_zero_pointers(pg) || internal_orphans(pg)),
-		"No internal zero-pointers or orphans.");
+	if (internal_zero_pointers(pg) || internal_orphans(pg)) {
+		std::abort();
+	}
+
 	m_pg = pg;
 	m_f_pg_extends=pg_extends(m_pg);
 }
 
 // Constructor from a manually-specified pg
-tmetg_t::tmetg_t(ts_t ts, std::vector<teejee::nv_ph> nvph, 
-	std::vector<std::vector<double>> pg) {
-	au_assert(nvph.size()>0,"Need >=1 nvph"); 
-	au_assert(pg.size()>0,"Need >=1 pg col"); 
+tmetg_t::tmetg_t(ts_t ts, std::vector<teejee::nv_ph> nvph, std::vector<std::vector<double>> pg) {
+	if (nvph.size()<=0 || pg.size()<=0) {
+		std::abort();
+	}
+
 	// All cols have the same number of rows, all entries are >= 0.0
 	for (int c=0; c<pg.size(); ++c) {
-		au_assert(pg[c].size() == nvph.size());
+		if (pg[c].size() != nvph.size()) { std::abort(); }
 		for (int r=0; r<pg[c].size(); ++r) {
-			au_assert(pg[c][r]>=0.0,"All entries must be >= 0.0"); 
+			if (pg[c][r] < 0.0) { std::abort(); }
 		}
 		pg[c] = normalize_probvec(pg[c]);
 	}
@@ -102,8 +111,10 @@ tmetg_t::tmetg_t(ts_t ts, std::vector<teejee::nv_ph> nvph,
 	m_tg = teejee {ts, nvph};
 	m_btstart = 0_bt;
 
-	au_assert(!(internal_zero_pointers(pg) || internal_orphans(pg)),
-		"No internal zero-pointers or orphans.");
+	if (internal_zero_pointers(pg) || internal_orphans(pg)) {
+		std::abort();  // No internal zero-pointers or orphans allowed.
+	}
+
 	m_pg = pg;
 	m_f_pg_extends=pg_extends(m_pg);
 }
@@ -150,7 +161,10 @@ void tmetg_t::set_pg_random(int mode) {
 
 // Prevents the caller from creating zero pointers and orphans
 bool tmetg_t::set_pg(teejee::nv_ph nvph, beat_t beat, double p) {
-	au_assert(m_tg.ismember(nvph) && p>=0.0 && bt2step(beat)<m_pg.size() ,"oops");
+	if (!m_tg.ismember(nvph) || p<0.0 || bt2step(beat)>=m_pg.size()) {
+		std::abort();
+	}
+	//au_assert(m_tg.ismember(nvph) && p>=0.0 && bt2step(beat)<m_pg.size() ,"oops");
 	if (!m_tg.onset_allowed_at(nvph,beat)) {
 		return false;
 	}
@@ -177,8 +191,11 @@ bool tmetg_t::set_pg(teejee::nv_ph nvph, beat_t beat, double p) {
 // Set a whole row
 // Prevents the caller from creating zero pointers and orphans
 bool tmetg_t::set_pg(teejee::nv_ph nvph, std::vector<double> p) {
-	au_assert(m_tg.ismember(nvph) && p.size()==m_pg.size() ,"oops");
-	for (int i=0; i<p.size(); ++i) { au_assert(p[i]>=0.0); }
+	if (!m_tg.ismember(nvph) || p.size()!=m_pg.size()) {
+		std::abort();
+	}
+	//au_assert(m_tg.ismember(nvph) && p.size()==m_pg.size() ,"oops");
+	for (int i=0; i<p.size(); ++i) { if (p[i] < 0.0) { std::abort(); } }
 
 	auto r = nvph2level(nvph);
 	auto old_pg = m_pg;
@@ -464,10 +481,15 @@ bool tmetg_t::internal_orphans(const std::vector<std::vector<double>>& pg) const
 
 // Elements not aligned w/ the tg c,r
 std::vector<std::vector<int>> tmetg_t::find_illegals(const std::vector<std::vector<double>>& pg) const {
-	au_assert(pg.size()>0,"Need >=1 nvph"); 
+	if (pg.size()==0) {
+		std::abort();
+	}
 	std::vector<std::vector<int>> illegals {};
 	for (int c=0; c<pg.size(); ++c) {
-		au_assert(pg[c].size()==m_tg.levels().size(),"Each c needs m_tg.levels().size() rows");
+		if (pg[c].size()!=m_tg.levels().size()) {
+			std::abort();  // Each c needs m_tg.levels().size() rows
+		}
+
 		for (int r=0; r<pg[c].size(); ++r) {
 			if (!m_tg.onset_allowed_at(m_tg.levels()[r],step2bt(c))) {
 				illegals.push_back({c,r});
@@ -489,7 +511,9 @@ std::vector<std::vector<double>>
 tmetg_t::set_pg_length_exact(std::vector<std::vector<double>> pg, beat_t target) const {
 	// The target col must be >= pg.size()
 	auto target_col = bt2stride(target);
-	au_assert(target_col>=pg.size(),"The target col should be >= pg.size().");
+	if (target_col < pg.size()) {
+		std::abort();
+	}
 
 	bool tf_modified_pg = false;
 	for (int c=0; c<pg.size(); ++c) {
@@ -605,12 +629,21 @@ std::vector<tmetg_t> tmetg_t::factor() const {
 tmetg_t tmetg_t::slice(beat_t bt_from, beat_t bt_to) const {
 	int idx_from = bt2step(bt_from);
 	int idx_to = bt2step(bt_to);
-	au_assert(aprx_int((bt_from-m_btstart)/m_tg.gres()),
-		"slice(): !aprx_int(bt_from-m_btstart)/m_tg.gres()");
-	au_assert(aprx_int((bt_to-m_btstart)/m_tg.gres()),
-		"slice(): !aprx_int(bt_to-m_btstart)/m_tg.gres()");
+	if (!aprx_int((bt_from-m_btstart)/m_tg.gres())) {
+		std::abort();
+	}
+	if (!aprx_int((bt_to-m_btstart)/m_tg.gres())) {
+		std::abort();
+	}
+	//au_assert(aprx_int((bt_from-m_btstart)/m_tg.gres()),
+	//	"slice(): !aprx_int(bt_from-m_btstart)/m_tg.gres()");
+	//au_assert(aprx_int((bt_to-m_btstart)/m_tg.gres()),
+	//	"slice(): !aprx_int(bt_to-m_btstart)/m_tg.gres()");
 	if (idx_from >= m_pg.size() || idx_from < 0 || idx_to > m_pg.size() || idx_to < 0) {
-		au_assert(m_f_pg_extends,"!m_f_pg_extends but range exceeds m_pg");
+		if (!m_f_pg_extends) {
+			std::abort();  // !m_f_pg_extends but range exceeds m_pg
+		}
+		//au_assert(m_f_pg_extends,"!m_f_pg_extends but range exceeds m_pg");
 		// extend_pg() does not check m_f_pg_extends
 	}
 
@@ -651,7 +684,11 @@ tmetg_t::extend_pg(std::vector<std::vector<double>> pg, beat_t from, beat_t to) 
 		idx_from = std::abs(idx_from)%pg.size();
 		idx_to = idx_from+nsteps;
 	}
-	au_assert((idx_from >= 0 && idx_to >= idx_from),"!(idx_from >= 0 && idx_to >= idx_from)");
+
+	if (!(idx_from >= 0 && idx_to >= idx_from)) {
+		std::abort();
+	}
+	//au_assert((idx_from >= 0 && idx_to >= idx_from),"!(idx_from >= 0 && idx_to >= idx_from)");
 
 	std::vector<std::vector<double>> new_pg {};
 	for (size_t c=idx_from; c<idx_to; ++c) {

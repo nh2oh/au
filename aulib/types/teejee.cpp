@@ -5,13 +5,12 @@
 #include "rp_t.h"
 #include "dbklib\math.h"
 #include "dbklib\algs.h"
-#include "..\util\au_error.h"
 #include "..\util\au_util.h"
 #include <vector>
 #include <string>
 #include <algorithm>
 #include <numeric>
-
+#include <exception>
 
 //
 //-----------------------------------------------------------------------------
@@ -69,7 +68,7 @@ bool teejee::nv_ph::operator!=(const teejee::nv_ph& rhs) const {
 //
 teejee::teejee(const ts_t& ts, const std::vector<d_t>& nv, 
 		const std::vector<beat_t>& ph) {
-	au_assert(ph.size()==nv.size(), "ph.size() != nv.size()");
+	if (ph.size()!=nv.size()) { std::abort(); }
 	
 	m_ts = ts;
 

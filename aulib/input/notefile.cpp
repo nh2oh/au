@@ -1,6 +1,5 @@
 #include "notefile.h"
 #include "..\util\au_util.h"
-#include "..\util\au_error.h"
 #include "dbklib\algs.h"
 #include "dbklib\math.h"
 #include "..\types\line_t.h" // for notefile2line()
@@ -14,6 +13,8 @@
 #include <regex>
 #include <filesystem>
 #include <chrono>
+#include <exception>
+
 
 bool notefileline::operator==(const notefileline& rhs) const {
 	return (file_line_num == rhs.file_line_num &&
@@ -135,8 +136,9 @@ bool write_notefile(const notefile& nf) {
 		if (!nt_lines_finished && !nnt_lines_finished) {
 			// Check that there is not an entry for curr_ln in _both_ 
 			// note_lines and nonnote_lines
-			au_assert(nf.lines[i_lines].file_line_num != 
-				nf.nonnote_lines[i_nntlines].file_line_num, "double what");
+			if (nf.lines[i_lines].file_line_num == nf.nonnote_lines[i_nntlines].file_line_num) {
+				std::abort();
+			}
 		}
 
 		if (!nt_lines_finished && nf.lines[i_lines].file_line_num == curr_ln) {
@@ -149,7 +151,7 @@ bool write_notefile(const notefile& nf) {
 			++i_nntlines;
 		} else {
 			// curr_ln does not appear in either nf.lines or nf_nonnote_lines
-			au_assert(false,"curr_ln does not appear in either nf.lines or nf_nonnote_lines");
+			std::abort();
 			// Dying here ensures that at every loop iteration one of i_lines, i_nntlines
 			// is incremented and that curr_ln actually refers to the phsyical line number 
 			// in the output file.  

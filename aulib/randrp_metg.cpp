@@ -3,14 +3,13 @@
 #include "types/metg_t.h"
 #include "types/rp_t.h"
 #include "util/au_random.h"
-#include "util/au_error.h"
 #include "util/au_util.h"
 //#include "..\util\au_algs.h"
 #include "dbklib\algs.h"
 #include <vector>
 #include <algorithm> // std::max()
 #include <numeric> // iota()
-
+#include <exception>
 
 // TODO:  Assumes the pg can be extended
 // TODO:  Need to take a more careful look at the method used for dropping
@@ -22,7 +21,9 @@ rp_t randrp_metg(tmetg_t mg, int nnts, bar_t nbars) {
 		// Extends, truncates, or extends /and/ truncates the pg such that all rps will be
 		// exactly nbars.  
 		bool success_setting_length = mgexact.set_length_exact(nbeat(mg.ts(),nbars));
-		au_assert(success_setting_length,"Couldn't set the length");
+		if (!success_setting_length) {
+			std::abort();
+		}
 	}
 	auto mgsplit = mgexact.factor();
 
@@ -99,9 +100,12 @@ rp_t randrp_metg(tmetg_t mg, int nnts, bar_t nbars) {
 			min_nnts += rps[i].min_nnts;
 			max_nnts += rps[i].max_nnts;
 		}
-		au_assert((max_nnts>=nnts && min_nnts<=nnts),
-			"Impossible:  No way to do "+std::to_string(nnts)+" notes in " + 
-			nbars.print() + " bars.");
+		if (max_nnts<nnts || min_nnts>nnts) {
+			std::abort();
+		}
+		//au_assert((max_nnts>=nnts && min_nnts<=nnts),
+		//	"Impossible:  No way to do "+std::to_string(nnts)+" notes in " + 
+		//	nbars.print() + " bars.");
 	} else if (nbars == 0_br && nnts > 0) {  // nbars is unconstrained
 		// If we're unlucky enough to choose the rp w/the smallest nnts at each
 		// step, how many steps would it take to satisfy the nnts constraint?
@@ -111,8 +115,8 @@ rp_t randrp_metg(tmetg_t mg, int nnts, bar_t nbars) {
 			++max_required_n_appends;
 		}
 		if (max_required_n_appends == 1 && cum_nnts > nnts) {
-			au_assert(false,
-				"The rp w/the smallest nnts in the first segment of the mg is < nnts.");
+			std::abort();
+			//  The rp w/the smallest nnts in the first segment of the mg is < nnts
 		}
 		size_t init_n_uq = idx_uqmgsplit.size();
 		for (int i=idx_uqmgsplit.size(); i<max_required_n_appends; ++i) {

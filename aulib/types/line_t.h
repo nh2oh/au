@@ -4,6 +4,8 @@
 #include "rp_t.h"
 #include <vector>
 #include <string>
+#include <exception>
+
 
 //
 // line_t<T>
@@ -39,13 +41,13 @@ public:
 	line_t()=default;
 
 	explicit line_t(ts_t ts, std::vector<musel_t<T>> mes, std::vector<d_t> rp) {
-		au_assert(mes.size() == rp.size(), "must have same numel() rp and de");
+		if (mes.size() != rp.size()) { std::abort(); }
 		m_mes = mes;
 		m_rp = rp_t {ts,rp};
 	};
 
 	explicit line_t(std::vector<T> nts, rp_t rp) {
-		au_assert(rp.nelems() == nts.size(),"oops");
+		if (rp.nelems() != nts.size()) { std::abort(); }
 		m_rp = rp;
 		for (auto e : nts) {
 			m_mes.push_back({e,false});
@@ -61,7 +63,7 @@ public:
 		m_mes.push_back(me);
 	};
 	void push_back(std::vector<musel_t<T>> mes, std::vector<d_t> rp) {
-		au_assert(mes.size() == rp.size(), "must have same numel() rp and de");
+		if (mes.size() != rp.size()) { std::abort(); }
 		for (int i=0; i<mes.size(); ++i) {
 			m_mes.push_back(mes[i]);
 			m_rp.push_back(rp[i]);

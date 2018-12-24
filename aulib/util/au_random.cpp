@@ -1,5 +1,4 @@
 #include "au_random.h"
-#include "au_error.h"
 #include "au_util.h"
 #include <vector>
 #include <random>
@@ -94,9 +93,9 @@ std::vector<double> normalize_probvec(const std::vector<double>& p) {
 		if (e < 0) { std::abort(); }
 		sum_p += e;
 	}
-	if (sum_p == 0.0) { std::abort(); }
-
+	
 	std::vector<double> result = p;
+	if (sum_p == 0.0) { return result; }  // means all elements of p == 0
 	std::for_each(result.begin(),result.end(),[sum_p](double& e){ e /= sum_p; });
 
 	return result;
@@ -111,11 +110,14 @@ std::vector<double> normalize_probvec(const std::vector<double>& p) {
 //
 //  TODO:  Rename to... randidx? draw[_from_pdf]?
 //
-std::vector<size_t> randset(int const& n, std::vector<double> const& p,
-	std::mt19937& re) {
-	au_assert(p.size()>0, "p>0");
-	au_assert(!std::any_of(p.begin(),p.end(),[](double const& e){ return e<0; }),
-		"all elements of p must be >= 0");
+std::vector<size_t> randset(int n, const std::vector<double>& p, std::mt19937& re) {
+	if (p.size() == 0 || std::any_of(p.begin(),p.end(),[](double const& e){ return e<0; })) { 
+		std::abort();
+	}
+	
+	//au_assert(p.size()>0, "p>0");
+	//au_assert(!std::any_of(p.begin(),p.end(),[](double const& e){ return e<0; }),
+	//	"all elements of p must be >= 0");
 
 	auto cp = std::vector<double>(p.size(), 0.0);  // will hold the cumulative
 												   // probability

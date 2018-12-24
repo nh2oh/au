@@ -3,13 +3,13 @@
 #include "beat_bar_t.h"
 #include "ts_t.h"
 #include "..\util\au_util.h"  // bsprintf()
-#include "..\util\au_error.h"  // bsprintf()
 #include <string>
 #include <vector>
 #include <cmath> // pow()
 #include <algorithm> // find_if(), copy()
 #include <chrono>
 #include <map>
+#include <exception>
 
 
 
@@ -172,7 +172,7 @@ std::vector<d_t> rp_t::to_duration_seq() const {
 }
 
 d_t rp_t::operator[](int i) const {
-	au_assert(i<=m_usridx,"out of range");
+	if (i>m_usridx) { std::abort(); }  // out of range
 	
 	std::vector<rp_t::vgroup> e_i {};
 	auto junk = std::copy_if(m_e.begin(),m_e.end(),std::back_inserter(e_i),
