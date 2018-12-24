@@ -1,5 +1,4 @@
 #include "notefile.h"
-#include "..\util\au_util.h"
 #include "dbklib\algs.h"
 #include "dbklib\math.h"
 #include "..\types\line_t.h" // for notefile2line()
@@ -7,6 +6,7 @@
 #include "..\types\ts_t.h" // for notefile2line()
 #include "..\types\rp_t.h" // for notefile2line()
 #include "..\types\beat_bar_t.h"  // tempo_t for notefile2line()
+#include "dbklib\tinyformat_dbk.h"
 #include <vector>
 #include <string>
 #include <fstream>
@@ -64,27 +64,26 @@ notefile read_notefile(const std::string& filename) {
 	std::vector<notefileline> nf_lines {};
 	std::vector<nonnotefileline> nf_nnt_lines {};  // "non-note lines"
 	std::vector<int> error_lines {};
-	std::regex rx("Note\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)");
+	std::regex rx {"Note\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)"};
+	std::smatch rx_matches {};
 	std::string line {}; line.reserve(100);  // Expect ~25 chars/line
 	
 	int fline_num = 0;
 	while (getline(f,line)) {
 		++fline_num;
-		auto o_matches = rx_match_captures(rx,line);
-		if (!o_matches) {  // Is not a "Note ontime offtime pitch\n" line
+
+		if (!std::regex_match(line,rx_matches,rx)) {  // Is not a "Note ontime offtime pitch\n" line
 			nonnotefileline curr_nnf_line {};
 			curr_nnf_line.file_line_num = fline_num;
 			curr_nnf_line.linedata = line;
 			nf_nnt_lines.push_back(curr_nnf_line);
 		} else {  // Is a "Note ontime offtime pitch\n" line
-			auto matches = *o_matches;
-		
 			notefileline curr_nf_line;
 			curr_nf_line.file_line_num = fline_num;
-			curr_nf_line.ontime = std::stod(*(matches[1]));
-			curr_nf_line.offtime = std::stod(*(matches[2]));
+			curr_nf_line.ontime = std::stod(rx_matches[1].str());
+			curr_nf_line.offtime = std::stod(rx_matches[2].str());
 			curr_nf_line.dt = curr_nf_line.offtime - curr_nf_line.ontime;
-			curr_nf_line.pitch = std::stoi(*(matches[3]));
+			curr_nf_line.pitch = std::stoi(rx_matches[3].str());
 
 			if (curr_nf_line.dt <= 0) {  // Checks for suspicious conditions...
 				error_lines.push_back(static_cast<int>(nf_lines.size()));

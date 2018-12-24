@@ -2,8 +2,6 @@
 #include <string>
 #include <cmath>  // floor() in int_suffix()
 #include <vector>
-#include <optional>
-#include <regex>
 #include <chrono>  // for wait()
 
 
@@ -32,33 +30,6 @@ std::string int_suffix(int const& int_in) {
 	return s;
 }
 
-
-std::optional<std::vector<std::optional<std::string>>> rx_match_captures(
-	std::regex const& rx, std::string const& subj) {
-	std::smatch rx_matches;
-
-	if (!std::regex_match(subj, rx_matches, rx)) {
-		return {};
-	}
-
-	std::vector<std::optional<std::string>> captures {};
-	for (int i=0; i<rx_matches.size(); ++i) {
-		std::ssub_match sub_match = rx_matches[i];
-		if (sub_match.matched) {
-			captures.push_back(sub_match.str());
-		} else {
-			captures.push_back({});
-		}
-	}
-
-	return captures;
-}
-
-std::optional<std::vector<std::optional<std::string>>> rx_match_captures(
-	std::string const& rx_exp, std::string const& subj) {
-	std::regex rx(rx_exp);
-	return rx_match_captures(rx,subj);
-}
 
 int wait() {
 	std::chrono::microseconds wait_time {1};

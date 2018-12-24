@@ -1,31 +1,11 @@
 #pragma once
 #include "dbklib\tinyformat_dbk.h"
 #include <string>
-#include <optional>
 #include <vector>
-#include <regex>
 #include <array>
 
-//using namespace dbk;
-/*
-// Just a wrapper to tfm2
-template<typename... Args>
-std::string bsprintf(const char* fmt, const Args&... args) {
-	std::ostringstream oss;
-	tfm::format(oss, fmt, args...);
-	return oss.str();
-}*/
 
 std::string int_suffix(int const&);
-
-// Specify regex as string (arg 1); function calls the std::regex
-// constructor
-std::optional<std::vector<std::optional<std::string>>> 
-	rx_match_captures(std::string const&, std::string const&);
-
-// Call the std::regex constructor yourself and pass the object in
-std::optional<std::vector<std::optional<std::string>>> 
-	rx_match_captures(std::regex const&, std::string const&);
 
 
 // Waits a v. short amount of time... sometimes useful for debugging
