@@ -36,7 +36,6 @@
     <ClCompile Include="types\teejee.cpp" />
     <ClCompile Include="types\ts_t.cpp" />
     <ClCompile Include="types\ts_t_uih.cpp" />
-    <ClCompile Include="util\au_frac.cpp" />
     <ClCompile Include="util\au_meta.cpp" />
     <ClCompile Include="util\au_random.cpp" />
     <ClCompile Include="util\au_util.cpp" />
@@ -73,7 +72,6 @@
     <ClInclude Include="types\types_all.h" />
     <ClInclude Include="uih.h" />
     <ClInclude Include="uih2.h" />
-    <ClInclude Include="util\au_frac.h" />
     <ClInclude Include="util\au_meta.h" />
     <ClInclude Include="util\au_random.h" />
     <ClInclude Include="util\au_util.h" />

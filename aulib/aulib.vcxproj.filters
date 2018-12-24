@@ -54,9 +54,6 @@
     <ClCompile Include="util\au_random.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="util\au_frac.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="types\cent_oct_t.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -147,9 +144,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="util\au_random.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="util\au_frac.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="types\cent_oct_t.h">
