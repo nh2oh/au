@@ -46,7 +46,7 @@ std::vector<double> normpdf(const std::vector<T>& x, T u, T s) {
 	return p;
 }
 
-
+/*
 std::vector<size_t> randset(int const&, const std::vector<double>&, std::mt19937&);
 
 template<typename T>
@@ -73,7 +73,7 @@ std::vector<T> urandelems(const std::vector<T>& s, int n, std::mt19937& re) {
 	}
 
 	return res;
-}
+}*/
 
 std::vector<double> normalize_probvec(std::vector<double>);
 

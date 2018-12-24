@@ -1,8 +1,8 @@
 #pragma once
 #include "randmel_gens.h"
 #include "..\util\au_random.h"
-#include "dbklib\algs.h"
 #include "dbklib\math.h"
+#include "dbklib\stats.h"
 #include "dbklib\algs.h"
 #include <vector>
 #include <numeric>  // std::iota() to generate scdpool
@@ -79,7 +79,9 @@ std::vector<scd_t> melody_a(ma_params p) {
 	std::uniform_int_distribution<size_t> rn_midx {0,static_cast<size_t>(p.nnts-1)};
 
 	// Completely random initial melody
-	std::vector<scd_t> m = urandelems(scdpool,p.nnts,re);
+	//std::vector<scd_t> m = urandelems(scdpool,p.nnts,re);
+	std::vector<scd_t> m {};  m.reserve(p.nnts);
+	rsample(scdpool.begin(),scdpool.end(),m,p.nnts,re);
 
 	// Evolution
 	double s = score(m);
