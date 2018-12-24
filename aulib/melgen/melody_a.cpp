@@ -80,8 +80,8 @@ std::vector<scd_t> melody_a(ma_params p) {
 
 	// Completely random initial melody
 	//std::vector<scd_t> m = urandelems(scdpool,p.nnts,re);
-	std::vector<scd_t> m {};  m.reserve(p.nnts);
-	rsample(scdpool.begin(),scdpool.end(),m,p.nnts,re);
+	std::vector<scd_t> m(p.nnts,scd_t{0});//  m.reserve(p.nnts);
+	randfill(scdpool.begin(),scdpool.end(),m.begin(),m.end(),rn_spidx,re);
 
 	// Evolution
 	double s = score(m);

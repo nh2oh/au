@@ -14,6 +14,8 @@
 #include <algorithm>
 #include <numeric> // lcm, gcd, accumulate() for summing prob vectors
 #include <exception>
+#include <random>
+
 
 
 // Constructor from an rp_t
@@ -566,9 +568,13 @@ std::vector<d_t> tmetg_t::draw() const {
 	std::vector<d_t> rnts {};
 	int curr_step=0;
 	while (curr_step<m_pg.size()) {
-		auto ridx = randset(1,m_pg[curr_step],re);
-		rnts.push_back(levels[ridx[0]].nv);
-		curr_step += level2stride(ridx[0]);
+		std::discrete_distribution rd {m_pg[curr_step].begin(),m_pg[curr_step].end()};
+		auto ridx = rd(re);
+		rnts.push_back(levels[ridx].nv);
+		curr_step += level2stride(ridx);
+		//auto ridx = r_andset(1,m_pg[curr_step],re);
+		//rnts.push_back(levels[ridx[0]].nv);
+		//curr_step += level2stride(ridx[0]);
 	}
 	return rnts;
 }

@@ -5,6 +5,7 @@
 #include "..\util\au_random.h"
 #include "dbklib\math.h"
 #include <vector>
+#include <cmath>  // std::round()
 
 //
 // Melody generator function using the method implied by Temperley Chapter 
@@ -42,8 +43,11 @@ std::vector<note_t> melody_temperley(const melody_temperley_params& p) {
 	// For the default-constructed spn12tet, "Middle C" => 261.63 Hz => scd 48.
 	// scd 0 is C(0)
 	//
-	std::vector<double> CP = normpdf(scdpool,p.CP_mean,p.CP_stdev);
-	int central_scd {scdpool[randset(1,CP,re)[0]]};
+	
+	std::normal_distribution rd_cp {p.CP_mean,p.CP_stdev};
+	int central_scd {static_cast<int>(std::round(rd_cp(re)))};
+	//std::vector<double> CP = normpdf(scdpool,p.CP_mean,p.CP_stdev);
+	//int central_scd {scdpool[r_andset(1,CP,re)[0]]};
 
 	// The Key Profile (KP)
 	// 
@@ -57,7 +61,7 @@ std::vector<note_t> melody_temperley(const melody_temperley_params& p) {
 	}  // TODO:  Why are these different from the ks_key() params?
 
 	// The elements of KP must "align" correctly with the elements of scdpool.  For 
-	// example,  if key_scd == 4 (corresponding to scdpool[4]), KP[4] needs to 
+	// example, if key_scd == 4 (corresponding to scdpool[4]), KP[4] needs to 
 	// be == KP_base[0].  If the caller's key_rscd is 1, KP[1] == KP_ base[0], 
 	// KP[2] == KP_ base[1], ...  KP[key_rscd+12n] == KP_base[0] for all n.  
 	//
@@ -72,7 +76,9 @@ std::vector<note_t> melody_temperley(const melody_temperley_params& p) {
 	std::vector<double> KP;  KP.reserve(scdpool.size());
 	for (int i=0; i<scdpool.size(); ++i) {
 		KP.push_back(KP_base[(i-key_rscd+12)%12]);  // Same idxing as in ks_key()
+		// TODO:  Replace w/ std::rotate()?  something similar?
 	}
+	//std::discrete_distribution rd_kp {KP.begin(),KP.end()};
 
 	// The Range Profile (RP)
 	//
@@ -80,17 +86,24 @@ std::vector<note_t> melody_temperley(const melody_temperley_params& p) {
 	//
     std::vector<double> RP = normpdf(scdpool,central_scd,p.RP_stdev);
 	std::vector<double> RPKP = vprod(RP,KP);
-	RPKP = normalize_probvec(RPKP);
+	//RPKP = normalize_probvec(RPKP);
 	
+	std::discrete_distribution rd_rpkp {RPKP.begin(),RPKP.end()};
+
+	// TODO:  lambda to fill curr_PP
+
 	std::vector<note_t> melody {};  melody.reserve(p.nnts);
-	int newest_scd = scdpool[randset(1,RPKP,re)[0]];
+	int newest_scd = scdpool[rd_rpkp(re)];
+	//int newest_scd = scdpool[r_andset(1,RPKP,re)[0]];
 	melody.push_back(sc[newest_scd]);
 	for (int i=1; i<p.nnts; ++i) {
 		auto curr_PP = normpdf(scdpool,newest_scd,p.PP_stdev); // Mean is the previous pitch
 
 		std::vector<double> curr_RPKPPP = vprod(RPKP,curr_PP);
-		curr_RPKPPP = normalize_probvec(curr_RPKPPP);
-		newest_scd = scdpool[randset(1,curr_RPKPPP,re)[0]];
+		//curr_RPKPPP = normalize_probvec(curr_RPKPPP);
+		std::discrete_distribution rd_rpkppp {curr_RPKPPP.begin(),curr_RPKPPP.end()};
+		newest_scd = std::round(rd_rpkppp(re));
+		//newest_scd = scdpool[r_andset(1,curr_RPKPPP,re)[0]];
 		melody.push_back(sc[newest_scd]);
 	}
 

@@ -110,6 +110,7 @@ std::vector<double> normalize_probvec(const std::vector<double>& p) {
 //
 //  TODO:  Rename to... randidx? draw[_from_pdf]?
 //
+/*
 std::vector<size_t> randset(int n, const std::vector<double>& p, std::mt19937& re) {
 	if (p.size() == 0 || std::any_of(p.begin(),p.end(),[](double const& e){ return e<0; })) { 
 		std::abort();
@@ -148,7 +149,7 @@ std::vector<size_t> randset(int n, const std::vector<double>& p, std::mt19937& r
 	}
 	return ridx;
 }
-
+*/
 
 
 

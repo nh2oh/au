@@ -19,7 +19,7 @@ std::vector<double> urandd(int,double,double,std::mt19937&);
 
 std::vector<int> nrandi(double,double,int);  // mean, var, number-to-generate
 
-
+// keep
 // Normal probability _density_ evaluated at x
 // Converts all the T's to double's ... good?  Force the user to
 // do this?  ???
@@ -36,6 +36,7 @@ double normprob(T u, T s, T x) {
 	return pre*std::exp(e);
 }
 
+// keep
 // Normal probability _density_ evaluated at each value of x.
 template<typename T>
 std::vector<double> normpdf(const std::vector<T>& x, T u, T s) {
@@ -47,7 +48,7 @@ std::vector<double> normpdf(const std::vector<T>& x, T u, T s) {
 }
 
 
-std::vector<size_t> randset(int, const std::vector<double>&, std::mt19937&);
+//std::vector<size_t> randset(int, const std::vector<double>&, std::mt19937&);
 /*
 template<typename T>
 std::vector<T> randelems(const std::vector<T>& s, int n, 

@@ -10,6 +10,7 @@
 #include <algorithm> // std::max()
 #include <numeric> // iota()
 #include <exception>
+#include <random>
 
 // TODO:  Assumes the pg can be extended
 // TODO:  Need to take a more careful look at the method used for dropping
@@ -191,12 +192,19 @@ rp_t randrp_metg(tmetg_t mg, int nnts, bar_t nbars) {
 		// curr_rp, it will not overshoot nnts or nbars, nor will it put us in a
 		// situation where subsequent iterations will be forced to exceed nnts, or 
 		// unable to meet nnts
-		auto ridx = randset(1,probs_keep,re);
-		for (const auto& e : rps[curr_rpset_idx].rpp[idx_keep[ridx[0]]].rp) {
+		std::discrete_distribution rd {probs_keep.begin(),probs_keep.end()};
+		auto ridx = rd(re);
+		for (const auto& e : rps[curr_rpset_idx].rpp[idx_keep[ridx]].rp) {
 			curr_rp.push_back(e);
 		}
+
+		//auto ridx = r_andset(1,probs_keep,re);
+		//for (const auto& e : rps[curr_rpset_idx].rpp[idx_keep[ridx[0]]].rp) {
+		//	curr_rp.push_back(e);
+		//}
 		curr_nbars += rps[curr_rpset_idx].nbars;
-		curr_nnts += rps[curr_rpset_idx].rpp[idx_keep[ridx[0]]].n;
+		//curr_nnts += rps[curr_rpset_idx].rpp[idx_keep[ridx[0]]].n;
+		curr_nnts += rps[curr_rpset_idx].rpp[idx_keep[ridx]].n;
 		++n_appends_curr_rp;
 
 		if (nnts > 0 && nbars > 0_br) {
