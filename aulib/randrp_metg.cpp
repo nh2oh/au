@@ -198,12 +198,7 @@ rp_t randrp_metg(tmetg_t mg, int nnts, bar_t nbars) {
 			curr_rp.push_back(e);
 		}
 
-		//auto ridx = r_andset(1,probs_keep,re);
-		//for (const auto& e : rps[curr_rpset_idx].rpp[idx_keep[ridx[0]]].rp) {
-		//	curr_rp.push_back(e);
-		//}
 		curr_nbars += rps[curr_rpset_idx].nbars;
-		//curr_nnts += rps[curr_rpset_idx].rpp[idx_keep[ridx[0]]].n;
 		curr_nnts += rps[curr_rpset_idx].rpp[idx_keep[ridx]].n;
 		++n_appends_curr_rp;
 

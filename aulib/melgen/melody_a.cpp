@@ -79,8 +79,7 @@ std::vector<scd_t> melody_a(ma_params p) {
 	std::uniform_int_distribution<size_t> rn_midx {0,static_cast<size_t>(p.nnts-1)};
 
 	// Completely random initial melody
-	//std::vector<scd_t> m = urandelems(scdpool,p.nnts,re);
-	std::vector<scd_t> m(p.nnts,scd_t{0});//  m.reserve(p.nnts);
+	std::vector<scd_t> m(p.nnts,scd_t{0});
 	randfill(scdpool.begin(),scdpool.end(),m.begin(),m.end(),rn_spidx,re);
 
 	// Evolution

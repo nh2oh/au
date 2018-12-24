@@ -47,35 +47,6 @@ std::vector<double> normpdf(const std::vector<T>& x, T u, T s) {
 	return p;
 }
 
-
-//std::vector<size_t> randset(int, const std::vector<double>&, std::mt19937&);
-/*
-template<typename T>
-std::vector<T> randelems(const std::vector<T>& s, int n, 
-	const std::vector<double>& p, std::mt19937& re) {
-	auto ridxs = randset(n,p,re);  // "random indices"
-
-	std::vector<T> res {}; // "random elements"
-	for (int i=0; i<ridxs.size(); ++i) {
-		res.push_back(s[ridxs[i]]);
-	}
-
-	return res;
-}
-
-// n random elements from s chosen w/a uniform probability dist
-template<typename T>
-std::vector<T> urandelems(const std::vector<T>& s, int n, std::mt19937& re) {
-	auto ridxs = urandi(n,0,s.size()-1,re);  // NB:  size()-1
-
-	std::vector<T> res(n,T{}); // "result"
-	for (int i=0; i<ridxs.size(); ++i) {
-		res[i] = s[ridxs[i]];
-	}
-
-	return res;
-}*/
-
 std::vector<double> normalize_probvec(const std::vector<double>&);
 
 

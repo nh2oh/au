@@ -13,14 +13,12 @@ struct melody_temperley_params {
 	ntl_t key_ntl {"C"};
 	int nnts {100};
 	double p_major {0.88};
-	int sz_scdpool {120};  // scd's on:  [0 sz_scdpool)
+	int sz_scdpool {120};  // scd's on:  [0, sz_scdpool)
 	double CP_mean {48.0};
 	double CP_stdev {13.0};
-	//int CP_mean {48};
-	//int CP_stdev {13};
-	int RP_stdev {5};
-	int PP_stdev {7};   // double PP_stdev = 7.2;
-};  //TODO:  These stdev and mean params should be doubles...
+	double RP_stdev {5};
+	double PP_stdev {7.2};
+};
 std::vector<note_t> melody_temperley(const melody_temperley_params&);
 
 // Key ntl, nnts

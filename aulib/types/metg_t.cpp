@@ -572,9 +572,6 @@ std::vector<d_t> tmetg_t::draw() const {
 		auto ridx = rd(re);
 		rnts.push_back(levels[ridx].nv);
 		curr_step += level2stride(ridx);
-		//auto ridx = r_andset(1,m_pg[curr_step],re);
-		//rnts.push_back(levels[ridx[0]].nv);
-		//curr_step += level2stride(ridx[0]);
 	}
 	return rnts;
 }

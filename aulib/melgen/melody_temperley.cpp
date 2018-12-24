@@ -26,7 +26,7 @@ std::vector<note_t> melody_temperley(const melody_temperley_params& p) {
 	spn sc {};
 	
 	// The scdpool is the "domain" of chromatic scale degrees from which the melody is drawn
-	std::vector<int> scdpool {};  scdpool.reserve(p.sz_scdpool);
+	std::vector<double> scdpool {};  scdpool.reserve(p.sz_scdpool);
 	for (int i=0; i<p.sz_scdpool; ++i) {
 		scdpool.push_back(i);
 	}
@@ -45,9 +45,7 @@ std::vector<note_t> melody_temperley(const melody_temperley_params& p) {
 	//
 	
 	std::normal_distribution rd_cp {p.CP_mean,p.CP_stdev};
-	int central_scd {static_cast<int>(std::round(rd_cp(re)))};
-	//std::vector<double> CP = normpdf(scdpool,p.CP_mean,p.CP_stdev);
-	//int central_scd {scdpool[r_andset(1,CP,re)[0]]};
+	double central_scd {std::round(rd_cp(re))};
 
 	// The Key Profile (KP)
 	// 
@@ -78,7 +76,6 @@ std::vector<note_t> melody_temperley(const melody_temperley_params& p) {
 		KP.push_back(KP_base[(i-key_rscd+12)%12]);  // Same idxing as in ks_key()
 		// TODO:  Replace w/ std::rotate()?  something similar?
 	}
-	//std::discrete_distribution rd_kp {KP.begin(),KP.end()};
 
 	// The Range Profile (RP)
 	//
@@ -86,27 +83,22 @@ std::vector<note_t> melody_temperley(const melody_temperley_params& p) {
 	//
     std::vector<double> RP = normpdf(scdpool,central_scd,p.RP_stdev);
 	std::vector<double> RPKP = vprod(RP,KP);
-	//RPKP = normalize_probvec(RPKP);
 	
 	std::discrete_distribution rd_rpkp {RPKP.begin(),RPKP.end()};
 
 	// TODO:  lambda to fill curr_PP
 
 	std::vector<note_t> melody {};  melody.reserve(p.nnts);
-	int newest_scd = scdpool[rd_rpkp(re)];
-	//int newest_scd = scdpool[r_andset(1,RPKP,re)[0]];
+	double newest_scd = scdpool[rd_rpkp(re)];
 	melody.push_back(sc[newest_scd]);
 	for (int i=1; i<p.nnts; ++i) {
-		auto curr_PP = normpdf(scdpool,newest_scd,p.PP_stdev); // Mean is the previous pitch
+		auto curr_PP = normpdf(scdpool,newest_scd,p.PP_stdev);  // Mean is the previous pitch
 
 		std::vector<double> curr_RPKPPP = vprod(RPKP,curr_PP);
-		//curr_RPKPPP = normalize_probvec(curr_RPKPPP);
 		std::discrete_distribution rd_rpkppp {curr_RPKPPP.begin(),curr_RPKPPP.end()};
 		newest_scd = std::round(rd_rpkppp(re));
-		//newest_scd = scdpool[r_andset(1,curr_RPKPPP,re)[0]];
-		melody.push_back(sc[newest_scd]);
+		melody.push_back(sc[static_cast<size_t>(newest_scd)]);
 	}
-
 
 	return melody;
 }
