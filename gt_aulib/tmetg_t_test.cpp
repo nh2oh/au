@@ -370,9 +370,22 @@ TEST(metg_t_tests, SetPgSet1) {
 	tmetg_t mg {ts,vdt,vph};
 
 	int Ntest = 100;
-	auto newp = urandd(Ntest,0,2);
-	auto btidx = urandi(Ntest,0,nbeat(tg.ts(),tg.period())/tg.gres()-1);
-	auto rowidx = urandi(Ntest,0,mg.levels().size()-1);
+	auto re = new_randeng(true);
+	std::vector<int> btidx(Ntest,0);
+	std::uniform_int_distribution rd_bt {0,static_cast<int>(std::round(nbeat(tg.ts(),tg.period())/tg.gres()-1))};
+	std::vector<double> newp(Ntest,0.0);
+	std::uniform_real_distribution rd_p {0.0,2.0};
+	std::vector<int> rowidx(Ntest,0);
+	std::uniform_int_distribution rd_rw {0,static_cast<int>(mg.levels().size()-1)};
+	for (int i=0; i<Ntest; ++i) {
+		btidx[i] = rd_bt(re);
+		newp[i] = rd_p(re);
+		rowidx[i] = rd_rw(re);
+	}
+	
+	//auto newp = urandd(Ntest,0,2);
+	//auto btidx = urandi(Ntest,0,nbeat(tg.ts(),tg.period())/tg.gres()-1);
+	//auto rowidx = urandi(Ntest,0,mg.levels().size()-1);
 	for (int i=0; i<btidx.size(); ++i) {
 		auto curr_bt = tg.gres()*btidx[i];
 		auto curr_lvl = mg.levels()[rowidx[i]];

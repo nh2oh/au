@@ -12,12 +12,6 @@
 
 std::mt19937 new_randeng(bool randseed=true);
 
-std::vector<int> urandi(int,int,int);  // n, min, max; range: [min,max]
-std::vector<int> urandi(int,int,int,std::mt19937&);  // n, min, max; range: [min,max]
-std::vector<double> urandd(int,double,double);
-std::vector<double> urandd(int,double,double,std::mt19937&);
-
-std::vector<int> nrandi(double,double,int);  // mean, var, number-to-generate
 
 // keep
 // Normal probability _density_ evaluated at x

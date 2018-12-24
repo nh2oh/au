@@ -49,8 +49,10 @@ std::vector<note_t> melody_temperley(const melody_temperley_params& p) {
 
 	// The Key Profile (KP)
 	// 
-	std::vector<double> KP_base;  
-	if (urandd(1,0,1)[0] <= p.p_major) {
+	std::discrete_distribution rd_majmin {p.p_major,1.0-p.p_major};
+	std::vector<double> KP_base;
+	if (rd_majmin(re)==0) {
+	//if (urandd(1,0,1)[0] <= p.p_major) {
 		KP_base =
 			{0.184,0.001,0.155,0.003,0.191,0.109,0.005,0.214,0.001,0.078,0.004,0.055};
 	} else {

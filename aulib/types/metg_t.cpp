@@ -143,13 +143,17 @@ void tmetg_t::set_pg_random(int mode) {
 	auto re = new_randeng(true);
 	for (auto c=0; c<m_pg.size(); ++c) {
 		auto curr_allowed = m_tg.which_allowed_at(step2bt(c));
-		std::vector<double> curr_probs {};
+		std::vector<double> curr_probs {}; //(curr_allowed.size(),1.0);
 		if (mode == 0) { // Probabilty of all allowed elements is the same
 			curr_probs = normalize_probvec(
 				std::vector<double>(curr_allowed.size(),1.0));
 		} else { // Probabilty of all allowed elements is random
-			curr_probs = normalize_probvec(
-				urandd(curr_allowed.size(),0.0,1.0,re));
+			std::uniform_real_distribution rd {0.0,1.0};
+			std::generate_n(std::back_inserter(curr_probs),curr_allowed.size(),
+				[&re,&rd](){ return rd(re); });
+			curr_probs = normalize_probvec(curr_probs);
+			//curr_probs = normalize_probvec(
+			//	urandd(curr_allowed.size(),0.0,1.0,re));
 		}
 
 		for (auto r=0; r<curr_allowed.size(); ++r) { 
