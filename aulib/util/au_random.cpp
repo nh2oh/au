@@ -6,6 +6,7 @@
 #include <chrono> // To generate a seed for the random engine
 #include <numeric>  // accumulate(), partial_sum() (not in <algorithm>)
 #include <algorithm>  // find_if()
+#include <exception>
 
 // Get a new random number generator engine
 // TODO:  t does not have the resolution to do this correctly... is it seconds????
@@ -87,23 +88,18 @@ std::vector<double> urandd(int n, double min, double max, std::mt19937& re) {
 	return rv;
 }
 
-std::vector<double> normalize_probvec(std::vector<double> p) {
-	if (p.size() == 0) {
-		return p;
+std::vector<double> normalize_probvec(const std::vector<double>& p) {
+	double sum_p {0.0};
+	for (const auto& e : p) {
+		if (e < 0) { std::abort(); }
+		sum_p += e;
 	}
-	//au_assert(p.size()>0, "p>0");
-	au_assert(!std::any_of(p.begin(),p.end(),[](double const& e){ return e<0; }),
-		"all elements of p must be >= 0");
+	if (sum_p == 0.0) { std::abort(); }
 
-	auto sum_p = std::accumulate(p.begin(),p.end(),0.0);
-	if (sum_p == 0.0) {
-		return p;
-	}
+	std::vector<double> result = p;
+	std::for_each(result.begin(),result.end(),[sum_p](double& e){ e /= sum_p; });
 
-	auto pnorm = p;
-	std::for_each(pnorm.begin(),pnorm.end(),[sum_p](double& e){ e /= sum_p; });
-
-	return pnorm;
+	return result;
 }
 
 // Random integers on [0,p.size()).  

@@ -54,7 +54,7 @@ public:
 
 	T operator[](size_t idx) const {
 		if (std::holds_alternative<T>(m_e)) {
-			au_assert(idx==0,"Not a chord: idx must == 0");
+			//au_assert(idx==0,"Not a chord: idx must == 0");
 			return std::get<T>(m_e);
 		} else {
 			return std::get<chord_t<T>>(m_e).notes()[idx];
