@@ -17,7 +17,6 @@
     <ClCompile Include="melgen\melody_hiller.cpp" />
     <ClCompile Include="melgen\melody_temperley.cpp" />
     <ClCompile Include="numeric_simple_uih.cpp" />
-    <ClCompile Include="nv_t_uih.cpp" />
     <ClCompile Include="randrp_metg.cpp" />
     <ClCompile Include="rpgen\rand_rp.cpp" />
     <ClCompile Include="scale\scale.cpp" />
@@ -35,7 +34,6 @@
     <ClCompile Include="types\scd_t.cpp" />
     <ClCompile Include="types\teejee.cpp" />
     <ClCompile Include="types\ts_t.cpp" />
-    <ClCompile Include="types\ts_t_uih.cpp" />
     <ClCompile Include="util\au_meta.cpp" />
     <ClCompile Include="util\au_random.cpp" />
     <ClCompile Include="util\au_util.cpp" />
@@ -46,7 +44,6 @@
     <ClInclude Include="melgen\hiller.h" />
     <ClInclude Include="melgen\randmel_gens.h" />
     <ClInclude Include="numeric_simple_uih.h" />
-    <ClInclude Include="nv_t_uih.h" />
     <ClInclude Include="randrp_metg.h" />
     <ClInclude Include="rpgen\rand_rp.h" />
     <ClInclude Include="scale\scale.h" />
@@ -68,7 +65,6 @@
     <ClInclude Include="types\scd_t.h" />
     <ClInclude Include="types\teejee.h" />
     <ClInclude Include="types\ts_t.h" />
-    <ClInclude Include="types\ts_t_uih.h" />
     <ClInclude Include="types\types_all.h" />
     <ClInclude Include="uih.h" />
     <ClInclude Include="uih2.h" />

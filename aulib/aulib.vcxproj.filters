@@ -57,13 +57,7 @@
     <ClCompile Include="types\cent_oct_t.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="types\ts_t_uih.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="numeric_simple_uih.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="nv_t_uih.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="randrp_metg.cpp">
@@ -158,13 +152,7 @@
     <ClInclude Include="uih.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="types\ts_t_uih.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="numeric_simple_uih.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="nv_t_uih.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="uih2.h">
