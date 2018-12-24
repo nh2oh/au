@@ -5,7 +5,7 @@
 #include <vector>
 #include <cmath>  // std::pow(), std::log2, std::round
 #include <numeric>  // std::gcd()
-
+#include <regex>
 
 const int d_t::max_nplet {5};
 const double d_t::min_duration = 1.0/std::pow(2,12);  
@@ -410,7 +410,31 @@ d_t::ab d_t::ab::operator-(const d_t::ab& rhs) const {
 }
 
 
+dt_str_parsed parse_dt_string(const std::string& s) {
+	dt_str_parsed res {};
 
+	std::regex rx {"1/(\\d+)(\\.*)?"};
+	std::smatch rx_matches {};  // std::smatch == std::match_results<std::string::const_interator>
+	if (!std::regex_match(s,rx_matches,rx)) {
+		res.is_valid = false;
+		return res;
+	}
+	int denom {std::stoi(rx_matches[1].str())};
+	if (denom == 0) {
+		res.is_valid = false;
+		return res;
+	}
+	double bv = std::log2(denom);
+	if (!aprx_eq(static_cast<double>(denom), std::pow(2.0,bv))) {
+		res.is_valid = false;  // not a power of 2
+		return res;
+	}
+	res.denom = denom;
+	res.is_valid = true;
+
+	return res;
+
+}
 
 
 

@@ -1,4 +1,5 @@
 #pragma once
+/*
 #include "uih.h"
 #include "types\nv_t.h"
 #include <string>
@@ -9,3 +10,5 @@ struct parse_userinput_nv {
 	using PIType = typename std::string const&;
 	au::uih_parser_result<d_t> operator()(std::string const&) const;
 };
+*/
+

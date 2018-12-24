@@ -1,4 +1,5 @@
 #pragma once
+/*
 #include "nv_t_uih.h"
 #include "types\nv_t.h"
 #include "uih.h"
@@ -42,6 +43,6 @@ uih_parser_result<d_t>
 
 	return result;
 }
-
+*/
 
 

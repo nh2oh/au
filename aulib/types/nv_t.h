@@ -178,6 +178,19 @@ d_t operator*(d_t, const double&);
 d_t operator/(d_t, const double&);
 
 
+//
+// If !dt_str_parsed.is_valid, all other fields have whatever they were default-constructed
+// with... they should be regarded as "undefined."  
+//
+struct dt_str_parsed {
+	bool is_valid {false};
+	int denom {0};
+	int ndot {0};
+};
+dt_str_parsed parse_dt_string(const std::string&);
+
+
+
 namespace autests {
 // min m, min n, max m, max n
 // Note that min m corresponds to the longest duration
