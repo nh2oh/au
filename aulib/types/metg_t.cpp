@@ -162,7 +162,7 @@ void tmetg_t::set_pg_random(int mode) {
 			// other elements are == 0 by the call to set_pg_zero().
 		}
 	}
-	wait();
+	//wait();
 }
 
 // Prevents the caller from creating zero pointers and orphans

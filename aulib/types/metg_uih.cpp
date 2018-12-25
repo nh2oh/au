@@ -5,7 +5,7 @@
 #include "beat_bar_t.h"
 #include "rp_t.h"
 #include "teejee.h"
-#include "..\util\au_random.h"
+#include "dbklib\stats.h"
 #include "dbklib\algs.h"
 #include "..\util\au_util.h"  // wait()
 #include <vector>

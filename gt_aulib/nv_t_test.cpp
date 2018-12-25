@@ -18,26 +18,43 @@ TEST(d_t_tests, AssortedConstructorTests) {
 	EXPECT_TRUE(d_t{0.25+0.125} == d_t{d::qd});
 }
 
+// 
+TEST(d_t_tests, ConstructWithNegativeDurationExact) {
+	d_t z {0};
+	d_t dw {2}; d_t ndw {-2};
+	d_t w {1}; d_t nw {-1};
+	d_t h {0.5}; d_t nh {-0.5};
+	d_t q {0.25}; d_t nq {-0.25};
+	d_t e {0.125}; d_t ne {-0.125};
+	
+	EXPECT_TRUE(ndw+dw==z);
+	EXPECT_TRUE(nw+w==z);
+	EXPECT_TRUE(nh+h==z);
+	EXPECT_TRUE(nq+q==z);
+	EXPECT_TRUE(ne+e==z);
+
+	EXPECT_TRUE(true);
+}
 
 // 
 TEST(d_t_tests, CommonDurationTConstructorTests) {
 	std::vector<d_t> all_cdts {
-	d::ow, d::owd, d::owdd, d::owddd,
-	d::qw, d::qwd, d::qwdd, d::qwddd,
-	d::dw, d::dwd, d::dwdd, d::dwddd,
-	d::w, d::wd, d::wdd, d::wddd,
-	d::h, d::hd, d::hdd, d::hddd,
-	d::q, d::qd, d::qdd, d::qddd,
-	d::e, d::ed, d::edd, d::eddd,
-	d::sx, d::sxd, d::sxdd, d::sxddd,
-	d::t, d::td, d::tdd, d::tddd,
-	d::sf, d::sfd, d::dfdd, d::sfddd,
-	d::ote, d::oted, d::otedd, d::oteddd,
-	d::tfs, d::tfsd, d::tfsdd, d::tfsddd,
-	d::ftw, d::ftwd, d::ftwdd, d::ftwddd,
-	d::ttwf, d::ttwfd, d::ttwfdd, d::ttwfddd,
-	d::twfe, d::twfed, d::twfedd, d::twfeddd,
-	d::fnsx, d::fnsxd, d::fnsxdd, d::fnsxddd
+		d::ow, d::owd, d::owdd, d::owddd,
+		d::qw, d::qwd, d::qwdd, d::qwddd,
+		d::dw, d::dwd, d::dwdd, d::dwddd,
+		d::w, d::wd, d::wdd, d::wddd,
+		d::h, d::hd, d::hdd, d::hddd,
+		d::q, d::qd, d::qdd, d::qddd,
+		d::e, d::ed, d::edd, d::eddd,
+		d::sx, d::sxd, d::sxdd, d::sxddd,
+		d::t, d::td, d::tdd, d::tddd,
+		d::sf, d::sfd, d::dfdd, d::sfddd,
+		d::ote, d::oted, d::otedd, d::oteddd,
+		d::tfs, d::tfsd, d::tfsdd, d::tfsddd,
+		d::ftw, d::ftwd, d::ftwdd, d::ftwddd,
+		d::ttwf, d::ttwfd, d::ttwfdd, d::ttwfddd,
+		d::twfe, d::twfed, d::twfedd, d::twfeddd,
+		d::fnsx, d::fnsxd, d::fnsxdd, d::fnsxddd
 	};
 
 	int i=0;
@@ -50,8 +67,16 @@ TEST(d_t_tests, CommonDurationTConstructorTests) {
 			EXPECT_TRUE(nv.ndot() == n);
 
 			// For - nv_t's, base() and ndot() don't work.  
-			nv = d_t{-1*val};
-			EXPECT_TRUE(nv == (d_t{0} - all_cdts[i]));
+			d_t nnv {-1*val};
+			d_t nnv_base = d_t {-1*std::pow(2,m)};
+			EXPECT_TRUE(nv == -1*nnv);
+			EXPECT_TRUE(-1*nv == nnv);
+			EXPECT_TRUE(nnv == (d_t{0} - all_cdts[i]));
+			d_t curr_base_nnv = nnv.base_nv();  // conserves sign, strips dots
+			
+			EXPECT_TRUE(curr_base_nnv == nnv_base)
+				<<"i="<<i<<",m="<<m<<",n="<<n<<":  "<< curr_base_nnv.print() << " == " << nnv_base.print();
+
 			++i;
 		}
 	}

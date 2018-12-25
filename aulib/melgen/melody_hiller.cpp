@@ -77,8 +77,6 @@ std::vector<std::vector<int>> rhythm_hiller_ex3(const melody_hiller_params& p) {
 // generating a completely random 2-d array of notes, scoring according to the counterpoint
 // rules, mutating, re-scoring, etc...
 //
-// Better method:  Use the rules to set the ntpool, then any random note selection will work.  
-// 
 // More than one of the rules relies implictly on the asumption that voice 0 is the cf.
 // More than one of the rules relies implictly on the asumption that notes are added to
 // m from low->high idx.
@@ -112,7 +110,6 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 	std::fill_n(std::back_inserter(m),p.nvoice,std::vector<note_t>(p.nnts,cmaj[0]));
 
 	// Rules
-	// TODO:  Add namespace qualifiers
 	std::vector<bool (*)(const hiller21_status&, const hiller_melody&)> 
 		ruleset {
 			&line_spans_gt_oct,

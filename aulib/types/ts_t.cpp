@@ -18,7 +18,7 @@ ts_t::ts_t(const std::string& str_in) {
 		std::abort();
 	}
 
-	from_parts(beat_t{ts_parsed.num}, d_t{ts_parsed.denom}, ts_parsed.is_compound);
+	from_parts(beat_t {ts_parsed.num}, d_t {ts_parsed.denom}, ts_parsed.is_compound);
 }
 
 //

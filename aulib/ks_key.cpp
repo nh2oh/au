@@ -1,7 +1,6 @@
 #include "melgen\randmel_gens.h"
 #include "types\line_t.h"
 #include "types\ntl_t.h"
-#include "util\au_random.h"  // corr()
 #include "dbklib\contigumap.h"
 #include "dbklib\stats.h"
 

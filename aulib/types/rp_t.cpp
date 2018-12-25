@@ -94,7 +94,7 @@ rp_t::rp_t(ts_t const& ts_in, std::vector<std::chrono::milliseconds> const& dt,
 		
 	}
 	//m_tot_nbars = nbar(m_ts,m_tot_nbeats);
-	wait();
+	//wait();
 
 }
 
@@ -107,7 +107,7 @@ void rp_t::push_back(d_t d) {
 	auto d_to_next_bar = duration(m_ts,bts_till_next_bar);
 
 	if (d_to_next_bar.weird()) {
-		wait();
+		//wait();
 	}
 
 	auto d_singlets = d.to_singlets_partition_max(d_to_next_bar,m_ts.bar_unit());
@@ -119,7 +119,7 @@ void rp_t::push_back(d_t d) {
 	m_dtot += d;
 	m_nbars += nbar(m_ts,d);
 	m_nbeats += nbeat(m_ts,d);
-	wait();
+	//wait();
 }
 
 std::string rp_t::print() const {

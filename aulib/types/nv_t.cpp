@@ -27,7 +27,7 @@ d_t::d_t(common_duration_t d) {
 }
 
 d_t::d_t(const mn& mn_in) {
-	m_ab = ab{mn_in};
+	m_ab = d_t::ab {mn_in};
 }
 
 d_t::d_t(double d) {
@@ -186,6 +186,19 @@ int d_t::base() const {
 	return 0;
 }
 
+d_t d_t::base_nv() const {
+	if (!is_mersenne(std::abs(m_ab.get_a()))) {
+		return *this;
+	}
+	// There exists a singlet representation but it may be < 0
+	int sign = m_ab.get_a() < 0 ? -1 : 1;
+	d_t::ab ab_positive {std::abs(m_ab.get_a()),m_ab.get_b()};
+	auto mn_positive = ab_positive.to_mn();  // to_mn() will _not_ work for (-) durations.
+	mn_positive.n = 0;
+	d_t result_positive {mn_positive};
+	return sign*result_positive;
+}
+
 std::string d_t::print(d_t::opts o) const {
 	auto vs = to_singlets();
 	std::string s {};
@@ -217,7 +230,7 @@ std::string d_t::print(d_t::opts o) const {
 	return s;
 }
 
-bool d_t::set_base(int const& m_in) {
+bool d_t::set_base(int m_in) {
 	if (m_ab.singlet_exists()) {
 		auto mn = m_ab.to_mn();
 		mn.m = m_in;
@@ -226,7 +239,7 @@ bool d_t::set_base(int const& m_in) {
 	}
 	return false;
 }
-bool d_t::set_dots(int const& ndots) {
+bool d_t::set_dots(int ndots) {
 	if (m_ab.singlet_exists()) {
 		auto mn = m_ab.to_mn();
 		mn.n = ndots;
@@ -235,7 +248,7 @@ bool d_t::set_dots(int const& ndots) {
 	}
 	return false;
 }
-bool d_t::add_dots(int const& ndots) {  // default value ndots == 1
+bool d_t::add_dots(int ndots) {  // default value ndots == 1
 	if (m_ab.singlet_exists()) {
 		auto mn = m_ab.to_mn();
 		mn.n += ndots;
@@ -244,7 +257,7 @@ bool d_t::add_dots(int const& ndots) {  // default value ndots == 1
 	}
 	return false;
 }
-bool d_t::rm_dots(int const& ndots) {
+bool d_t::rm_dots(int ndots) {
 	if (m_ab.singlet_exists()) {
 		auto mn = m_ab.to_mn();
 		mn.n = std::max(mn.n-ndots,0);
@@ -331,6 +344,7 @@ d_t gcd(const d_t first, const d_t second) {
 	return d_t {a/b};
 }
 
+// TODO:  Possibly better to use exp2(...) rather than pow(2,...) here ?
 d_t::ab::ab(const d_t::mn& mn_in) {
 	a = static_cast<int>(std::pow(2,mn_in.n+1))-1;
 	b = mn_in.m + mn_in.n;
@@ -343,18 +357,28 @@ d_t::ab::ab(int a_in, int b_in) {
 	reduce();
 }
 
+// d = a/(2^b)
+// TODO:  How does the requirement that a > 0 affect durations < 0 ??
+// Durations are always stored in reduced form so that d_t::ab::to_mn()
+// will always calculate the "reduced" m,n-form; the getter d_t.base() simply
+// checks singlet_exists() and returns d_t::mn.m.  
 void d_t::ab::reduce() {
+	bool a_is_neg = a<0;
+	if (a_is_neg) { a = std::abs(a); }
+
 	while (a > 0 && a%2 == 0) {
 		a = a/2;
 		b -= 1;
 	}
+
+	if (a_is_neg) { a = -a; }
 }
 
 // You have to check if a singlet_exists() first, otherwise the 
 // answer could be _way_ wrong.  
 d_t::mn d_t::ab::to_mn() const {
 	auto n = static_cast<int>(std::log2(a+1)-1.0);
-	return d_t::mn{b-n, n};
+	return d_t::mn {b-n, n};
 }
 
 double d_t::ab::val() const {
