@@ -97,8 +97,8 @@ public:
 	};
 	d_t()=default;
 	d_t(common_duration_t);
-	explicit d_t(const mn&);
-	explicit d_t(double);  // A duration spanning an amount of time == this many whole notes.
+	explicit d_t(const d_t::mn&);
+	explicit d_t(double);  // d whole notes.
 
 	bool singlet_exists() const;
 	std::vector<d_t> to_singlets() const;
@@ -145,44 +145,15 @@ public:
 
 	friend d_t gcd(const d_t, const d_t);
 private:
-	/*class ab {
-		// TODO:  Am i going overboard w/ this embedded class dfn?
-		// a,b-form:  a/(2^b)
-		// a,b are stored such that the fraction a/(2^b) is in reduced form.  
-	public:
-		ab()=default;
-		explicit ab(int,int);
-		explicit ab(const d_t::mn&);
-
-		ab operator+(const ab&) const;
-		ab operator-(const ab&) const;
-		double val() const;
-		bool singlet_exists() const;
-		d_t::mn to_mn() const;  // Assumes the m,n-form exists; check first!
-		int get_a() const;
-		int get_b() const;
-	private:
-		int a {0};
-		int b {0};
-		void reduce();
-	};
-
-	ab m_ab {0,0};*/
-
 	int a_ {0};
 	int b_ {0};
 	void reduce();
-	double num_whole_nts() const;
-	d_t::mn to_mn() const;
+	double to_double() const;
+	d_t::mn to_mn() const;  // std::abort() if not possible
 	bool mn_exists() const;
 
 	static const int max_nplet;
 	static const double min_duration;
-
-	//ab dbl2ab(double) const;
-		// This is implemented here and not as a constructor of class ab because
-		// it reads min_duration.  I could make it an ab constructor with the addnl
-		// min-duration argument.  
 };
 
 bool operator<=(const d_t&, const d_t&);

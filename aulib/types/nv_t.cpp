@@ -16,36 +16,20 @@ const double d_t::min_duration = 1.0/std::pow(2,12);
 // TODO:  Ctor calling ctor => gross
 d_t::d_t(common_duration_t d) {
 	auto dint = static_cast<int>(d);
-	// -9999 is a special value signaling d::z
-	if (dint != -9999) {
+	if (dint != -9999) {  // -9999 is a special value signaling d::z
 		int n = std::abs(dint)%10;
 		int m = -1*(dint/10);
-		//m_ab = ab{d_t::mn{m,n}};
 		*this = d_t {d_t::mn {m,n}};
 	} else {
-		//m_ab = ab{0,0};
-
-		//*this = d_t {d_t::mn {0,0}};
 		a_=0; b_=0;
 	}
 }
-
-//d_t::d_t(const mn& mn_in) {
-//	m_ab = d_t::ab {mn_in};
-//}
 
 d_t::d_t(const mn& mn_in) {
 	a_ = static_cast<int>(std::pow(2,mn_in.n+1))-1;
 	b_ = mn_in.m + mn_in.n;
 	this->reduce();
 }
-
-//d_t::d_t(double d) {
-//	// The argument ratio_w is interpreted as a duration, that is, as being 
-//	// proportional to the whole-note (also => proportional to time ).
-//	//
-//	m_ab = dbl2ab(d);
-//}
 
 // d ~ some number of whole notes (=> proportional to time).
 d_t::d_t(double d) {
@@ -77,33 +61,6 @@ d_t::d_t(double d) {
 		*this=temp-*this;
 	}
 }
-/*
-d_t::ab d_t::dbl2ab(double d) const {
-	bool is_neg = (d<0);
-	if (is_neg) { d = -1*d; }
-
-	// For any note of duration d > 0 w/ 0-dots:  
-	// frexp(d) => f == 0.5, exp ~ integer, where m = -(exp-1).
-	// For a d>0 _with_ dots, 0.5 < f < 1.0, exp ~ integer, where 
-	// m = -(exp-1), n=0 is the corresponding d_t w/ 0-dots.  The "remainder," 
-	// d - 0.5*std::pow(2,exp), is the contribution of the dots to d.  
-	//
-	d_t::ab res {};
-
-	auto duration_minduration_maxdot = d_t::min_duration/std::pow(2,5);
-	//auto duration_minduration_maxdot = 1.0/std::pow(2,12);
-
-	while(d>=duration_minduration_maxdot) {
-		int exp = 0;
-		auto f = frexp(d,&exp);
-		d_t::ab t {1,-1*(exp-1)};
-		res = res + t;
-		d -= 0.5*std::pow(2,exp);
-	}
-
-	if (is_neg) { res = ab{0,0}-res; }
-	return res;
-}*/
 
 bool d_t::singlet_exists() const {
 	return this->mn_exists();
@@ -142,19 +99,17 @@ bool d_t::singlet_exists() const {
 std::vector<d_t> d_t::to_singlets() const {
 	std::vector<d_t> res {};
 
-	if (mn_exists()) {
+	if (this->mn_exists()) {
 		res.push_back(d_t{this->to_mn()});
 	} else {
 		d_t remain = *this;
-		//auto curr_ab = m_ab;
-		while (!remain.mn_exists() && remain.num_whole_nts() > d_t::min_duration) {
-			//auto p = static_cast<int>(std::floor(std::log2(curr_ab.get_a())));
+		while (!remain.mn_exists() && remain.to_double() > d_t::min_duration) {
 			auto p = static_cast<int>(std::floor(std::log2(remain.a_)));
-			//ab ab_nodots_singlet {1,curr_ab.get_b()-p};
+
 			d_t temp = remain;
 			temp.a_ = 1; temp.b_ -= p;
 			res.push_back(temp);
-			//curr_ab = curr_ab - ab_nodots_singlet;
+
 			remain -= temp;
 		}
 	}
@@ -163,35 +118,16 @@ std::vector<d_t> d_t::to_singlets() const {
 }
 
 
-
-/*std::vector<d_t> d_t::to_singlets() const {
-	std::vector<d_t> res {};
-
-	if (singlet_exists()) {
-		res.push_back(d_t{m_ab.to_mn()});
-	} else {
-		auto curr_ab = m_ab;
-		while (!curr_ab.singlet_exists() && curr_ab.val() > d_t::min_duration) {
-			auto p = static_cast<int>(std::floor(std::log2(curr_ab.get_a())));
-			ab ab_nodots_singlet {1,curr_ab.get_b()-p};
-			res.push_back(d_t{ab_nodots_singlet.to_mn()});
-			curr_ab = curr_ab - ab_nodots_singlet;
-		}
-	}
-	
-	return res;
-}*/
-
-
-// The elments [0,n] must sum to exactly d1
+// The first n elements of the result must sum to exactly d1; the sum of all the elements in the
+// result == this, even if d1 > this.
 std::vector<d_t> d_t::to_singlets_partition(const d_t& d1) const {
 	std::vector<d_t> res {};
 	if (d1 > *this) { return to_singlets(); }
 	
-	auto rem = *this - d1;
 	for (auto e : d1.to_singlets()) {
 		res.push_back(e);
 	}
+	auto rem = *this - d1;
 	for (auto e : rem.to_singlets()) {
 		res.push_back(e);
 	}
@@ -203,38 +139,22 @@ std::vector<d_t> d_t::to_singlets_partition(const d_t& d1) const {
 // following n is > dmax.  
 std::vector<d_t> d_t::to_singlets_partition_max(const d_t& d1, const d_t& dmax) const {
 	std::vector<d_t> res {};
-	if (d1 >= *this) { return to_singlets(); }
+	if (d1 >= *this) { return this->to_singlets(); }
 	
 	auto rem = *this - d1;
-	//for (auto e : d1.to_singlets()) {
-	//	res.push_back(e);
-	//}
 	auto dmaxs = dmax.to_singlets();
 	auto d1s = d1.to_singlets();
 	res.insert(res.end(),d1s.begin(),d1s.end());
 	while (rem > dmax) {
 		res.insert(res.end(),dmaxs.begin(),dmaxs.end());
-		//for (auto e : dmax.to_singlets()) {
-		//	res.push_back(e);
-		//}
 		rem -= dmax;
 	}
-	//for (auto e : rem.to_singlets()) {
-	//	res.push_back(e);
-	//}
 	auto rems = rem.to_singlets();
 	res.insert(res.end(),rems.begin(),rems.end());
 
-	//for (auto e : rem.to_singlets_partition_max(dmax, dmax)) {
-	//	res.push_back(e);
-	//}
-
 	return res;
 }
-/*
-bool d_t::weird() const {
-	return m_ab.get_a() >= 100;
-}*/
+
 bool d_t::weird() const {
 	return a_ >= 100;
 }
@@ -263,11 +183,6 @@ d_t d_t::base_nv() const {
 	// There exists a singlet representation but it may be < 0
 	int sign = a_ < 0 ? -1 : 1;
 	d_t temp_positive = *this;  temp_positive.a_ = std::abs(temp_positive.a_);
-	//d_t::ab ab_positive {std::abs(m_ab.get_a()),m_ab.get_b()};
-	//auto mn_positive = ab_positive.to_mn();  // to_mn() will _not_ work for (-) durations.
-	//mn_positive.n = 0;
-	//d_t result_positive {mn_positive};
-	//return sign*result_positive;
 	auto mn_positive = temp_positive.to_mn();
 	mn_positive.n = 0;
 	d_t result_positive {mn_positive};
@@ -353,6 +268,32 @@ bool d_t::rm_dots() {
 	return false;
 }
 
+// d = a/(2^b)
+// Durations are always stored in reduced form so that this->to_mn() will return the "reduced" 
+// m,n-form.  For example, the getter d_t.base() simply checks mn_exists() and returns 
+// this->to_mn().m
+void d_t::reduce() {
+	while (a_ != 0 && a_%2 == 0) {
+		a_ = a_/2;
+		b_ -= 1;
+	}
+}
+
+d_t::mn d_t::to_mn() const {
+	if (!this->mn_exists()) { std::abort(); }
+	auto n = static_cast<int>(std::log2(a_+1)-1.0);
+	return d_t::mn {b_-n, n};
+}
+
+double d_t::to_double() const {
+	return static_cast<double>(a_)/std::pow(2,b_);
+}
+
+// Can this duration be represented as a singlet?  That is, is there
+// an m,n representation?
+bool d_t::mn_exists() const {
+	return (a_>0 && is_mersenne(a_));
+}
 
 
 d_t& d_t::operator+=(const d_t& rhs) {
@@ -390,34 +331,29 @@ d_t operator-(d_t lhs, const d_t& rhs) {
 	return lhs -= rhs;
 }
 d_t& d_t::operator*=(const double& n) {
-	//m_ab = dbl2ab(m_ab.val()*n);
-	*this = d_t {n*(this->num_whole_nts())};
+	*this = d_t {n*(this->to_double())};
 	return *this;
 }
 d_t& d_t::operator/=(const double& d) {
-	*this = d_t {this->num_whole_nts()/d};
-	//m_ab = dbl2ab(m_ab.val()/d);
+	*this = d_t {this->to_double()/d};
 	return *this;
 }
 double operator/(const d_t& n, const d_t& d) {
-	//double f = static_cast<double>(n.m_ab.get_a())/static_cast<double>(d.m_ab.get_a());
-	//auto db = d.m_ab.get_b() - n.m_ab.get_b();
+	return n.to_double()/d.to_double();
+	//double f = static_cast<double>(n.a_)/static_cast<double>(d.a_);
+	//auto db = d.b_ - n.b_;
 	//return f*std::pow(2,db);
-	double f = static_cast<double>(n.a_)/static_cast<double>(d.a_);
-	auto db = d.b_ - n.b_;
-	return f*std::pow(2,db);
 }
 bool d_t::operator<(const d_t& rhs) const {
-	return aprx_lt(this->num_whole_nts(),rhs.num_whole_nts());
-	//return aprx_lt(m_ab.val(),rhs.m_ab.val()); // (m_ab.val() < rhs.m_ab.val());
+	return aprx_lt(this->to_double(),rhs.to_double());
 }
 bool d_t::operator>(const d_t& rhs) const {
-	return aprx_gt(this->num_whole_nts(),rhs.num_whole_nts());
-	//return aprx_gt(m_ab.val(),rhs.m_ab.val()); // (m_ab.val() > rhs.m_ab.val());
+	return aprx_gt(this->to_double(),rhs.to_double());
 }
-// TODO:  This does not need to use the fp aprx functions
+// TODO:  This does not need to use the fp aprx functions if it can be asumed that each d_t 
+// is in reduced form.  
 bool d_t::operator==(const d_t& rhs) const {
-	return aprx_eq(this->num_whole_nts(),rhs.num_whole_nts());
+	return aprx_eq(this->to_double(),rhs.to_double());
 	//return aprx_eq(m_ab.val(), rhs.m_ab.val());
 }
 bool operator!=(const d_t& lhs, const d_t& rhs) {
@@ -441,121 +377,12 @@ d_t operator/(d_t n, const double& d) {
 }
 
 d_t gcd(const d_t first, const d_t second) {
-	//auto a = std::gcd(first.m_ab.get_a(),second.m_ab.get_a());
-	//auto b = std::pow(2,std::max(first.m_ab.get_b(),second.m_ab.get_b()));
-	//return d_t {a/b};
 	auto a = std::gcd(first.a_,second.a_);
 	auto b = std::pow(2,std::max(first.b_,second.b_));
 	return d_t {a/b};
 }
 
 
-/*
-// TODO:  Possibly better to use exp2(...) rather than pow(2,...) here ?
-d_t::ab::ab(const d_t::mn& mn_in) {
-	a = static_cast<int>(std::pow(2,mn_in.n+1))-1;
-	b = mn_in.m + mn_in.n;
-	reduce();
-}
-
-d_t::ab::ab(int a_in, int b_in) {
-	a = a_in;
-	b = b_in;
-	reduce();
-}*/
-
-// d = a/(2^b)
-// Durations are always stored in reduced form so that d_t::ab::to_mn()
-// will always calculate the "reduced" m,n-form; the getter d_t.base() simply
-// checks singlet_exists() and returns d_t::mn.m.  
-/*void d_t::ab::reduce() {
-	bool a_is_neg = a<0;
-	if (a_is_neg) { a = std::abs(a); }
-
-	while (a > 0 && a%2 == 0) {
-		a = a/2;
-		b -= 1;
-	}
-
-	if (a_is_neg) { a = -a; }
-}*/
-void d_t::reduce() {
-	while (a_ != 0 && a_%2 == 0) {
-		a_ = a_/2;
-		b_ -= 1;
-	}
-}
-
-// You have to check if a singlet_exists() first, otherwise the 
-// answer could be _way_ wrong.  
-/*d_t::mn d_t::ab::to_mn() const {
-	auto n = static_cast<int>(std::log2(a+1)-1.0);
-	return d_t::mn {b-n, n};
-}*/
-d_t::mn d_t::to_mn() const {
-	if (!this->mn_exists()) { std::abort(); }
-	auto n = static_cast<int>(std::log2(a_+1)-1.0);
-	return d_t::mn {b_-n, n};
-}
-/*
-double d_t::ab::val() const {
-	return static_cast<double>(a)/std::pow(2,b);
-}*/
-double d_t::num_whole_nts() const {
-	return static_cast<double>(a_)/std::pow(2,b_);
-}
-/*
-int d_t::ab::get_a() const {
-	return a;
-}
-
-int d_t::ab::get_b() const {
-	return b;
-}*/
-
-// Can this duration be represented as a singlet?  That is, is there
-// an m,n representation?
-/*bool d_t::ab::singlet_exists() const {
-	return is_mersenne(a);
-}*/
-bool d_t::mn_exists() const {
-	return (a_>0 && is_mersenne(a_));
-}
-
-/*
-d_t::ab d_t::ab::operator+(const d_t::ab& rhs) const {
-	// a,b-form requires a be an integer, therefore 2^db must be >= 1
-	// because the a term of the sum is: m_a = m_a*(2^db)*d2.m_a
-	ab res {};
-	auto db = rhs.b - b;  // "delta b"
-	if (db >= 0) {
-		res.a = (a)*static_cast<int>(std::pow(2,db)) + rhs.a;
-		res.b = rhs.b;
-	} else {
-		res.a = (rhs.a)*static_cast<int>(std::pow(2,-1*db)) + a;
-		res.b = b;
-	}
-
-	res.reduce();
-	return res;
-}
-
-d_t::ab d_t::ab::operator-(const d_t::ab& rhs) const {
-	// a,b-form requires a be an integer, therefore 2^db must be >= 1
-	// because the a term of the sum is: m_a = m_a*(2^db)*d2.m_a
-	ab res {};
-	auto db = rhs.b - b;  // "delta b"
-	if (db >= 0) {
-		res.a = (a)*static_cast<int>(std::pow(2,db)) - rhs.a;
-		res.b = rhs.b;
-	} else {
-		res.a = a - (rhs.a)*static_cast<int>(std::pow(2,-1*db));
-		res.b = b;
-	}
-	
-	res.reduce();
-	return res;
-}*/
 
 
 dt_str_parsed parse_dt_string(const std::string& s) {
@@ -583,8 +410,6 @@ dt_str_parsed parse_dt_string(const std::string& s) {
 	return res;
 
 }
-
-
 
 
 std::vector<autests::dtset> autests::make_dt_set(int m_min, int n_min, int m_max, int n_max) {
