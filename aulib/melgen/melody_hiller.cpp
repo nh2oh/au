@@ -89,17 +89,19 @@ std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params& 
 	auto ntstr_min_parse = parse_spn_ntstr(p.min);
 	auto ntstr_max_parse = parse_spn_ntstr(p.max);
 	bool min_valid = (ntstr_min_parse.is_valid && ntstr_min_parse.is_oct_set 
-		&& (ntstr_min_parse.ntl == ntstr_min_parse.ntl_base));
+		&& ntstr_min_parse.nsharp+ntstr_min_parse.nflat == 0);
+	//	&& (ntstr_min_parse.ntl == ntstr_min_parse.ntl_base));
 	bool max_valid = (ntstr_max_parse.is_valid && ntstr_max_parse.is_oct_set 
-		&& (ntstr_max_parse.ntl == ntstr_max_parse.ntl_base));
+		&& ntstr_max_parse.nsharp+ntstr_max_parse.nflat == 0);
+	//	&& (ntstr_max_parse.ntl == ntstr_max_parse.ntl_base));
 	if (!min_valid || !max_valid) {
 		std::abort();
 	}
 
 	// Note pool; range must span at least 1 octave
 	std::vector<note_t> ntpool {};
-	int scd_min = cmaj.to_scd(ntstr_min_parse.ntl_base,ntstr_min_parse.oct);
-	int scd_max = cmaj.to_scd(ntstr_max_parse.ntl_base,ntstr_max_parse.oct);
+	int scd_min = cmaj.to_scd(ntl_t{ntstr_min_parse.ntl_base_str},octn_t{ntstr_min_parse.oct});
+	int scd_max = cmaj.to_scd(ntl_t{ntstr_max_parse.ntl_base_str},octn_t{ntstr_max_parse.oct});
 	if (scd_max-scd_min < 8) { std::abort(); }
 	for (int scd=scd_min; scd<=scd_max; ++scd) {
 		ntpool.push_back(cmaj[scd]);

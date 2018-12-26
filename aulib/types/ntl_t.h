@@ -2,6 +2,28 @@
 #include "frq_t.h"
 #include <string>
 
+
+struct ntlstr_parsed {
+	bool is_valid {false};
+	bool is_oct_set {false};
+	std::string ntl_str {};
+	int oct {0};
+};
+// ntstr_parsed.ntl_str does _not_ include the octave specifier, if present.  
+ntlstr_parsed parse_ntlstr(const std::string&);
+
+struct spn_ntstr_parsed {
+	bool is_valid {false};
+	bool is_oct_set {false};
+	std::string ntl_base_str {};
+	int nsharp {0};
+	int nflat {0};
+	int oct {0};
+};
+// spn_ntstr_parsed.ntl_base_str is the ntl only:  No #,& modifiers, and no octave specifier
+spn_ntstr_parsed parse_spn_ntstr(const std::string&);
+
+
 class ntl_t {
 public:
 	explicit ntl_t() = default;
@@ -55,28 +77,7 @@ private:
 
 
 
-struct spn_ntstr_parsed {
-	bool is_valid {false};
-	bool is_oct_set {false};
-	bool is_valid_spn {false};
-	ntl_t ntl {};
-	ntl_t ntl_base {};  // No sharp or flat modifiers
-	int nsharp {0};
-	int nflat {0};
-	octn_t oct {};
-};
-spn_ntstr_parsed parse_spn_ntstr(const std::string&);
 
-
-// TODO:  Don't embed ntl_t, octn_t; let the user run the ctor manually (?)
-// See the ts_t version...
-struct ntstr_parsed {
-	bool is_valid {false};
-	bool is_oct_set {false};
-	ntl_t ntl {};
-	octn_t oct {};
-};
-ntstr_parsed parse_ntstr(const std::string&);
 
 // 
 // A note_t is a concrete, absolute, standalone representation of a pitch that associates

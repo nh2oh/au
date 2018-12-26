@@ -65,7 +65,7 @@ TEST(ts_t_tests, NineEightNineSxtnNineFourCompound) {
 }
 
 
-TEST(ts_t_tests, SextupleMeter) {
+TEST(ts_t_tests, SextupleMeter) {  // From the wikipedia article on sextuple meter
 	// Simple
 	ts_t sf {6_bt,d::q,false};
 	ts_t se {6_bt,d::e,false};
@@ -77,7 +77,6 @@ TEST(ts_t_tests, SextupleMeter) {
 	ts_t etsx {18_bt,d::sx,true};
 	EXPECT_TRUE(ete.beats_per_bar() == 6_bt);
 	EXPECT_TRUE(etsx.beats_per_bar() == 6_bt);
-
 }
 
 // Tests the ctor from a std::string for non-compound ts_t's
