@@ -73,7 +73,6 @@ public:
 	bool operator<=(const octn_t&) const;
 	bool operator>(const octn_t&) const;
 	bool operator>=(const octn_t&) const;
-	
 private:
 	int m_octn {0};
 };

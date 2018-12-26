@@ -1,4 +1,5 @@
 #include "ntl_t.h"
+#include <array>
 #include <string>
 #include <regex>
 #include <ctype.h>  // std::tolower()
@@ -8,6 +9,8 @@
 //
 // Determines if a string represents a valid note letter.  '(' and ')' are not included;
 // an oct specifier is not considered to be part of an ntl.  
+//
+// TODO:  Noes not validate the max length of 12
 //
 bool is_valid_ntl(const std::string& s) {
 	if (s.size() == 0) { return false; }
@@ -163,18 +166,16 @@ std::string note_t::print(note_t::fmt f) const {
 			s += ntl.print() + "(" + oct.print() + ")";
 			break;
 		}
-		case fmt::lp: {  // TODO:  Gross
-			// in "\absolute" mode, c' (middle C) => C(4) in SPN
-			int n_mod = oct.to_int()-3;
-			std::string mods {};
-			if (n_mod > 0) {
-				mods = std::string(n_mod,'\'');
-			} else if (n_mod < 0) {
-				mods = std::string(std::abs(n_mod),',');
-			}
+		case fmt::lp: {
 			s += ntl.print();
 			std::transform(s.begin(),s.end(),s.begin(), ::tolower);
-			s += mods;
+			
+			int n_mod = oct.to_int()-3;  // in "\absolute" mode, c' (middle C) => C(4) in SPN
+			if (n_mod > 0) {
+				s.append(n_mod,'\'');
+			} else if (n_mod < 0) {
+				s.append(std::abs(n_mod),',');
+			}
 			break;
 		}
 	}
