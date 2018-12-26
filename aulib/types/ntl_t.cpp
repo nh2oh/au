@@ -5,40 +5,39 @@
 #include <cmath>  // std::abs()
 #include <algorithm>
 
-// The set of chars allowed in an ntl_t.  '(' and ')' are not included; an oct specifier is not
-// considered to be part of the ntl.  
-// Equivalent regex (see parse_ntstr()):  [a-zA-Z0-9#&\\[\\]_\\-]+
-const char *ntl_t::m_allowed {"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234567989_-[]#&"};
-
-ntl_t::ntl_t(const std::string& str_in) {
-	set_ntl(str_in);
-}
-ntl_t::ntl_t(const char* char_in) {
-	set_ntl(std::string(char_in));
-}
-bool ntl_t::valid_string(const std::string& str_in) {
-	if (str_in.size() == 0) { return false; }
-	auto pos_illegal = str_in.find_first_not_of(m_allowed,0);
+//
+// Determines if a string represents a valid note letter.  '(' and ')' are not included;
+// an oct specifier is not considered to be part of an ntl.  
+//
+bool is_valid_ntl(const std::string& s) {
+	if (s.size() == 0) { return false; }
+	const std::string allowed {"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234567989_-[]#&"};
+	auto pos_illegal = s.find_first_not_of(allowed,0);
 	return pos_illegal == std::string::npos;
 }
-void ntl_t::set_ntl(const std::string& str_in) {
-	if (!valid_string(str_in)) {
-		std::abort();
-	}
-	m_ntl = str_in;
-}
-std::string ntl_t::print() const {
-	return m_ntl;
-}
 
-bool ntl_t::operator==(const ntl_t& rhs) const {
-	return (m_ntl == rhs.m_ntl);
-}
-bool operator!=(const ntl_t& lhs, const ntl_t& rhs) {
-	return !(lhs == rhs);
-}
-ntl_t operator""_ntl(const char *literal_in, size_t length) {
-	return ntl_t {literal_in};
+//
+// Determines if a string represents a valid note and whether or not it contains
+// an octave specifier (a number surrounded by '(' and ')' at the end of the 
+// string); parses the octave specifier if present.  The string returned in 
+// ntlostr_parsed.ntl_str does _not_ include the octave specifier.  
+// 
+ntlostr_parsed parse_ntlostr(const std::string& s) {
+	ntlostr_parsed result {};  result.is_valid = false;
+
+	std::regex rx {"^([a-zA-Z0-9#&\\[\\]_\\-]+)(?:\\((-?\\d+)\\))?"};
+	std::smatch rx_matches {};
+	if (!std::regex_match(s, rx_matches, rx)) {
+		return result;
+	}
+	result.is_valid = rx_matches[1].matched;
+	result.ntl_str = rx_matches[1].str();
+	result.is_oct_set = rx_matches[2].matched;
+	if (rx_matches[2].matched) {
+		result.oct = std::stoi(rx_matches[2].str());
+	}
+
+	return result;
 }
 
 //
@@ -59,7 +58,7 @@ ntl_t operator""_ntl(const char *literal_in, size_t length) {
 spn_ntstr_parsed parse_spn_ntstr(const std::string& s) {
 	spn_ntstr_parsed result {};  result.is_valid = false;
 
-	std::regex rx {"([ABCDEFG]{1,1})([&#]+)?(?:\\((-?\\d+)\\))?"};
+	std::regex rx {"^([ABCDEFG]{1,1})([&#]+)?(?:\\((-?\\d+)\\))?"};
 	std::smatch rx_matches {};
 	if (!std::regex_match(s, rx_matches, rx)) {
 		return result;
@@ -83,6 +82,35 @@ spn_ntstr_parsed parse_spn_ntstr(const std::string& s) {
 	return result;
 }
 
+
+
+ntl_t::ntl_t(const std::string& str_in) {
+	set_ntl(str_in);
+}
+ntl_t::ntl_t(const char* char_in) {
+	set_ntl(std::string(char_in));
+}
+void ntl_t::set_ntl(const std::string& str_in) {
+	if (!is_valid_ntl(str_in) || str_in.size() > m_ntl.size()) {
+		std::abort();
+	}
+	//m_ntl = str_in;
+	std::copy(str_in.begin(),str_in.end(),m_ntl.begin());
+}
+std::string ntl_t::print() const {
+	//std::find(m_ntl.begin(),m_ntl.end(),'\0');
+	return std::string {m_ntl.begin(),std::find(m_ntl.begin(),m_ntl.end(),'\0')};
+}
+
+bool ntl_t::operator==(const ntl_t& rhs) const {
+	return (m_ntl == rhs.m_ntl);
+}
+bool operator!=(const ntl_t& lhs, const ntl_t& rhs) {
+	return !(lhs == rhs);
+}
+ntl_t operator""_ntl(const char *literal_in, size_t length) {
+	return ntl_t {literal_in};
+}
 
 
 
@@ -161,29 +189,5 @@ bool operator!=(const note_t& lhs, const note_t& rhs) {
 	return !(lhs==rhs);
 }
 
-//
-// Determines if a string represents a valid note and whether or not it contains
-// an octave specifier (a number surrounded by '(' and ')' at the end of the 
-// string); parses the octave specifier if present.  The string returned in 
-// ntstr_parsed.ntl_str does _not_ include the octave specifier.  
-// 
-//
-ntlstr_parsed parse_ntlstr(const std::string& s) {
-	ntlstr_parsed result {};  result.is_valid = false;
-
-	std::regex rx {"([a-zA-Z0-9#&\\[\\]_\\-]+)(?:\\((-?\\d+)\\))?"};
-	std::smatch rx_matches {};
-	if (!std::regex_match(s, rx_matches, rx)) {
-		return result;
-	}
-	result.is_valid = rx_matches[1].matched;
-	result.ntl_str = rx_matches[1].str();
-	result.is_oct_set = rx_matches[2].matched;
-	if (rx_matches[2].matched) {
-		result.oct = std::stoi(rx_matches[2].str());
-	}
-
-	return result;
-}
 
 

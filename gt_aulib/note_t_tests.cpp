@@ -62,7 +62,7 @@ TEST(note_t_tests, ParseNtstrNonmemberFunctionLegalNoOct) {
 	};
 
 	for (const auto& e : legal_nooct) {
-		auto curr_ntparse = parse_ntlstr(e);
+		auto curr_ntparse = parse_ntlostr(e);
 		EXPECT_TRUE(curr_ntparse.is_valid);
 		EXPECT_FALSE(curr_ntparse.is_oct_set);
 		EXPECT_EQ(ntl_t{curr_ntparse.ntl_str},ntl_t{e});
@@ -85,7 +85,7 @@ TEST(note_t_tests, ParseNtstrNonmemberFunctionLegalWithOct) {
 		{"_C##(-0)","_C##",0},{"_C##(-00)","_C##",0}
 	};
 	for (const auto& e : legal_oct) {
-		auto curr_ntparse = parse_ntlstr(e.str);
+		auto curr_ntparse = parse_ntlostr(e.str);
 		EXPECT_TRUE(curr_ntparse.is_valid);
 		EXPECT_TRUE(curr_ntparse.is_oct_set);
 		EXPECT_EQ(curr_ntparse.ntl_str,e.str_nooct);
@@ -104,7 +104,7 @@ TEST(note_t_tests, ParseNtstrNonmemberFunctionIllegal) {
 		"F()"  // Empty oct-spec parens
 	};
 	for (const auto& e : illegal) {
-		auto curr_ntparse = parse_ntlstr(e);
+		auto curr_ntparse = parse_ntlostr(e);
 		EXPECT_FALSE(curr_ntparse.is_valid);
 		EXPECT_FALSE(curr_ntparse.is_oct_set);
 	}

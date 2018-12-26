@@ -1,16 +1,18 @@
 #pragma once
 #include "frq_t.h"
 #include <string>
+#include <array>
 
+bool is_valid_ntl(const std::string&);
 
-struct ntlstr_parsed {
+struct ntlostr_parsed {
 	bool is_valid {false};
 	bool is_oct_set {false};
 	std::string ntl_str {};
 	int oct {0};
 };
-// ntstr_parsed.ntl_str does _not_ include the octave specifier, if present.  
-ntlstr_parsed parse_ntlstr(const std::string&);
+// ntlostr_parsed.ntl_str does _not_ include the octave specifier, if present.  
+ntlostr_parsed parse_ntlostr(const std::string&);
 
 struct spn_ntstr_parsed {
 	bool is_valid {false};
@@ -23,27 +25,28 @@ struct spn_ntstr_parsed {
 // spn_ntstr_parsed.ntl_base_str is the ntl only:  No #,& modifiers, and no octave specifier
 spn_ntstr_parsed parse_spn_ntstr(const std::string&);
 
-
+//
+// An ASCII-encoded maximum 12 char sequence consisting of: letters,numbers,[,],-,_,#,&
+// Note that ( and ) are forbidden; an octave specifier is not part of an ntl_t.  
+//
+// A##&&#[274]
+//
 class ntl_t {
 public:
 	explicit ntl_t() = default;
 	explicit ntl_t(const char*);
 	explicit ntl_t(const std::string&);
 
-	static bool valid_string(const std::string&);
-
 	std::string print() const;
 
 	bool operator==(const ntl_t&) const;
 private:
 	void set_ntl(const std::string&);  // Essentially a delegated constructor
-
-	static const char *m_allowed;
-	std::string m_ntl {"C"};
+	//std::string m_ntl {"C"};
+	std::array<char,12> m_ntl {'C','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0'};
 };
 
 bool operator!=(const ntl_t&, const ntl_t&);
-
 ntl_t operator""_ntl(const char*, size_t);
 
 
@@ -74,9 +77,6 @@ public:
 private:
 	int m_octn {0};
 };
-
-
-
 
 
 // 

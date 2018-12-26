@@ -57,7 +57,6 @@ TEST(ntl_t_tests, MultiSharpMultiFlat) {
 	}
 
 	for (int i=0; i<vs_sharps.size(); ++i) {
-		EXPECT_TRUE(ntl_t::valid_string(vs_sharps[i]));
 		EXPECT_EQ(vs_sharps[i],v_sharps[i].print());
 		EXPECT_EQ(vs_flats[i],v_flats[i].print());
 	}
@@ -70,7 +69,6 @@ TEST(ntl_t_tests, NumbersBracketsDashesUnderscores) {
 		"G","G##","A_____","-_-","--B-"};
 	
 	for (int i=0; i<weird.size(); ++i) {
-		EXPECT_TRUE(ntl_t::valid_string(weird[i]));
 		ntl_t curr_ntl {weird[i]};
 		EXPECT_EQ(curr_ntl.print(),weird[i]);
 	}
@@ -84,7 +82,7 @@ TEST(ntl_t_tests, IllegalChars) {
 		"C$","D &",	"G.","G#.#","A__^___","-%_-","--~B-"};
 	
 	for (int i=0; i<illegal.size(); ++i) {
-		EXPECT_FALSE(ntl_t::valid_string(illegal[i]));
+		EXPECT_FALSE(is_valid_ntl(illegal[i])) << "illegal[i] == " << illegal[i];
 	}
 
 }
