@@ -54,6 +54,32 @@ TEST(ts_t_tests, TwelveEightSimpleCompound) {
 }
 
 
+TEST(ts_t_tests, NineEightNineSxtnNineFourCompound) {
+	ts_t ne {9_bt,d::e,true};
+	ts_t nsx {9_bt,d::sx,true};
+	ts_t nf {9_bt,d::q,true};
+
+	EXPECT_TRUE(ne.beats_per_bar() == 3_bt);
+	EXPECT_TRUE(nsx.beats_per_bar() == 3_bt);
+	EXPECT_TRUE(nf.beats_per_bar() == 3_bt);
+}
+
+
+TEST(ts_t_tests, SextupleMeter) {
+	// Simple
+	ts_t sf {6_bt,d::q,false};
+	ts_t se {6_bt,d::e,false};
+	EXPECT_TRUE(sf.beats_per_bar() == 6_bt);
+	EXPECT_TRUE(se.beats_per_bar() == 6_bt);
+	
+	// Compound
+	ts_t ete {18_bt,d::e,true};
+	ts_t etsx {18_bt,d::sx,true};
+	EXPECT_TRUE(ete.beats_per_bar() == 6_bt);
+	EXPECT_TRUE(etsx.beats_per_bar() == 6_bt);
+
+}
+
 // Tests the ctor from a std::string for non-compound ts_t's
 TEST(ts_t_tests, StringCtorNotCompound) {
 	struct ts_str_ans {

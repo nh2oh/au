@@ -426,3 +426,32 @@ std::vector<autests::dtset> autests::make_dt_set(int m_min, int n_min, int m_max
 
 	return result;
 }
+
+
+
+
+nv_t::nv_t(common_duration_t d) {
+	from_duration(d_t {d});
+}
+nv_t::nv_t(const nv_t::mn& mn) {
+	m_ = mn.m;
+	n_ = mn.n;
+}
+nv_t::nv_t(double d) {  // A duration spanning this many whole notes.
+	from_duration(d_t {d});
+}
+nv_t::nv_t(const d_t& d) {  // std::abort() if no m,n-form exists
+	from_duration(d);
+}
+
+void nv_t::from_duration(const d_t& d) {
+	if (!d.singlet_exists()) { std::abort(); }
+	auto mn = d.to_mn();
+	m_ = mn.m;
+	n_ = mn.n;
+}
+
+
+
+
+

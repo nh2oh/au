@@ -26,7 +26,7 @@ enum class common_duration_t {
 	z = -9999  // Note the special value for a zero-duration note
 };
 using d = common_duration_t;
-
+//TODO:   It is a shitty idea to have a type named 'd'
 
 
 //
@@ -101,6 +101,8 @@ public:
 	explicit d_t(double);  // d whole notes.
 
 	bool singlet_exists() const;
+	d_t::mn to_mn() const;  // std::abort() if not possible
+
 	std::vector<d_t> to_singlets() const;
 		// Unconstrained
 	std::vector<d_t> to_singlets_partition(const d_t&) const;
@@ -111,7 +113,7 @@ public:
 		// arg2, except the final subsequence, which may be <= arg2.
 
 	bool weird() const;
-
+	
 	int ndot() const;
 		// If the object has no singlet representation, ndot == 0, even if
 		// there is a tuplet representation where one or more or all the
@@ -122,7 +124,7 @@ public:
 	d_t base_nv() const;
 		// The value of the present object with n set to 0
 		// If the object has no singlet representation returns the present object.  
-
+	
 	struct opts {
 		bool denom_only {false};  // TODO:  What does this do??
 	};
@@ -149,7 +151,7 @@ private:
 	int b_ {0};
 	void reduce();
 	double to_double() const;
-	d_t::mn to_mn() const;  // std::abort() if not possible
+
 	bool mn_exists() const;
 
 	static const int max_nplet;
@@ -188,11 +190,12 @@ struct dtset {
 	int n {0};
 };
 std::vector<dtset> make_dt_set(int, int, int, int);
-}
+};
 
 
-
-/*
+//
+// Not sure if this is useful at all beyond just passing around common_duration_t's
+//
 class nv_t {
 public:
 	struct mn {
@@ -206,17 +209,23 @@ public:
 	explicit nv_t(const nv_t::mn&);
 	explicit nv_t(double);  // A duration spanning this many whole notes.
 	explicit nv_t(const d_t&);  // std::abort() if no m,n-form exists
+
+	int ndot() const;
+	int base() const;  // m_
+	nv_t base_nv() const;  // strips dots
+
+	bool set_base(int);
+	bool set_dots(int);
+	bool add_dots(int=1);
+	bool rm_dots(int);
+	bool rm_dots();  // Remove all the dots, if any
+
 private:
-	nv_t::mn mn_ {2,0};  // quarter-note
+	void from_duration(const d_t&);
+
+	int m_ {2};
+	int n_ {0};
 };
-*/
-
-
-
-
-
-
-
 
 
 

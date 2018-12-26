@@ -28,6 +28,12 @@
 //   Three (1/6). notes == (1/8).. (an eighth note w/ 2 dots).  
 //
 //
+// Meter
+//                       n-tuple
+//                      /       \
+//                  simple    compound
+//
+
 
 //
 // TODO:  Why can i not inspect is_compound() ?
