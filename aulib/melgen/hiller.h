@@ -1,6 +1,7 @@
 #pragma once
 #include "..\types\ntl_t.h"
 #include "..\scale\diatonic_spn.h"   // declaration of the hiller status object
+#include "..\types\rp_t.h"
 #include <vector>
 #include <string>
 
@@ -30,9 +31,9 @@ struct melody_hiller_params {
 		// 5 => ??
 };
 std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params&);  // "Experiment 2, part 1"
-std::vector<std::vector<int>> rhythm_hiller_ex3(const melody_hiller_params&);
-
-
+std::vector<std::vector<int>> rhythm_hiller_ex31(const melody_hiller_params&);
+std::vector<std::vector<int>> rhythm_hiller_ex32(const melody_hiller_params&);
+std::vector<rp_t> hillerrp2dbkrp(const std::vector<std::vector<int>>&);
 
 namespace melody_hiller_internal {
 

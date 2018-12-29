@@ -185,3 +185,26 @@ d_t rp_t::operator[](int i) const {
 
 	return sum;
 }
+
+rp_t::rp_element rp_t::operator[](const d_t& i) const {
+	if (i>m_dtot) { std::abort(); }  // out of range
+	
+	std::vector<rp_t::vgroup> e_i {};
+	auto junk = std::copy_if(m_e.begin(),m_e.end(),std::back_inserter(e_i),
+		[&](const vgroup& curr_e){return curr_e.usrix==i; });
+
+	d_t sum {};
+	for (auto const& e : e_i) {
+		sum += e.e;
+	}
+
+	return sum;
+}
+
+
+
+
+
+
+
+

@@ -110,6 +110,15 @@ public:
 
 	d_t operator[](int) const;
 		// Returns the d_t elements as initially passed in
+
+	struct rp_element {
+		d_t e {d::z};  // == tieback + tiefwd
+		d_t tieback {d::z};
+		d_t tiefwd {d::z};
+	};
+	rp_element operator[](const d_t&) const;
+	rp_element operator[](const beat_t&) const;
+	rp_element operator[](const bar_t&) const;
 private:
 	struct vgroup {
 		d_t e {};

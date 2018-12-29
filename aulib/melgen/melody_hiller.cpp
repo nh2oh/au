@@ -4,6 +4,7 @@
 #include "..\scale\diatonic_spn.h"
 #include "..\types\ntl_t.h"
 #include "..\types\frq_t.h"
+#include "..\types\rp_t.h"
 #include <string>
 #include <vector>
 #include <iostream>
@@ -21,19 +22,63 @@
 // For the present measure of the present voice:  
 // 1) generate a random permutation of a 4-binary digit sequence, 
 //    ex: 0000, 0001, 0010, ..., 0011, ... 1111
-//    where each 1 corresponds to an 8'th note, each 0 to an 8'th note rest or
-//    a continuation of the final note from the prior measure.  
+//    where each 1 corresponds to a note-onset event (a "strike"), and each 0 to a rest or
+//    a hold of the previous note.  
 // 2) generate an integer on [1,12]
 //    The 1-measure rp generated in (1) is repeated for this many measures
 //    for the present voice then a new rp and int are generated.
 //
+// The rp is generated beginning with "voice 0," which in the melody functions corresponds to the
+// cf.  However, in rhythm_hiller_32(), which incprporates the voice-voice correlation procedure,
+// lower voices need to be generated before upper voices.  Hence, in both versions of the hiller
+// rhythm functions, I call std::reverse() on the rp, so that "voice 0" in the generating algorithm 
+// correspinds to voice n in the result.  
 //
 //
-//
-std::vector<std::vector<int>> rhythm_hiller_ex3(const melody_hiller_params& p) {
+std::vector<std::vector<int>> rhythm_hiller_ex31(const melody_hiller_params& p) {
 	auto re = new_randeng(true);
 	std::uniform_int_distribution rd_note_on {0,1};
-	std::uniform_int_distribution rd_nrep {0,12};
+	std::uniform_int_distribution rd_nrep {0,4};  
+		// TODO:  Hiller's version is {0,12}; I am setting to 4 for debugging purposes
+	
+	if (p.nnts%4 != 0) {
+		std::abort();
+	}
+	int n_measures = p.nnts/4; 
+
+	std::vector<std::vector<int>> rp(p.nvoice);
+	for (int i=0; i<p.nvoice; ++i) {
+		int curr_measure_n = 0;
+		while (curr_measure_n < n_measures) {
+			std::vector<int> curr_measure {};
+			// The segment is completely random, but require that the very first element of the
+			// voice be a note onset (this is not part of Hiller's procedure)
+			for (int j=0; j<4; ++j) { curr_measure.push_back(rd_note_on(re)); }
+			if (curr_measure_n == 0 && curr_measure[0] == 0) { continue; }
+			
+			int ncopies = std::min(rd_nrep(re)+1,std::abs(n_measures-curr_measure_n));
+			for (int j=0; j<ncopies; ++j) {
+				std::copy(curr_measure.begin(),curr_measure.end(),std::back_inserter(rp[i]));
+			}
+			curr_measure_n += ncopies;
+		}
+	}
+	std::reverse(rp.begin(),rp.end());
+
+	return rp;
+}
+//
+// p.113:
+// ts == 4/8;  8'th note is the smallest possible time interval
+//
+// As rhythm_hiller_ex31(), but with the voice-voice correlation procedure added.  
+//
+//
+std::vector<std::vector<int>> rhythm_hiller_ex32(const melody_hiller_params& p) {
+	auto re = new_randeng(true);
+	std::uniform_int_distribution rd_note_on {0,1};
+	std::uniform_int_distribution rd_nrep {0,4};  
+		// TODO:  Hiller's version is {0,12}; I am setting to 2 for debugging purposes
 	std::uniform_int_distribution rd_n_voicecorr {0,p.nvoice};
 	
 	if (p.nnts%4 != 0) {
@@ -41,34 +86,58 @@ std::vector<std::vector<int>> rhythm_hiller_ex3(const melody_hiller_params& p) {
 	}
 	int n_measures = p.nnts/4; 
 
-	std::vector<std::vector<int>> rp {};
+	std::vector<std::vector<int>> rp(p.nvoice);
 	for (int i=0; i<p.nvoice; ++i) {
-
-		std::vector<int> curr_voice {};
 		int curr_measure_n = 0;
 		while (curr_measure_n < n_measures) {
-			std::vector<int> curr_seg {};
+			std::vector<int> curr_measure {};
 			int corr_with_voice = rd_n_voicecorr(re);
 			if (i>0 && corr_with_voice < i) {
-				// Require that this segment be the same as that for the prev voice
-				for (int j=0; j<4; ++j) { curr_seg.push_back(rp[corr_with_voice][4*curr_measure_n+j]); }
+				// Require that this segment be the same as that for voice corr_with_voice
+				for (int j=0; j<4; ++j) { curr_measure.push_back(rp[corr_with_voice][4*curr_measure_n+j]); }
 			} else {
 				// This segment is completely random
-				for (int j=0; j<4; ++j) { curr_seg.push_back(rd_note_on(re)); }
+				for (int j=0; j<4; ++j) { curr_measure.push_back(rd_note_on(re)); }
 			}
+			// require that the very first element of the voice be a note onset (this is not part
+			// of Hiller's procedure).  
+			if (curr_measure_n == 0 && curr_measure[0] == 0) { continue; }
 			
-			int nrep = rd_nrep(re);
-			int ncopies = std::min(nrep+1,std::abs(n_measures-curr_measure_n));
+			int ncopies = std::min(rd_nrep(re)+1,std::abs(n_measures-curr_measure_n));
 			for (int j=0; j<ncopies; ++j) {
-				std::copy(curr_seg.begin(),curr_seg.end(),std::back_inserter(curr_voice));
+				std::copy(curr_measure.begin(),curr_measure.end(),std::back_inserter(rp[i]));
 			}
 			curr_measure_n += ncopies;
 		}
-
-		rp.push_back(curr_voice);
 	}
+	std::reverse(rp.begin(),rp.end());
 
 	return rp;
+}
+
+
+std::vector<rp_t> hillerrp2dbkrp(const std::vector<std::vector<int>>& hrp) {
+	std::vector<rp_t> result {};
+	for (int i=0; i<hrp.size(); ++i) {
+		result.push_back(rp_t {ts_t {4_bt,d::e}});
+
+		int span {0};
+		for (int j=0; j<hrp[i].size(); ++j) {
+			if (hrp[i][j] == 1 || (j==hrp[i].size()-1)) {
+				d_t curr_nv = (span+1)*(d_t{d::e});
+				result[i].push_back(curr_nv);
+				span = 0;
+				continue;
+			}
+
+			++span;
+		}
+
+		std::cout << "voice " << i << ":  " << result[i].nbars().print() << " bars: \n"
+			<< result[i].print() << std::endl << std::endl;
+	}
+
+	return result;
 }
 
 

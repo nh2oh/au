@@ -10,7 +10,8 @@
 // Determines if a string represents a valid note letter.  '(' and ')' are not included;
 // an oct specifier is not considered to be part of an ntl.  
 //
-// TODO:  Noes not validate the max length of 12
+// TODO:  Does not validate the max length of 12
+// TODO:  Possibly allow ',' and ''' ??? (lilypond ntstrs)
 //
 bool is_valid_ntl(const std::string& s) {
 	if (s.size() == 0) { return false; }
