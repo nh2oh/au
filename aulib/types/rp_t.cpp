@@ -186,19 +186,43 @@ d_t rp_t::operator[](int i) const {
 	return sum;
 }
 
-rp_t::rp_element rp_t::operator[](const d_t& i) const {
-	if (i>m_dtot) { std::abort(); }  // out of range
+rp_t::rp_element rp_t::operator[](const d_t& pos) const {
+	if (pos>m_dtot) { std::abort(); }  // out of range
 	
-	std::vector<rp_t::vgroup> e_i {};
-	auto junk = std::copy_if(m_e.begin(),m_e.end(),std::back_inserter(e_i),
-		[&](const vgroup& curr_e){return curr_e.usrix==i; });
+	rp_t::rp_element result {};
 
-	d_t sum {};
-	for (auto const& e : e_i) {
-		sum += e.e;
+	d_t curr_pos {d::z};
+	int idx {0};
+	for (int i=0; i<m_e.size(); ++i) {
+		curr_pos += m_e[i].e;
+		if (curr_pos == pos) {
+			idx = i;
+			break;
+		} else if (curr_pos > pos) {
+			idx = std::max(0,i-1);  // TODO:  Danger: signed-unsigned subtraction
+		}
 	}
 
-	return sum;
+	int idx_tie_start = idx - m_e[idx].tie_b;
+	d_t dist_tie_back {d::z};
+	for (int i=idx_tie_start; i<idx; ++i) {
+		dist_tie_back += m_e[i].e;
+	}
+	int idx_tie_end = idx + m_e[idx].tie_f;
+	d_t dist_tie_fwd {d::z};
+	for (int i=idx; i<idx_tie_end; ++i) {
+		dist_tie_fwd += m_e[i].e;
+	}
+
+	result.tieback = dist_tie_back;
+	result.tiefwd = dist_tie_fwd;
+	if (m_e[idx].e == pos) { 
+		result.e = m_e[idx].e;
+	} else {
+		result.e = d_t {d::z};
+	}
+
+	return result;
 }
 
 
