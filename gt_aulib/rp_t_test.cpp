@@ -8,6 +8,74 @@
 // TODO:  No unit tests for print()
 
 
+
+TEST(rp_t_tests, SqBrktOpAllOverloadsSet1) {
+	std::vector<std::vector<d_t>> rps {
+		{d::q, d::q, d::q, d::q, d::q, d::q, d::q, d::q},  // 8 q => 2 bars
+		{d::q, d::q, d::q, d::h,       d::q, d::q, d::q},  // 2 bars
+		{d::e, d::e, d::h, d::w,                   d::e, d::q}  // 2.125 bars
+	};
+	ts_t ts {4_bt,d::q,false};
+
+	struct ans_t {
+		bar_t nbars {0};
+		beat_t nbeats {0};
+		int nelements {0};
+	};
+	std::vector<ans_t> ans {{2_br,8_bt,8},{2_br,8_bt,7},{2.125_br,8.5_bt,6}};
+
+	for (int i=0; i<rps.size(); ++i) {
+		rp_t curr_rp {ts,rps[i]};
+		EXPECT_EQ(curr_rp.nbars(),ans[i].nbars);
+		EXPECT_EQ(curr_rp.nbeats(),ans[i].nbeats);
+		EXPECT_EQ(curr_rp.nevents(),ans[i].nelements);
+	}
+	
+	rp_t rp0 {ts,rps[0]};
+	for (beat_t curr_bt {0}; curr_bt<rp0.nbeats(); curr_bt += 0.125_bt) {
+		rp_t::rp_element_t result {};
+		int rpsidx = static_cast<int>(curr_bt/1_bt);
+
+		result = rp0[curr_bt];
+		EXPECT_EQ(result.on, beat_t {rpsidx});
+		EXPECT_EQ(result.e, d_t {rps[0][rpsidx]});
+
+		result = rp0[nbar(ts,curr_bt)];
+		EXPECT_EQ(result.on, beat_t {rpsidx});
+		EXPECT_EQ(result.e, d_t {rps[0][rpsidx]});
+
+		result = rp0[duration(ts,curr_bt)];
+		EXPECT_EQ(result.on, beat_t {rpsidx});
+		EXPECT_EQ(result.e, d_t {rps[0][rpsidx]});
+	}
+
+	beat_t prev_exact_bt {0};
+	int rpsidx = 0;
+	rp_t rp1 {ts,rps[1]};
+	for (beat_t curr_bt {0}; curr_bt<rp0.nbeats(); curr_bt += 0.125_bt) {
+		rp_t::rp_element_t result {};
+
+		if (curr_bt == prev_exact_bt+nbeat(ts,rps[1][rpsidx])) {
+			prev_exact_bt = prev_exact_bt+nbeat(ts,rps[1][rpsidx]);
+			++rpsidx;
+		}
+
+		result = rp1[curr_bt];
+		EXPECT_EQ(result.on, prev_exact_bt); //beat_t {rpsidx});
+		EXPECT_EQ(result.e, d_t {rps[1][rpsidx]});
+
+		result = rp1[nbar(ts,curr_bt)];
+		EXPECT_EQ(result.on, prev_exact_bt); //eat_t {rpsidx});
+		EXPECT_EQ(result.e, d_t {rps[1][rpsidx]});
+
+		result = rp1[duration(ts,curr_bt)];
+		EXPECT_EQ(result.on, prev_exact_bt); //beat_t {rpsidx});
+		EXPECT_EQ(result.e, d_t {rps[1][rpsidx]});
+	}
+
+}
+
+
 // For a set of rp's of known nbars, nbeats under three ts_t's == 4/4, 3/4, 5/4,
 // tests rp_t.nbeat(), .nbar(), .nevents() for construction from a vector<d_t>.
 TEST(rp_t_tests, VectorDtConstructorAssortedRPsAndTsSet1) {
@@ -119,7 +187,6 @@ TEST(rp_t_tests, TsOnlyConstructorAssortedRPsAndTsSet1) {
 }
 
 
-
 TEST(rp_t_tests, VectorDtConstructorAssortedRPsAndTsSet2) {
 	std::vector<std::vector<d_t>> rp{
 		{d::sx, d::sx, d::sx, d::sx, d::sx, d::sx, d::sx, d::sx, d::sx, d::sx, d::sx, d::sx}, // 12 sx => 1 bar
@@ -158,4 +225,8 @@ TEST(rp_t_tests, VectorDtConstructorAssortedRPsAndTsSet2) {
 		}  // to next rp for curr_ts
 	} // to next ts
 }
+
+
+
+
 

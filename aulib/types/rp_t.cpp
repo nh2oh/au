@@ -125,20 +125,24 @@ std::string rp_t::print() const {
 		int n_full_bars = std::floor(e.on/ts_.beats_per_bar());
 		beat_t bts_till_next_bar = (n_full_bars+1)*ts_.beats_per_bar() - e.on;
 		d_t d_to_next_bar = duration(ts_,bts_till_next_bar);
-
+		
+		bar_t curr_bar = nbar(ts_,e.on);
 		auto d_singlets = (e.e).to_singlets_partition_max(d_to_next_bar,ts_.bar_unit());
 		for (size_t i=0; i<d_singlets.size(); ++i) {
+			
+			if (curr_bar.isexact()) {
+				s += " | ";
+			} else {
+				s += " ";
+			}
+
 			if (i > 0) { s += ')'; }
 			s += d_singlets[i].print();
 			if ((d_singlets.size()-1-i) > 0) { s += '('; }
+
+			curr_bar += nbar(ts_,d_singlets[i]);
 		}
 
-		bar_t curr_bar = nbar(ts_,e.on);
-		if (curr_bar.isexact()) {
-			s += " | ";
-		} else {
-			s += " ";
-		}
 	}
 
 	return s;

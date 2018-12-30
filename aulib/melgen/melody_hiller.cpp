@@ -511,6 +511,7 @@ bool ch_contains_tritone(const std::vector<note_t>& ch) {
 	return false;
 }
 
+// TODO:  What is this??  Is it used anywhere??
 int last_nonzero_idx(const std::vector<std::vector<int>>& rp, int v_idx, int ch_idx) {
 	for (int i=ch_idx; i>0; --i) {
 		if (rp[v_idx][i]==1) { return i; }

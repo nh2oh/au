@@ -29,6 +29,8 @@ struct melody_hiller_params {
 		// 3 => Progress each successfull iteration; melody + summary message
 		// 4 => Progress each iteration;  success/failure message
 		// 5 => ??
+
+	bool use_rp {false};
 };
 std::vector<std::vector<note_t>> melody_hiller_ex21(const melody_hiller_params&);  // "Experiment 2, part 1"
 std::vector<std::vector<int>> rhythm_hiller_ex31(const melody_hiller_params&);
