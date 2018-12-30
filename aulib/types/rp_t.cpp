@@ -252,79 +252,56 @@ rp_t::rp_t(const ts_t& ts, const std::vector<d_t>& nv) {
 	}
 }
 
-// TODO:  This is horrible
-// The reverse of member function dt(...)
+// TODO:  This is horrible; generalize the internals to some sort of find_closest()
 // Each element of dt is interpreted as the nearest integer multiple of res
 // and the d_t closest to this dt is chosen.  
-rp_t::rp_t(const ts_t& ts_in, const std::vector<std::chrono::milliseconds>& dt, const tempo_t& tempo,
-		const std::chrono::milliseconds& res) {
-
+rp_t::rp_t(const ts_t& ts_in, const std::vector<std::chrono::milliseconds>& dt, 
+	const tempo_t& tempo, const std::chrono::milliseconds& res) {
 	ts_ = ts_in;
 
-	std::map<beat_t,d_t> nvset {};
+	struct beat_duration {
+		d_t d {d::z};
+		beat_t bt {0};
+	};
+	std::vector<beat_duration> nvset {};
 	for (int m=-3; m<8; ++m) { // -3 => 8 (qw) 5 => 1/32
 		for (int n=0; n<5; ++n) {
-			auto curr_nv = d_t{d_t::mn{m,n}};
-			nvset[nbeat(ts_,curr_nv)]=curr_nv;
+			d_t curr_nv {d_t::mn{m,n}};
+			nvset.push_back({curr_nv, nbeat(ts_,curr_nv)});
 		}
 	}
 
-	// The t difference between each dt element and the dt of the nv_t
-	// chosen to represent said element.  
-	std::vector<std::chrono::milliseconds> error {};
+	// The t difference between each dt element and that of the chosen nv_t.
+	std::vector<std::chrono::milliseconds> error {};  error.reserve(dt.size());
 
-	decltype(res/res) one = {1};
-	for (auto e : dt) {
+	for (const auto& e : dt) {
 		// Find the integer multiple r of res closest to e:
-		// e/res is essentially integer division, so r*res will always 
-		// be <= e, and (r+1)*res will always be > e.  If e < res, e/res
-		// = r == 0.  
+		// e/res is integer division, so r*res will always be <= e, and (r+1)*res 
+		// will always be > e.  If e < res, e/res = r == 0.  
 		auto r = e/res;	
 		(e-r*res <= ((r+1)*res-e)) ? r=r : r=(r+1);
-		// I do not want to skip events < res since this will change the
-		// size of the vectors (or i'll have to have 0-duration elements...
-		// which don't exist...)
-		if (r == 0) { r = one; }
+		// I do not want to skip events < res since this will change the size of the vectors (or 
+		// i'll need to deal with 0-duration elements)
+		if (r == 0) { r = 1; }
 
 		auto curr_nbts = (r*res)*tempo;
 
 		// Find the element in nvset for which nbeats is closest to curr_nbts
-		// TODO:  Generalize to find_closest()
-		beat_t nbts_best_nv {};
-		d_t best_nv {};
 		auto nvset_firstgt = std::find_if(nvset.begin(),nvset.end(),
-			[&](std::pair<beat_t,d_t> const& in){return(in.first > curr_nbts);});
-		if (nvset_firstgt == nvset.begin()) {
-			best_nv = (*nvset_firstgt).second;
-			nbts_best_nv = (*nvset_firstgt).first;
-		} else if (nvset_firstgt == nvset.end()) {
+			[curr_nbts](const beat_duration& in){ return(in.bt > curr_nbts); });
+		if (nvset_firstgt == nvset.end()) {
 			--nvset_firstgt;
-			best_nv = (*nvset_firstgt).second;
-			nbts_best_nv = (*nvset_firstgt).first;
-		} else {
-			auto first_gt = *nvset_firstgt;  // closest > curr_nbts
-			--nvset_firstgt;
-			auto first_lteq = *nvset_firstgt;  // closest <= curr_nbts
-			if ((first_gt.first-curr_nbts) < (curr_nbts-first_lteq.first)) {
-				best_nv = first_gt.second;
-				nbts_best_nv = first_gt.first;
-			} else {
-				best_nv = first_lteq.second;
-				nbts_best_nv = first_lteq.first;
+		} else if (nvset_firstgt != nvset.begin()) {
+			if (((*nvset_firstgt).bt-curr_nbts) >= (curr_nbts-(*(nvset_firstgt-1)).bt)) {
+				--nvset_firstgt;
 			}
 		}
-
-		this->push_back(best_nv);
-		//m_tot_nbeats += nbts_best_nv;
+		this->push_back((*nvset_firstgt).d);
 
 		// Error measure
-		auto x= nbts_best_nv/tempo;
+		auto x = ((*nvset_firstgt).bt)/tempo;
 		error.push_back(x - e);
-		
 	}
-	//m_tot_nbars = nbar(m_ts,m_tot_nbeats);
-	//wait();
-
 }
 
 
