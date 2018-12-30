@@ -35,7 +35,7 @@ TEST(randrp_metg_tests, FourFourQESxZeroPhDefMgConstrainNbarsNnts) {
 	for (int i=0; i<tests.size(); ++i) {
 		auto rrp = randrp_metg(mg,tests[i].num_nts,tests[i].num_bars);
 		
-		EXPECT_TRUE(rrp.nelems()==tests[i].num_nts);
+		EXPECT_TRUE(rrp.nevents()==tests[i].num_nts);
 		auto nb = rrp.nbars();
 		auto tf_nb = (nb==tests[i].num_bars);
 		EXPECT_TRUE(tf_nb);
@@ -61,9 +61,9 @@ TEST(randrp_metg_tests, FourFourQESxZeroPhDefMgConstrainNnotes) {
 
 	for (int i=0; i<tests.size(); ++i) {
 		auto rrp = randrp_metg(mg,tests[i].num_nts,tests[i].num_bars);
-		EXPECT_TRUE(rrp.nelems()==tests[i].num_nts);
-		EXPECT_TRUE(rrp.nbars() >= rrp.nelems()*nbar(mg.ts(),mg.levels().back().nv));
-		EXPECT_TRUE(rrp.nbars() <= rrp.nelems()*nbar(mg.ts(),mg.levels().front().nv));
+		EXPECT_TRUE(rrp.nevents()==tests[i].num_nts);
+		EXPECT_TRUE(rrp.nbars() >= rrp.nevents()*nbar(mg.ts(),mg.levels().back().nv));
+		EXPECT_TRUE(rrp.nbars() <= rrp.nevents()*nbar(mg.ts(),mg.levels().front().nv));
 	}
 }
 
@@ -88,7 +88,7 @@ TEST(randrp_metg_tests, FourFourQESxZeroPhDefMgConstrainNbars) {
 	for (int i=0; i<tests.size(); ++i) {
 		auto rrp = randrp_metg(mg,tests[i].num_nts,tests[i].num_bars);
 		
-		EXPECT_TRUE(rrp.nelems() > 0);
+		EXPECT_TRUE(rrp.nevents() > 0);
 		auto nb = rrp.nbars();
 		auto tf_nb = (nb==tests[i].num_bars);
 		EXPECT_TRUE(tf_nb);
@@ -117,7 +117,7 @@ TEST(randrp_metg_tests, FourFourDwWQEZeroPhDefMgConstrainNbars) {
 	for (int i=0; i<tests.size(); ++i) {
 		auto rrp = randrp_metg(mg,tests[i].num_nts,tests[i].num_bars);
 		
-		EXPECT_TRUE(rrp.nelems() > 0);
+		EXPECT_TRUE(rrp.nevents() > 0);
 		auto nb = rrp.nbars();
 		auto tf_nb = (nb==tests[i].num_bars);
 		EXPECT_TRUE(tf_nb);
@@ -155,7 +155,7 @@ TEST(randrp_metg_tests, FourFourWHQZeroPhManualPg) {
 	for (int i=0; i<Ntests1; ++i) {
 		auto rrp = randrp_metg(mg,tests1[i%tests1.size()].num_nts,tests1[i%tests1.size()].num_bars);
 
-		EXPECT_TRUE(rrp.nelems()==tests1[i%tests1.size()].num_nts);
+		EXPECT_TRUE(rrp.nevents()==tests1[i%tests1.size()].num_nts);
 		auto nb = rrp.nbars();
 		auto tf_nb = (nb==tests1[i%tests1.size()].num_bars);
 		EXPECT_TRUE(tf_nb);
@@ -174,7 +174,7 @@ TEST(randrp_metg_tests, FourFourWHQZeroPhManualPg) {
 	for (int i=0; i<Ntests2; ++i) {
 		auto rrp = randrp_metg(mg,tests2[i%tests2.size()].num_nts,tests2[i%tests2.size()].num_bars);
 
-		EXPECT_TRUE(rrp.nelems()==tests2[i%tests2.size()].num_nts);
+		EXPECT_TRUE(rrp.nevents()==tests2[i%tests2.size()].num_nts);
 		auto nb = rrp.nbars();
 		auto tf_nb = (nb==tests2[i%tests2.size()].num_bars);
 		EXPECT_TRUE(tf_nb);
@@ -211,7 +211,7 @@ TEST(randrp_metg_tests, FourFourHnt1BtPhShiftWHQDefaultRandommg) {
 
 	for (int i=0; i<tests.size(); ++i) {
 		auto rrp = randrp_metg(mg,tests[i].num_nts,tests[i].num_bars);
-		bool tf_ne = (rrp.nelems()==tests[i].num_nts);
+		bool tf_ne = (rrp.nevents()==tests[i].num_nts);
 		EXPECT_TRUE(tf_ne);
 		auto nb = rrp.nbars();
 		auto tf_nb = (nb==tests[i].num_bars);
@@ -243,7 +243,7 @@ TEST(randrp_metg_tests, ThreeFourZeroPhaseHQESxDefaultRandommg) {
 	for (int i=0; i<tests.size(); ++i) {
 		auto rrp = randrp_metg(mg,tests[i].num_nts,tests[i].num_bars);
 		
-		EXPECT_TRUE(rrp.nelems()==tests[i].num_nts);
+		EXPECT_TRUE(rrp.nevents()==tests[i].num_nts);
 		auto nb = rrp.nbars();
 		auto tf_nb = (nb==tests[i].num_bars);
 		EXPECT_TRUE(tf_nb);

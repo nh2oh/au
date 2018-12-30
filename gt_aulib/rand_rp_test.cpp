@@ -30,7 +30,7 @@ TEST(rand_rp_tests, ConstrainedNbarsConstrainedNnts) {
 		auto curr_rp = rand_rp(in);
 		EXPECT_TRUE(curr_rp.success);
 		EXPECT_EQ(curr_rp.rp.nbars(),in.nbars);
-		EXPECT_EQ(curr_rp.rp.nelems(),in.nnts);
+		EXPECT_EQ(curr_rp.rp.nevents(),in.nnts);
 		EXPECT_EQ(curr_rp.rp.ts(),in.ts);
 	}
 }
@@ -85,7 +85,7 @@ TEST(rand_rp_tests, ConstrainedNbarsUnconstrainedNnts) {
 			}
 			auto second_rp = rand_rp(in);
 			EXPECT_TRUE(second_rp.success);
-			if (second_rp.rp.nelems()!=curr_rp.rp.nelems()) {
+			if (second_rp.rp.nevents()!=curr_rp.rp.nevents()) {
 				break;
 			}
 		}
@@ -131,7 +131,7 @@ TEST(rand_rp_tests, UnconstrainedNbarsConstrainedNnts) {
 			}
 		}
 		
-		EXPECT_EQ(curr_rp.rp.nelems(),in.nnts);
+		EXPECT_EQ(curr_rp.rp.nevents(),in.nnts);
 		EXPECT_EQ(curr_rp.rp.ts(),in.ts);
 	}
 }

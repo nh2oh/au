@@ -47,7 +47,7 @@ public:
 	};
 
 	explicit line_t(std::vector<T> nts, rp_t rp) {
-		if (rp.nelems() != nts.size()) { std::abort(); }
+		if (rp.nevents() != nts.size()) { std::abort(); }
 		m_rp = rp;
 		for (auto e : nts) {
 			m_mes.push_back({e,false});
@@ -73,7 +73,7 @@ public:
 	// Getters
 	bar_t nbars() const { return m_rp.nbars(); };
 	beat_t nbeats() const { return m_rp.nbeats(); };
-	size_t nelems() const { return m_rp.nelems(); };
+	size_t nelems() const { return m_rp.nevents(); };
 	std::string print(const std::string& sep = " ") {
 		d_t::opts rp_p_opts {};
 		rp_p_opts.denom_only = true;
@@ -109,7 +109,7 @@ public:
 			if (curr_musel.isrest()) { continue; }
 			for (int j=0; j<curr_musel.n(); ++j) {
 				//notes_flat_norests.push_back(curr_musel[j]);
-				notes_flat_norests.push_back({curr_musel[j],m_rp[i]});
+				notes_flat_norests.push_back({curr_musel[j],m_rp[i].e});
 			}
 		}
 		return notes_flat_norests;

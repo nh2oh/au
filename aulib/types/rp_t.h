@@ -81,7 +81,7 @@
 //  from the output of print().  
 //
 
-
+/*
 class rp_t {
 public:
 	rp_t()=default;
@@ -134,18 +134,20 @@ private:
 	ts_t m_ts;
 };
 
+*/
 
 
 
 
 
-
-class rp2_t {
+class rp_t {
 public:
-	rp2_t()=default;
-	explicit rp2_t(const ts_t&);
-	explicit rp2_t(const ts_t&, const beat_t&);  // start_
-	explicit rp2_t(const ts_t&, const std::vector<d_t>&);
+	rp_t()=default;
+	explicit rp_t(const ts_t&);
+	explicit rp_t(const ts_t&, const beat_t&);  // start_
+	explicit rp_t(const ts_t&, const std::vector<d_t>&);
+	explicit rp_t(const ts_t&, const std::vector<std::chrono::milliseconds>&, const tempo_t&,
+		const std::chrono::milliseconds&);
 
 	// Callers push_back() d_t's only, hence the beat-number of each added element (modulo the
 	// overall "phase shift") is not under the control of the caller.  A caller can not create 

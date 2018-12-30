@@ -12,7 +12,7 @@
 #include <exception>
 #include <iostream>
 
-
+/*
 rp_t::rp_t(ts_t const& ts) {
 	m_ts = ts;
 }
@@ -224,6 +224,7 @@ rp_t::rp_element rp_t::operator[](const d_t& pos) const {
 
 	return result;
 }
+*/
 
 
 
@@ -235,24 +236,99 @@ rp_t::rp_element rp_t::operator[](const d_t& pos) const {
 
 
 
-
-rp2_t::rp2_t(const ts_t& ts) {
+rp_t::rp_t(const ts_t& ts) {
 	ts_ = ts;
 }
 
-rp2_t::rp2_t(const ts_t& ts, const beat_t& start) {
+rp_t::rp_t(const ts_t& ts, const beat_t& start) {
 	ts_ = ts;
 	start_ = start;
 }
 
-rp2_t::rp2_t(const ts_t& ts, const std::vector<d_t>& nv) {
+rp_t::rp_t(const ts_t& ts, const std::vector<d_t>& nv) {
 	ts_ = ts;
 	for (auto e : nv) {
 		this->push_back(e);
 	}
 }
 
-void rp2_t::push_back(d_t d) {
+// TODO:  This is horrible
+// The reverse of member function dt(...)
+// Each element of dt is interpreted as the nearest integer multiple of res
+// and the d_t closest to this dt is chosen.  
+rp_t::rp_t(const ts_t& ts_in, const std::vector<std::chrono::milliseconds>& dt, const tempo_t& tempo,
+		const std::chrono::milliseconds& res) {
+
+	ts_ = ts_in;
+
+	std::map<beat_t,d_t> nvset {};
+	for (int m=-3; m<8; ++m) { // -3 => 8 (qw) 5 => 1/32
+		for (int n=0; n<5; ++n) {
+			auto curr_nv = d_t{d_t::mn{m,n}};
+			nvset[nbeat(ts_,curr_nv)]=curr_nv;
+		}
+	}
+
+	// The t difference between each dt element and the dt of the nv_t
+	// chosen to represent said element.  
+	std::vector<std::chrono::milliseconds> error {};
+
+	decltype(res/res) one = {1};
+	for (auto e : dt) {
+		// Find the integer multiple r of res closest to e:
+		// e/res is essentially integer division, so r*res will always 
+		// be <= e, and (r+1)*res will always be > e.  If e < res, e/res
+		// = r == 0.  
+		auto r = e/res;	
+		(e-r*res <= ((r+1)*res-e)) ? r=r : r=(r+1);
+		// I do not want to skip events < res since this will change the
+		// size of the vectors (or i'll have to have 0-duration elements...
+		// which don't exist...)
+		if (r == 0) { r = one; }
+
+		auto curr_nbts = (r*res)*tempo;
+
+		// Find the element in nvset for which nbeats is closest to curr_nbts
+		// TODO:  Generalize to find_closest()
+		beat_t nbts_best_nv {};
+		d_t best_nv {};
+		auto nvset_firstgt = std::find_if(nvset.begin(),nvset.end(),
+			[&](std::pair<beat_t,d_t> const& in){return(in.first > curr_nbts);});
+		if (nvset_firstgt == nvset.begin()) {
+			best_nv = (*nvset_firstgt).second;
+			nbts_best_nv = (*nvset_firstgt).first;
+		} else if (nvset_firstgt == nvset.end()) {
+			--nvset_firstgt;
+			best_nv = (*nvset_firstgt).second;
+			nbts_best_nv = (*nvset_firstgt).first;
+		} else {
+			auto first_gt = *nvset_firstgt;  // closest > curr_nbts
+			--nvset_firstgt;
+			auto first_lteq = *nvset_firstgt;  // closest <= curr_nbts
+			if ((first_gt.first-curr_nbts) < (curr_nbts-first_lteq.first)) {
+				best_nv = first_gt.second;
+				nbts_best_nv = first_gt.first;
+			} else {
+				best_nv = first_lteq.second;
+				nbts_best_nv = first_lteq.first;
+			}
+		}
+
+		this->push_back(best_nv);
+		//m_tot_nbeats += nbts_best_nv;
+
+		// Error measure
+		auto x= nbts_best_nv/tempo;
+		error.push_back(x - e);
+		
+	}
+	//m_tot_nbars = nbar(m_ts,m_tot_nbeats);
+	//wait();
+
+}
+
+
+void rp_t::push_back(d_t d) {
 	// Note that start_ only matters if inserting into an empty container since after the first 
 	// insertion its effect will be reflected in the cumulative beat-onset field of each rp_ 
 	// element.  
@@ -263,26 +339,26 @@ void rp2_t::push_back(d_t d) {
 }
 
 
-bar_t rp2_t::nbars() const {
+bar_t rp_t::nbars() const {
 	if (rp_.size() == 0) {
 		return nbar(ts_,start_);
 	}
 	return nbar(ts_,rp_.back().on) + nbar(ts_,rp_.back().e);
 }
-beat_t rp2_t::nbeats() const {
+beat_t rp_t::nbeats() const {
 	if (rp_.size() == 0) {
 		return start_;
 	}
 	return rp_.back().on + nbeat(ts_,rp_.back().e);
 }
-int rp2_t::nevents() const {
+int rp_t::nevents() const {
 	return rp_.size();
 }
-ts_t rp2_t::ts() const {
+ts_t rp_t::ts() const {
 	return ts_;
 }
 
-std::vector<d_t> rp2_t::to_duration_seq() const {
+std::vector<d_t> rp_t::to_duration_seq() const {
 	std::vector<d_t> result {};  result.reserve(rp_.size());
 	for (const auto& e : rp_) {
 		result.push_back(e.e);
@@ -291,7 +367,7 @@ std::vector<d_t> rp2_t::to_duration_seq() const {
 }
 
 
-std::string rp2_t::print() const {
+std::string rp_t::print() const {
 	std::string s {};
 
 	for (const auto& e : rp_) {
@@ -318,13 +394,13 @@ std::string rp2_t::print() const {
 }
 
 // Returns the d_t elements corresponding to sounded event i
-rp2_t::rp_element_t rp2_t::operator[](int i) const {
+rp_t::rp_element_t rp_t::operator[](int i) const {
 	if (i > rp_.size()) {
-		std::cout << "rp2_t::operator[](int i) const : i > rp_.size()\n";
+		std::cout << "rp_t::operator[](int i) const : i > rp_.size()\n";
 		std::abort();
 	}
 
-	return rp2_t::rp_element_t {rp_[i].e,rp_[i].on};
+	return rp_t::rp_element_t {rp_[i].e,rp_[i].on};
 }
 
 
