@@ -6,8 +6,8 @@
 
 
 // For a set of rp's of known nbars, nbeats under three ts_t's == 4/4, 3/4, 5/4,
-// tests rp_t.nbeat(), .nbar(), .nelems() for construction from a vector<d_t>.
-TEST(rp_t_tests, VectorDtConstructorAssortedRPsAndTsSet1) {
+// tests rp2_t.nbeat(), .nbar(), .nevents() for construction from a vector<d_t>.
+TEST(rp2_t_tests, VectorDtConstructorAssortedRPsAndTsSet1) {
 	std::vector<std::vector<d_t>> rp{
 		{d::q, d::q, d::h},  //  4/4 => 1 bar
 		{d::e, d::e, d::q, d::h},  // 4/4 => 1 bar
@@ -38,16 +38,20 @@ TEST(rp_t_tests, VectorDtConstructorAssortedRPsAndTsSet1) {
 		for (int j=0; j<rp.size(); ++j) {
 			auto curr_vdt = rp[j];
 
-			rp_t curr_rp {curr_ts, curr_vdt};
+			rp2_t curr_rp {curr_ts, curr_vdt};
+
 			EXPECT_TRUE(curr_rp.ts() == curr_ts);
-			EXPECT_TRUE(curr_rp.nbeats() == ans_nbeat[i][j]);
-			EXPECT_TRUE(curr_rp.nbars() == ans_nbar[i][j]);
-			EXPECT_TRUE(curr_rp.nelems() == curr_vdt.size());
+			EXPECT_TRUE(curr_rp.nbeats() == ans_nbeat[i][j]) << "Expect " 
+				<< curr_rp.nbeats().print() << " == " << ans_nbeat[i][j].print();
+			EXPECT_TRUE(curr_rp.nbars() == ans_nbar[i][j]) << "Expect " 
+				<< curr_rp.nbars().print() << " == " << ans_nbar[i][j].print();
+			EXPECT_TRUE(curr_rp.nevents() == curr_vdt.size()) << "Expect " 
+				<< curr_rp.nevents() << " == " << curr_vdt.size();
 
 			EXPECT_TRUE(curr_rp.to_duration_seq() == curr_vdt);
 
 			for (int k=0; k<curr_vdt.size(); ++k) {
-				EXPECT_TRUE(curr_rp[k]==curr_vdt[k]);
+				EXPECT_TRUE(curr_rp[k].e==curr_vdt[k]);
 			}
 		}  // to next rp for curr_ts
 	} // to next ts
@@ -55,9 +59,9 @@ TEST(rp_t_tests, VectorDtConstructorAssortedRPsAndTsSet1) {
 
 
 // For a set of rp's of known nbars, nbeats under three ts_t's == 4/4, 3/4, 5/4,
-// tests rp_t.nbeat(), .nbar(), .nelems() for construction empty, followed by 
-// element-wise push_back() of each d_t element into the rp_t.
-TEST(rp_t_tests, TsOnlyConstructorAssortedRPsAndTsSet1) {
+// tests rp2_t.nbeat(), .nbar(), .nevents() for construction empty, followed by 
+// element-wise push_back() of each d_t element into the rp2_t.
+TEST(rp2_t_tests, TsOnlyConstructorAssortedRPsAndTsSet1) {
 	std::vector<std::vector<d_t>> rp{
 		{d::q, d::q, d::h},  //  4/4 => 1 bar
 		{d::e, d::e, d::q, d::h},  // 4/4 => 1 bar
@@ -88,11 +92,11 @@ TEST(rp_t_tests, TsOnlyConstructorAssortedRPsAndTsSet1) {
 		for (int j=0; j<rp.size(); ++j) {
 			auto curr_vdt = rp[j];
 
-			rp_t curr_rp{curr_ts};
+			rp2_t curr_rp{curr_ts};
 			EXPECT_TRUE(curr_rp.ts() == curr_ts);
 			EXPECT_TRUE(curr_rp.nbeats() == 0_bt);
 			EXPECT_TRUE(curr_rp.nbars() == 0_br);
-			EXPECT_TRUE(curr_rp.nelems() == 0);
+			EXPECT_TRUE(curr_rp.nevents() == 0);
 
 			for (int k=0; k<curr_vdt.size(); ++k) {
 				curr_rp.push_back(curr_vdt[k]);
@@ -100,12 +104,12 @@ TEST(rp_t_tests, TsOnlyConstructorAssortedRPsAndTsSet1) {
 			EXPECT_TRUE(curr_rp.ts() == curr_ts);
 			EXPECT_TRUE(curr_rp.nbeats() == ans_nbeat[i][j]);
 			EXPECT_TRUE(curr_rp.nbars() == ans_nbar[i][j]);
-			EXPECT_TRUE(curr_rp.nelems() == curr_vdt.size());
+			EXPECT_TRUE(curr_rp.nevents() == curr_vdt.size());
 
 			EXPECT_TRUE(curr_rp.to_duration_seq() == curr_vdt);
 
 			for (int k=0; k<curr_vdt.size(); ++k) {
-				EXPECT_TRUE(curr_rp[k]==curr_vdt[k]);
+				EXPECT_TRUE(curr_rp[k].e==curr_vdt[k]);
 			}
 		}  // to next rp for curr_ts
 	} // to next ts
@@ -113,7 +117,7 @@ TEST(rp_t_tests, TsOnlyConstructorAssortedRPsAndTsSet1) {
 
 
 
-TEST(rp_t_tests, VectorDtConstructorAssortedRPsAndTsSet2) {
+TEST(rp2_t_tests, VectorDtConstructorAssortedRPsAndTsSet2) {
 	std::vector<std::vector<d_t>> rp{
 		{d::sx, d::sx, d::sx, d::sx, d::sx, d::sx, d::sx, d::sx, d::sx, d::sx, d::sx, d::sx}, // 12 sx => 1 bar
 		{d::sx, d::sx, d::sx, d::sx, d::sx, d::sx, d::sx, d::sx}, // 8 sx => 2/3 bars 
@@ -137,16 +141,16 @@ TEST(rp_t_tests, VectorDtConstructorAssortedRPsAndTsSet2) {
 		for (int j=0; j<rp.size(); ++j) {
 			auto curr_vdt = rp[j];
 
-			rp_t curr_rp{curr_ts, curr_vdt};
+			rp2_t curr_rp{curr_ts, curr_vdt};
 			EXPECT_TRUE(curr_rp.ts() == curr_ts);
 			EXPECT_TRUE(curr_rp.nbeats() == ans_nbeat[i][j]);
 			EXPECT_TRUE(curr_rp.nbars() == ans_nbar[i][j]);
-			EXPECT_TRUE(curr_rp.nelems() == curr_vdt.size());
+			EXPECT_TRUE(curr_rp.nevents() == curr_vdt.size());
 
 			EXPECT_TRUE(curr_rp.to_duration_seq() == curr_vdt);
 
 			for (int k=0; k<curr_vdt.size(); ++k) {
-				EXPECT_TRUE(curr_rp[k]==curr_vdt[k]);
+				EXPECT_TRUE(curr_rp[k].e==curr_vdt[k]);
 			}
 		}  // to next rp for curr_ts
 	} // to next ts

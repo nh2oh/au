@@ -147,6 +147,10 @@ public:
 	explicit rp2_t(const ts_t&, const beat_t&);  // start_
 	explicit rp2_t(const ts_t&, const std::vector<d_t>&);
 
+	// Callers push_back() d_t's only, hence the beat-number of each added element (modulo the
+	// overall "phase shift") is not under the control of the caller.  A caller can not create 
+	// an rp_t with a "gap" between adjacent elements.  
+	// The container can not represent caller-annotated ties, ex:  ... | e e( )e e| ...
 	void push_back(d_t);
 
 	std::string print() const;
@@ -156,6 +160,8 @@ public:
 	ts_t ts() const;
 	
 	std::vector<d_t> to_duration_seq() const;
+
+
 
 	//
 	// T_out operator[](T_in)
@@ -169,23 +175,13 @@ public:
 	//
 	struct rp_element_t {
 		d_t e {d::z};  // element presently within
-		beat_t on {0_bt};  // onset beat of present element
+		beat_t on {0_bt};  // cumulative onset beat of present element
 	};
-
 	rp_element_t operator[](int) const;  // Returns the d_t elements corresponding to sounded event i
 	rp_element_t operator[](const d_t&) const;
 	rp_element_t operator[](const beat_t&) const;
 	rp_element_t operator[](const bar_t&) const;
 private:
-	struct user_element_t {
-		beat_t on {0};  // cumulative beat-number corresponding to the element onset
-		d_t e {d::z};
-	};
-	// Callers push_back() d_t's only, hence the beat-number of each added element (modulo the
-	// overall "phase shift") is not under the control of the caller.  A caller can not create 
-	// an rp_t with a "gap" between adjacent elements.  
-	// The container can not represent caller-annotated ties, ex:  ... | e e( )e e| ...
-	
 	ts_t ts_ {4_bt,d::q,false};
 	beat_t start_ {0};  // Beat number corresponding to the first element
 	// beat_t tot_nbeats_ {0};  // == rp_.back().on - start_

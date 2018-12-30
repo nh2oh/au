@@ -10,7 +10,7 @@
 #include <chrono>
 #include <map>
 #include <exception>
-
+#include <iostream>
 
 
 rp_t::rp_t(ts_t const& ts) {
@@ -258,7 +258,7 @@ void rp2_t::push_back(d_t d) {
 	// element.  
 	// A consequence of this is that nbars() nbeats() etc can return + or - results even if rp_ 
 	// is empty.  
-	beat_t bt_onset = rp_.size() == 0 ? start_ : rp_.back().on + nbeat(ts_,d);
+	beat_t bt_onset = rp_.size() == 0 ? start_ : rp_.back().on + nbeat(ts_,rp_.back().e);
 	rp_.push_back({d, bt_onset});
 }
 
@@ -316,5 +316,29 @@ std::string rp2_t::print() const {
 
 	return s;
 }
+
+// Returns the d_t elements corresponding to sounded event i
+rp2_t::rp_element_t rp2_t::operator[](int i) const {
+	if (i > rp_.size()) {
+		std::cout << "rp2_t::operator[](int i) const : i > rp_.size()\n";
+		std::abort();
+	}
+
+	return rp2_t::rp_element_t {rp_[i].e,rp_[i].on};
+}
+
+
+/*
+rp_element_t operator[](const d_t&) const;
+rp_element_t operator[](const beat_t&) const;
+rp_element_t operator[](const bar_t&) const;
+*/
+
+
+
+
+
+
+
 
 
