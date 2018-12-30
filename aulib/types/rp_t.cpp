@@ -232,3 +232,89 @@ rp_t::rp_element rp_t::operator[](const d_t& pos) const {
 
 
 
+
+
+
+
+rp2_t::rp2_t(const ts_t& ts) {
+	ts_ = ts;
+}
+
+rp2_t::rp2_t(const ts_t& ts, const beat_t& start) {
+	ts_ = ts;
+	start_ = start;
+}
+
+rp2_t::rp2_t(const ts_t& ts, const std::vector<d_t>& nv) {
+	ts_ = ts;
+	for (auto e : nv) {
+		this->push_back(e);
+	}
+}
+
+void rp2_t::push_back(d_t d) {
+	// Note that start_ only matters if inserting into an empty container since after the first 
+	// insertion its effect will be reflected in the cumulative beat-onset field of each rp_ 
+	// element.  
+	// A consequence of this is that nbars() nbeats() etc can return + or - results even if rp_ 
+	// is empty.  
+	beat_t bt_onset = rp_.size() == 0 ? start_ : rp_.back().on + nbeat(ts_,d);
+	rp_.push_back({d, bt_onset});
+}
+
+
+bar_t rp2_t::nbars() const {
+	if (rp_.size() == 0) {
+		return nbar(ts_,start_);
+	}
+	return nbar(ts_,rp_.back().on) + nbar(ts_,rp_.back().e);
+}
+beat_t rp2_t::nbeats() const {
+	if (rp_.size() == 0) {
+		return start_;
+	}
+	return rp_.back().on + nbeat(ts_,rp_.back().e);
+}
+int rp2_t::nevents() const {
+	return rp_.size();
+}
+ts_t rp2_t::ts() const {
+	return ts_;
+}
+
+std::vector<d_t> rp2_t::to_duration_seq() const {
+	std::vector<d_t> result {};  result.reserve(rp_.size());
+	for (const auto& e : rp_) {
+		result.push_back(e.e);
+	}
+	return result;
+}
+
+
+std::string rp2_t::print() const {
+	std::string s {};
+
+	for (const auto& e : rp_) {
+		int n_full_bars = std::floor(e.on/ts_.beats_per_bar());
+		beat_t bts_till_next_bar = (n_full_bars+1)*ts_.beats_per_bar() - e.on;
+		d_t d_to_next_bar = duration(ts_,bts_till_next_bar);
+
+		auto d_singlets = (e.e).to_singlets_partition_max(d_to_next_bar,ts_.bar_unit());
+		for (size_t i=0; i<d_singlets.size(); ++i) {
+			if (i > 0) { s += ')'; }
+			s += d_singlets[i].print();
+			if ((d_singlets.size()-1-i) > 0) { s += '('; }
+		}
+
+		bar_t curr_bar = nbar(ts_,e.on);
+		if (curr_bar.isexact()) {
+			s += " | ";
+		} else {
+			s += " ";
+		}
+	}
+
+	return s;
+}
+
+
