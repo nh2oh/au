@@ -4,7 +4,7 @@
 #include "ts_t.h"
 #include <string>
 #include <vector>
-#include <algorithm> // find_if(), copy()
+#include <algorithm> // find_if(), copy(), std::max()
 #include <chrono>
 #include <exception>
 #include <iostream>
@@ -15,12 +15,28 @@ rp_t::rp_t(const ts_t& ts) {
 }
 
 rp_t::rp_t(const ts_t& ts, const beat_t& start) {
+	if (start < 0_bt) {
+		std::cout << "rp_t::rp_t(const ts_t& ts, const beat_t& start) : " 
+			<< "Illegal to construct an rp_t w/a starting position < 0 beats.\n ";
+	}
 	ts_ = ts;
 	start_ = start;
 }
 
 rp_t::rp_t(const ts_t& ts, const std::vector<d_t>& nv) {
 	ts_ = ts;
+	for (auto e : nv) {
+		this->push_back(e);
+	}
+}
+
+rp_t::rp_t(const ts_t& ts, const beat_t& start, const std::vector<d_t>& nv) {
+	if (start < 0_bt) {
+		std::cout << "rp_t::rp_t(const ts_t& ts, const beat_t& start) : " 
+			<< "Illegal to construct an rp_t w/a starting position < 0 beats.\n ";
+	}
+	ts_ = ts;
+	start_ = start;
 	for (auto e : nv) {
 		this->push_back(e);
 	}
@@ -49,14 +65,18 @@ rp_t::rp_t(const ts_t& ts_in, const std::vector<std::chrono::milliseconds>& dt,
 	std::vector<std::chrono::milliseconds> error {};  error.reserve(dt.size());
 
 	for (const auto& e : dt) {
-		// Find the integer multiple r of res closest to e:
-		// e/res is integer division, so r*res will always be <= e, and (r+1)*res 
-		// will always be > e.  If e < res, e/res = r == 0.  
-		auto r = e/res;	
+		if (e < std::chrono::milliseconds {0}) {
+			std::cout << "rp_t::rp_t(const ts_t& ts_in, const std::vector<std::chrono::milliseconds>& ...) : "
+				<< "All elements of dt must be >= 0.\n";
+			std::abort();
+		}
+		// Find the integer multiple r of res closest to e.  e/res is integer division, so
+		// r*res will always be <= e, and (r+1)*res will always be > e.  
+		// If e < res, e/res = r == 0, however, I do not want to skip events < res since 
+		// this will change the size of the vectors (or  i'll need to deal with 0-duration
+		// elements); hence std::max(e/res,1).  
+		auto r = std::max(e/res,static_cast<decltype(e/res)>(1));
 		(e-r*res <= ((r+1)*res-e)) ? r=r : r=(r+1);
-		// I do not want to skip events < res since this will change the size of the vectors (or 
-		// i'll need to deal with 0-duration elements)
-		if (r == 0) { r = 1; }
 
 		auto curr_nbts = (r*res)*tempo;
 
@@ -116,7 +136,6 @@ std::vector<d_t> rp_t::to_duration_seq() const {
 	}
 	return result;
 }
-
 
 std::string rp_t::print() const {
 	std::string s {};

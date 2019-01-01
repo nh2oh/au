@@ -102,7 +102,6 @@ void ntl_t::set_ntl(const std::string& str_in) {
 	std::copy(str_in.begin(),str_in.end(),m_ntl.begin());
 }
 std::string ntl_t::print() const {
-	//std::find(m_ntl.begin(),m_ntl.end(),'\0');
 	return std::string {m_ntl.begin(),std::find(m_ntl.begin(),m_ntl.end(),'\0')};
 }
 

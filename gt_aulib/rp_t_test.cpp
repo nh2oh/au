@@ -4,10 +4,7 @@
 #include "..\aulib\types\beat_bar_t.h"
 #include <vector>
 
-// TODO:  No unit tests for setting start_ offset
 // TODO:  No unit tests for print()
-
-
 
 TEST(rp_t_tests, SqBrktOpAllOverloadsSet1) {
 	std::vector<std::vector<d_t>> rps {
@@ -274,8 +271,4 @@ TEST(rp_t_tests, VectorDtConstructorAssortedRPsAndTsSet2) {
 		}  // to next rp for curr_ts
 	} // to next ts
 }
-
-
-
-
 

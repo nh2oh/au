@@ -350,7 +350,7 @@ bool d_t::operator<(const d_t& rhs) const {
 bool d_t::operator>(const d_t& rhs) const {
 	return aprx_gt(this->to_double(),rhs.to_double());
 }
-// TODO:  This does not need to use the fp aprx functions if it can be asumed that each d_t 
+// TODO:  This does not need to use the fp aprx functions if it can be assumed that each d_t 
 // is in reduced form.  
 bool d_t::operator==(const d_t& rhs) const {
 	return aprx_eq(this->to_double(),rhs.to_double());

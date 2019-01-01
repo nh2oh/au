@@ -9,17 +9,13 @@
 //
 // Class rp_t
 // Represents a continuous sequence of d_t's spanning some distance (queryable with .nbars(), 
-// .nbeats(), etc) under some ts_t.  The sequence may have an initial offset considered part of
-// the span of the sequence.  
+// .nbeats(), etc) under some ts_t.  The sequence may have an initial offset, considered part of
+// the span of the sequence.  Ex: For a single q-note, if start_ == 0.5_bt, and ts_ == "4/4", 
+// rp_ will == {0.5,q}, and rp.nbeats() will return 1.5_bt.  
 //
-// Operations (that need to be) supported:
-// -Return the sequence of de_t's initially supplied by the caller
-// -Print w/ barlines, appropriate ties, etc
-// -Replace/access element i, where i is an index coresponding to the caller's de_t sequence
-//  used to construct the container.  
-// -Replace/access arbitrary locations within the sequence not nec. == to an event in the caller's
-//  de_t sequence used to construct the container.  Ex, access a beat between two rhythm elements.  
-//
+// TODO:
+// -> Insert()
+// -> begin(), end() iterator generators
 //
 
 class rp_t {
@@ -28,6 +24,7 @@ public:
 	explicit rp_t(const ts_t&);
 	explicit rp_t(const ts_t&, const beat_t&);  // start_
 	explicit rp_t(const ts_t&, const std::vector<d_t>&);
+	explicit rp_t(const ts_t&, const beat_t&, const std::vector<d_t>&);
 	explicit rp_t(const ts_t&, const std::vector<std::chrono::milliseconds>&, const tempo_t&,
 		const std::chrono::milliseconds&);
 
@@ -46,12 +43,16 @@ public:
 	std::vector<d_t> to_duration_seq() const;
 
 	//
-	// T_out operator[](T_in)
-	// Caller's can request the element at any arbitrary position in the rp, including positions
-	// falling between note-onset events.  Ex, for 
+	// T_out operator[](T_in pos)
+	// Returns the first element <= T_in and the onset position of said element.  
+	// Callers can request pos at any arbitrary position in the rp provided that pos >= rp_front().on
+	// && pos < rp_.back().on+nbeat(tp_.ts_,rp_.back().e), including positions that fall between onset
+	// events.  Ex, for 
 	// rp.ts_ == "4/4"_ts; rp.rp_ == q q q q | q q e e e e |
-	// what does rp[0.5_bt] return?
-	// -> { q, 0_bt }  // Element currently within, onset position of said element
+	// rp[0.5_bt] returns { q, 0_bt };
+	// Beat 0.5 occurs after the first quarter note (onset at beat 0) but before the second quarter
+	// note (onset at beat 1).  
+	// Illegal inputs are rp[-0.5_bt], rp[8_bt]
 	//
 	// rp[p].on + nbeat(rp.ts(),rp[p].e) => idx of the next element
 	// p - rp[p].on => distance to start of _present_ element
@@ -59,7 +60,7 @@ public:
 	//
 	struct rp_element_t {
 		d_t e {d::z};  // element presently within
-		beat_t on {0_bt};  // cumulative onset beat of present element
+		beat_t on {0_bt};  // (cumulative) onset beat of present element
 	};
 	rp_element_t operator[](int) const;  // Returns the d_t elements corresponding to sounded event i
 	rp_element_t operator[](const d_t&) const;
@@ -67,8 +68,14 @@ public:
 	rp_element_t operator[](const bar_t&) const;
 private:
 	ts_t ts_ {4_bt,d::q,false};
-	beat_t start_ {0};  // Beat number corresponding to the first element
-	// beat_t tot_nbeats_ {0};  // == rp_.back().on - start_
+
+	// Beat number corresponding to the onset of the first rp element.  Redundant with rp_[0].on
+	// but needed so an empty rp_t can be constructed w/a nonzero start pos.  
+	beat_t start_ {0};  
+	
+	// .on for each entry is the _cumulative_ onset position in the rp, including the effect
+	// of a nonzero start_.  Once rp_size() > 0, start_ is redundant with rp_[0].on and is no
+	// longer needed.  
 	std::vector<rp_element_t> rp_ {};
 
 };
