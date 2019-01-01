@@ -29,48 +29,97 @@ TEST(rp_t_tests, SqBrktOpAllOverloadsSet1) {
 		EXPECT_EQ(curr_rp.nbars(),ans[i].nbars);
 		EXPECT_EQ(curr_rp.nbeats(),ans[i].nbeats);
 		EXPECT_EQ(curr_rp.nevents(),ans[i].nelements);
-	}
-	
-	rp_t rp0 {ts,rps[0]};
-	for (beat_t curr_bt {0}; curr_bt<rp0.nbeats(); curr_bt += 0.125_bt) {
-		rp_t::rp_element_t result {};
-		int rpsidx = static_cast<int>(curr_bt/1_bt);
 
-		result = rp0[curr_bt];
-		EXPECT_EQ(result.on, beat_t {rpsidx});
-		EXPECT_EQ(result.e, d_t {rps[0][rpsidx]});
+		beat_t prev_exact_bt {0};
+		int rpsidx = 0;
+		for (beat_t curr_bt {0}; curr_bt<curr_rp.nbeats(); curr_bt += 0.125_bt) {  // 0.125_br => d::sx
+			rp_t::rp_element_t result {};
 
-		result = rp0[nbar(ts,curr_bt)];
-		EXPECT_EQ(result.on, beat_t {rpsidx});
-		EXPECT_EQ(result.e, d_t {rps[0][rpsidx]});
+			//
+			// When curr_bt < prev_exact_bt+nbeat(ts,rps[i][rpsidx]), rp_t::operator[]() returns
+			// the duration element corresponding to prev_exact_bt (==rps[i][rpsidx]).  The result
+			// returned by rp_t::operator[]() changes when curr_bt passes the next element in the
+			// rp.  
+			//
+			if (curr_bt == prev_exact_bt+nbeat(ts,rps[i][rpsidx])) {
+				prev_exact_bt = prev_exact_bt+nbeat(ts,rps[i][rpsidx]);
+				++rpsidx;
+			}
 
-		result = rp0[duration(ts,curr_bt)];
-		EXPECT_EQ(result.on, beat_t {rpsidx});
-		EXPECT_EQ(result.e, d_t {rps[0][rpsidx]});
-	}
+			result = curr_rp[curr_bt];
+			EXPECT_EQ(result.on, prev_exact_bt);
+			EXPECT_EQ(result.e, d_t {rps[i][rpsidx]});
 
-	beat_t prev_exact_bt {0};
-	int rpsidx = 0;
-	rp_t rp1 {ts,rps[1]};
-	for (beat_t curr_bt {0}; curr_bt<rp0.nbeats(); curr_bt += 0.125_bt) {
-		rp_t::rp_element_t result {};
+			result = curr_rp[nbar(ts,curr_bt)];
+			EXPECT_EQ(result.on, prev_exact_bt);
+			EXPECT_EQ(result.e, d_t {rps[i][rpsidx]});
 
-		if (curr_bt == prev_exact_bt+nbeat(ts,rps[1][rpsidx])) {
-			prev_exact_bt = prev_exact_bt+nbeat(ts,rps[1][rpsidx]);
-			++rpsidx;
+			result = curr_rp[duration(ts,curr_bt)];
+			EXPECT_EQ(result.on, prev_exact_bt);
+			EXPECT_EQ(result.e, d_t {rps[i][rpsidx]});
 		}
 
-		result = rp1[curr_bt];
-		EXPECT_EQ(result.on, prev_exact_bt); //beat_t {rpsidx});
-		EXPECT_EQ(result.e, d_t {rps[1][rpsidx]});
+	}
+}
 
-		result = rp1[nbar(ts,curr_bt)];
-		EXPECT_EQ(result.on, prev_exact_bt); //eat_t {rpsidx});
-		EXPECT_EQ(result.e, d_t {rps[1][rpsidx]});
+TEST(rp_t_tests, NonZeroStartBeat) {
+	struct test_set {
+		beat_t start_bt {};
+		std::vector<d_t> rp {};
+	};
 
-		result = rp1[duration(ts,curr_bt)];
-		EXPECT_EQ(result.on, prev_exact_bt); //beat_t {rpsidx});
-		EXPECT_EQ(result.e, d_t {rps[1][rpsidx]});
+	std::vector<test_set> rps {
+		{0.5_bt, {d::q, d::q, d::q, d::q, d::q, d::q, d::q, d::q}},  // 0.125 + 2 bars
+		{0.25_bt, {d::q, d::q, d::q, d::h,       d::q, d::q, d::q}},  // 0.0625 + 2 bars
+		{1_bt, {d::e, d::e, d::h, d::w,                   d::e, d::q}}  // 0.25 + 2.125 bars
+	};
+	ts_t ts {4_bt,d::q,false};
+
+	struct ans_t {
+		bar_t nbars {0};
+		beat_t nbeats {0};
+		int nelements {0};
+	};
+	std::vector<ans_t> ans {{2.125_br,8.5_bt,8},{2.0625_br,8.25_bt,7},{2.375_br,9.5_bt,6}};
+	
+	for (int i=0; i<rps.size(); ++i) {
+		rp_t curr_rp {ts,rps[i].start_bt};
+		for (const auto& e : rps[i].rp) {
+			// As i write this, there is no rp_t {ts, start-bt, vector<d_t>} ctor
+			curr_rp.push_back(e);
+		}
+		EXPECT_EQ(curr_rp.nbars(),ans[i].nbars);
+		EXPECT_EQ(curr_rp.nbeats(),ans[i].nbeats);
+		EXPECT_EQ(curr_rp.nevents(),ans[i].nelements);
+
+		beat_t prev_exact_bt {curr_rp[0].on};
+		int rpsidx = 0;
+		for (beat_t curr_bt=curr_rp[0].on; curr_bt<curr_rp.nbeats(); curr_bt += 0.125_bt) {  // 0.125_br => d::sx
+			rp_t::rp_element_t result {};
+
+			//
+			// When curr_bt < prev_exact_bt+nbeat(ts,rps[i][rpsidx]), rp_t::operator[]() returns
+			// the duration element corresponding to prev_exact_bt (==rps[i][rpsidx]).  The result
+			// returned by rp_t::operator[]() changes when curr_bt passes the next element in the
+			// rp.  
+			//
+			if (curr_bt == prev_exact_bt+nbeat(ts,rps[i].rp[rpsidx])) {
+				prev_exact_bt = prev_exact_bt+nbeat(ts,rps[i].rp[rpsidx]);
+				++rpsidx;
+			}
+
+			result = curr_rp[curr_bt];
+			EXPECT_EQ(result.on, prev_exact_bt);
+			EXPECT_EQ(result.e, d_t {rps[i].rp[rpsidx]});
+
+			result = curr_rp[nbar(ts,curr_bt)];
+			EXPECT_EQ(result.on, prev_exact_bt);
+			EXPECT_EQ(result.e, d_t {rps[i].rp[rpsidx]});
+
+			result = curr_rp[duration(ts,curr_bt)];
+			EXPECT_EQ(result.on, prev_exact_bt);
+			EXPECT_EQ(result.e, d_t {rps[i].rp[rpsidx]});
+		}
 	}
 
 }

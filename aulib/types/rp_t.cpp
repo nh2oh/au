@@ -168,16 +168,24 @@ rp_t::rp_element_t rp_t::operator[](const bar_t& pos) const {
 	return this->operator[](nbt);
 }
 rp_t::rp_element_t rp_t::operator[](const beat_t& pos) const {
+	if (rp_.size() == 0 
+		|| pos < rp_.front().on 
+		|| (pos >= rp_.back().on+nbeat(ts_,rp_.back().e))) { 
+		// Caller requested a beat subsequent to the span of the final rp element, or possibly prior
+		// to the initial element.  
+		std::cout << "rp_t::operator[](const beat_t& pos) const : " 
+			<< "Out of range.\n ";
+		std::abort();
+	}
+
 	for (int i=0; i<rp_.size(); ++i) {
-		if ((pos >= rp_[i].on) && (pos < rp_[i].on+nbeat(ts_,rp_[i].e))) {
+		if (pos >= rp_[i].on && (pos < rp_[i].on+nbeat(ts_,rp_[i].e))) {
 			return rp_[i];
 		}
 	}
 
-	// Requested a beat subsequent to the final rp element, or possibly before the initial element
 	std::cout << "rp_t::operator[](const beat_t& pos) const : " 
-		<< "Requested a beat subsequent to the final rp element, or possibly prior to the initial "
-		<< "element.\n";
+		<< "This should never happen.\n ";
 	std::abort();
 }
 

@@ -52,8 +52,10 @@ public:
 	// rp.ts_ == "4/4"_ts; rp.rp_ == q q q q | q q e e e e |
 	// what does rp[0.5_bt] return?
 	// -> { q, 0_bt }  // Element currently within, onset position of said element
-	// -> { q, 0.5_bt }  // Element currently within, time remaining until next said element
-	// -> { q, 0.5_bt }  // Element currently within, time since onset of said element
+	//
+	// rp[p].on + nbeat(rp.ts(),rp[p].e) => idx of the next element
+	// p - rp[p].on => distance to start of _present_ element
+	// p - (rp[p].on + nbeat(rp.ts(),rp[p].e)) => distance to start of _next_ element
 	//
 	struct rp_element_t {
 		d_t e {d::z};  // element presently within
