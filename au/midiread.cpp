@@ -12,7 +12,7 @@ midi_vl_field_interpreted midi_interpret_vl_field(const unsigned char* p) {
 	std::array<unsigned char,4> padded_field {0,0,0,0};
 	for (uint8_t i=0; (i<4); ++i) {
 		padded_field[i] = (*p & 0x7F);
-		if (reinterpret_cast<uint8_t>(*p) <= 127) {
+		if (static_cast<const uint8_t>(padded_field[i]) <= 127) {
 			result.N = i+1;
 			result.val = midi_raw_interpret<uint32_t>(&(padded_field[0]));
 			return result;
@@ -56,7 +56,6 @@ midi_file_header_data read_midi_fheaderchunk(const midi_chunk& chunk) {
 	result.time_div = midi_raw_interpret<int16_t>(&(chunk.data[offset]));
 	offset += 2;
 
-
 	return result;
 }
 
@@ -64,14 +63,25 @@ midi_file_header_data read_midi_fheaderchunk(const midi_chunk& chunk) {
 channel_event read_midi_event_stream(const midi_chunk& chunk) {
 	// Check that the chunk.id == MTrk
 	channel_event result {};
-
+	std::vector<channel_event> events {};
 	size_t offset {0};
 
-	midi_vl_field_interpreted sz = midi_interpret_vl_field(&(chunk.data[0]));
-	result.delta_time = sz.val;
-	offset += sz.N;
+	while (offset < chunk.data.size()) {
+		midi_vl_field_interpreted sz = midi_interpret_vl_field(&(chunk.data[offset]));
+		result.delta_time = sz.val;
+		offset += sz.N;
 	
+		result.event_type = (chunk.data[offset] >> 4);
+		result.event_type = (chunk.data[offset] << 4);
+		offset += 1;
 
+		result.p1 = chunk.data[offset];
+		offset += 1;
+		result.p2 = chunk.data[offset];
+		offset += 1;
+
+		events.push_back(result);
+	}
 
 	return result;
 }

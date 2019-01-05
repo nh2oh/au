@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <array>
 #include <algorithm>
+#include <vector>
 
 
 // 
@@ -43,20 +44,52 @@ struct midi_file_header_data {
 
 struct channel_event {
 	uint32_t delta_time {0};
-	uint8_t type_channel {0};  // event-type (first 4 bits), channel (last 4 bits)
+	uint8_t event_type {0};  // event-type (first 4 bits), channel (last 4 bits)
+	uint8_t channel {0};  // event-type (first 4 bits), channel (last 4 bits)
 	uint8_t p1 {0};
 	uint8_t p2 {0};
 };
 
+struct event_container {
+	midi_vl_field_interpreted delta_time {};
 
-struct midi_track_data {
-	//...
+};
+
+template<uint8_t N>
+struct sysex_event {
+	// F0 <length> <bytes to be transmitted after F0>
+	// Sometimes F7... see std
+	midi_vl_field_interpreted length {};
+	std::array<unsigned char,N> data {};
+};
+
+template<uint8_t N>
+struct midi_event {
+	// ...
+	midi_vl_field_interpreted length {};
+	uint8_t type {0};  // 4 bits
+	uint8_t channel {0};  // 4 bits
+	uint8_t p1 {0};
+	uint8_t p2 {0};
+};
+
+struct meta_event {
+	//FF <type> <length> <bytes>
+	uint8_t type {0};
+	midi_vl_field_interpreted length {};
+	std::vector<unsigned char> data {};
+};
+
+struct mtrk_event {
+	uint32_t delta_time {0};
+	event_container event {};  // midi-event || sysx-event || meta-event
 };
 
 midi_chunk read_midi_chunk(const dbk::binfile&, size_t);
 midi_file_header_data read_midi_fheaderchunk(const midi_chunk&);
 
-midi_track_data read_midi_trackchunk(const midi_chunk&);
+//midi_chunk read_midi_trackchunk(const midi_chunk&);
+channel_event read_midi_event_stream(const midi_chunk&);
 
 int read_midi_file(const std::filesystem::path&);
 
