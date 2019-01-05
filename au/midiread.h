@@ -20,17 +20,16 @@ T midi_raw_interpret(const unsigned char* p) {
 
 	return *reinterpret_cast<T*>(&(data[0]));
 };
-/*
-class midi_file {
 
-	struct offset_table {
-		std::string name {};
+// 
+// The max size of a vl field is 4 bytes; returns [0,4]
+//
+struct midi_vl_field_interpreted {
+	uint8_t N {0};
+	uint32_t val {0};
+};
+midi_vl_field_interpreted midi_interpret_vl_field(const unsigned char*);
 
-
-	get_offset()
-
-	std::vector<unsigned char> data_ {};
-};*/
 
 struct midi_chunk {
 	std::array<unsigned char,4> id {};
@@ -41,6 +40,15 @@ struct midi_file_header_data {
 	int16_t num_trks {0};
 	int16_t time_div {0};
 };
+
+struct channel_event {
+	uint32_t delta_time {0};
+	uint8_t type_channel {0};  // event-type (first 4 bits), channel (last 4 bits)
+	uint8_t p1 {0};
+	uint8_t p2 {0};
+};
+
+
 struct midi_track_data {
 	//...
 };
