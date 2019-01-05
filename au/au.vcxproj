@@ -99,12 +99,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="midiread.h" />
     <ClInclude Include="scr.h" />
     <ClInclude Include="scr2.h" />
     <ClInclude Include="wavwr.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="au.cpp" />
+    <ClCompile Include="midiread.cpp" />
     <ClCompile Include="scr.cpp" />
     <ClCompile Include="scr2.cpp" />
     <ClCompile Include="wavwr.cpp" />

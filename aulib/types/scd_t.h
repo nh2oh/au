@@ -1,11 +1,11 @@
 #pragma once
-#include <string> // for declaring the print() members
 
-//-----------------------------------------------------------------------------
+
+//
 // The scd_t class
 //
-// An scd_t represents a scale degree of some unspecified scale.  It is a representation 
-// of an absolute position within a scale.  scd_t is nothing more than a thin wrapper around 
+// An scd_t represents a scale degree of some unspecified scale.  It represents an absolute
+// position within a scale.  scd_t is nothing more than a thin wrapper around 
 // int and can be implictly converted to and from an int.  
 //
 //
