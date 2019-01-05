@@ -20,19 +20,35 @@ T midi_raw_interpret(const unsigned char* p) {
 
 	return *reinterpret_cast<T*>(&(data[0]));
 };
+/*
+class midi_file {
 
+	struct offset_table {
+		std::string name {};
+
+
+	get_offset()
+
+	std::vector<unsigned char> data_ {};
+};*/
 
 struct midi_chunk {
 	std::array<unsigned char,4> id {};
 	std::vector<unsigned char> data {};
 };
-struct midi_header_data {
-	std::array<unsigned char,2> fmt_type {};
-	std::array<unsigned char,2> num_trks {};
-	std::array<unsigned char,2> time_div {};
+struct midi_file_header_data {
+	int16_t fmt_type {0};
+	int16_t num_trks {0};
+	int16_t time_div {0};
+};
+struct midi_track_data {
+	//...
 };
 
 midi_chunk read_midi_chunk(const dbk::binfile&, size_t);
+midi_file_header_data read_midi_fheaderchunk(const midi_chunk&);
+
+midi_track_data read_midi_trackchunk(const midi_chunk&);
 
 int read_midi_file(const std::filesystem::path&);
 
