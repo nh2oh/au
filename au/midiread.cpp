@@ -14,7 +14,7 @@ midi_vl_field_interpreted midi_interpret_vl_field(const unsigned char* p) {
 		result.val = result.val << 8;
 		result.val += (*p & 0x7F);
 		++(result.N);
-	} while (*p & 0x80);
+	} while ((*p & 0x80) && (result.N <= 4));
 
 	return result;
 	
@@ -41,7 +41,7 @@ detect_chunk_result detect_chunk_type(const unsigned char* p) {
 	// All chunks with a 4-char identifier
 	std::string idstr {};
 	std::copy(p,p+4,std::back_inserter(idstr));
-	if (idstr == "MTHd") {
+	if (idstr == "MThd") {
 		result.type = midi_chunk_t::header;
 	} else if (idstr == "MTrk") {
 		result.type = midi_chunk_t::track;
@@ -62,8 +62,7 @@ detect_chunk_result detect_chunk_type(const unsigned char* p) {
 		return result;
 	}
 
-
-	result.is_valid == true;
+	result.is_valid = true;
 	return result;
 }
 
@@ -205,5 +204,63 @@ midi_event parse_midi_event(const unsigned char* p) {
 
 	return result;
 }
+
+
+
+
+
+
+
+
+midi_file::midi_file(const std::filesystem::path& fp) {
+	this->fdata_ = dbk::readfile(fp).d;
+	
+	uint64_t i {0};
+	detect_chunk_result curr_chunk_type = detect_chunk_type(&(this->fdata_[i]));
+	if (!curr_chunk_type.is_valid || curr_chunk_type.type != midi_chunk_t::header) {
+		std::cout << "!curr_chunk_type.is_valid || curr_chunk_type.type != midi_chunk_t::header\n";
+		std::abort();
+	}
+	this->chunk_idx_.push_back({i,static_cast<uint64_t>(8+curr_chunk_type.length),midi_chunk_t::header});
+	i += this->chunk_idx_.back().length;
+
+	detect_mtrk_event_result curr_event {};
+	
+	while (i<this->fdata_.size()) {
+		curr_chunk_type = detect_chunk_type(&(this->fdata_[i]));
+		if (!curr_chunk_type.is_valid || curr_chunk_type.type != midi_chunk_t::track) {
+			std::cout << "!curr_chunk_type.is_valid || curr_chunk_type.type != midi_chunk_t::track\n";
+			std::abort();
+		}
+		this->chunk_idx_.push_back({i,static_cast<uint64_t>(8+curr_chunk_type.length),midi_chunk_t::track});
+		auto j = i+8;
+
+		detect_mtrk_event_result curr_event = detect_mtrk_event_type(&(this->fdata_[i]));
+		std::vector<midi_file::mtrk_event_idx> curr_mtrk_event_idx {};
+		while (curr_event.is_valid) {
+			//auto j = i + curr_event.delta_t.N;
+			j += curr_event.delta_t.N;
+
+			if (curr_event.type == mtrk_event_t::sysex) {
+				sysex_event sx = parse_sysex_event(&(this->fdata_[j]));
+				j += (1 + sx.length.N + sx.length.val);
+			} else if (curr_event.type == mtrk_event_t::meta) {
+				meta_event mt = parse_meta_event(&(this->fdata_[j]));
+				j += (2 + mt.length.N + mt.length.val);
+			} else {  // midi event
+				std::abort();
+			}
+
+			curr_mtrk_event_idx.push_back({i,(j-i),curr_event.type});
+			i += curr_mtrk_event_idx.back().length;
+		}
+		this->mtrk_event_idx_.push_back(curr_mtrk_event_idx);
+
+		i+=this->chunk_idx_.back().length;
+	}  // to next midi_chunk
+
+}
+
+
 
 

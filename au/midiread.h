@@ -71,7 +71,7 @@ struct detect_chunk_result {
 	int32_t length {};
 	bool is_valid {};
 };
-detect_chunk_result detect_chunk_type(const unsigned char*);
+//detect_chunk_result detect_chunk_type(const unsigned char*);
 
 
 
@@ -111,7 +111,7 @@ struct meta_event {
 meta_event parse_meta_event(const unsigned char*);
 
 int read_mtrk_event_stream(const midi_chunk&);
-
+int read_mtrk_event_stream(const unsigned char*);
 
 enum class chunk_t {
 	file_header,
@@ -133,7 +133,7 @@ private:
 	struct chunk_idx {
 		uint64_t offset {0};
 		uint64_t length {0};
-		chunk_t type {};
+		midi_chunk_t type {};
 	};
 	struct mtrk_event_idx {
 		uint64_t offset {0};  // global file offset
@@ -142,8 +142,8 @@ private:
 	};
 
 	std::vector<unsigned char> fdata_ {};
-	std::vector<chunk_idx> chunk_idx_ {};  // header chunk and all track chunks
-	std::vector<std::vector<mtrk_event_idx>> mtrk_event_idx_ {};  // inner idx => track num
+	std::vector<midi_file::chunk_idx> chunk_idx_ {};  // header chunk and all track chunks
+	std::vector<std::vector<midi_file::mtrk_event_idx>> mtrk_event_idx_ {};  // inner idx => track num
 };
 
 
