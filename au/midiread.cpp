@@ -33,6 +33,41 @@ midi_vl_field_interpreted midi_interpret_vl_field(const unsigned char* p) {
 	std::abort();*/
 };
 
+
+
+detect_chunk_result detect_chunk_type(const unsigned char* p) {
+	detect_chunk_result result {midi_chunk_t::unknown,0,false};
+	
+	// All chunks with a 4-char identifier
+	std::string idstr {};
+	std::copy(p,p+4,std::back_inserter(idstr));
+	if (idstr == "MTHd") {
+		result.type = midi_chunk_t::header;
+	} else if (idstr == "MTrk") {
+		result.type = midi_chunk_t::track;
+	} else {
+		result.is_valid = false;
+		return result;
+	}
+	p+=4;
+
+	result.length = midi_raw_interpret<int32_t>(p);
+	p+=4;
+	if (result.length < 0) {
+		result.is_valid = false;
+		return result;
+	}
+	if (result.type == midi_chunk_t::header && result.length != 6) {
+		result.is_valid = false;
+		return result;
+	}
+
+
+	result.is_valid == true;
+	return result;
+}
+
+
 midi_chunk read_midi_chunk(const dbk::binfile& bf, size_t offset) {
 	midi_chunk result {};
 
@@ -69,6 +104,34 @@ midi_file_header_data read_midi_fheaderchunk(const midi_chunk& chunk) {
 }
 
 
+detect_mtrk_event_result detect_mtrk_event_type(const unsigned char* p) {
+	detect_mtrk_event_result result {midi_file::mtrk_event_type::unknown,midi_vl_field_interpreted {},false};
+	
+	// All mtrk events begin with a delta-time occupying a maximum of 4 bytes
+	result.delta_t = midi_interpret_vl_field(p);
+	if (result.delta_t.N > 4) {
+		result.is_valid = false;
+		return result;
+	}
+	p += result.delta_t.N;
+
+	if (*p == static_cast<unsigned char>(0xF0) || *p == static_cast<unsigned char>(0xF7)) {
+		// sysex event; 0xF0==240, 0xF7==247
+		result.type = midi_file::mtrk_event_type::sysex;
+		result.is_valid = true;
+	} else if (*p == static_cast<unsigned char>(0xFF)) {  
+		// meta event; 0xFF == 255
+		result.type = midi_file::mtrk_event_type::meta;
+		result.is_valid = true;
+	} else {
+		// midi event
+		result.type = midi_file::mtrk_event_type::meta;
+		result.is_valid = true;
+	}
+
+	return result;
+}
+
 int read_mtrk_event_stream(const midi_chunk& chunk) {
 	// Check that the chunk.id == MTrk
 	// 1) Get the delta-time
@@ -78,15 +141,19 @@ int read_mtrk_event_stream(const midi_chunk& chunk) {
 	
 	size_t offset {0};
 	while (offset < chunk.data.size()) {
-		midi_vl_field_interpreted delta_t = midi_interpret_vl_field(&(chunk.data[offset]));
-		offset += delta_t.N;
 
-		auto x = 0xF0;
-		
-		if (chunk.data[offset] == 0xF0 || chunk.data[offset] == 0xF7) {  // sysex event; 0xF0==240, 0xF7==247
+		detect_mtrk_event_result mtrk_type = detect_mtrk_event_type(&(chunk.data[offset]));
+		if (!mtrk_type.is_valid) {
+			std::cout << "(!mtrk_type.is_valid)" << std::endl;
+			break;
+		}
+
+		offset += mtrk_type.delta_t.N;
+		if (mtrk_type.type == midi_file::mtrk_event_type::sysex) {
 			sysex_event sx = parse_sysex_event(&(chunk.data[offset]));
+			offset += (1 + sx.length.N + sx.length.val);
 			std::cout << sx.id << std::endl;
-		} else if (chunk.data[offset] == 0xFF) {  // meta event
+		} else if (mtrk_type.type == midi_file::mtrk_event_type::meta) {
 			meta_event mt = parse_meta_event(&(chunk.data[offset]));
 			offset += (2 + mt.length.N + mt.length.val);
 			std::cout << mt.id << std::endl;
@@ -97,18 +164,6 @@ int read_mtrk_event_stream(const midi_chunk& chunk) {
 		//...
 	}  // To next MTrk event
 
-		/*result.event_type = (chunk.data[offset] >> 4);
-		result.event_type = (chunk.data[offset] << 4);
-		offset += 1;
-
-		result.p1 = chunk.data[offset];
-		offset += 1;
-		result.p2 = chunk.data[offset];
-		offset += 1;
-
-		events.push_back(result);
-	}
-	*/
 	return 0;
 }
 
@@ -144,57 +199,11 @@ meta_event parse_meta_event(const unsigned char* p) {
 	return result;
 }
 
+midi_event parse_midi_event(const unsigned char* p) {
+	midi_event result {};
+	//...
 
-int read_midi_file(const std::filesystem::path& fp) {
-	//
-	// Chunk header (8 bytes)
-	//   4 byte ID string; identifies the type of chunk
-	//   4 byte size; the chunk's length in bytes following the header. 
-	// Chunk data
-	//   ...
-	//
-
-	//
-	// "Global" file header chunk (one per file)
-	//   Sz   Name            Value(s)
-	//   4    ID string       "MThd" (0x4D546864)
-	//   4    size            6 (0x00000006)
-	//   2    format type     0-2
-	//   2    num-tracks      1-65,535
-	//   2    time division   ...
-	//
-
-	//
-	// Track chunk
-	//   Sz   Name            Value(s)
-	//   4    chunk ID        "MTrk" (0x4D54726B)     --------- HEADER
-	//   4    chunk size      Num-bytes               --------- HEADER
-	//   ...  Event data      stream of MIDI events
-	//
-
-	//
-	// Event stream (track data)
-	// 3 types of events:  Control Events, System Exclusive Events, Meta Events
-	//
-	//   Sz    Name            Value(s)
-	//   ...   delta-time      Ontime relative to track's final event; 0 => play @ end
-	//                         The final byte of the field is indicated by the MSB of the 
-	//                         byte == 1.  
-	//   4bit  Event-type 
-	//   4bit  Channel
-	//   1     P1
-	//   1     P2
-	//
-	//
-	//
-
-
-
-
-
-
-
-
-	return 0;
+	return result;
 }
+
 
