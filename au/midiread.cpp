@@ -105,7 +105,7 @@ midi_file_header_data read_midi_fheaderchunk(const midi_chunk& chunk) {
 
 
 detect_mtrk_event_result detect_mtrk_event_type(const unsigned char* p) {
-	detect_mtrk_event_result result {midi_file::mtrk_event_type::unknown,midi_vl_field_interpreted {},false};
+	detect_mtrk_event_result result {mtrk_event_t::unknown,midi_vl_field_interpreted {},false};
 	
 	// All mtrk events begin with a delta-time occupying a maximum of 4 bytes
 	result.delta_t = midi_interpret_vl_field(p);
@@ -117,15 +117,15 @@ detect_mtrk_event_result detect_mtrk_event_type(const unsigned char* p) {
 
 	if (*p == static_cast<unsigned char>(0xF0) || *p == static_cast<unsigned char>(0xF7)) {
 		// sysex event; 0xF0==240, 0xF7==247
-		result.type = midi_file::mtrk_event_type::sysex;
+		result.type = mtrk_event_t::sysex;
 		result.is_valid = true;
 	} else if (*p == static_cast<unsigned char>(0xFF)) {  
 		// meta event; 0xFF == 255
-		result.type = midi_file::mtrk_event_type::meta;
+		result.type = mtrk_event_t::meta;
 		result.is_valid = true;
 	} else {
 		// midi event
-		result.type = midi_file::mtrk_event_type::meta;
+		result.type = mtrk_event_t::meta;
 		result.is_valid = true;
 	}
 
@@ -149,11 +149,11 @@ int read_mtrk_event_stream(const midi_chunk& chunk) {
 		}
 
 		offset += mtrk_type.delta_t.N;
-		if (mtrk_type.type == midi_file::mtrk_event_type::sysex) {
+		if (mtrk_type.type == mtrk_event_t::sysex) {
 			sysex_event sx = parse_sysex_event(&(chunk.data[offset]));
 			offset += (1 + sx.length.N + sx.length.val);
 			std::cout << sx.id << std::endl;
-		} else if (mtrk_type.type == midi_file::mtrk_event_type::meta) {
+		} else if (mtrk_type.type == mtrk_event_t::meta) {
 			meta_event mt = parse_meta_event(&(chunk.data[offset]));
 			offset += (2 + mt.length.N + mt.length.val);
 			std::cout << mt.id << std::endl;

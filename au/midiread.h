@@ -112,31 +112,38 @@ meta_event parse_meta_event(const unsigned char*);
 
 int read_mtrk_event_stream(const midi_chunk&);
 
-struct midi_file {
-	enum class chunk_type {
-		file_header,
-		track
-	};
-	enum class mtrk_event_type {
-		midi,
-		sysex,
-		meta,
-		unknown
-	};
+
+enum class chunk_t {
+	file_header,
+	track
+};
+enum class mtrk_event_t {
+	midi,
+	sysex,
+	meta,
+	unknown
+};
+
+class midi_file {
+public:
+	midi_file() = default;
+	midi_file(const std::filesystem::path&);
+
+private:
 	struct chunk_idx {
 		uint64_t offset {0};
 		uint64_t length {0};
-		midi_file::chunk_type type {};
+		chunk_t type {};
 	};
 	struct mtrk_event_idx {
 		uint64_t offset {0};  // global file offset
 		uint64_t length {0};
-		midi_file::mtrk_event_type type {};
+		mtrk_event_t type {};
 	};
 
-	std::vector<unsigned char> data_ {};
+	std::vector<unsigned char> fdata_ {};
 	std::vector<chunk_idx> chunk_idx_ {};  // header chunk and all track chunks
-	std::vector<std::vector<mtrk_event_idx>> midi_event_idx_ {};  // inner idx => track num
+	std::vector<std::vector<mtrk_event_idx>> mtrk_event_idx_ {};  // inner idx => track num
 };
 
 
@@ -151,7 +158,7 @@ struct midi_file {
 // testify to the validity of the event data following the length field.  
 //
 struct detect_mtrk_event_result {
-	midi_file::mtrk_event_type type {midi_file::mtrk_event_type::unknown};
+	mtrk_event_t type {mtrk_event_t::unknown};
 	midi_vl_field_interpreted delta_t {};
 	bool is_valid {};
 };
