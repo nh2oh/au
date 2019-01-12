@@ -20,29 +20,7 @@ midi_vl_field_interpreted midi_interpret_vl_field(const unsigned char* p) {
 	result.val += (*p & 0x7F);
 	++(result.N);
 
-	/*
-	do {
-		result.val = result.val << 8;
-		result.val += (*p & 0x7F);
-		++(result.N);
-		++p;
-	} while ((*p & 0x80) && (result.N <= 4));*/
-
 	return result;
-	
-	/*std::array<unsigned char,4> padded_field {0,0,0,0};
-	for (int8_t i=3; (i>=0); --i) {
-		padded_field[i] = (*p & 0x7F);
-		if (*p & 0x80) {
-			result.N = i+1;
-			result.val = midi_raw_interpret<int32_t>(&(padded_field[0]));
-			return result;
-		}
-		++p;
-	}
-
-	std::cout << "midi_length_vl_field(const unsigned char* p)\n";
-	std::abort();*/
 };
 
 
@@ -50,7 +28,7 @@ midi_vl_field_interpreted midi_interpret_vl_field(const unsigned char* p) {
 detect_chunk_result detect_chunk_type(const unsigned char* p) {
 	detect_chunk_result result {midi_chunk_t::unknown,0,false};
 	
-	// All chunks with a 4-char identifier
+	// All chunks begin w/ A 4-char identifier
 	std::string idstr {};
 	std::copy(p,p+4,std::back_inserter(idstr));
 	if (idstr == "MThd") {
@@ -141,41 +119,6 @@ detect_mtrk_event_result detect_mtrk_event_type(const unsigned char* p) {
 	}
 
 	return result;
-}
-
-int read_mtrk_event_stream(const midi_chunk& chunk) {
-	// Check that the chunk.id == MTrk
-	// 1) Get the delta-time
-	// 2) Determine sysex_event, midi_event or meta_event
-	// 3) Call the right parsing fn based on (2)
-	// ...
-	
-	size_t offset {0};
-	while (offset < chunk.data.size()) {
-
-		detect_mtrk_event_result mtrk_type = detect_mtrk_event_type(&(chunk.data[offset]));
-		if (!mtrk_type.is_valid) {
-			std::cout << "(!mtrk_type.is_valid)" << std::endl;
-			break;
-		}
-
-		offset += mtrk_type.delta_t.N;
-		if (mtrk_type.type == mtrk_event_t::sysex) {
-			sysex_event sx = parse_sysex_event(&(chunk.data[offset]));
-			offset += (1 + sx.length.N + sx.length.val);
-			std::cout << sx.id << std::endl;
-		} else if (mtrk_type.type == mtrk_event_t::meta) {
-			meta_event mt = parse_meta_event(&(chunk.data[offset]));
-			offset += (2 + mt.length.N + mt.length.val);
-			std::cout << mt.id << std::endl;
-		} else {  // midi event
-			std::cout << "midi";
-		}
-
-		//...
-	}  // To next MTrk event
-
-	return 0;
 }
 
 

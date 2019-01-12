@@ -120,9 +120,6 @@ struct meta_event {
 };
 meta_event parse_meta_event(const unsigned char*);
 
-int read_mtrk_event_stream(const midi_chunk&);
-int read_mtrk_event_stream(const unsigned char*);
-
 enum class chunk_t {
 	file_header,
 	track
