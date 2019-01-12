@@ -16,10 +16,16 @@ template<typename T>
 T midi_raw_interpret(const unsigned char* p) {
 	constexpr unsigned short N = sizeof(T)/sizeof(char);
 	static_assert(N>=1);
-	std::array<char,N> data {};
+
+	std::array<unsigned char,N> data {};
+	std::reverse_copy(p,p+N,data.begin());
+	return *static_cast<T*>(static_cast<void*>(&(data[0])));
+
+
+	/*std::array<char,N> data {};
 	std::rotate_copy(p,p+N-1,p+N,data.begin());
 
-	return *reinterpret_cast<T*>(&(data[0]));
+	return *reinterpret_cast<T*>(&(data[0]));*/
 };
 
 // 

@@ -10,11 +10,23 @@
 midi_vl_field_interpreted midi_interpret_vl_field(const unsigned char* p) {
 	midi_vl_field_interpreted result {};
 	result.val = 0;
+
+	while (*p & 0x80) {
+		result.val += (*p & 0x7F);
+		result.val = result.val << 8;
+		++(result.N);
+		++p;
+	}
+	result.val += (*p & 0x7F);
+	++(result.N);
+
+	/*
 	do {
 		result.val = result.val << 8;
 		result.val += (*p & 0x7F);
 		++(result.N);
-	} while ((*p & 0x80) && (result.N <= 4));
+		++p;
+	} while ((*p & 0x80) && (result.N <= 4));*/
 
 	return result;
 	
@@ -192,9 +204,15 @@ meta_event parse_meta_event(const unsigned char* p) {
 	p += result.delta_t.N;
 
 	result.id = *p;  // char -> uint8_t;  must == 0xFF
+	if (result.id != 0xFF) {
+		std::abort();
+	}
 	++p;
 
 	result.type = *p;  // char -> uint8_t;  ex: 58 => ts
+	if (result.type > 128) {
+		std::abort();
+	}
 	++p;
 
 	result.length = midi_interpret_vl_field(p);
@@ -213,42 +231,26 @@ midi_event parse_midi_event(const unsigned char* p) {
 	p += result.delta_t.N;
 
 	short n_data_bytes {0};
-	if (*p & 1<<7) {  // MSB == 1 => byte is a status byte
-		switch (*p>>4) {
-			case 0x8:  // Note off
-				n_data_bytes = 2;
-				result.channel = (*p & 0x0F);
-				result.type = (*p & 0xF0);
+	if (*p & 1<<7) {  // MSBit == 1 => byte is a status byte (Equiv: *p & 0x80).  
+		n_data_bytes = 2;
+		result.type = (*p & 0xF0);
+		result.channel = (*p & 0x0F);
+		switch ((*p)>>4) {  // Testing the 4 MSBits of *p
+			case 0x08:  // Note off
 				break;
-			case 0x9:  // Note on
-				n_data_bytes = 2;
-				result.channel = (*p & 0xF);
-				result.type = (*p & 0xF0);
+			case 0x09:  // Note on
 				break;
-			case 0xA:  // Polyphonic key pressure/Aftertouch
-				n_data_bytes = 2;
-				result.channel = (*p & 0xF);
-				result.type = (*p & 0xF0);
+			case 0x0A:  // Polyphonic key pressure/Aftertouch
 				break;
-			case 0xB:  // Control change
-				n_data_bytes = 2;
-				result.channel = (*p & 0xF);
-				result.type = (*p & 0xF0);
+			case 0x0B:  // Control change
 				break;
-			case 0xC:  // Program change Channel
+			case 0x0C:  // Program change Channel
 				n_data_bytes = 1;
-				result.channel = (*p & 0xF);
-				result.type = (*p & 0xF0);
 				break;
-			case 0xD:  // Pressure/After touch
+			case 0x0D:  // Pressure/After touch
 				n_data_bytes = 1;
-				result.channel = (*p & 0xF);
-				result.type = (*p & 0xF0);
 				break;
-			case 0xE:  // Pitch bend change
-				n_data_bytes = 2;
-				result.channel = (*p & 0xF);
-				result.type = (*p & 0xF0);
+			case 0x0E:  // Pitch bend change
 				break;
 			default:
 				std::abort();
@@ -259,8 +261,16 @@ midi_event parse_midi_event(const unsigned char* p) {
 	}
 
 	++p; result.p1 = *p;
+	if ((result.p1)>>7 != 0) {
+		// The MSB of all data bytes is 0
+		std::abort();
+	}
 	if (n_data_bytes == 2) {
 		++p; result.p2 = *p;
+		if ((result.p2)>>7 != 0) {
+			// The MSB of all data bytes is 0
+			std::abort();
+		}
 	}
 
 	return result;
