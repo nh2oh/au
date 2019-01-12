@@ -51,13 +51,13 @@ detect_chunk_result detect_chunk_type(const unsigned char* p) {
 	}
 	p+=4;
 
-	result.length = midi_raw_interpret<int32_t>(p);
+	result.data_length = midi_raw_interpret<int32_t>(p);
 	p+=4;
-	if (result.length < 0) {
+	if (result.data_length < 0) {
 		result.is_valid = false;
 		return result;
 	}
-	if (result.type == midi_chunk_t::header && result.length != 6) {
+	if (result.type == midi_chunk_t::header && result.data_length != 6) {
 		result.is_valid = false;
 		return result;
 	}
@@ -124,7 +124,7 @@ detect_mtrk_event_result detect_mtrk_event_type(const unsigned char* p) {
 		result.is_valid = true;
 	} else {
 		// midi event
-		result.type = mtrk_event_t::meta;
+		result.type = mtrk_event_t::midi;
 		result.is_valid = true;
 	}
 
@@ -169,6 +169,10 @@ int read_mtrk_event_stream(const midi_chunk& chunk) {
 
 sysex_event parse_sysex_event(const unsigned char* p) {
 	sysex_event result {};
+
+	result.delta_t = midi_interpret_vl_field(p);
+	p += result.delta_t.N;
+
 	result.id = *p;  // uchar -> uint8_t
 	++p;
 
@@ -183,6 +187,10 @@ sysex_event parse_sysex_event(const unsigned char* p) {
 
 meta_event parse_meta_event(const unsigned char* p) {
 	meta_event result {};
+
+	result.delta_t = midi_interpret_vl_field(p);
+	p += result.delta_t.N;
+
 	result.id = *p;  // char -> uint8_t;  must == 0xFF
 	++p;
 
@@ -200,13 +208,73 @@ meta_event parse_meta_event(const unsigned char* p) {
 
 midi_event parse_midi_event(const unsigned char* p) {
 	midi_event result {};
-	//...
+
+	result.delta_t = midi_interpret_vl_field(p);
+	p += result.delta_t.N;
+
+	short n_data_bytes {0};
+	if (*p & 1<<7) {  // MSB == 1 => byte is a status byte
+		switch (*p>>4) {
+			case 0x8:  // Note off
+				n_data_bytes = 2;
+				result.channel = (*p & 0x0F);
+				result.type = (*p & 0xF0);
+				break;
+			case 0x9:  // Note on
+				n_data_bytes = 2;
+				result.channel = (*p & 0xF);
+				result.type = (*p & 0xF0);
+				break;
+			case 0xA:  // Polyphonic key pressure/Aftertouch
+				n_data_bytes = 2;
+				result.channel = (*p & 0xF);
+				result.type = (*p & 0xF0);
+				break;
+			case 0xB:  // Control change
+				n_data_bytes = 2;
+				result.channel = (*p & 0xF);
+				result.type = (*p & 0xF0);
+				break;
+			case 0xC:  // Program change Channel
+				n_data_bytes = 1;
+				result.channel = (*p & 0xF);
+				result.type = (*p & 0xF0);
+				break;
+			case 0xD:  // Pressure/After touch
+				n_data_bytes = 1;
+				result.channel = (*p & 0xF);
+				result.type = (*p & 0xF0);
+				break;
+			case 0xE:  // Pitch bend change
+				n_data_bytes = 2;
+				result.channel = (*p & 0xF);
+				result.type = (*p & 0xF0);
+				break;
+			default:
+				std::abort();
+				break;
+		}
+	} else {  // MSB == 0 => byte is a data byte
+		std::abort();
+	}
+
+	++p; result.p1 = *p;
+	if (n_data_bytes == 2) {
+		++p; result.p2 = *p;
+	}
 
 	return result;
 }
 
+uint8_t midi_event_num_data_bytes(const midi_event& event_in) {
 
-
+	if (event_in.type == 0xC0 || event_in.type == 0xD0) {
+		return 1;
+	} else {
+		return 2;
+	}
+}
+	
 
 
 
@@ -218,46 +286,56 @@ midi_file::midi_file(const std::filesystem::path& fp) {
 	uint64_t i {0};
 	detect_chunk_result curr_chunk_type = detect_chunk_type(&(this->fdata_[i]));
 	if (!curr_chunk_type.is_valid || curr_chunk_type.type != midi_chunk_t::header) {
-		std::cout << "!curr_chunk_type.is_valid || curr_chunk_type.type != midi_chunk_t::header\n";
+		std::cout << "!curr_chunk_type.is_valid || curr_chunk_type.type != midi_chunk_t::header\n"
+			<< "for this->fdata_[i] with i == " << i << ".  A valid midi file must begin with a "
+			<< "midi header chunk.  \nAborting...\n";
 		std::abort();
 	}
-	this->chunk_idx_.push_back({i,static_cast<uint64_t>(8+curr_chunk_type.length),midi_chunk_t::header});
+	this->chunk_idx_.push_back({i,static_cast<uint64_t>(8+curr_chunk_type.data_length),midi_chunk_t::header});
 	i += this->chunk_idx_.back().length;
 
-	detect_mtrk_event_result curr_event {};
-	
-	while (i<this->fdata_.size()) {
+	while (i<this->fdata_.size()) {  // For each Track trunk...
 		curr_chunk_type = detect_chunk_type(&(this->fdata_[i]));
 		if (!curr_chunk_type.is_valid || curr_chunk_type.type != midi_chunk_t::track) {
-			std::cout << "!curr_chunk_type.is_valid || curr_chunk_type.type != midi_chunk_t::track\n";
+			std::cout << "!curr_chunk_type.is_valid || curr_chunk_type.type != midi_chunk_t::track\n"
+			<< "for this->fdata_[i] with i == " << i << ".  A valid midi must contain a sequence of track "
+			<< "chunks following the header chunk.  \nAborting...\n";
 			std::abort();
 		}
-		this->chunk_idx_.push_back({i,static_cast<uint64_t>(8+curr_chunk_type.length),midi_chunk_t::track});
-		auto j = i+8;
-
-		detect_mtrk_event_result curr_event = detect_mtrk_event_type(&(this->fdata_[i]));
+		this->chunk_idx_.push_back({i,static_cast<uint64_t>(8+curr_chunk_type.data_length),midi_chunk_t::track});
+		
+		
+		// Now that we know that the present chunk is a Track chunk, move to the data section and 
+		// iterate over the MTrk events contained within.  
 		std::vector<midi_file::mtrk_event_idx> curr_mtrk_event_idx {};
-		while (curr_event.is_valid) {
-			//auto j = i + curr_event.delta_t.N;
-			j += curr_event.delta_t.N;
-
-			if (curr_event.type == mtrk_event_t::sysex) {
-				sysex_event sx = parse_sysex_event(&(this->fdata_[j]));
-				j += (1 + sx.length.N + sx.length.val);
-			} else if (curr_event.type == mtrk_event_t::meta) {
-				meta_event mt = parse_meta_event(&(this->fdata_[j]));
-				j += (2 + mt.length.N + mt.length.val);
-			} else {  // midi event
+		uint64_t j = i+8;
+		while (j < (this->chunk_idx_.back().offset+this->chunk_idx_.back().length)) {
+			detect_mtrk_event_result curr_event = detect_mtrk_event_type(&(this->fdata_[j]));
+			if (!curr_event.is_valid) {
 				std::abort();
 			}
 
-			curr_mtrk_event_idx.push_back({i,(j-i),curr_event.type});
-			i += curr_mtrk_event_idx.back().length;
+			uint64_t curr_event_length {0};
+			if (curr_event.type == mtrk_event_t::sysex) {
+				sysex_event sx = parse_sysex_event(&(this->fdata_[j]));
+				curr_event_length = curr_event.delta_t.N + 1 + sx.length.N + sx.length.val;
+			} else if (curr_event.type == mtrk_event_t::meta) {
+				meta_event mt = parse_meta_event(&(this->fdata_[j]));
+				curr_event_length = curr_event.delta_t.N + 2 + mt.length.N + mt.length.val;
+			} else {  // midi event
+				midi_event md = parse_midi_event(&(this->fdata_[j]));
+				curr_event_length = curr_event.delta_t.N + 1;
+				auto yay = midi_event_num_data_bytes(md);
+				curr_event_length += yay;
+			}
+
+			curr_mtrk_event_idx.push_back({j,curr_event_length,curr_event.type});
+			j += curr_event_length;
 		}
 		this->mtrk_event_idx_.push_back(curr_mtrk_event_idx);
 
 		i+=this->chunk_idx_.back().length;
-	}  // to next midi_chunk
+	}  // to next midi_chunk (Track chunk)
 
 }
 

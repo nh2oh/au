@@ -33,9 +33,9 @@ midi_vl_field_interpreted midi_interpret_vl_field(const unsigned char*);
 
 //
 // There are two types of chunks: the Header chunk, containing data pertaining to the entire file 
-// (only oen per file (?)), and the Track chunk (possibly >1 per file).  Both chunk types have the 
+// (only one per file), and the Track chunk (possibly >1 per file).  Both chunk types have the 
 // layout implied by struct midi_chunk.  Note that the length field is always 4 bytes and is not a
-// vl-type quentity.  
+// vl-type quantity.  
 //
 enum class midi_chunk_t {
 	header,
@@ -68,10 +68,10 @@ midi_file_header_data read_midi_fheaderchunk(const midi_chunk&);
 //
 struct detect_chunk_result {
 	midi_chunk_t type {midi_chunk_t::unknown};
-	int32_t length {};
+	int32_t data_length {};
 	bool is_valid {};
 };
-//detect_chunk_result detect_chunk_type(const unsigned char*);
+detect_chunk_result detect_chunk_type(const unsigned char*);
 
 
 
@@ -80,13 +80,14 @@ struct detect_chunk_result {
 //
 // MTrk events
 // There are 3 types:  sysex_event, midi_event, meta_event
-// Each MTrk event consists of a vl delta_time quantity followed by one of the three datastructures
+// Each MTrk event consists of a vl delta_time quantity followed by one of the three data structures
 // below.  Note that the delta-time field is part of an "MTrk event" but not part of the event data
 // (held in the sysex, midi, meta containers below) itself.  
 // detect_mtrk_event_result detect_mtrk_event_type(const unsigned char*); validates the delta_time
 // field and peeks into the subsequent data to classify the event.  
 //
 struct sysex_event {
+	midi_vl_field_interpreted delta_t {};
 	// F0 (sometimes F7 ...see std) <length> <bytes to be transmitted after F0||F7>
 	uint8_t id {0};  // F0 or F7
 	midi_vl_field_interpreted length {};
@@ -94,14 +95,17 @@ struct sysex_event {
 };
 sysex_event parse_sysex_event(const unsigned char*);
 struct midi_event {
-	midi_vl_field_interpreted length {};
-	uint8_t type {0};  // 4 bits
-	uint8_t channel {0};  // 4 bits
+	// Total length is delta_t.N + 1 + (1 or 2)
+	midi_vl_field_interpreted delta_t {};
+	uint8_t type {0};  // 4 bits most-sig. part of status byte
+	uint8_t channel {0};  // 4 bits least-sig. part of status byte
 	uint8_t p1 {0};
 	uint8_t p2 {0};
 };
+uint8_t midi_event_num_data_bytes(const midi_event&);
 midi_event parse_midi_event(const unsigned char*);
 struct meta_event {
+	midi_vl_field_interpreted delta_t {};
 	// FF <type> <length> <bytes>
 	uint8_t id {0};  // FF
 	uint8_t type {0};
@@ -130,14 +134,16 @@ public:
 	midi_file(const std::filesystem::path&);
 
 private:
+	// Offsets, lengths of header and all track chunks
 	struct chunk_idx {
-		uint64_t offset {0};
+		uint64_t offset {0};  // global file offset
 		uint64_t length {0};
 		midi_chunk_t type {};
 	};
+	// <vl-delta_t> <event data>
 	struct mtrk_event_idx {
-		uint64_t offset {0};  // global file offset
-		uint64_t length {0};
+		uint64_t offset {0};  // global file offset of start of delta_t field
+		uint64_t length {0};  // Includes the vl delta_t field
 		mtrk_event_t type {};
 	};
 
