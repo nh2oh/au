@@ -173,5 +173,86 @@ struct detect_mtrk_event_result {
 };
 detect_mtrk_event_result detect_mtrk_event_type(const unsigned char*);
 
+using channel_msg_status_byte = unsigned char;
+enum class ch : uint8_t {
+	ch0,ch1,ch2,ch3,ch4,ch5,ch6,ch7,ch8,ch9,ch10,ch11,ch12,ch13,ch14,ch15
+};
+uint8_t channel_number(const channel_msg_status_byte&);
+
+
+
+struct channel_msg {
+	enum type { voice, mode };
+	unsigned char *p_;
+	type type() const {
+		if (*p_ & 0xF0 == 0xB0) {
+			if (*(p_+1) == 0x78) {  // 0b01111000 == 120
+				return channel_msg::type::mode;
+			}
+		}
+		return channel_msg::type::voice;
+	};
+
+	int num_data_bytes() const {
+		if (*p_ & 0xF0 == 0xC0 || *p_ & 0xF0 == 0xD0) {
+			return 1;
+		}
+		return 2;
+	};
+};
+
+
+
+enum class ch_msg_type_full : uint8_t {
+	ch_voice,  // status - [data]_n; n : (0,2]
+	ch_mode,  // status - [data]_n; n : (0,2]
+	sys_common,
+	sys_realtime,  // Status byte only
+	sys_exclusive,  // Status - [data]_n - optional EOX; n >= 0
+	invalid
+};
+
+
+
+
+
+// Ptr to byte; does not examine beyond ptr
+enum class midi_byte : uint8_t {
+	status,
+	data
+};
+midi_byte classify_byte(const unsigned char*);
+
+// Classification can be made by examining the status byte only
+enum class status_byte_type : uint8_t {
+	channel,
+	system,
+	unknown
+};
+status_byte_type classify_status_byte(const unsigned char*);
+
+//
+// Does not verify that the input is a status byte; assumes this.
+// May have to increment ptr by 1
+// 
+enum class ch_msg_type : uint8_t {
+	voice,
+	mode,
+};
+ch_msg_type classify_channel_status_byte(const unsigned char*);
+
+//
+// Does not verify that the input is a status byte; assumes this.
+// May have to increment ptr by 1
+enum class sys_msg_type : uint8_t {
+	exclusive,
+	common,
+	realtime,
+	unknown
+};
+sys_msg_type classify_system_status_byte(const unsigned char*);
+
+
+
 
 

@@ -219,6 +219,63 @@ midi_event parse_midi_event(const unsigned char* p) {
 	return result;
 }
 
+
+status_byte_type classify_status_byte(const unsigned char *p) {
+	unsigned char high = 0xF0;
+
+	status_byte_type result {status_byte_type::unknown};
+	switch (*p & high) {
+		case 0x80:  result = status_byte_type::channel; break;
+		case 0x90:  result = status_byte_type::channel; break;
+		case 0xA0:  result = status_byte_type::channel; break;
+		case 0xB0:  result = status_byte_type::channel; break;
+		case 0xC0:  result = status_byte_type::channel; break;
+		case 0xD0:  result = status_byte_type::channel; break;
+		case 0xE0:  result = status_byte_type::channel; break;
+		case 0xF0:  result = status_byte_type::system; break;
+		default:    result = status_byte_type::unknown; break;
+	}
+
+	return result;
+}
+
+midi_byte classify_byte(const unsigned char* p) {
+	if (*p & 0x80 == 0x80) {
+		return midi_byte::status;
+	}
+	return midi_byte::data;
+}
+
+ch_msg_type classify_channel_status_byte(const unsigned char* p) {
+	if (*p & 0xF0 == 0xB0) {
+		if (*(p+1) == 0x78) {  // 0b01111000 == 120
+			return ch_msg_type::mode;
+		}
+	}
+	return ch_msg_type::voice;
+}
+
+sys_msg_type classify_system_status_byte(const unsigned char* p) {
+	sys_msg_type result {sys_msg_type::unknown};
+	if (*p == 0xF0) {
+		result = sys_msg_type::exclusive;
+	} else if (*p & 0xF8 == 0xF0) {
+		// 0b11110sss where sss : [1,7]
+		if (*p & 0x07 == 0) {
+			result = sys_msg_type::unknown;
+		} else {
+			result = sys_msg_type::common;
+		}
+	} else if (*p & 0xF8 == 0xF8) {
+		// 0b11110ttt where ttt : [0,7]
+		result = sys_msg_type::realtime;
+	}
+
+	return result;
+}
+
+
+
 uint8_t midi_event_num_data_bytes(const midi_event& event_in) {
 
 	if (event_in.type == 0xC0 || event_in.type == 0xD0) {
