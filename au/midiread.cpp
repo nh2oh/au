@@ -167,57 +167,52 @@ meta_event parse_meta_event(const unsigned char* p) {
 	return result;
 }
 
-midi_event parse_midi_event(const unsigned char* p) {
+midi_event parse_midi_event(const unsigned char *p, const unsigned char prev_stat) {
 	midi_event result {};
 
 	result.delta_t = midi_interpret_vl_field(p);
 	p += result.delta_t.N;
 
-	short n_data_bytes {0};
-	if (*p & 1<<7) {  // MSBit == 1 => byte is a status byte (Equiv: *p & 0x80).  
+	unsigned char high_bit = 0x80;
+	unsigned char high_4bits = 0xF0;
+
+	if ((*p & high_bit) == 0x80) {
+		result.running_status = false;
+		result.status = *p;
+		++p;
+	} else {
+		result.running_status = true;
+		result.status = prev_stat;
+		// Not incrementing p; *p is the first data byte in running-status mode
+	}
+	if ((result.status & high_bit) != 0x80) { std::abort(); }
+
+	uint8_t n_data_bytes {0};
+	if ((result.status & high_4bits) == 0xC0 || (result.status & 0xF0) == 0xD0) {  // MSBit == 1 => byte is a status byte
+		n_data_bytes = 1;
+	} else {
 		n_data_bytes = 2;
-		result.type = (*p & 0xF0);
-		result.channel = (*p & 0x0F);
-		switch ((*p)>>4) {  // Testing the 4 MSBits of *p
-			case 0x08:  // Note off
-				break;
-			case 0x09:  // Note on
-				break;
-			case 0x0A:  // Polyphonic key pressure/Aftertouch
-				break;
-			case 0x0B:  // Control change
-				break;
-			case 0x0C:  // Program change Channel
-				n_data_bytes = 1;
-				break;
-			case 0x0D:  // Pressure/After touch
-				n_data_bytes = 1;
-				break;
-			case 0x0E:  // Pitch bend change
-				break;
-			default:
-				std::abort();
-				break;
-		}
-	} else {  // MSB == 0 => byte is a data byte
-		std::abort();
 	}
 
-	++p; result.p1 = *p;
-	if ((result.p1)>>7 != 0) {
-		// The MSB of all data bytes is 0
-		std::abort();
+	if ((*p & high_bit) == 0x80) {
+		std::abort();  // The MSB of all data bytes is 0
 	}
+	result.p1 = *p;
+	
 	if (n_data_bytes == 2) {
-		++p; result.p2 = *p;
-		if ((result.p2)>>7 != 0) {
-			// The MSB of all data bytes is 0
-			std::abort();
-		}
+		++p; 
+		if ((*p & high_bit) == 0x80) { std::abort(); }
+		result.p2 = *p;
 	}
 
 	return result;
 }
+
+
+
+
+
+
 
 
 status_byte_type classify_status_byte(const unsigned char *p) {
@@ -240,14 +235,14 @@ status_byte_type classify_status_byte(const unsigned char *p) {
 }
 
 midi_byte classify_byte(const unsigned char* p) {
-	if (*p & 0x80 == 0x80) {
+	if ((*p & 0x80) == 0x80) {
 		return midi_byte::status;
 	}
 	return midi_byte::data;
 }
 
 ch_msg_type classify_channel_status_byte(const unsigned char* p) {
-	if (*p & 0xF0 == 0xB0) {
+	if ((*p & 0xF0) == 0xB0) {
 		if (*(p+1) == 0x78) {  // 0b01111000 == 120
 			return ch_msg_type::mode;
 		}
@@ -255,18 +250,22 @@ ch_msg_type classify_channel_status_byte(const unsigned char* p) {
 	return ch_msg_type::voice;
 }
 
+int channel_number(const unsigned char* p) {
+	return (*p & 0x0F) + 1;
+}
+
 sys_msg_type classify_system_status_byte(const unsigned char* p) {
 	sys_msg_type result {sys_msg_type::unknown};
 	if (*p == 0xF0) {
 		result = sys_msg_type::exclusive;
-	} else if (*p & 0xF8 == 0xF0) {
+	} else if ((*p & 0xF8) == 0xF0) {
 		// 0b11110sss where sss : [1,7]
-		if (*p & 0x07 == 0) {
+		if ((*p & 0x07) == 0) {
 			result = sys_msg_type::unknown;
 		} else {
 			result = sys_msg_type::common;
 		}
-	} else if (*p & 0xF8 == 0xF8) {
+	} else if ((*p & 0xF8) == 0xF8) {
 		// 0b11110ttt where ttt : [0,7]
 		result = sys_msg_type::realtime;
 	}
@@ -274,10 +273,57 @@ sys_msg_type classify_system_status_byte(const unsigned char* p) {
 	return result;
 }
 
+midi_message_info classify_midi_msg(const unsigned char* p) {
+	if (classify_byte(p) == midi_byte::data) {
+		return {midi_msg_type::invalid,0};
+	}
+
+	status_byte_type curr_status_byte_type = classify_status_byte(p);  // Channel or System or Unknown
+
+	midi_message_info result {};
+	if (curr_status_byte_type == status_byte_type::channel) {
+		result.type = to_midi_msg_type(classify_channel_status_byte(p));
+	} else if (curr_status_byte_type == status_byte_type::system) {
+		result.type = to_midi_msg_type(classify_channel_status_byte(p));
+	} else if (curr_status_byte_type == status_byte_type::unknown) {
+		result.type = midi_msg_type::invalid;
+	}
+
+	++p;
+	while (classify_byte(p)!=midi_byte::status) {
+		++(result.n_data_bytes);
+		++p;
+	}
+
+	return result;
+}
+midi_msg_type to_midi_msg_type(ch_msg_type m) {
+	switch (m) {
+		case ch_msg_type::voice:  return midi_msg_type::ch_voice; break;
+		case ch_msg_type::mode:  return midi_msg_type::ch_mode; break;
+		default: return midi_msg_type::ch_unknown; break;
+	}
+};
+midi_msg_type to_midi_msg_type(sys_msg_type m) {
+	switch (m) {
+		case sys_msg_type::exclusive:  return midi_msg_type::sys_exclusive; break;
+		case sys_msg_type::common:  return midi_msg_type::sys_common; break;
+		case sys_msg_type::realtime:  return midi_msg_type::sys_realtime; break;
+		case sys_msg_type::unknown:  return midi_msg_type::sys_unknown; break;
+		default: return midi_msg_type::sys_unknown; break;
+	}
+};
+
+
+
+
+
+
+
+
 
 
 uint8_t midi_event_num_data_bytes(const midi_event& event_in) {
-
 	if (event_in.type == 0xC0 || event_in.type == 0xD0) {
 		return 1;
 	} else {
@@ -285,11 +331,6 @@ uint8_t midi_event_num_data_bytes(const midi_event& event_in) {
 	}
 }
 	
-
-
-
-
-
 midi_file::midi_file(const std::filesystem::path& fp) {
 	this->fdata_ = dbk::readfile(fp).d;
 	
@@ -319,6 +360,7 @@ midi_file::midi_file(const std::filesystem::path& fp) {
 		// iterate over the MTrk events contained within.  
 		std::vector<midi_file::mtrk_event_idx> curr_mtrk_event_idx {};
 		uint64_t j = i+8;
+		unsigned char prev_stat_byte {0};
 		while (j < (this->chunk_idx_.back().offset+this->chunk_idx_.back().length)) {
 			detect_mtrk_event_result curr_event = detect_mtrk_event_type(&(this->fdata_[j]));
 			if (!curr_event.is_valid) {
@@ -333,17 +375,18 @@ midi_file::midi_file(const std::filesystem::path& fp) {
 				meta_event mt = parse_meta_event(&(this->fdata_[j]));
 				curr_event_length = curr_event.delta_t.N + 2 + mt.length.N + mt.length.val;
 			} else {  // midi event
-				midi_event md = parse_midi_event(&(this->fdata_[j]));
+				midi_event md = parse_midi_event(&(this->fdata_[j]),prev_stat_byte);
+				prev_stat_byte = md.status;
 				curr_event_length = curr_event.delta_t.N + 1;
 				auto yay = midi_event_num_data_bytes(md);
 				curr_event_length += yay;
 			}
 
 			curr_mtrk_event_idx.push_back({j,curr_event_length,curr_event.type});
+			//
 			j += curr_event_length;
 		}
 		this->mtrk_event_idx_.push_back(curr_mtrk_event_idx);
-
 		i+=this->chunk_idx_.back().length;
 	}  // to next midi_chunk (Track chunk)
 

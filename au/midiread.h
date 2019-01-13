@@ -101,15 +101,17 @@ struct sysex_event {
 };
 sysex_event parse_sysex_event(const unsigned char*);
 struct midi_event {
-	// Total length is delta_t.N + 1 + (1 or 2)
+	// Total length is delta_t.N+1+(1||2) if !running_status; delta_t.N+(1||2) if running_status
 	midi_vl_field_interpreted delta_t {};
+	bool running_status {false};
+	unsigned char status {0};
 	uint8_t type {0};  // 4 bits most-sig. part of status byte
 	uint8_t channel {0};  // 4 bits least-sig. part of status byte
 	uint8_t p1 {0};
 	uint8_t p2 {0};
 };
 uint8_t midi_event_num_data_bytes(const midi_event&);
-midi_event parse_midi_event(const unsigned char*);
+midi_event parse_midi_event(const unsigned char*, const unsigned char);
 struct meta_event {
 	midi_vl_field_interpreted delta_t {};
 	// FF <type> <length> <bytes>
@@ -173,44 +175,8 @@ struct detect_mtrk_event_result {
 };
 detect_mtrk_event_result detect_mtrk_event_type(const unsigned char*);
 
-using channel_msg_status_byte = unsigned char;
-enum class ch : uint8_t {
-	ch0,ch1,ch2,ch3,ch4,ch5,ch6,ch7,ch8,ch9,ch10,ch11,ch12,ch13,ch14,ch15
-};
-uint8_t channel_number(const channel_msg_status_byte&);
 
 
-
-struct channel_msg {
-	enum type { voice, mode };
-	unsigned char *p_;
-	type type() const {
-		if (*p_ & 0xF0 == 0xB0) {
-			if (*(p_+1) == 0x78) {  // 0b01111000 == 120
-				return channel_msg::type::mode;
-			}
-		}
-		return channel_msg::type::voice;
-	};
-
-	int num_data_bytes() const {
-		if (*p_ & 0xF0 == 0xC0 || *p_ & 0xF0 == 0xD0) {
-			return 1;
-		}
-		return 2;
-	};
-};
-
-
-
-enum class ch_msg_type_full : uint8_t {
-	ch_voice,  // status - [data]_n; n : (0,2]
-	ch_mode,  // status - [data]_n; n : (0,2]
-	sys_common,
-	sys_realtime,  // Status byte only
-	sys_exclusive,  // Status - [data]_n - optional EOX; n >= 0
-	invalid
-};
 
 
 
@@ -240,6 +206,9 @@ enum class ch_msg_type : uint8_t {
 	mode,
 };
 ch_msg_type classify_channel_status_byte(const unsigned char*);
+// Only returns valid info if the input points at a valid channel status byte; the
+// function does not verify this
+int channel_number(const unsigned char*);
 
 //
 // Does not verify that the input is a status byte; assumes this.
@@ -252,7 +221,32 @@ enum class sys_msg_type : uint8_t {
 };
 sys_msg_type classify_system_status_byte(const unsigned char*);
 
+struct msg_ptr {
+	enum type { voice, mode };
+	unsigned char *p_;
+};
 
+// Combine sys_msg_type, ch_msg_type
+enum class midi_msg_type : uint8_t {
+	ch_voice,
+	ch_mode,
+	sys_common,
+	sys_realtime,
+	sys_exclusive,
+	ch_unknown,
+	sys_unknown,
+	unknown,
+	invalid  // *p is not a status byte
+};
+midi_msg_type to_midi_msg_type(sys_msg_type);
+midi_msg_type to_midi_msg_type(ch_msg_type);
+struct midi_message_info {
+	midi_msg_type type {};
+	uint8_t n_data_bytes {0};
+};
+midi_message_info classify_midi_msg(const unsigned char*);
 
+// This overload is used for "running status" sequences
+midi_message_info classify_midi_msg(midi_msg_type, const unsigned char*);
 
 
