@@ -87,10 +87,18 @@ detect_chunk_result detect_chunk_type(const unsigned char*);
 // MTrk events
 // There are 3 types:  sysex_event, midi_event, meta_event
 // Each MTrk event consists of a vl delta_time quantity followed by one of the three data structures
-// below.  Note that the delta-time field is part of an "MTrk event" but not part of the event data
-// (held in the sysex, midi, meta containers below) itself.  
+// below.  All MTrk events begin with a delta-time field, considered in the standard to be part of 
+// the definition of an MTrk event "container," but not part of the {sysex,midi,meta}-event proper; 
+// nevertheless, here i store the delta-time in each event struct.  From the std:
+// <MTrk event> = <delta-time> <event>
+// <event> = <MIDI event> | <sysex event> | <meta-event> 
+//
 // detect_mtrk_event_result detect_mtrk_event_type(const unsigned char*); validates the delta_time
 // field and peeks into the subsequent data to classify the event.  
+//
+// Note that the length of each event can not be determined until the event is classified as 
+// sysex, meta, or midi, and in the case of midi, the event must be parsed to get the length.
+//
 //
 struct sysex_event {
 	midi_vl_field_interpreted delta_t {};
@@ -100,8 +108,23 @@ struct sysex_event {
 	std::vector<unsigned char> data {};
 };
 sysex_event parse_sysex_event(const unsigned char*);
+
+//
+// All midi events have an associated status byte, either as part of the event itself, immediately
+// following the vl delta-time field, or implied by the most recently encountered status byte
+// (ie, in a midi_event preceeding the present), a state referred to as "running status."  The 
+// midi_event struct below encodes the appropriate status byte explictly for each event, even for 
+// midi events not containing a status byte (ie, for midi events occuring in a sequence where 
+// running-status is in use and which follow some prior midi message where the status byte is set).  
+// This removes the implicit state from a sequence of midi messages.  If running_status == true,
+// the message got its status byte from a prior message in the stream and the present message did
+// not contain an explicit status byte.  If running_status == false, the contents of the status 
+// field were encoded in the present message in the actual stream.  
+// Note that the default value for the status field == 0b00000000 which is invalid as a status byte
+// since the high bit is 0.  
+//
 struct midi_event {
-	// Total length is delta_t.N+1+(1||2) if !running_status; delta_t.N+(1||2) if running_status
+	// Total length is delta_t.N+1+(1||2) if !running_status; delta_t.N+0+(1||2) if running_status
 	midi_vl_field_interpreted delta_t {};
 	bool running_status {false};
 	unsigned char status {0};
@@ -110,8 +133,8 @@ struct midi_event {
 	uint8_t p1 {0};
 	uint8_t p2 {0};
 };
-uint8_t midi_event_num_data_bytes(const midi_event&);
-midi_event parse_midi_event(const unsigned char*, const unsigned char);
+uint8_t midi_event_num_data_bytes(const midi_event&);  // Returns 1 || 2
+midi_event parse_midi_event(const unsigned char*, const unsigned char);  // p-to-event, prev status byte
 struct meta_event {
 	midi_vl_field_interpreted delta_t {};
 	// FF <type> <length> <bytes>
@@ -123,8 +146,8 @@ struct meta_event {
 meta_event parse_meta_event(const unsigned char*);
 
 enum class chunk_t {
-	file_header,
-	track
+	file_header,  // MThd
+	track  // MTrk
 };
 enum class mtrk_event_t {
 	midi,
