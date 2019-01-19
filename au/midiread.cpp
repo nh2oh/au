@@ -377,7 +377,7 @@ midi_file::midi_file(const std::filesystem::path& fp) {
 		// over the MTrk events contained within.   
 		std::vector<midi_file::mtrk_event_idx> curr_mtrk_event_idx {};
 		uint64_t j = i+8;
-		unsigned char prev_midi_status_byte {0};
+		unsigned char prev_midi_status_byte {0};  // TODO: Rename running_midi_status_byte ?
 		while (j < (this->chunk_idx_.back().offset+this->chunk_idx_.back().length)) {
 			// Classify the present event as midi, sysex, or meta
 			detect_mtrk_event_result curr_event = detect_mtrk_event_type(&(this->fdata_[j]));
@@ -391,6 +391,7 @@ midi_file::midi_file(const std::filesystem::path& fp) {
 				// Sysex events and meta-events cancel any running status which was in effect.  
 				// Running status does not apply to and may not be used for these messages.
 				//
+				prev_midi_status_byte = unsigned char {0};
 				sysex_event sx = parse_sysex_event(&(this->fdata_[j]));
 				curr_event_length = curr_event.delta_t.N + 1 + sx.length.N + sx.length.val;
 			} else if (curr_event.type == mtrk_event_t::meta) {
@@ -398,6 +399,7 @@ midi_file::midi_file(const std::filesystem::path& fp) {
 				// Sysex events and meta-events cancel any running status which was in effect.  
 				// Running status does not apply to and may not be used for these messages.
 				//
+				prev_midi_status_byte = unsigned char {0};
 				meta_event mt = parse_meta_event(&(this->fdata_[j]));
 				curr_event_length = curr_event.delta_t.N + 2 + mt.length.N + mt.length.val;
 			} else {  // midi event
@@ -408,7 +410,7 @@ midi_file::midi_file(const std::filesystem::path& fp) {
 				curr_event_length += yay;
 			}
 
-			curr_mtrk_event_idx.push_back({j,curr_event_length,curr_event.type});
+			curr_mtrk_event_idx.push_back({j,curr_event_length,curr_event.type,prev_midi_status_byte});
 			j += curr_event_length;
 		}
 		this->mtrk_event_idx_.push_back(curr_mtrk_event_idx);
@@ -431,14 +433,27 @@ std::string midi_file::print_mtrk_seq() const {
 	std::string s {};
 
 	for (int trkn=0; trkn<mtrk_event_idx_.size(); ++trkn) {
+		s += ("Track " + std::to_string(trkn) + "\n");
 		for (int evntn=0; evntn<mtrk_event_idx_[trkn].size(); ++evntn) {
+			auto curr_offset = mtrk_event_idx_[trkn][evntn].offset;
+			auto curr_dptr = &(this->fdata_[curr_offset]);
+			
 			if (mtrk_event_idx_[trkn][evntn].type == mtrk_event_t::midi) {
-				print_midi_event(const midi_event& md)
+				midi_event md = parse_midi_event(curr_dptr, mtrk_event_idx_[trkn][evntn].midi_status);
+				s += print_midi_event(md);
+			} else if (mtrk_event_idx_[trkn][evntn].type == mtrk_event_t::meta) {
+				meta_event mt = parse_meta_event(curr_dptr);
+				s += print_meta_event(mt);
+			} else if (mtrk_event_idx_[trkn][evntn].type == mtrk_event_t::sysex) {
+				sysex_event sx = parse_sysex_event(curr_dptr);
+				s += print_sysex_event(sx);
+			} else if (mtrk_event_idx_[trkn][evntn].type == mtrk_event_t::unknown) {
+				s += "mtrk_event_t::unknown";
 			}
+			s += "\n";
 		}
+		s += ("End of track " + std::to_string(trkn) + "--------------------------\n");
 	}
-
-
 
 	return s;
 }
@@ -447,7 +462,7 @@ std::string midi_file::print_mtrk_seq() const {
 std::string print_midi_event(const midi_event& md) {
 	std::string s {};
 	std::string sep {"    "};
-	s += md.delta_t.val;
+	s += std::to_string(md.delta_t.val);
 	s += sep;
 
 	std::string status_str {};
@@ -483,22 +498,22 @@ std::string print_midi_event(const midi_event& md) {
 	}
 	s += sep;
 
-	s += md.p1;
+	s += std::to_string(md.p1);
 	if (midi_event_num_data_bytes(md) == 2) {
-		s += md.p2;
+		s += (", " + std::to_string(md.p2));
 	}
 
 	return s;
 }
 
 std::string print_meta_event(const meta_event& mt) {
-	std::string s {"Meta event \\n"};
+	std::string s {"Meta event"};
 
 	return s;
 }
 
 std::string print_sysex_event(const sysex_event& sx) {
-	std::string s {"Sysex event \\n"};
+	std::string s {"Sysex event"};
 
 	return s;
 }

@@ -12,6 +12,8 @@
 // to little endian for interpretation.  Obviously this byte order swapping is only needed for 
 // LE architectures.  
 // 
+// TODO:  May read unaligned; copy from p into uninitialized T cast to unsigned char*
+//
 template<typename T>
 T midi_raw_interpret(const unsigned char* p) {
 	constexpr unsigned short N = sizeof(T)/sizeof(char);
@@ -145,10 +147,12 @@ struct meta_event {
 };
 meta_event parse_meta_event(const unsigned char*);
 
+/*
 enum class chunk_t {
 	file_header,  // MThd
 	track  // MTrk
-};
+};*/
+
 enum class mtrk_event_t {
 	midi,
 	sysex,
@@ -168,13 +172,17 @@ private:
 	struct chunk_idx {
 		uint64_t offset {0};  // global file offset
 		uint64_t length {0};
-		midi_chunk_t type {};
+		midi_chunk_t type {};  // header, track, unknown
 	};
 	// <vl-delta_t> <event data>
 	struct mtrk_event_idx {
 		uint64_t offset {0};  // global file offset of start of delta_t field
 		uint64_t length {0};  // Includes the vl delta_t field
-		mtrk_event_t type {};
+		mtrk_event_t type {mtrk_event_t::unknown};  // midi, sysex, meta, unknown
+		
+		// If type == mtrk_event_t::midi, the global file offset of the applicable 
+		// midi status byte
+		unsigned char midi_status {0};
 	};
 
 	std::vector<unsigned char> fdata_ {};
