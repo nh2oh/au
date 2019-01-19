@@ -4,7 +4,7 @@
 #include <array>
 #include <algorithm>
 #include <vector>
-
+#include <string> //midi_file::print()
 
 // 
 // Converts the field [p,p+N) where N is the number of unsigned chars occupied by a T to a T.  
@@ -161,6 +161,8 @@ public:
 	midi_file() = default;
 	midi_file(const std::filesystem::path&);
 
+	std::string print() const;
+	std::string print_mtrk_seq() const;
 private:
 	// Offsets, lengths of header and all track chunks
 	struct chunk_idx {
@@ -271,5 +273,11 @@ midi_message_info classify_midi_msg(const unsigned char*);
 
 // This overload is used for "running status" sequences
 midi_message_info classify_midi_msg(midi_msg_type, const unsigned char*);
+
+
+std::string print_midi_event(const midi_event& mt);
+std::string print_meta_event(const meta_event& mt);
+std::string print_sysex_event(const sysex_event& mt);
+
 
 

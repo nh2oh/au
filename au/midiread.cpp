@@ -5,7 +5,7 @@
 #include <iterator>  // std::back_inserter()
 #include <iostream>
 #include <exception>
-
+#include <string>
 
 midi_vl_field_interpreted midi_interpret_vl_field(const unsigned char* p) {
 	midi_vl_field_interpreted result {};
@@ -415,6 +415,92 @@ midi_file::midi_file(const std::filesystem::path& fp) {
 		i+=this->chunk_idx_.back().length;
 	}  // to next midi_chunk (Track chunk)
 
+}
+
+
+std::string midi_file::print() const {
+	std::string s {};
+
+
+
+
+	return s;
+}
+
+std::string midi_file::print_mtrk_seq() const {
+	std::string s {};
+
+	for (int trkn=0; trkn<mtrk_event_idx_.size(); ++trkn) {
+		for (int evntn=0; evntn<mtrk_event_idx_[trkn].size(); ++evntn) {
+			if (mtrk_event_idx_[trkn][evntn].type == mtrk_event_t::midi) {
+				print_midi_event(const midi_event& md)
+			}
+		}
+	}
+
+
+
+	return s;
+}
+
+
+std::string print_midi_event(const midi_event& md) {
+	std::string s {};
+	std::string sep {"    "};
+	s += md.delta_t.val;
+	s += sep;
+
+	std::string status_str {};
+	status_byte_type sb = classify_status_byte(&(md.status));
+	if (sb == status_byte_type::channel) {
+		status_str += "ch:";
+		ch_msg_type chsb = classify_channel_status_byte(&(md.status));
+		if (chsb == ch_msg_type::voice) {
+			status_str += "voice";
+		} else if (chsb == ch_msg_type::mode) {
+			status_str += "mode ";
+		}
+	} else if (sb == status_byte_type::system) {
+		status_str += "sy:";
+		sys_msg_type sysb = classify_system_status_byte(&(md.status));
+		if (sysb == sys_msg_type::exclusive) {
+			status_str += "ex";
+		} else if (sysb == sys_msg_type::common) {
+			status_str += "cm";
+		} else if (sysb == sys_msg_type::realtime) {
+			status_str += "rt";
+		} else if (sysb == sys_msg_type::unknown) {
+			status_str += "uk";
+		}
+	} else if (sb == status_byte_type::unknown) {
+		status_str += "uk:";
+		status_str += "_____";
+	}
+	if (md.running_status) {
+		s += ('[' + status_str + ']');
+	} else {
+		s += (' ' + status_str + ' ');
+	}
+	s += sep;
+
+	s += md.p1;
+	if (midi_event_num_data_bytes(md) == 2) {
+		s += md.p2;
+	}
+
+	return s;
+}
+
+std::string print_meta_event(const meta_event& mt) {
+	std::string s {"Meta event \\n"};
+
+	return s;
+}
+
+std::string print_sysex_event(const sysex_event& sx) {
+	std::string s {"Sysex event \\n"};
+
+	return s;
 }
 
 
