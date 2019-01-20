@@ -35,7 +35,7 @@ T midi_raw_interpret(const unsigned char* p) {
 //
 struct midi_vl_field_interpreted {
 	int8_t N {0};
-	int32_t val {0};
+	int32_t val {0};  // TODO:  uint32_t ???
 };
 midi_vl_field_interpreted midi_interpret_vl_field(const unsigned char*);
 
@@ -180,8 +180,10 @@ private:
 		uint64_t length {0};  // Includes the vl delta_t field
 		mtrk_event_t type {mtrk_event_t::unknown};  // midi, sysex, meta, unknown
 		
-		// If type == mtrk_event_t::midi, the global file offset of the applicable 
-		// midi status byte
+		// If type == mtrk_event_t::midi, the applicable status byte.  
+		// Alternatives:
+		// 1)  The global file offset of the applicable midi status byte
+		// 2)  The global file offset of the event idx containing the status byte
 		unsigned char midi_status {0};
 	};
 

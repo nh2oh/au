@@ -11,6 +11,20 @@ midi_vl_field_interpreted midi_interpret_vl_field(const unsigned char* p) {
 	midi_vl_field_interpreted result {};
 	result.val = 0;
 
+	while (true) {
+		result.val += (*p & 0x7F);
+		++(result.N);
+		if (!(*p & 0x80)) { 
+			break;
+		} else {
+			result.val = result.val << 7;
+			++p;
+		}
+	}
+	return result;
+
+	// BROKEN:
+	/*
 	while (*p & 0x80) {
 		result.val += (*p & 0x7F);
 		result.val = result.val << 8;
@@ -19,8 +33,7 @@ midi_vl_field_interpreted midi_interpret_vl_field(const unsigned char* p) {
 	}
 	result.val += (*p & 0x7F);
 	++(result.N);
-
-	return result;
+	*/
 };
 
 
@@ -438,6 +451,10 @@ std::string midi_file::print_mtrk_seq() const {
 			auto curr_offset = mtrk_event_idx_[trkn][evntn].offset;
 			auto curr_dptr = &(this->fdata_[curr_offset]);
 			
+			s += ("EvNum=" + std::to_string(evntn) + "; ");
+			s += ("Offset=" + std::to_string(curr_offset) + "; ");
+			s += ("Length=" + std::to_string(mtrk_event_idx_[trkn][evntn].length) + "; ");
+
 			if (mtrk_event_idx_[trkn][evntn].type == mtrk_event_t::midi) {
 				midi_event md = parse_midi_event(curr_dptr, mtrk_event_idx_[trkn][evntn].midi_status);
 				s += print_midi_event(md);
@@ -462,8 +479,8 @@ std::string midi_file::print_mtrk_seq() const {
 std::string print_midi_event(const midi_event& md) {
 	std::string s {};
 	std::string sep {"    "};
-	s += std::to_string(md.delta_t.val);
-	s += sep;
+	s += "MIDI:  ";
+	s += ("delta-t=" + std::to_string(md.delta_t.val) + sep);
 
 	std::string status_str {};
 	status_byte_type sb = classify_status_byte(&(md.status));
@@ -491,6 +508,7 @@ std::string print_midi_event(const midi_event& md) {
 		status_str += "uk:";
 		status_str += "_____";
 	}
+	s += "status=";
 	if (md.running_status) {
 		s += ('[' + status_str + ']');
 	} else {
@@ -498,22 +516,22 @@ std::string print_midi_event(const midi_event& md) {
 	}
 	s += sep;
 
-	s += std::to_string(md.p1);
+	s += ("p1=" + std::to_string(md.p1));
 	if (midi_event_num_data_bytes(md) == 2) {
-		s += (", " + std::to_string(md.p2));
+		s += (", p2=" + std::to_string(md.p2));
 	}
 
 	return s;
 }
 
 std::string print_meta_event(const meta_event& mt) {
-	std::string s {"Meta event"};
+	std::string s {"META:  "};
 
 	return s;
 }
 
 std::string print_sysex_event(const sysex_event& sx) {
-	std::string s {"Sysex event"};
+	std::string s {"SYSEX:  "};
 
 	return s;
 }
