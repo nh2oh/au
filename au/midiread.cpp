@@ -263,7 +263,7 @@ status_byte_type classify_status_byte(const unsigned char *p) {
 	return result;
 }
 
-midi_byte classify_byte(const unsigned char* p) {
+midi_byte classify_byte(const unsigned char *p) {
 	if ((*p & 0x80) == 0x80) {
 		return midi_byte::status;
 	}
@@ -280,8 +280,9 @@ ch_msg_type classify_channel_status_byte(const unsigned char* p) {
 }
 
 int channel_number(const unsigned char* p) {
-	return (*p & 0x0F) + 1;
+	return (*p & 0x0F) + 1;  // + 1 b/c there is no channel 0
 }
+
 
 sys_msg_type classify_system_status_byte(const unsigned char* p) {
 	sys_msg_type result {sys_msg_type::unknown};
@@ -302,12 +303,15 @@ sys_msg_type classify_system_status_byte(const unsigned char* p) {
 	return result;
 }
 
+// Expects to be pointed at the status byte of a midi message
 midi_message_info classify_midi_msg(const unsigned char* p) {
+	// Classify as either a status byte or a non status byte (ie, a data byte).
 	if (classify_byte(p) == midi_byte::data) {
 		return {midi_msg_type::invalid,0};
 	}
 
-	status_byte_type curr_status_byte_type = classify_status_byte(p);  // Channel or System or Unknown
+	// Channel or System or Unknown
+	status_byte_type curr_status_byte_type = classify_status_byte(p);  
 
 	midi_message_info result {};
 	if (curr_status_byte_type == status_byte_type::channel) {
@@ -353,7 +357,7 @@ midi_msg_type to_midi_msg_type(sys_msg_type m) {
 
 
 uint8_t midi_event_num_data_bytes(const midi_event& event_in) {
-	if (event_in.type == 0xC0 || event_in.type == 0xD0) {
+	if ((event_in.status & 0xF0) == 0xC0 || (event_in.status & 0xF0) == 0xD0) {
 		return 1;
 	} else {
 		return 2;
@@ -485,12 +489,34 @@ std::string print_midi_event(const midi_event& md) {
 	std::string status_str {};
 	status_byte_type sb = classify_status_byte(&(md.status));
 	if (sb == status_byte_type::channel) {
-		status_str += "ch:";
+		status_str += ("ch:" + std::to_string((md.status & 0x0F)+1));
 		ch_msg_type chsb = classify_channel_status_byte(&(md.status));
 		if (chsb == ch_msg_type::voice) {
-			status_str += "voice";
+			status_str += "voice:";
+			if ((md.status & 0xF0) == 0x80) {
+				status_str += "Note-off";
+			} else if ((md.status & 0xF0) == 0x90) {
+				status_str += "Note-on";
+			} else if ((md.status & 0xF0) == 0xA0) {
+				status_str += "Aftertouch/Key-pressure";
+			} else if ((md.status & 0xF0) == 0xB0) {
+				status_str += "Control-change";
+			} else if ((md.status & 0xF0) == 0xC0) {
+				status_str += "Program-change";
+			} else if ((md.status & 0xF0) == 0xD0) {
+				status_str += "Aftertouch/Channel-pressure";
+			} else if ((md.status & 0xF0) == 0xE0) {
+				status_str += "Pitch-bend-change";
+			} else {
+				status_str += "Unknown-channel-voice-status-byte";
+			}
 		} else if (chsb == ch_msg_type::mode) {
-			status_str += "mode ";
+			status_str += "mode:";
+			if ((md.status & 0xF0) == 0xB0) {
+				status_str += "Select-channel-mode";
+			} else {
+				status_str += "Unknown-channel-mode-status-byte";
+			}
 		}
 	} else if (sb == status_byte_type::system) {
 		status_str += "sy:";

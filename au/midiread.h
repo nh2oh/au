@@ -130,8 +130,8 @@ struct midi_event {
 	midi_vl_field_interpreted delta_t {};
 	bool running_status {false};
 	unsigned char status {0};
-	uint8_t type {0};  // 4 bits most-sig. part of status byte
-	uint8_t channel {0};  // 4 bits least-sig. part of status byte
+	//uint8_t type {0};  // 4 bits most-sig. part of status byte
+	//uint8_t channel {0};  // 4 bits least-sig. part of status byte
 	uint8_t p1 {0};
 	uint8_t p2 {0};
 };
@@ -147,11 +147,6 @@ struct meta_event {
 };
 meta_event parse_meta_event(const unsigned char*);
 
-/*
-enum class chunk_t {
-	file_header,  // MThd
-	track  // MTrk
-};*/
 
 enum class mtrk_event_t {
 	midi,
@@ -178,13 +173,14 @@ private:
 	struct mtrk_event_idx {
 		uint64_t offset {0};  // global file offset of start of delta_t field
 		uint64_t length {0};  // Includes the vl delta_t field
-		mtrk_event_t type {mtrk_event_t::unknown};  // midi, sysex, meta, unknown
+		//mtrk_event_t type {mtrk_event_t::unknown};  // midi, sysex, meta, unknown
 		
 		// If type == mtrk_event_t::midi, the applicable status byte.  
 		// Alternatives:
 		// 1)  The global file offset of the applicable midi status byte
 		// 2)  The global file offset of the event idx containing the status byte
-		unsigned char midi_status {0};
+		//unsigned char midi_status {0};
+		uint64_t offset_status {0};
 	};
 
 	std::vector<unsigned char> fdata_ {};
@@ -228,7 +224,8 @@ midi_byte classify_byte(const unsigned char*);
 enum class status_byte_type : uint8_t {
 	channel,
 	system,
-	unknown
+	unknown,
+	invalid  // Not a status bye (MSBit != 1)
 };
 status_byte_type classify_status_byte(const unsigned char*);
 
@@ -285,9 +282,9 @@ midi_message_info classify_midi_msg(const unsigned char*);
 midi_message_info classify_midi_msg(midi_msg_type, const unsigned char*);
 
 
-std::string print_midi_event(const midi_event& mt);
-std::string print_meta_event(const meta_event& mt);
-std::string print_sysex_event(const sysex_event& mt);
+std::string print_midi_event(const midi_event&);
+std::string print_meta_event(const meta_event&);
+std::string print_sysex_event(const sysex_event&);
 
 
 
