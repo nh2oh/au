@@ -7,27 +7,18 @@
 #include <string> //midi_file::print()
 
 // 
-// Converts the field [p,p+N) where N is the number of unsigned chars occupied by a T to a T.  
-// Swaps the byte order of the field so that the big endian fields of a midi file are converted
-// to little endian for interpretation.  Obviously this byte order swapping is only needed for 
-// LE architectures.  
+// Copies the bytes in the range [p,p+sizeof(T)) into the range occupied by a T such that the
+// byte order in the source and destination ranges are the reverse of oneanother.  Hence
+// big-endian encoded T in [p,p+sizeof(T)) is corrrectly interpreted on an LE architecture.  
+// Obviously this byte order swapping is only needed for interpreting midi files on LE 
+// architectures.  
 // 
-// TODO:  May read unaligned; copy from p into uninitialized T cast to unsigned char*
-//
 template<typename T>
 T midi_raw_interpret(const unsigned char* p) {
-	constexpr unsigned short N = sizeof(T)/sizeof(char);
-	static_assert(N>=1);
-
-	std::array<unsigned char,N> data {};
-	std::reverse_copy(p,p+N,data.begin());
-	return *static_cast<T*>(static_cast<void*>(&(data[0])));
-
-
-	/*std::array<char,N> data {};
-	std::rotate_copy(p,p+N-1,p+N,data.begin());
-
-	return *reinterpret_cast<T*>(&(data[0]));*/
+	T result {};
+	unsigned char *p_result = static_cast<unsigned char*>(static_cast<void*>(&result));
+	std::reverse_copy(p,p+sizeof(T),p_result);
+	return result;
 };
 
 // 
@@ -173,14 +164,13 @@ private:
 	struct mtrk_event_idx {
 		uint64_t offset {0};  // global file offset of start of delta_t field
 		uint64_t length {0};  // Includes the vl delta_t field
-		//mtrk_event_t type {mtrk_event_t::unknown};  // midi, sysex, meta, unknown
+		mtrk_event_t type {mtrk_event_t::unknown};  // midi, sysex, meta, unknown
 		
 		// If type == mtrk_event_t::midi, the applicable status byte.  
 		// Alternatives:
 		// 1)  The global file offset of the applicable midi status byte
 		// 2)  The global file offset of the event idx containing the status byte
-		//unsigned char midi_status {0};
-		uint64_t offset_status {0};
+		unsigned char midi_status {0};
 	};
 
 	std::vector<unsigned char> fdata_ {};
