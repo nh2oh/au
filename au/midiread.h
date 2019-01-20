@@ -30,6 +30,30 @@ struct midi_vl_field_interpreted {
 };
 midi_vl_field_interpreted midi_interpret_vl_field(const unsigned char*);
 
+template<typename T>  // T ~ integral
+std::array<unsigned char,4> midi_encode_vl_field(T val) {
+	std::array<unsigned char,4> result {0x00,0x00,0x00,0x00};
+
+	int i = 3;
+	result[i] = val & 0x7F;
+	while (i > 1 && (val >>= 7) > 0) {
+		--i;
+		result[i] |= 0x80;
+		result[i] += (val & 0x7F);
+	}
+
+	for (int j=0; j<4; ++j) { 
+		if (i<3) {
+			result[j] = result[i];
+			++i;
+		} else {
+			result[j] = 0x00;
+		}
+	}
+
+	return result;
+}
+
 //
 // There are two types of chunks: the Header chunk, containing data pertaining to the entire file 
 // (only one per file), and the Track chunk (possibly >1 per file).  Both chunk types have the 
@@ -37,8 +61,8 @@ midi_vl_field_interpreted midi_interpret_vl_field(const unsigned char*);
 // vl-type quantity.  
 //
 enum class midi_chunk_t {
-	header,
-	track,
+	header,  // MThd
+	track,  // MTrk
 	unknown
 };
 struct midi_chunk {
