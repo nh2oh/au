@@ -274,11 +274,6 @@ midi_event parse_midi_event(const unsigned char *p, const unsigned char prev_sta
 
 
 
-
-
-
-
-
 status_byte_type classify_status_byte(const unsigned char *p) {
 	unsigned char high = 0xF0;
 

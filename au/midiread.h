@@ -263,7 +263,11 @@ std::string print_midi_event(const midi_event&);
 std::string print_sysex_event(const sysex_event&);
 
 
-
+//
+// On possibility here is that the class could just hold fdata_, validated
+// upon construction, and possibly the chunk_idx_ vector; the mtrk_event_idx_ vector
+// is probably not needed (?).  Only function is to certify a valid midi file.  
+//
 class midi_file {
 public:
 	midi_file() = default;
