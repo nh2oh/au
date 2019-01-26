@@ -93,6 +93,24 @@ midi_file_header_data read_midi_fheaderchunk(const midi_chunk& chunk) {
 	return result;
 }
 
+midi_division_field_type_t detect_midi_time_division_type(const unsigned char *p) {
+	if ((*p)>>7 == 1) {
+		return midi_division_field_type_t::SMPTE;
+	} else {
+		return midi_division_field_type_t::ticks_per_quarter;
+	}
+}
+// assumes midi_division_field_type_t::ticks_per_quarter
+uint16_t ticks_per_quarter(const unsigned char *p) {
+	std::array<unsigned char,2> field {(*p)&0x7F, *(++p)};
+	return midi_raw_interpret<uint16_t>(&(field[0]));
+}
+// assumes midi_division_field_type_t::SMPTE
+midi_smpte_field interpret_smpte_field(const unsigned char *p) {
+	midi_smpte_field result {};
+	result.time_code_fmt = static_cast<int8_t>(*p);
+	result.units_per_frame = static_cast<uint8_t>(*(++p));
+}
 
 detect_mtrk_event_result detect_mtrk_event_type(const unsigned char* p) {
 	detect_mtrk_event_result result {mtrk_event_t::unknown,midi_vl_field_interpreted {},false};

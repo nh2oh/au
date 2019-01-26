@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <vector>
 #include <string> //midi_file::print()
+#include <type_traits>
 
 // 
 // Copies the bytes in the range [p,p+sizeof(T)) into the range occupied by a T such that the
@@ -32,6 +33,7 @@ midi_vl_field_interpreted midi_interpret_vl_field(const unsigned char*);
 
 template<typename T>  // T ~ integral
 std::array<unsigned char,4> midi_encode_vl_field(T val) {
+	static_assert(sizeof(T)<=4);  // The max size of a vl field is 4 bytes
 	std::array<unsigned char,4> result {0x00,0x00,0x00,0x00};
 
 	int i = 3;
@@ -58,7 +60,8 @@ std::array<unsigned char,4> midi_encode_vl_field(T val) {
 // There are two types of chunks: the Header chunk, containing data pertaining to the entire file 
 // (only one per file), and the Track chunk (possibly >1 per file).  Both chunk types have the 
 // layout implied by struct midi_chunk.  Note that the length field is always 4 bytes and is not a
-// vl-type quantity.  
+// vl-type quantity.  From p. 132: "Your programs should expect alien chunks and treat them as if
+// they weren't there."  
 //
 enum class midi_chunk_t {
 	header,  // MThd
@@ -73,12 +76,31 @@ struct midi_chunk {
 midi_chunk read_midi_chunk(const dbk::binfile&, size_t);
 
 // Header chunk data section
+// fmt:  0, 1, 2
+//  -> 0 => File contains a single multi-channel track
+//  -> 1 => File contains one or more simultaneous tracks
+//  -> 3 =>  File contains one or more sequentially independent single-track patterns.  
+// ntrks:  Always 1 for a fmt-type 0 file.  
+// time_div:  
+//  -> bit 15==0 => bits [14-0] == ticks-per-quarter-note
+//  -> bit 15==1 => bits [14-8] == "negative SMPTE format," bits [7-0] == ticks-per-frame
 struct midi_file_header_data {
 	int16_t fmt_type {0};
 	int16_t num_trks {0};
 	int16_t time_div {0};
 };
 midi_file_header_data read_midi_fheaderchunk(const midi_chunk&);
+enum class midi_division_field_type_t {
+	ticks_per_quarter,
+	SMPTE
+};
+midi_division_field_type_t detect_midi_time_division_type(const unsigned char*);
+uint16_t ticks_per_quarter(const unsigned char*);  // assumes midi_division_field_type_t::ticks_per_quarter
+struct midi_smpte_field {
+	int8_t time_code_fmt {0};
+	uint8_t units_per_frame {0};
+};
+midi_smpte_field interpret_smpte_field(const unsigned char*);  // assumes midi_division_field_type_t::SMPTE
 
 //
 // Checks to see if the input is pointing at the start of a valid midi chunk (either a file-header
