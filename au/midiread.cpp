@@ -93,6 +93,34 @@ midi_file_header_data read_midi_fheaderchunk(const midi_chunk& chunk) {
 	return result;
 }
 
+
+midi_file_header_data read_midi_fheaderchunk(const unsigned char *p) {
+	detect_chunk_result chunk_type = detect_chunk_type(p);
+	if (chunk_type.type != midi_chunk_t::header) {
+		std::cout << "p is not pointing at the start of a midi header.";
+		std::abort();
+	}
+	p += 4;  // MThd
+	p += 4;  // 4-byte field giving the length of the data segment (chunk_type.data_length)
+
+	if (chunk_type.data_length != 6) {
+		std::cout << "The \"global\" header chunk of a midi file must have a 6-byte data section.";
+		std::abort();
+	}
+	midi_file_header_data header_data {};
+	header_data.fmt_type = midi_raw_interpret<int16_t>(p);
+	p += 2;
+
+	header_data.num_trks = midi_raw_interpret<int16_t>(p);
+	p += 2;
+
+	header_data.time_div = midi_raw_interpret<int16_t>(p);
+	p += 2;
+
+	return header_data;
+}
+
+
 midi_time_division_field_type_t detect_midi_time_division_type(const unsigned char *p) {
 	if ((*p)>>7 == 1) {
 		return midi_time_division_field_type_t::SMPTE;
@@ -450,6 +478,20 @@ std::string midi_file::print() const {
 
 
 
+
+	return s;
+}
+
+
+std::string midi_file::print_mthd() const {
+	std::string s {};
+
+	midi_file_header_data header_data 
+		= read_midi_fheaderchunk(&(this->fdata_[chunk_idx_[0].offset]));
+
+	s += ("Format type = " + std::to_string(header_data.fmt_type) + "    \n");
+	s += ("Num Tracks = " + std::to_string(header_data.num_trks) + "    \n");
+	s += ("Time Division = " + std::to_string(header_data.time_div) + "    \n");
 
 	return s;
 }

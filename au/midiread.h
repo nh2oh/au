@@ -68,8 +68,6 @@ enum class midi_chunk_t {
 	track,  // MTrk
 	unknown
 };
-struct mthd {};
-struct mtrk {};
 struct midi_chunk {
 	std::array<char,4> id {};
 	int32_t length {0};  // redundant w/ data.size()
@@ -273,6 +271,7 @@ public:
 
 	std::string print() const;
 	std::string print_mtrk_seq() const;
+	std::string print_mthd() const;
 private:
 	// Offsets, lengths of header and all track chunks
 	struct chunk_idx {
