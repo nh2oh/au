@@ -7,54 +7,7 @@
 #include <string> //midi_file::print()
 #include <type_traits>
 
-// 
-// Copies the bytes in the range [p,p+sizeof(T)) into the range occupied by a T such that the
-// byte order in the source and destination ranges are the reverse of oneanother.  Hence
-// big-endian encoded T in [p,p+sizeof(T)) is corrrectly interpreted on an LE architecture.  
-// Obviously this byte order swapping is only needed for interpreting midi files on LE 
-// architectures.  
-// 
-template<typename T>
-T midi_raw_interpret(const unsigned char* p) {
-	T result {};
-	unsigned char *p_result = static_cast<unsigned char*>(static_cast<void*>(&result));
-	std::reverse_copy(p,p+sizeof(T),p_result);
-	return result;
-};
-
-// 
-// The max size of a vl field is 4 bytes; returns [0,4]
-//
-struct midi_vl_field_interpreted {
-	int8_t N {0};
-	int32_t val {0};  // TODO:  uint32_t ???
-};
-midi_vl_field_interpreted midi_interpret_vl_field(const unsigned char*);
-
-template<typename T>  // T ~ integral
-std::array<unsigned char,4> midi_encode_vl_field(T val) {
-	static_assert(sizeof(T)<=4);  // The max size of a vl field is 4 bytes
-	std::array<unsigned char,4> result {0x00,0x00,0x00,0x00};
-
-	int i = 3;
-	result[i] = val & 0x7F;
-	while (i > 1 && (val >>= 7) > 0) {
-		--i;
-		result[i] |= 0x80;
-		result[i] += (val & 0x7F);
-	}
-
-	for (int j=0; j<4; ++j) { 
-		if (i<3) {
-			result[j] = result[i];
-			++i;
-		} else {
-			result[j] = 0x00;
-		}
-	}
-
-	return result;
-}
+namespace weird_stuff_jan26 {
 
 //
 // There are two types of chunks: the Header chunk, containing data pertaining to the entire file 
@@ -70,12 +23,6 @@ enum class midi_chunk_t {
 };
 struct mthd {};
 struct mtrk {};
-struct midi_chunk {
-	std::array<char,4> id {};
-	int32_t length {0};  // redundant w/ data.size()
-	std::vector<unsigned char> data {};
-};
-midi_chunk read_midi_chunk(const dbk::binfile&, size_t);
 
 //
 // If you have a generic_midi_range_t, you are guaranteed that it starts w/a 4 char id, a 4-byte
@@ -91,6 +38,8 @@ struct generic_midi_range_t {
 	std::vector<unsigned char>::iterator begin {};
 	std::vector<unsigned char>::iterator end {};
 };
+generic_midi_range_t interpret_generic_midi_range(const unsigned char*);
+
 template<typename T>
 struct midi_chunk_range_t {
 	static_assert(std::is_same<T,midi_chunk_t::header>::value
@@ -106,7 +55,7 @@ midi_chunk_range_t<T> midi_range_cast(generic_midi_range_t generic_range_in) {
 	result.begin = generic_range_in.begin;
 	result.begin = generic_range_in.end;
 };
-generic_midi_range_t interpret_generic_midi_range(const unsigned char*);
+
 
 template<typename T>
 std::array<char,4> get_id(const midi_chunk_range_t<T>& r) {  // MThd, MTrk, ????
@@ -119,25 +68,6 @@ uint32_t get_data_length(const midi_chunk_range_t<T>& r) {
 	return midi_raw_interpret<uint32_t>(r.begin()+4);
 }
 
-struct midi_timediv_field_t {
-	enum field_type_t {
-		ticks_per_q_nt,
-		SMPTE,
-		unknown
-	};
-	midi_timediv_field_t::field_type_t detected_type {unknown};
-	uint16_t ticks_per_q_nt {0};
-	int8_t smpte_time_code_fmt {0};
-	uint8_t smpte_units_per_frame {0};
-};
-
-midi_timediv_field_t interpret_time_division_type(const midi_chunk_range_t<mthd>& r);
-struct midi_file_header_data_t {
-	int16_t fmt_type {0};
-	int16_t num_trks {0};
-	int16_t time_div {0};
-};
-midi_file_header_data_t read_midi_fheaderchunk(const midi_chunk_range_t<mthd>& r);
 
 
 // Header chunk data section
@@ -149,41 +79,25 @@ midi_file_header_data_t read_midi_fheaderchunk(const midi_chunk_range_t<mthd>& r
 // time_div:  
 //  -> bit 15==0 => bits [14-0] == ticks-per-quarter-note
 //  -> bit 15==1 => bits [14-8] == "negative SMPTE format," bits [7-0] == ticks-per-frame
-struct midi_file_header_data {
+struct midi_file_header_data_t {
 	int16_t fmt_type {0};
 	int16_t num_trks {0};
 	int16_t time_div {0};
 };
-midi_file_header_data read_midi_fheaderchunk(const midi_chunk&);
-enum class midi_division_field_type_t {
-	ticks_per_quarter,
-	SMPTE
-};
-midi_division_field_type_t detect_midi_time_division_type(const unsigned char*);
-uint16_t ticks_per_quarter(const unsigned char*);  // assumes midi_division_field_type_t::ticks_per_quarter
-struct midi_smpte_field {
-	int8_t time_code_fmt {0};
-	uint8_t units_per_frame {0};
-};
-midi_smpte_field interpret_smpte_field(const unsigned char*);  // assumes midi_division_field_type_t::SMPTE
+midi_file_header_data_t read_midi_fheader_data(const midi_chunk_range_t<mthd>& r);
 
-//
-// Checks to see if the input is pointing at the start of a valid midi chunk (either a file-header
-// chunk or a Track chunk).  Both have the layout implied by struct midi_chunk (above).  
-// If is_valid, the user can subsequently call the correct parser:
-//    read_midi_fheaderchunk(const midi_chunk&);
-//    read_midi_trackchunk(const midi_chunk&);
-// Note that is_valid only indicates that the input is the start of a valid chunk; it does _not_
-// testify to the validity of the data contained within the chunk.  
-//
-struct detect_chunk_result {
-	midi_chunk_t type {midi_chunk_t::unknown};
-	int32_t data_length {};
-	bool is_valid {};
+struct midi_timediv_field_t {
+	enum field_type_t {
+		ticks_per_q_nt,
+		SMPTE,
+		unknown
+	};
+	midi_timediv_field_t::field_type_t detected_type {unknown};
+	uint16_t ticks_per_q_nt {0};
+	int8_t smpte_time_code_fmt {0};
+	uint8_t smpte_units_per_frame {0};
 };
-detect_chunk_result detect_chunk_type(const unsigned char*);
-
-
+midi_timediv_field_t interpret_time_division_type(const midi_chunk_range_t<mthd>& r);
 
 
 
@@ -387,5 +301,5 @@ std::string print_midi_event(const midi_event&);
 std::string print_meta_event(const meta_event&);
 std::string print_sysex_event(const sysex_event&);
 
-
+};  // namespace weird_stuff_jan26
 

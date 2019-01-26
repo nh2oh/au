@@ -27,6 +27,9 @@
     <ClInclude Include="midiread.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="static_midi.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="au.cpp">
