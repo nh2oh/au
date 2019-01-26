@@ -77,69 +77,6 @@ struct midi_chunk {
 };
 midi_chunk read_midi_chunk(const dbk::binfile&, size_t);
 
-//
-// If you have a generic_midi_range_t, you are guaranteed that it starts w/a 4 char id, a 4-byte
-// length, and has a data section == to this length.  The next char following the end of
-// the range is either the end of the file or the start of another midi chunk (this latter
-// chunk is not validated beyond its 4-char id).  
-//
-// After obtaining a generic_midi_range_t from interpret_generic_midi_range(), call 
-// midi_range_cast<T>() on it with T chosen as directed by generic_midi_range_t.detected_type
-// (midi_chunk_t::header, ::track, ...).  
-struct generic_midi_range_t {
-	const midi_chunk_t detected_type {midi_chunk_t::unknown};
-	std::vector<unsigned char>::iterator begin {};
-	std::vector<unsigned char>::iterator end {};
-};
-template<typename T>
-struct midi_chunk_range_t {
-	static_assert(std::is_same<T,midi_chunk_t::header>::value
-		|| std::is_same<T,midi_chunk_t::track>::value
-		|| std::is_same<T,midi_chunk_t::unknown>::value);
-	using chunk_t = T;
-	std::vector<unsigned char>::iterator begin {};
-	std::vector<unsigned char>::iterator end {};
-};
-template<typename T>
-midi_chunk_range_t<T> midi_range_cast(generic_midi_range_t generic_range_in) {
-	midi_chunk_range_t<T> result {};
-	result.begin = generic_range_in.begin;
-	result.begin = generic_range_in.end;
-};
-generic_midi_range_t interpret_generic_midi_range(const unsigned char*);
-
-template<typename T>
-std::array<char,4> get_id(const midi_chunk_range_t<T>& r) {  // MThd, MTrk, ????
-	std::array<char,4> result {};
-	std::copy(r.begin(),r.begin()+4,result.begin());
-	return result;
-}
-template<typename T>
-uint32_t get_data_length(const midi_chunk_range_t<T>& r) {
-	return midi_raw_interpret<uint32_t>(r.begin()+4);
-}
-
-struct midi_timediv_field_t {
-	enum field_type_t {
-		ticks_per_q_nt,
-		SMPTE,
-		unknown
-	};
-	midi_timediv_field_t::field_type_t detected_type {unknown};
-	uint16_t ticks_per_q_nt {0};
-	int8_t smpte_time_code_fmt {0};
-	uint8_t smpte_units_per_frame {0};
-};
-
-midi_timediv_field_t interpret_time_division_type(const midi_chunk_range_t<mthd>& r);
-struct midi_file_header_data_t {
-	int16_t fmt_type {0};
-	int16_t num_trks {0};
-	int16_t time_div {0};
-};
-midi_file_header_data_t read_midi_fheaderchunk(const midi_chunk_range_t<mthd>& r);
-
-
 // Header chunk data section
 // fmt:  0, 1, 2
 //  -> 0 => File contains a single multi-channel track
@@ -155,17 +92,17 @@ struct midi_file_header_data {
 	int16_t time_div {0};
 };
 midi_file_header_data read_midi_fheaderchunk(const midi_chunk&);
-enum class midi_division_field_type_t {
+enum class midi_time_division_field_type_t {
 	ticks_per_quarter,
 	SMPTE
 };
-midi_division_field_type_t detect_midi_time_division_type(const unsigned char*);
-uint16_t ticks_per_quarter(const unsigned char*);  // assumes midi_division_field_type_t::ticks_per_quarter
+midi_time_division_field_type_t detect_midi_time_division_type(const unsigned char*);
+uint16_t interpret_tpq_field(const unsigned char*);  // assumes midi_time_division_field_type_t::ticks_per_quarter
 struct midi_smpte_field {
 	int8_t time_code_fmt {0};
 	uint8_t units_per_frame {0};
 };
-midi_smpte_field interpret_smpte_field(const unsigned char*);  // assumes midi_division_field_type_t::SMPTE
+midi_smpte_field interpret_smpte_field(const unsigned char*);  // assumes midi_time_division_field_type_t::SMPTE
 
 //
 // Checks to see if the input is pointing at the start of a valid midi chunk (either a file-header
@@ -183,13 +120,10 @@ struct detect_chunk_result {
 };
 detect_chunk_result detect_chunk_type(const unsigned char*);
 
-
-
-
-
 //
 // MTrk events
 // There are 3 types:  sysex_event, midi_event, meta_event
+//
 // Each MTrk event consists of a vl delta_time quantity followed by one of the three data structures
 // below.  All MTrk events begin with a delta-time field, considered in the standard to be part of 
 // the definition of an MTrk event "container," but not part of the {sysex,midi,meta}-event proper; 
@@ -203,7 +137,31 @@ detect_chunk_result detect_chunk_type(const unsigned char*);
 // Note that the length of each event can not be determined until the event is classified as 
 // sysex, meta, or midi, and in the case of midi, the event must be parsed to get the length.
 //
+
 //
+// Checks to see if the input is pointing at the start of a valid MTrk event, which is a vl length
+// followed by the data corresponding to the event.  If is_valid, the user can subsequently call the 
+// correct parser:
+//    sysex_event parse_sysex_event(const unsigned char*);
+//    meta_event parse_meta_event(const unsigned char*);
+//    midi_event parse_midi_event(const unsigned char*);
+// Note that is_valid only indicates that the input is the start of a valid MTrk event; it does _not_
+// testify to the validity of the event data following the length field.  
+//
+enum class mtrk_event_t {
+	midi,
+	sysex,
+	meta,
+	unknown
+};
+struct detect_mtrk_event_result {
+	mtrk_event_t type {mtrk_event_t::unknown};
+	midi_vl_field_interpreted delta_t {};
+	bool is_valid {};
+};
+detect_mtrk_event_result detect_mtrk_event_type(const unsigned char*);
+
+
 struct sysex_event {
 	midi_vl_field_interpreted delta_t {};
 	// F0 (sometimes F7 ...see std) <length> <bytes to be transmitted after F0||F7>
@@ -249,79 +207,21 @@ struct meta_event {
 };
 meta_event parse_meta_event(const unsigned char*);
 
-
-enum class mtrk_event_t {
-	midi,
-	sysex,
-	meta,
-	unknown
-};
-
-class midi_file {
-public:
-	midi_file() = default;
-	midi_file(const std::filesystem::path&);
-
-	std::string print() const;
-	std::string print_mtrk_seq() const;
-private:
-	// Offsets, lengths of header and all track chunks
-	struct chunk_idx {
-		uint64_t offset {0};  // global file offset
-		uint64_t length {0};
-		midi_chunk_t type {};  // header, track, unknown
-	};
-	// <vl-delta_t> <event data>
-	struct mtrk_event_idx {
-		uint64_t offset {0};  // global file offset of start of delta_t field
-		uint64_t length {0};  // Includes the vl delta_t field
-		mtrk_event_t type {mtrk_event_t::unknown};  // midi, sysex, meta, unknown
-		
-		// If type == mtrk_event_t::midi, the applicable status byte.  
-		// Alternatives:
-		// 1)  The global file offset of the applicable midi status byte
-		// 2)  The global file offset of the event idx containing the status byte
-		unsigned char midi_status {0};
-	};
-
-	std::vector<unsigned char> fdata_ {};
-	std::vector<midi_file::chunk_idx> chunk_idx_ {};  // header chunk and all track chunks
-	std::vector<std::vector<midi_file::mtrk_event_idx>> mtrk_event_idx_ {};  // inner idx => track num
-};
-
-
-//
-// Checks to see if the input is pointing at the start of a valid MTrk event, which is a vl length
-// followed by the data corresponding to the event.  If is_valid, the user can subsequently call the 
-// correct parser:
-//    sysex_event parse_sysex_event(const unsigned char*);
-//    meta_event parse_meta_event(const unsigned char*);
-//    midi_event parse_midi_event(const unsigned char*);
-// Note that is_valid only indicates that the input is the start of a valid MTrk event; it does _not_
-// testify to the validity of the event data following the length field.  
-//
-struct detect_mtrk_event_result {
-	mtrk_event_t type {mtrk_event_t::unknown};
-	midi_vl_field_interpreted delta_t {};
-	bool is_valid {};
-};
-detect_mtrk_event_result detect_mtrk_event_type(const unsigned char*);
+std::string print_meta_event(const meta_event&);
 
 
 
-
-
-
-
-
+// Classifies the indicated byte as either a midi-status or midi-data byte.  For this to make
+// any sense at all the input must be pointing into a MIDI event.  
 // Ptr to byte; does not examine beyond ptr
 enum class midi_byte : uint8_t {
 	status,
 	data
 };
 midi_byte classify_byte(const unsigned char*);
-
-// Classification can be made by examining the status byte only
+// Iff the input is pointing at MIDI status byte (as verified by classify_byte()), 
+// classify_status_byte() classifies the type of midi message to which the indicated status 
+// byte belongs.  Classification is made by examining the status byte only.  
 enum class status_byte_type : uint8_t {
 	channel,
 	system,
@@ -359,6 +259,54 @@ struct msg_ptr {
 	unsigned char *p_;
 };
 
+
+std::string print_midi_event(const midi_event&);
+
+std::string print_sysex_event(const sysex_event&);
+
+
+
+class midi_file {
+public:
+	midi_file() = default;
+	midi_file(const std::filesystem::path&);
+
+	std::string print() const;
+	std::string print_mtrk_seq() const;
+private:
+	// Offsets, lengths of header and all track chunks
+	struct chunk_idx {
+		uint64_t offset {0};  // global file offset
+		uint64_t length {0};
+		midi_chunk_t type {};  // header, track, unknown
+	};
+	// <vl-delta_t> <event data>
+	struct mtrk_event_idx {
+		uint64_t offset {0};  // global file offset of start of delta_t field
+		uint64_t length {0};  // Includes the vl delta_t field
+		mtrk_event_t type {mtrk_event_t::unknown};  // midi, sysex, meta, unknown
+		
+		// If type == mtrk_event_t::midi, the applicable status byte.  
+		// Alternatives:
+		// 1)  The global file offset of the applicable midi status byte
+		// 2)  The global file offset of the event idx containing the status byte
+		unsigned char midi_status {0};
+	};
+
+	std::vector<unsigned char> fdata_ {};
+	std::vector<midi_file::chunk_idx> chunk_idx_ {};  // header chunk and all track chunks
+	std::vector<std::vector<midi_file::mtrk_event_idx>> mtrk_event_idx_ {};  // inner idx => track num
+};
+
+
+
+
+
+
+
+
+
+/*
 // Combine sys_msg_type, ch_msg_type
 enum class midi_msg_type : uint8_t {
 	ch_voice,
@@ -381,11 +329,5 @@ midi_message_info classify_midi_msg(const unsigned char*);
 
 // This overload is used for "running status" sequences
 midi_message_info classify_midi_msg(midi_msg_type, const unsigned char*);
-
-
-std::string print_midi_event(const midi_event&);
-std::string print_meta_event(const meta_event&);
-std::string print_sysex_event(const sysex_event&);
-
-
+*/
 

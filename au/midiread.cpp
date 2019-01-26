@@ -93,23 +93,24 @@ midi_file_header_data read_midi_fheaderchunk(const midi_chunk& chunk) {
 	return result;
 }
 
-midi_division_field_type_t detect_midi_time_division_type(const unsigned char *p) {
+midi_time_division_field_type_t detect_midi_time_division_type(const unsigned char *p) {
 	if ((*p)>>7 == 1) {
-		return midi_division_field_type_t::SMPTE;
+		return midi_time_division_field_type_t::SMPTE;
 	} else {
-		return midi_division_field_type_t::ticks_per_quarter;
+		return midi_time_division_field_type_t::ticks_per_quarter;
 	}
 }
-// assumes midi_division_field_type_t::ticks_per_quarter
-uint16_t ticks_per_quarter(const unsigned char *p) {
+// assumes midi_time_division_field_type_t::ticks_per_quarter
+uint16_t interpret_tpq_field(const unsigned char *p) {
 	std::array<unsigned char,2> field {(*p)&0x7F, *(++p)};
 	return midi_raw_interpret<uint16_t>(&(field[0]));
 }
-// assumes midi_division_field_type_t::SMPTE
+// assumes midi_time_division_field_type_t::SMPTE
 midi_smpte_field interpret_smpte_field(const unsigned char *p) {
 	midi_smpte_field result {};
 	result.time_code_fmt = static_cast<int8_t>(*p);
 	result.units_per_frame = static_cast<uint8_t>(*(++p));
+	return result;
 }
 
 detect_mtrk_event_result detect_mtrk_event_type(const unsigned char* p) {
@@ -309,6 +310,7 @@ sys_msg_type classify_system_status_byte(const unsigned char* p) {
 	return result;
 }
 
+/*
 // Expects to be pointed at the status byte of a midi message
 midi_message_info classify_midi_msg(const unsigned char* p) {
 	// Classify as either a status byte or a non status byte (ie, a data byte).
@@ -352,7 +354,7 @@ midi_msg_type to_midi_msg_type(sys_msg_type m) {
 		default: return midi_msg_type::sys_unknown; break;
 	}
 };
-
+*/
 
 
 
@@ -461,9 +463,9 @@ std::string midi_file::print_mtrk_seq() const {
 			auto curr_offset = mtrk_event_idx_[trkn][evntn].offset;
 			auto curr_dptr = &(this->fdata_[curr_offset]);
 			
-			s += ("EvNum=" + std::to_string(evntn) + "; ");
-			s += ("Offset=" + std::to_string(curr_offset) + "; ");
-			s += ("Length=" + std::to_string(mtrk_event_idx_[trkn][evntn].length) + "; ");
+			s += ("EvntNum =" + std::to_string(evntn) + "; ");
+			s += ("Offset  =" + std::to_string(curr_offset) + "; ");
+			s += ("Length  =" + std::to_string(mtrk_event_idx_[trkn][evntn].length) + "; ");
 
 			if (mtrk_event_idx_[trkn][evntn].type == mtrk_event_t::midi) {
 				midi_event md = parse_midi_event(curr_dptr, mtrk_event_idx_[trkn][evntn].midi_status);
@@ -495,7 +497,7 @@ std::string print_midi_event(const midi_event& md) {
 	std::string status_str {};
 	status_byte_type sb = classify_status_byte(&(md.status));
 	if (sb == status_byte_type::channel) {
-		status_str += ("ch:" + std::to_string((md.status & 0x0F)+1));
+		status_str += ("ch:" + std::to_string((md.status & 0x0F)+1) + " ");
 		ch_msg_type chsb = classify_channel_status_byte(&(md.status));
 		if (chsb == ch_msg_type::voice) {
 			status_str += "voice:";
@@ -540,7 +542,7 @@ std::string print_midi_event(const midi_event& md) {
 		status_str += "uk:";
 		status_str += "_____";
 	}
-	s += "status=";
+	s += "status-byte=";
 	if (md.running_status) {
 		s += ('[' + status_str + ']');
 	} else {
@@ -557,8 +559,58 @@ std::string print_midi_event(const midi_event& md) {
 }
 
 std::string print_meta_event(const meta_event& mt) {
-	std::string s {"META:  "};
+	std::string s {};
+	std::string sep {"    "};
+	s += "META:  ";
+	s += ("delta-t=" + std::to_string(mt.delta_t.val) + sep);
 
+	auto print_data = [](const std::vector<unsigned char>& data) -> std::string {
+		std::string s {};
+		for (const auto& e : data) {
+			s.push_back(static_cast<char>(e));
+		}
+		return s;
+	};
+
+	std::string event_type {"Type = "};
+	if (mt.type == 0x00) {
+		event_type += "Sequence-Number";
+	} else if (mt.type == 0x01) {
+		event_type += "Text-Event";
+	} else if (mt.type == 0x02) {
+		event_type += "Copyright Notice";
+	} else if (mt.type == 0x03) {
+		event_type += "Sequence/Track Name";
+	} else if (mt.type == 0x04) {
+		event_type += "Instrument Name";
+	} else if (mt.type == 0x05) {
+		event_type += "Lyric";
+	} else if (mt.type == 0x06) {
+		event_type += "Marker";
+	} else if (mt.type == 0x07) {
+		event_type += "Cue Point";
+	} else if (mt.type == 0x20) {
+		event_type += "MIDI Channel Prefix";
+	} else if (mt.type == 0x2F) {
+		event_type += "End-of-Track";
+	} else if (mt.type == 0x51) {
+		event_type += "Set-Tempo";
+	} else if (mt.type == 0x54) {
+		event_type += "SMPTE Offset";
+	} else if (mt.type == 0x58) {
+		event_type += "Time-Signature";
+	} else if (mt.type == 0x59) {
+		event_type += "Key-Signature";
+	} else if (mt.type == 0x7F) {
+		event_type += "Sequencer-Specific Meta-Event";
+	} else {
+		event_type += "Not-Recognized";
+	}
+	s += (event_type + sep);
+
+	s += ("Length = " + std::to_string(mt.length.val) + sep);
+	s += ("Data = " + print_data(mt.data));
+	
 	return s;
 }
 
