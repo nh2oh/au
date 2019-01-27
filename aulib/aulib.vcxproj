@@ -11,6 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="input\midi_util.cpp" />
     <ClCompile Include="input\notefile.cpp" />
     <ClCompile Include="ks_key.cpp" />
     <ClCompile Include="melgen\melody_a.cpp" />

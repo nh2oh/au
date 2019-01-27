@@ -78,5 +78,8 @@
     <ClCompile Include="rand_rp_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="midi_util_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

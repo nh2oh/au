@@ -1,3 +1,4 @@
+#pragma once
 #include <array>
 #include <algorithm>  // std::reverse_copy() in midi_raw_interpret()
 
