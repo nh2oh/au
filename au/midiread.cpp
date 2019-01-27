@@ -331,58 +331,6 @@ sys_msg_type classify_system_status_byte(const unsigned char* p) {
 	return result;
 }
 
-/*
-// Expects to be pointed at the status byte of a midi message
-midi_message_info classify_midi_msg(const unsigned char* p) {
-	// Classify as either a status byte or a non status byte (ie, a data byte).
-	if (classify_byte(p) == midi_byte::data) {
-		return {midi_msg_type::invalid,0};
-	}
-
-	// Channel or System or Unknown
-	status_byte_type curr_status_byte_type = classify_status_byte(p);  
-
-	midi_message_info result {};
-	if (curr_status_byte_type == status_byte_type::channel) {
-		result.type = to_midi_msg_type(classify_channel_status_byte(p));
-	} else if (curr_status_byte_type == status_byte_type::system) {
-		result.type = to_midi_msg_type(classify_channel_status_byte(p));
-	} else if (curr_status_byte_type == status_byte_type::unknown) {
-		result.type = midi_msg_type::invalid;
-	}
-
-	++p;
-	while (classify_byte(p)!=midi_byte::status) {
-		++(result.n_data_bytes);
-		++p;
-	}
-
-	return result;
-}
-midi_msg_type to_midi_msg_type(ch_msg_type m) {
-	switch (m) {
-		case ch_msg_type::voice:  return midi_msg_type::ch_voice; break;
-		case ch_msg_type::mode:  return midi_msg_type::ch_mode; break;
-		default: return midi_msg_type::ch_unknown; break;
-	}
-};
-midi_msg_type to_midi_msg_type(sys_msg_type m) {
-	switch (m) {
-		case sys_msg_type::exclusive:  return midi_msg_type::sys_exclusive; break;
-		case sys_msg_type::common:  return midi_msg_type::sys_common; break;
-		case sys_msg_type::realtime:  return midi_msg_type::sys_realtime; break;
-		case sys_msg_type::unknown:  return midi_msg_type::sys_unknown; break;
-		default: return midi_msg_type::sys_unknown; break;
-	}
-};
-*/
-
-
-
-
-
-
-
 
 
 uint8_t midi_event_num_data_bytes(const midi_event& event_in) {
@@ -440,6 +388,7 @@ midi_file::midi_file(const std::filesystem::path& fp) {
 				prev_midi_status_byte = unsigned char {0};
 				sysex_event sx = parse_sysex_event(&(this->fdata_[j]));
 				curr_event_length = curr_event.delta_t.N + 1 + sx.length.N + sx.length.val;
+					// length:  +1 for the F0 or F7
 			} else if (curr_event.type == mtrk_event_t::meta) {
 				// From the std (p.136):
 				// Sysex events and meta-events cancel any running status which was in effect.  
@@ -448,12 +397,17 @@ midi_file::midi_file(const std::filesystem::path& fp) {
 				prev_midi_status_byte = unsigned char {0};
 				meta_event mt = parse_meta_event(&(this->fdata_[j]));
 				curr_event_length = curr_event.delta_t.N + 2 + mt.length.N + mt.length.val;
+					// length: +2 => +1 for the leading FF, +1 for the type-byte
 			} else {  // midi event
 				midi_event md = parse_midi_event(&(this->fdata_[j]),prev_midi_status_byte);
 				prev_midi_status_byte = md.status;
-				curr_event_length = curr_event.delta_t.N + 1;
-				auto yay = midi_event_num_data_bytes(md);
-				curr_event_length += yay;
+				if (!(md.running_status)) {
+					curr_event_length = curr_event.delta_t.N + 1 + midi_event_num_data_bytes(md);
+					// +1 for the status byte
+				} else {
+					curr_event_length = curr_event.delta_t.N + midi_event_num_data_bytes(md);
+					// no status byte in running-status
+				}
 			}
 
 			curr_mtrk_event_idx.push_back({j,curr_event_length,curr_event.type,prev_midi_status_byte});

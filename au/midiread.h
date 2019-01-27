@@ -80,15 +80,15 @@ detect_chunk_result detect_chunk_type(const unsigned char*);
 // Each MTrk event consists of a vl delta_time quantity followed by one of the three data structures
 // below.  All MTrk events begin with a delta-time field, considered in the standard to be part of 
 // the definition of an MTrk event "container," but not part of the {sysex,midi,meta}-event proper; 
-// nevertheless, here i store the delta-time in each event struct.  From the std:
+// From the std:
 // <MTrk event> = <delta-time> <event>
 // <event> = <MIDI event> | <sysex event> | <meta-event> 
 //
-// detect_mtrk_event_result detect_mtrk_event_type(const unsigned char*); validates the delta_time
-// field and peeks into the subsequent data to classify the event.  
-//
-// Note that the length of each event can not be determined until the event is classified as 
-// sysex, meta, or midi, and in the case of midi, the event must be parsed to get the length.
+// Nevertheless, here i store the delta-time in each event struct.  The length of each MTrk event can 
+// not be determined until the event is classified as sysex, meta, or midi, and parsed.  sysex and
+// meta events explictly encode their length as a vl field; midi events are 2, 3, or 4, bytes (not
+// including the vl delta-time field) depending on the presence or absense of a status byte, and, if
+// present, its value.
 //
 
 //
@@ -207,10 +207,6 @@ sys_msg_type classify_system_status_byte(const unsigned char*);
 
 
 
-
-
-
-
 //
 // One possibility here is that this class could just hold fdata_, validated
 // upon construction, and possibly the chunk_idx_ vector; the mtrk_event_idx_ vector
@@ -248,37 +244,4 @@ private:
 	std::vector<midi_file::chunk_idx> chunk_idx_ {};  // header chunk and all track chunks
 	std::vector<std::vector<midi_file::mtrk_event_idx>> mtrk_event_idx_ {};  // inner idx => track num
 };
-
-
-
-
-
-
-
-
-
-/*
-// Combine sys_msg_type, ch_msg_type
-enum class midi_msg_type : uint8_t {
-	ch_voice,
-	ch_mode,
-	sys_common,
-	sys_realtime,
-	sys_exclusive,
-	ch_unknown,
-	sys_unknown,
-	unknown,
-	invalid  // *p is not a status byte
-};
-midi_msg_type to_midi_msg_type(sys_msg_type);
-midi_msg_type to_midi_msg_type(ch_msg_type);
-struct midi_message_info {
-	midi_msg_type type {};
-	uint8_t n_data_bytes {0};
-};
-midi_message_info classify_midi_msg(const unsigned char*);
-
-// This overload is used for "running status" sequences
-midi_message_info classify_midi_msg(midi_msg_type, const unsigned char*);
-*/
 
