@@ -91,6 +91,71 @@ detect_chunk_result detect_chunk_type(const unsigned char*);
 // present, its value.
 //
 
+int64_t somehow_calc_event_size(const unsigned char*);
+int64_t somehow_detn_event_type(const unsigned char*);
+struct mtrk_container_t;
+struct mtrk_event_container_t;
+
+// want to be obtainable only from a method of mtrk_container_t so that *begin_ always
+// points at the start of a valid mtrk event.  
+struct mtrk_container_iterator {
+	const mtrk_container_t *container_ {};
+	const unsigned char *begin_ {};
+
+	mtrk_container_iterator& operator++() {
+		auto sz = somehow_calc_event_size(this->begin_);
+		this->begin_ += sz;
+	};
+
+	mtrk_event_container_t operator*() const {
+		mtrk_event_container_t result {};
+		//result.begin_ = this->begin_;
+		//result.size = somehow_calc_event_size(this->begin_);
+		return result;
+	};
+
+
+	bool end() const {
+		auto this_end = this->begin_ + somehow_calc_event_size(this->begin_);
+		return ((this_end - this->container_->begin_)==this->container_->size);
+	};
+};
+
+struct mtrk_container_t {
+	const unsigned char *begin_ {};
+
+	// size of the whole chunk including the id and length fields
+	const int64_t size {0};
+
+	mtrk_container_iterator begin() const;
+};
+
+
+struct mtrk_event_container_t {
+	enum event_type {
+		midi,
+		sysex,
+		meta,
+		unknown,
+		invalid
+	};
+	mtrk_event_container_t::event_type type {mtrk_event_container_t::event_type::unknown};
+	const unsigned char *begin_ {};
+
+	// size of the whole event including the delta-t field
+	const int64_t size {0};
+
+	// ptr to the start of the delta-t field
+	const unsigned char *delta_time() const;
+
+	// ptr to event start (including the length field in the case of sysex & meta events)
+	const unsigned char *event() const;
+	
+	// size of the event not including the delta-t field (but including the length field 
+	// in the case of sysex & meta events)
+	int32_t data_size() const;
+};
+
 //
 // Checks to see if the input is pointing at the start of a valid MTrk event, which is a vl length
 // followed by the data corresponding to the event.  If is_valid, the user can subsequently call the 

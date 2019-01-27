@@ -300,7 +300,7 @@ midi_byte classify_byte(const unsigned char *p) {
 
 ch_msg_type classify_channel_status_byte(const unsigned char* p) {
 	if ((*p & 0xF0) == 0xB0) {
-		if (*(p+1) == 0x78) {  // 0b01111000 == 120
+		if ((*(p+1) & 0xF8) == 0x78) {  // 0b01111000 == 120
 			return ch_msg_type::mode;
 		}
 	}
