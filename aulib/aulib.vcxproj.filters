@@ -191,5 +191,8 @@
     <ClInclude Include="types\voice_t.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="input\midi_util.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
