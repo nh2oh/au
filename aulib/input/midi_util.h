@@ -26,6 +26,10 @@ struct midi_vl_field_interpreted {
 };
 midi_vl_field_interpreted midi_interpret_vl_field(const unsigned char*);
 
+//
+// For values requiring less than 4 bytes in encoded form, the rightmost
+// bytes of the array will be 0.  
+//
 template<typename T>  // T ~ integral
 std::array<unsigned char,4> midi_encode_vl_field(T val) {
 	static_assert(sizeof(T)<=4);  // The max size of a vl field is 4 bytes
@@ -33,14 +37,14 @@ std::array<unsigned char,4> midi_encode_vl_field(T val) {
 
 	int i = 3;
 	result[i] = val & 0x7F;
-	while (i > 1 && (val >>= 7) > 0) {
+	while (i>0 && (val >>= 7) > 0) {
 		--i;
 		result[i] |= 0x80;
 		result[i] += (val & 0x7F);
 	}
 
 	for (int j=0; j<4; ++j) { 
-		if (i<3) {
+		if (i<=3) {
 			result[j] = result[i];
 			++i;
 		} else {
