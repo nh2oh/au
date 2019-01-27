@@ -9,6 +9,8 @@
 #include <type_traits>
 
 
+std::string print_hexascii(const unsigned char*, int, const char = ' ');
+
 //
 // There are two types of chunks: the Header chunk, containing data pertaining to the entire file 
 // (only one per file), and the Track chunk (possibly >1 per file).  Both chunk types have the 
@@ -113,6 +115,17 @@ struct detect_mtrk_event_result {
 detect_mtrk_event_result detect_mtrk_event_type(const unsigned char*);
 
 
+struct meta_event {
+	midi_vl_field_interpreted delta_t {};
+	// FF <type> <length> <bytes>
+	uint8_t id {0};  // FF
+	uint8_t type {0};
+	midi_vl_field_interpreted length {};
+	std::vector<unsigned char> data {};
+};
+meta_event parse_meta_event(const unsigned char*);
+std::string print_meta_event(const meta_event&);
+
 struct sysex_event {
 	midi_vl_field_interpreted delta_t {};
 	// F0 (sometimes F7 ...see std) <length> <bytes to be transmitted after F0||F7>
@@ -121,6 +134,7 @@ struct sysex_event {
 	std::vector<unsigned char> data {};
 };
 sysex_event parse_sysex_event(const unsigned char*);
+std::string print_sysex_event(const sysex_event&);
 
 //
 // All midi events have an associated status byte, either as part of the event itself, immediately
@@ -141,26 +155,12 @@ struct midi_event {
 	midi_vl_field_interpreted delta_t {};
 	bool running_status {false};
 	unsigned char status {0};
-	//uint8_t type {0};  // 4 bits most-sig. part of status byte
-	//uint8_t channel {0};  // 4 bits least-sig. part of status byte
 	uint8_t p1 {0};
 	uint8_t p2 {0};
 };
 uint8_t midi_event_num_data_bytes(const midi_event&);  // Returns 1 || 2
 midi_event parse_midi_event(const unsigned char*, const unsigned char);  // p-to-event, prev status byte
-struct meta_event {
-	midi_vl_field_interpreted delta_t {};
-	// FF <type> <length> <bytes>
-	uint8_t id {0};  // FF
-	uint8_t type {0};
-	midi_vl_field_interpreted length {};
-	std::vector<unsigned char> data {};
-};
-meta_event parse_meta_event(const unsigned char*);
-
-std::string print_meta_event(const meta_event&);
-
-
+std::string print_midi_event(const midi_event&);
 
 // Classifies the indicated byte as either a midi-status or midi-data byte.  For this to make
 // any sense at all the input must be pointing into a MIDI event.  
@@ -205,19 +205,14 @@ enum class sys_msg_type : uint8_t {
 };
 sys_msg_type classify_system_status_byte(const unsigned char*);
 
-struct msg_ptr {
-	enum type { voice, mode };
-	unsigned char *p_;
-};
 
 
-std::string print_midi_event(const midi_event&);
 
-std::string print_sysex_event(const sysex_event&);
+
 
 
 //
-// On possibility here is that the class could just hold fdata_, validated
+// One possibility here is that this class could just hold fdata_, validated
 // upon construction, and possibly the chunk_idx_ vector; the mtrk_event_idx_ vector
 // is probably not needed (?).  Only function is to certify a valid midi file.  
 //

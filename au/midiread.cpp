@@ -7,7 +7,22 @@
 #include <exception>
 #include <string>
 
+// Default value of sep == ' '; see header
+std::string print_hexascii(const unsigned char *p, int n, const char sep) {
+	std::string s {};  s.reserve(3*n);
 
+	std::array<unsigned char,16> nybble2ascii {'0','1','2','3','4','5',
+		'6','7','8','9','A','B','C','D','E','F'};
+
+	for (int i=0; i<n; ++i) {
+		s += nybble2ascii[((*p) & 0xF0)>>4];
+		s += nybble2ascii[((*p) & 0x0F)];
+		s += sep;
+		++p;
+	}
+
+	return s;
+}
 
 detect_chunk_result detect_chunk_type(const unsigned char* p) {
 	detect_chunk_result result {midi_chunk_t::unknown,0,false};
@@ -483,21 +498,22 @@ std::string midi_file::print_mtrk_seq() const {
 			auto curr_offset = mtrk_event_idx_[trkn][evntn].offset;
 			auto curr_dptr = &(this->fdata_[curr_offset]);
 			
-			s += ("EvntNum =" + std::to_string(evntn) + "; ");
-			s += ("Offset  =" + std::to_string(curr_offset) + "; ");
-			s += ("Length  =" + std::to_string(mtrk_event_idx_[trkn][evntn].length) + "; ");
+			s += ("EvntNum = " + std::to_string(evntn) + "; ");
+			s += ("File Offset = " + std::to_string(curr_offset) + "; ");
+			s += ("Length = " + std::to_string(mtrk_event_idx_[trkn][evntn].length) + '\n');
+			s += ('\t' + print_hexascii(curr_dptr,mtrk_event_idx_[trkn][evntn].length) + '\n');
 
 			if (mtrk_event_idx_[trkn][evntn].type == mtrk_event_t::midi) {
 				midi_event md = parse_midi_event(curr_dptr, mtrk_event_idx_[trkn][evntn].midi_status);
-				s += print_midi_event(md);
+				s += ('\t' + print_midi_event(md));
 			} else if (mtrk_event_idx_[trkn][evntn].type == mtrk_event_t::meta) {
 				meta_event mt = parse_meta_event(curr_dptr);
-				s += print_meta_event(mt);
+				s += ('\t' + print_meta_event(mt));
 			} else if (mtrk_event_idx_[trkn][evntn].type == mtrk_event_t::sysex) {
 				sysex_event sx = parse_sysex_event(curr_dptr);
-				s += print_sysex_event(sx);
+				s += ('\t' + print_sysex_event(sx));
 			} else if (mtrk_event_idx_[trkn][evntn].type == mtrk_event_t::unknown) {
-				s += "mtrk_event_t::unknown";
+				s += ('\t' + "mtrk_event_t::unknown");
 			}
 			s += "\n";
 		}
@@ -510,9 +526,9 @@ std::string midi_file::print_mtrk_seq() const {
 
 std::string print_midi_event(const midi_event& md) {
 	std::string s {};
-	std::string sep {"    "};
+	std::string sep {"  "};
 	s += "MIDI:  ";
-	s += ("delta-t=" + std::to_string(md.delta_t.val) + sep);
+	s += ("delta-t = " + std::to_string(md.delta_t.val) + sep);
 
 	std::string status_str {};
 	status_byte_type sb = classify_status_byte(&(md.status));
@@ -562,17 +578,17 @@ std::string print_midi_event(const midi_event& md) {
 		status_str += "uk:";
 		status_str += "_____";
 	}
-	s += "status-byte=";
+	s += "status-byte = ";
 	if (md.running_status) {
-		s += ('[' + status_str + ']');
+		s += ("(Running)  [" + status_str + ']');
 	} else {
-		s += (' ' + status_str + ' ');
+		s += ("(Explicit)  [" + status_str + ']');
 	}
 	s += sep;
 
-	s += ("p1=" + std::to_string(md.p1));
+	s += ("p1 = " + std::to_string(md.p1));
 	if (midi_event_num_data_bytes(md) == 2) {
-		s += (", p2=" + std::to_string(md.p2));
+		s += (sep + "p2 = " + std::to_string(md.p2));
 	}
 
 	return s;

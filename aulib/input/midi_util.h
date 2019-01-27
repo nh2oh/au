@@ -26,7 +26,10 @@ struct midi_vl_field_interpreted {
 };
 midi_vl_field_interpreted midi_interpret_vl_field(const unsigned char*);
 
+
 //
+// Encodes T in the form of a VL quantity, the maximum size of which, according
+// to the MIDI std is 4 bytes.  
 // For values requiring less than 4 bytes in encoded form, the rightmost
 // bytes of the array will be 0.  
 //
@@ -43,6 +46,9 @@ std::array<unsigned char,4> midi_encode_vl_field(T val) {
 		result[i] += (val & 0x7F);
 	}
 
+	// Shift the elements of result to the left so that result[0] contains 
+	// the first nonzero byte and any zero bytes are at the end of result (beyond
+	// the first byte w/ bit 7 == 0).  
 	for (int j=0; j<4; ++j) { 
 		if (i<=3) {
 			result[j] = result[i];
@@ -53,7 +59,7 @@ std::array<unsigned char,4> midi_encode_vl_field(T val) {
 	}
 
 	return result;
-}
+};
 
 
 
