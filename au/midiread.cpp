@@ -1,4 +1,5 @@
 #include "midiread.h"
+/*
 #include "dbklib\binfile.h"
 #include <filesystem>
 #include <algorithm>
@@ -611,5 +612,5 @@ std::string print_sysex_event(const sysex_event& sx) {
 }
 
 
-
+*/
 
