@@ -21,14 +21,40 @@ std::string print_hexascii(const unsigned char*, int, const char = ' ');
 enum class midi_chunk_t {
 	header,  // MThd
 	track,  // MTrk
-	unknown
+	unknown,
+	invalid  // Does not begin w/a 4 char ASCII id & a 4-byte length
 };
+//midi_chunk_t detect_midi_chunk_type(const unsigned char*);
+
+
+// Feb 2:  midi_chunk read_midi_chunk(const dbk::binfile&, size_t) seems to be unused,
+// but the struct is the input arg to:
+// midi_file_header_data read_midi_fheaderchunk(const midi_chunk&);
+// used in the mthd print routine
 struct midi_chunk {
 	std::array<char,4> id {};
 	int32_t length {0};  // redundant w/ data.size()
 	std::vector<unsigned char> data {};
 };
-midi_chunk read_midi_chunk(const dbk::binfile&, size_t);
+midi_chunk read_midi_chunk(const dbk::binfile&, size_t);  
+
+
+//
+// Checks to see if the input is pointing at the start of a valid midi chunk (either a file-header
+// chunk or a Track chunk).  Both have the layout implied by struct midi_chunk (above).  
+// If is_valid, the user can subsequently call the correct parser:
+//    read_midi_fheaderchunk(const midi_chunk&);
+//    read_midi_trackchunk(const midi_chunk&);
+// Note that is_valid only indicates that the input is the start of a valid chunk; it does _not_
+// testify to the validity of the data contained within the chunk.  
+//
+struct detect_chunk_result {
+	midi_chunk_t type {midi_chunk_t::unknown};
+	int32_t data_length {};
+	bool is_valid {};
+};
+detect_chunk_result detect_chunk_type(const unsigned char*);
+
 
 // Header chunk data section
 // fmt:  0, 1, 2
@@ -58,22 +84,6 @@ struct midi_smpte_field {
 midi_smpte_field interpret_smpte_field(const unsigned char*);  // assumes midi_time_division_field_type_t::SMPTE
 
 //
-// Checks to see if the input is pointing at the start of a valid midi chunk (either a file-header
-// chunk or a Track chunk).  Both have the layout implied by struct midi_chunk (above).  
-// If is_valid, the user can subsequently call the correct parser:
-//    read_midi_fheaderchunk(const midi_chunk&);
-//    read_midi_trackchunk(const midi_chunk&);
-// Note that is_valid only indicates that the input is the start of a valid chunk; it does _not_
-// testify to the validity of the data contained within the chunk.  
-//
-struct detect_chunk_result {
-	midi_chunk_t type {midi_chunk_t::unknown};
-	int32_t data_length {};
-	bool is_valid {};
-};
-detect_chunk_result detect_chunk_type(const unsigned char*);
-
-//
 // MTrk events
 // There are 3 types:  sysex_event, midi_event, meta_event
 //
@@ -91,70 +101,6 @@ detect_chunk_result detect_chunk_type(const unsigned char*);
 // present, its value.
 //
 
-int64_t somehow_calc_event_size(const unsigned char*);
-int64_t somehow_detn_event_type(const unsigned char*);
-struct mtrk_container_t;
-struct mtrk_event_container_t;
-
-// want to be obtainable only from a method of mtrk_container_t so that *begin_ always
-// points at the start of a valid mtrk event.  
-struct mtrk_container_iterator {
-	const mtrk_container_t *container_ {};
-	const unsigned char *begin_ {};
-
-	mtrk_container_iterator& operator++() {
-		auto sz = somehow_calc_event_size(this->begin_);
-		this->begin_ += sz;
-	};
-
-	mtrk_event_container_t operator*() const {
-		mtrk_event_container_t result {};
-		//result.begin_ = this->begin_;
-		//result.size = somehow_calc_event_size(this->begin_);
-		return result;
-	};
-
-
-	bool end() const {
-		auto this_end = this->begin_ + somehow_calc_event_size(this->begin_);
-		return ((this_end - this->container_->begin_)==this->container_->size);
-	};
-};
-
-struct mtrk_container_t {
-	const unsigned char *begin_ {};
-
-	// size of the whole chunk including the id and length fields
-	const int64_t size {0};
-
-	mtrk_container_iterator begin() const;
-};
-
-
-struct mtrk_event_container_t {
-	enum event_type {
-		midi,
-		sysex,
-		meta,
-		unknown,
-		invalid
-	};
-	mtrk_event_container_t::event_type type {mtrk_event_container_t::event_type::unknown};
-	const unsigned char *begin_ {};
-
-	// size of the whole event including the delta-t field
-	const int64_t size {0};
-
-	// ptr to the start of the delta-t field
-	const unsigned char *delta_time() const;
-
-	// ptr to event start (including the length field in the case of sysex & meta events)
-	const unsigned char *event() const;
-	
-	// size of the event not including the delta-t field (but including the length field 
-	// in the case of sysex & meta events)
-	int32_t data_size() const;
-};
 
 //
 // Checks to see if the input is pointing at the start of a valid MTrk event, which is a vl length

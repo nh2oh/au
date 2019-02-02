@@ -102,12 +102,13 @@
     <ClInclude Include="midiread.h" />
     <ClInclude Include="scr.h" />
     <ClInclude Include="scr2.h" />
-    <ClInclude Include="static_midi.h" />
+    <ClInclude Include="midi_container.h" />
     <ClInclude Include="wavwr.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="au.cpp" />
     <ClCompile Include="midiread.cpp" />
+    <ClCompile Include="midi_container.cpp" />
     <ClCompile Include="scr.cpp" />
     <ClCompile Include="scr2.cpp" />
     <ClCompile Include="wavwr.cpp" />
