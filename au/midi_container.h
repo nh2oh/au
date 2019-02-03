@@ -4,13 +4,14 @@
 #include <algorithm>
 #include <string>
 #include <vector>
+#include <filesystem>
 
 namespace mc {
+
 
 //
 // Separates the unsafe functions of unsigned char* from safer user-facing classes.  
 //
-
 
 //
 // There are two types of chunks: the Header chunk, containing data pertaining to the entire file 
@@ -19,18 +20,59 @@ namespace mc {
 // vl-type quantity.  From p. 132: "Your programs should expect alien chunks and treat them as if
 // they weren't there."  
 //
-enum class midi_chunk_t {
+enum class chunk_type {
 	header,  // MThd
 	track,  // MTrk
-	unknown,
-	invalid  // Does not begin w/a 4 char ASCII id & a 4-byte length
+	unknown
 };
+enum event_type {
+	midi,
+	sysex,
+	meta
+};
+
+struct parse_meta_event_result_t {
+	bool is_valid {false};
+	// FF <type> <length> <bytes>N+
+	uint8_t size {0};  // does not include delta_time; is 2+length.N+length.val
+	uint8_t id {0};  // FF
+	uint8_t type {0};
+	midi_vl_field_interpreted length {};
+};
+parse_meta_event_result_t parse_meta_event(const unsigned char*);
+
+struct parse_sysex_event_result_t {
+	bool is_valid {false};
+	// F0 (sometimes F7 ...see std) <length> <bytes to be transmitted after F0||F7>
+	uint8_t size {0}; // does not include delta_time; is 1+length.N+length.val
+	uint8_t id {0};  // F0 or F7
+	midi_vl_field_interpreted length {};
+};
+parse_sysex_event_result_t parse_sysex_event(const unsigned char*);
+
+struct parse_midi_event_result_t {
+	bool is_valid {false};
+	bool running_status {false};
+	uint8_t size {0};  // does not include delta_time;  0 || 1 (status) + 1 || 2 (data) => 1 || 2 || 3
+};
+parse_midi_event_result_t parse_midi_event(const unsigned char*, unsigned char=0);
+bool midi_event_has_status_byte(const unsigned char*);
+unsigned char midi_event_get_status_byte(const unsigned char*);
+
+
+
+
+
+
+
 struct detect_chunk_type_result_t {
-	mc::midi_chunk_t type {mc::midi_chunk_t::unknown};
-	bool is_valid {};
+	chunk_type type {chunk_type::unknown};
 	std::string msg {};
+	bool is_valid {};
+		// False => Does not begin w/a 4 char ASCII id & a 4-byte length, or possibly
+		// the length => a buffer overrun.  
 };
-mc::detect_chunk_type_result_t detect_midi_chunk_type(const unsigned char*);
+detect_chunk_type_result_t detect_chunk_type(const unsigned char*);
 
 // Why not a generic midi_chunk_container_t<T> template?  Because MThd and MTrk containers
 // are radically different and it really does not make sense to write generic functions to 
@@ -50,6 +92,7 @@ public:
 		return midi_raw_interpret<int32_t>(p_+4);
 	};
 
+	// Includes the "MThd" and data-length fields
 	int32_t size() const {
 		return this->data_length() + 8;
 	};
@@ -87,10 +130,10 @@ std::string print(const mthd_container_t&);
 
 
 //
-// What's the point of this?  This is a convienience class for _viewing_/inspecting mtrk events
+// What's the point of this?  This is a convienience class for working with mtrk events
 // originating as part of a sequence where each member had a delta_time, midi_status, etc.  
 // If you have one of these you have a ptr to a legal, validated mtrk event of type midi, sysex,
-// or meta event.  
+// or meta.  
 //
 // The four methods are applicable to _all_ mtrk events are:
 // (1) delta_time(mtrk_event_container_t)
@@ -98,78 +141,54 @@ std::string print(const mthd_container_t&);
 // (3) non-interpreted print:  <delta_t>-<type>-hex-ascii (note that the size is needed for this)
 // (4) data_size() && size()
 //
-// Note that midi event lengths cannot in general be determined by examining *p_ alone, since
-// *p_ may get its status byte from a previous message.  For events of type midi, the field 
-// const char midi_status_ is the applicable midi status byte, either contained in *p_ or within
-// some previous (probably unknown) midi event.  
-// ...Without a status byte, can you not get the size from the first (possibly only) data byte?
-// No, b/c if the byte after the first data byte begins w/ 0 you can not distingish it from 
-// a single-byte delta_time vl-quantity for the next event.  
+// Note that for a byte sequence starting at p_ corresponding to a midi event, it is not in
+// general possible to determine the length of the event since it may have been specified in the
+// status byte of a previous midi event.  
+// For example, for an event without a status byte, if the byte after the first data byte 
+// begins w/ 0, it can not be distingished from the first byte of a single-byte delta_time vl
+// quantity for the next event.  
 //
-// TODO:  Conversion functions for specialized containers for midi, sysex, meta ??
-//
+
 class mtrk_event_container_t {
 public:
-	enum event_type {
-		midi,
-		sysex,
-		meta,
-		unknown,
-		invalid
-	};
-	// Does not need to be recorded as a data member
-	// const mtrk_event_container_t::event_type type {mtrk_event_container_t::event_type::unknown};
+	mtrk_event_container_t(const unsigned char*, int32_t);  // beg_, size
 
 	// size of the event not including the delta-t field (but including the length field 
 	// in the case of sysex & meta events)
+	int32_t delta_time() const;
+	event_type type() const;
 	int32_t data_length() const;
 	int32_t size() const;
-	// Used by the free func delta_time(const mtrk_event_container_t&)
-	const unsigned char *begin() const;
-private:
-	const unsigned char *beg_ {};
 
-	// Meaningless for sysex and meta events.  For midi events, holds the status byte, needed
-	// to compute the event size.  For creation of midi events using this container, use a (-)
-	// value to indicate running status (ie, that the status byte for the present event should
-	// not be written.  
-	const char midi_status_ {0};
+private:
+	unsigned char *beg_ {};
+	int32_t size_ {0};  // delta_t + payload
 };
 
-mtrk_event_container_t::event_type detect_mtrk_event_type(const unsigned char*);
-midi_vl_field_interpreted delta_time(const mtrk_event_container_t&);
+struct parse_mtrk_event_result_t {
+	bool is_valid {false};  // False if the delta-t vl field does not validate
+	midi_vl_field_interpreted delta_t {};
+	event_type type {event_type::midi};
+};
+parse_mtrk_event_result_t parse_mtrk_event_type(const unsigned char*);
 std::string print(const mtrk_event_container_t&);
 
 
-
-
-class mtrk_container_t;
-
-// Obtained from the begin() && end() methods of class mtrk_container_t.  
-struct mtrk_container_iterator {
-	const mtrk_container_t *container_ {};
-	int32_t container_event_offset_ {0};  // offset into the container's event_idx vector
-
-	mtrk_event_container_t operator*() const {
-		auto context = (*(this->container_)).mtrk_events_[this->container_event_offset_];
-		const unsigned char *p = (*(this->container_)).mtrk_events_.begin + context.offset;
-		return mtrk_event_container_t {p,context.midi_status};
-	};
-
-	mtrk_container_iterator& operator++() {
-		this->container_event_offset_ += 1;
-		return *this;
-	};
-	mtrk_container_iterator& operator--() {
-		this->container_event_offset_ -= 1;
-		return *this;
-	};
+struct validate_mtrk_chunk_result_t {
+	bool is_valid {false};
+	std::string msg {};
 };
+validate_mtrk_chunk_result_t validate_mtrk_chunk(const unsigned char*);
+
+//
+//
+//
+class mtrk_container_iterator;
 
 class mtrk_container_t {
 public:
 	mtrk_container_t()=default;
-	mtrk_container_t(const unsigned char *p) : beg_(p) {};
+	mtrk_container_t(const unsigned char*);
 
 	std::array<char,4> id() const {
 		std::array<char,4> result {};
@@ -180,51 +199,72 @@ public:
 	int32_t data_length() const {
 		return midi_raw_interpret<int32_t>(beg_+4);
 	};
-
 	int32_t size() const {
-		return this->data_length();
+		return this->data_length()+4;
 	};
 
 	mtrk_container_iterator begin() const {
-		return mtrk_container_iterator { this, 0 };
+		// From the std p.135:  "The first event in each MTrk chunk must specify status"
+		return mtrk_container_iterator { this, 8, midi_event_get_status_byte(this->beg_+8) };
 	};
 	mtrk_container_iterator end() const {
-		return mtrk_container_iterator {this, this->mtrk_events_.size()};
+		return mtrk_container_iterator { this, this->size()};
 	};
 	
 private:
-	struct mtrk_event_idx_t {
-		int32_t offset {0};  // Offset from this->beg_
-		unsigned char midi_status {};
-		// Probably also want t_onset ?
-	};
 	const unsigned char *beg_ {};  // Points at "MTrk..."
-	const int32_t size_ {0};
-	std::vector<mtrk_event_idx_t> mtrk_events_ {};
-
 	friend struct mtrk_container_iterator;
 };
 
 
+// Obtained from the begin() && end() methods of class mtrk_container_t.  
+struct mtrk_container_iterator {
+	mtrk_event_container_t operator*() const {
+		const unsigned char *p = *this->container_.beg_+this->container_offset_;
+		auto sz = parse_midi_event(p, this->midi_status_).size;
+		parse_midi_event_result_t parse_midi_event(, unsigned char=0);
+		return mtrk_event_container_t {p,sz};
+	};
 
+	mtrk_container_iterator& operator++() {
+		this->container_offset_ += 1;
+		const unsigned char *p = *this->container_.beg_+this->container_offset_;
+		if (detect_mtrk_event_type(p)==mtrk_event_container_t::event_type::midi 
+			&& midi_event_has_status_byte(p)) {
+			this->midi_status_ = midi_event_get_status_byte(p);
+		}
+		return *this;
+	};
 
-struct validate_smf_result_t {
-	bool is_valid {};
-	std::string msg {};
-	std::vector<const unsigned char*> chunk_offsets_ {};
+	mtrk_container_t *container_ {};
+	int32_t container_offset_ {0};  // offset from this->container_.beg_
+	unsigned char midi_status_ {0};
 };
-validate_smf_result_t validate_smf(const unsigned char*, int32_t);
+
+
+
+
+
 
 class smf_container_t {
 public:
-	smf_container_t(const unsigned char *p, const std::vector<const unsigned char*>&) : beg_(p) {};
-	mtrk_container_t get_header(int) const;
+	smf_container_t()=default;
+	smf_container_t(const std::vector<int32_t>& o, const std::vector<unsigned char>& d)
+		: chunk_offset_(o), data_(d) {};
+	mthd_container_t get_header() const;
 	mtrk_container_t get_track(int) const;
 private:
-	std::vector<const unsigned char*> chunk_offset_ {};  // MThd, Mtrk, unknown
-	const unsigned char *beg_ {};
-	const int32_t size_ {};
+	std::vector<int32_t> chunk_offset_ {};  // MThd, Mtrk, unknown
+	std::vector<unsigned char> data_ {};
 };
+
+struct read_smf_result_t {
+	bool is_valid {};
+	std::string msg {};
+	smf_container_t smf {};
+};
+read_smf_result_t read_smf(const std::filesystem::path&);
+
 
 std::string print(const smf_container_t&);
 bool play(const smf_container_t&);
@@ -234,31 +274,9 @@ bool play(const smf_container_t&);
 
 
 
-midi_vl_field_interpreted sysex_event_length(const unsigned char*);
-midi_vl_field_interpreted midi_event_length(const unsigned char*);
-midi_vl_field_interpreted meta_event_length(const unsigned char*);
+
 
 
 };  // namespace mc
 
-/*
-int64_t somehow_calc_event_size(const unsigned char*);
-int64_t somehow_detn_event_type(const unsigned char*);
-struct mtrk_container_t;
-struct mtrk_event_container_t;
-
-
-
-struct mtrk_container_t {
-	const unsigned char *begin_ {};
-
-	// size of the whole chunk including the id and length fields
-	const int64_t size {0};
-
-	mtrk_container_iterator begin() const;
-};
-
-
-
-*/
 

@@ -1,21 +1,21 @@
 #include "midi_container.h"
-
+#include "dbklib\binfile.h"
 
 
 namespace mc {
 
-mc::detect_chunk_type_result_t detect_midi_chunk_type(const unsigned char *p) {
-	mc::detect_chunk_type_result_t result {};
+detect_chunk_type_result_t detect_chunk_type(const unsigned char *p) {
+	detect_chunk_type_result_t result {};
 	
 	// All chunks begin w/ A 4-char identifier
 	std::string idstr {};
 	std::copy(p,p+4,std::back_inserter(idstr));
 	if (idstr == "MThd") {
-		result.type = mc::midi_chunk_t::header;
+		result.type = chunk_type::header;
 	} else if (idstr == "MTrk") {
-		result.type = mc::midi_chunk_t::track;
+		result.type = chunk_type::track;
 	} else {
-		result.type = mc::midi_chunk_t::unknown;
+		result.type = chunk_type::unknown;
 	}
 	p+=4;
 
@@ -27,15 +27,25 @@ mc::detect_chunk_type_result_t detect_midi_chunk_type(const unsigned char *p) {
 		result.is_valid = false;
 		return result;
 	}
-	if (result.type == mc::midi_chunk_t::header && data_length != 6) {
+
+	if (result.type == chunk_type::header && data_length != 6) {
 		result.msg = "MThd chunks must have a data length of 6";
 		result.is_valid = false;
 		return result;
+	} else if (result.type == chunk_type::track) {
+		auto first_event = parse_mtrk_event_type(p);
+		if (!(first_event.is_valid) || first_event.type != event_type::midi
+			|| !midi_event_has_status_byte(p)) {
+			result.msg = "MTrk chunks must begin w/a MIDI event containing a status byte";
+			result.is_valid = false;
+			return result;
+		}
 	}
-
 	result.is_valid = true;
 	return result;
 }
+
+
 
 std::string print(const mthd_container_t& mthd) {
 	std::string s {};
@@ -138,46 +148,168 @@ int32_t mtrk_event_container_t::size() const {
 int32_t mtrk_event_container_t::data_length() const {
 	return (this->size() - midi_interpret_vl_field(this->beg_).N);
 }
-const unsigned char *mtrk_event_container_t::begin() const {
-		return this->beg_;
-}
 
 
-mtrk_event_container_t::event_type detect_mtrk_event_type(const unsigned char *p) {
+parse_mtrk_event_result_t parse_mtrk_event_type(const unsigned char *p) {
+	parse_mtrk_event_result_t result {};
 	// All mtrk events begin with a delta-time occupying a maximum of 4 bytes
-	auto delta_t_vl = midi_interpret_vl_field(p);
-	if (delta_t_vl.N > 4) {
-		return mtrk_event_container_t::event_type::invalid;
+	result.delta_t = midi_interpret_vl_field(p);
+	if (result.delta_t.N > 4) {
+		result.is_valid = false;
+		return result;
 	}
-	p += delta_t_vl.N;
+	p += result.delta_t.N;
 
 	if (*p == static_cast<unsigned char>(0xF0) || *p == static_cast<unsigned char>(0xF7)) {
 		// sysex event; 0xF0==240, 0xF7==247
-		return mtrk_event_container_t::event_type::sysex;
+		result.is_valid = true;
+		result.type=event_type::sysex;
 	} else if (*p == static_cast<unsigned char>(0xFF)) {  
 		// meta event; 0xFF == 255
-		return mtrk_event_container_t::event_type::meta;
+		result.is_valid = true;
+		result.type = event_type::meta;
 	} else {
 		// midi event
-		return mtrk_event_container_t::event_type::midi;
+		result.is_valid = true;
+		result.type = event_type::midi;
 	}
+	return result;
+}
+
+bool midi_event_has_status_byte(const unsigned char *p) {
+	auto delta_t_vl = midi_interpret_vl_field(p);
+	if (delta_t_vl.N > 4) {
+		std::abort();
+	}
+	p += delta_t_vl.N;
+	return (*p) & 0x80;
+}
+unsigned char midi_event_get_status_byte(const unsigned char* p) {
+	auto delta_t_vl = midi_interpret_vl_field(p);
+	if (delta_t_vl.N > 4) {
+		std::abort();
+	}
+	p += delta_t_vl.N;
+	return *p;
 }
 
 
-midi_vl_field_interpreted delta_time(const mtrk_event_container_t& mtrkev) {
-	return midi_interpret_vl_field(mtrkev.begin());
+
+validate_mtrk_chunk_result_t validate_mtrk_chunk(const unsigned char *p) {
+	validate_mtrk_chunk_result_t result {};
+
+	auto chunk_detect = detect_midi_chunk_type(p);
+	if (!(chunk_detect.is_valid) || chunk_detect.type != chunk_type::track) {
+		result.is_valid = false;
+		result.msg += "!(chunk_detect.is_valid) || chunk_detect.type != midi_chunk_t::track";
+		return result;
+	}
+
+	// Validate each mtrk event in the chunk
+	auto size = midi_raw_interpret<int32_t>(p+4);
+	int32_t i {8};
+	unsigned char most_recent_midi_status_byte {0};
+	while (i<size) {
+		int32_t curr_event_length {0};
+
+		// Classify the present event as midi, sysex, or meta
+		auto curr_event = parse_mtrk_event_type(p+i);
+		if (!(curr_event.is_valid)) {
+			result.is_valid = false;
+			result.msg += "!(curr_event.is_valid)";
+			return result;
+		}
+
+		if (curr_event.type == event_type::sysex) {
+			// From the std (p.136):
+			// Sysex events and meta-events cancel any running status which was in effect.  
+			// Running status does not apply to and may not be used for these messages.
+			//
+			most_recent_midi_status_byte = unsigned char {0};
+			auto sx = parse_sysex_event(p+i);
+			if (!(sx.is_valid)) {
+				result.is_valid = false;
+				result.msg = "!(sx.is_valid)";
+				return result;
+			}
+			curr_event_length = curr_event.delta_t.N + sx.size;
+		} else if (curr_event.type == event_type::sysex) {
+			// From the std (p.136):
+			// Sysex events and meta-events cancel any running status which was in effect.  
+			// Running status does not apply to and may not be used for these messages.
+			//
+			most_recent_midi_status_byte = unsigned char {0};
+			auto mt = parse_meta_event(p+i);
+			if (!(mt.is_valid)) {
+				result.is_valid = false;
+				result.msg = "!(mt.is_valid)";
+				return result;
+			}
+			curr_event_length = curr_event.delta_t.N + mt.size;
+		} else if (curr_event.type == event_type::midi) {
+			auto md = parse_midi_event(p+i,most_recent_midi_status_byte);
+			if (!(md.is_valid)) {
+				result.is_valid = false;
+				result.msg = "!(md.is_valid)";
+				return result;
+			}
+			curr_event_length = curr_event.delta_t.N + md.size;
+			if (!(md.running_status)) {
+				most_recent_midi_status_byte = midi_event_get_status_byte(p+i);
+			}
+		} else {
+			std::abort();
+		}
+
+		i += curr_event_length;
+	}
+
+	result.is_valid = true;
+	return result;
 }
 
-/*
-midi_vl_field_interpreted sysex_event_length(const unsigned char *p) {
 
-midi_vl_field_interpreted midi_event_length(const unsigned char*);
-midi_vl_field_interpreted meta_event_length(const unsigned char*);
-*/
+read_smf_result_t read_smf(const std::filesystem::path& fp) {
+	read_smf_result_t result {};
+	auto data = dbk::readfile(fp).d;
+	std::vector<int32_t> chunk_offsets {};
 
+	int32_t i {0};
+	detect_chunk_type_result_t curr_chunk_type = detect_midi_chunk_type(&data[i]);
+	if (!curr_chunk_type.is_valid || curr_chunk_type.type != chunk_type::header) {
+		result.is_valid = false;
+		result.msg += "!curr_chunk_type.is_valid || curr_chunk_type.type != midi_chunk_t::header\n";
+		result.msg += "A valid midi file must begin with an MThd chunk.  \n";
+		return result;
+	}
+	chunk_offsets.push_back(i);
+	mthd_container_t mthd {&data[i]};
 
+	i += mthd.size();
+	while (i<data.size()) {  // For each Track trunk...
+		curr_chunk_type = detect_midi_chunk_type(&data[i]);
+		if (!curr_chunk_type.is_valid || curr_chunk_type.type != chunk_type::track) {
+			result.is_valid = false;
+			result.msg += "!curr_chunk_type.is_valid || curr_chunk_type.type != midi_chunk_t::track\n";
+			result.msg += "A valid midi file must contain MTrk chunks following the MThd chunk.  \n";
+			return result;
+		}
+		chunk_offsets.push_back(i);
 
+		auto check_curr_mtrk = validate_mtrk_chunk(&data[i]);
+		if (!(check_curr_mtrk.is_valid)) {
+			result.is_valid = false;
+			result.msg += check_curr_mtrk.msg;
+			return result;
+		}
 
+		mtrk_container_t curr_mtrk {&data[i]};
+		i += curr_mtrk.size();
+	}
+
+	result.smf = smf_container_t(chunk_offsets,data);
+	return result;
+}
 
 
 };  // namespace mc

@@ -1,5 +1,6 @@
 #include "midi_util.h"
 
+// TODO:  Max 4 bytes; stop after 4 bytes
 midi_vl_field_interpreted midi_interpret_vl_field(const unsigned char* p) {
 	midi_vl_field_interpreted result {};
 	result.val = 0;
