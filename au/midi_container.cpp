@@ -55,9 +55,9 @@ std::string print(const mthd_container_t& mthd) {
 
 	s += "Time Division = ";
 	auto timediv_type = detect_midi_time_division_type(mthd);
-	if (timediv_type == mc::midi_time_division_field_type_t::SMPTE) {
+	if (timediv_type == midi_time_division_field_type_t::SMPTE) {
 		s += "(SMPTE) WTF";
-	} else if (timediv_type == mc::midi_time_division_field_type_t::ticks_per_quarter) {
+	} else if (timediv_type == midi_time_division_field_type_t::ticks_per_quarter) {
 		s += "(ticks-per-quarter-note) ";
 		s += std::to_string(interpret_tpq_field(mthd));
 	}
@@ -192,6 +192,10 @@ event_type detect_mtrk_event_type_unsafe(const unsigned char *p) {
 	}
 }
 
+// Pointer to the first byte of the vl delta-time field.
+// If the delta-time validates, the event is either meta, sysex, or midi (by the std, 
+// anything not sysex or meta is midi).  This function is therefore somewhat useless.
+// You might as well just validate the delta-time then call detect_mtrk_event_type_unsafe().  
 parse_mtrk_event_result_t parse_mtrk_event_type(const unsigned char *p) {
 	parse_mtrk_event_result_t result {};
 	// All mtrk events begin with a delta-time occupying a maximum of 4 bytes
@@ -236,22 +240,38 @@ unsigned char midi_event_get_status_byte(const unsigned char* p) {
 }
 
 
-
+//
+// Checks that p points at the start of a valid MTrk chunk (ie, the 'M' of MTrk...),
+// then moves through the all events in the track and validates that each begins with a
+// valid vl delta-time, is one of midi, meta, or sysex, and that for each such event a
+// valid mtrk_event_container_t object can be created if necessary (it must be possible to
+// determine the size in bytes of each event).  
+//
+// If the input is a valid MTrk chunk, the validate_mtrk_chunk_result_t returned can be
+// passed to the ctor of mtrk_container_t to instantiate a valid object.  
+//
+// All the rules of the midi standard as regards sequences of MTrk events are validated
+// here for the case of the single track indicated by the input.  Ex, that each midi 
+// event has a status byte (either as part of the event or implictly through running 
+// status), etc.  
+// 
+//
 validate_mtrk_chunk_result_t validate_mtrk_chunk(const unsigned char *p) {
 	validate_mtrk_chunk_result_t result {};
 
-	auto chunk_detect = detect_midi_chunk_type(p);
+	detect_chunk_type_result_t chunk_detect = detect_chunk_type(p);
 	if (!(chunk_detect.is_valid) || chunk_detect.type != chunk_type::track) {
 		result.is_valid = false;
-		result.msg += "!(chunk_detect.is_valid) || chunk_detect.type != midi_chunk_t::track";
+		result.msg += "!(chunk_detect.is_valid) || chunk_detect.type != midi_chunk_t::track\n";
+		result.msg += ("chunk_detect.msg = " + chunk_detect.msg + "\n");
 		return result;
 	}
 
 	// Validate each mtrk event in the chunk
-	auto size = midi_raw_interpret<int32_t>(p+4);
+	auto mtrk_reported_size = midi_raw_interpret<int32_t>(p+4);
 	int32_t i {8};
 	unsigned char most_recent_midi_status_byte {0};
-	while (i<size) {
+	while (i<mtrk_reported_size) {
 		int32_t curr_event_length {0};
 
 		// Classify the present event as midi, sysex, or meta
@@ -275,7 +295,7 @@ validate_mtrk_chunk_result_t validate_mtrk_chunk(const unsigned char *p) {
 				return result;
 			}
 			curr_event_length = curr_event.delta_t.N + sx.size;
-		} else if (curr_event.type == event_type::sysex) {
+		} else if (curr_event.type == event_type::meta) {
 			// From the std (p.136):
 			// Sysex events and meta-events cancel any running status which was in effect.  
 			// Running status does not apply to and may not be used for these messages.
@@ -306,9 +326,99 @@ validate_mtrk_chunk_result_t validate_mtrk_chunk(const unsigned char *p) {
 		i += curr_event_length;
 	}
 
+	if (i != mtrk_reported_size) {
+		result.is_valid = false;
+		result.msg += "i != mtrk_reported_size";
+		return result;
+	}
+
 	result.is_valid = true;
+	result.size = i;
+	result.p = p;
 	return result;
 }
+
+mtrk_container_t::mtrk_container_t(const validate_mtrk_chunk_result_t& mtrk) {
+	if (!mtrk.is_valid) {
+		std::abort();
+	}
+
+	this->p_ = mtrk.p;
+	this->size_ = mtrk.size;
+
+}
+
+int32_t mtrk_container_t::data_size() const {
+	return midi_raw_interpret<int32_t>(this->p_+4);
+}
+int32_t mtrk_container_t::size() const {
+	return this->data_size()+4;
+}
+mtrk_container_iterator mtrk_container_t::begin() const {
+	// From the std p.135:  "The first event in each MTrk chunk must specify status"
+	return mtrk_container_iterator { this, 8, midi_event_get_status_byte(this->beg_+8) };
+}
+mtrk_container_iterator mtrk_container_t::end() const {
+	return mtrk_container_iterator { this, this->size()};
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+mtrk_event_container_t mtrk_container_iterator::operator*() const {
+	const unsigned char *p = *this->container_.beg_+this->container_offset_;
+	auto sz = parse_midi_event(p, this->midi_status_).size;
+	parse_midi_event_result_t parse_midi_event(, unsigned char=0);
+	return mtrk_event_container_t {p,sz};
+}
+
+mtrk_container_iterator& mtrk_container_iterator::operator++() {
+	const unsigned char *curr_p = this->container_->p_ + this->container_offset_;
+	parse_mtrk_event_result_t curr_event = parse_mtrk_event_type(curr_p);
+	int32_t curr_size {0};
+	if (curr_event.type==event_type::sysex) {
+		auto sx = parse_sysex_event(curr_p);
+		curr_size = sx.size;
+	} else if (curr_event.type==event_type::meta) {
+		auto mt = parse_meta_event(curr_p);
+		curr_size = mt.size;
+	} else if (curr_event.type==event_type::midi) {
+		auto md = parse_midi_event(curr_p,this->midi_status_);
+		curr_size = md.size;
+	}
+
+	this->container_offset_ += curr_size;
+	const unsigned char *new_p = this->container_->p_ + this->container_offset_;
+	parse_mtrk_event_result_t new_event = parse_mtrk_event_type(new_p);
+	if (new_event.type==event_type::sysex) {
+		this->midi_status_ = 0;  // sysex && meta events reset midi status
+	} else if (new_event.type==event_type::meta) {
+		this->midi_status_ = 0;  // sysex && meta events reset midi status
+	} else if (new_event.type==event_type::midi) {
+		// this->midi_status_ currently holds the midi status byte applicable to the
+		// previous event
+		auto md = parse_midi_event(new_p,this->midi_status_);
+		if (!md.running_status) {
+			// The present (new) event contains a status byte
+			this->midi_status_ = midi_event_get_status_byte(new_p);
+		}
+	}
+
+	return *this;
+}
+
+
+
+
 
 
 read_smf_result_t read_smf(const std::filesystem::path& fp) {

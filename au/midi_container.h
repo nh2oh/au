@@ -148,6 +148,7 @@ std::string print(const mthd_container_t&);
 // For example, for a midi event without a status byte, if the byte after the first data byte 
 // begins w/ 0, it can not be distingished from the first byte of a single-byte delta_time vl
 // quantity for the next event.  
+//
 // An mtrk_event_container_t associates the size (number of bytes) with the pointer to the
 // event, hence even if running status is in effect, a pointer into an MTrk sequence in the
 // form of a valid mtrk_event_container_t can be used to extract an entire complete event
@@ -155,6 +156,11 @@ std::string print(const mthd_container_t&);
 // applicible status byte).  This allows an mtrk_event_container_t to act as a handle to any
 // concrete MTrk event in memory, since if it exists in memory it _must_ have a size, 
 // regardless of whether or not that size can be determined by examining *p and *(p+n) alone.  
+// Midi status is not a data member because it must be possible to create and work with 
+// events to be used in a running-status context which are completely valid but obviously will
+// lack an explicit status - for example, if writing a program to write out a novel smf.  
+// Nevertheless, to exist at all these events must ipso facto have a concrete size.  
+//
 //
 // The four methods are applicable to _all_ mtrk events are:
 // (1) delta_time(mtrk_event_container_t)
@@ -200,6 +206,7 @@ struct validate_mtrk_chunk_result_t {
 	bool is_valid {false};
 	std::string msg {};
 	const unsigned char *p;
+	int32_t size {0};
 };
 validate_mtrk_chunk_result_t validate_mtrk_chunk(const unsigned char*);
 
@@ -207,53 +214,23 @@ class mtrk_container_t {
 public:
 	mtrk_container_t(const validate_mtrk_chunk_result_t&);
 
-	std::array<char,4> id() const {  // "MTrk"
-		std::array<char,4> result {};
-		std::copy(beg_,beg_+4,result.begin());
-		return result;
-	};
-
-	int32_t data_length() const {
-		return midi_raw_interpret<int32_t>(beg_+4);
-	};
-	int32_t size() const {
-		return this->data_length()+4;
-	};
-
-	mtrk_container_iterator begin() const {
-		// From the std p.135:  "The first event in each MTrk chunk must specify status"
-		return mtrk_container_iterator { this, 8, midi_event_get_status_byte(this->beg_+8) };
-	};
-	mtrk_container_iterator end() const {
-		return mtrk_container_iterator { this, this->size()};
-	};
-	
+	int32_t data_size() const;
+	int32_t size() const;
+	mtrk_container_iterator begin() const;
+	mtrk_container_iterator end() const;
 private:
-	const unsigned char *beg_ {};  // Points at "MTrk..."
-	const int32_t size_ {0};
+	const unsigned char *p_ {};  // Points at "MTrk..."
+	int32_t size_ {0};
 	friend struct mtrk_container_iterator;
 };
 
 
 // Obtained from the begin() && end() methods of class mtrk_container_t.  
-struct mtrk_container_iterator {
-	mtrk_event_container_t operator*() const {
-		const unsigned char *p = *this->container_.beg_+this->container_offset_;
-		auto sz = parse_midi_event(p, this->midi_status_).size;
-		parse_midi_event_result_t parse_midi_event(, unsigned char=0);
-		return mtrk_event_container_t {p,sz};
-	};
-
-	mtrk_container_iterator& operator++() {
-		this->container_offset_ += 1;
-		const unsigned char *p = *this->container_.beg_+this->container_offset_;
-		if (detect_mtrk_event_type(p)==mtrk_event_container_t::event_type::midi 
-			&& midi_event_has_status_byte(p)) {
-			this->midi_status_ = midi_event_get_status_byte(p);
-		}
-		return *this;
-	};
-
+class mtrk_container_iterator {
+public:
+	mtrk_event_container_t operator*() const;
+	mtrk_container_iterator& operator++();
+private:
 	mtrk_container_t *container_ {};
 	int32_t container_offset_ {0};  // offset from this->container_.beg_
 	unsigned char midi_status_ {0};
