@@ -10,7 +10,7 @@ namespace mc {
 
 
 //
-// Separates the unsafe functions of unsigned char* from safer user-facing classes.  
+// TODO:  validate_, parse_, detect_ naming inconsistency
 //
 
 //
@@ -23,9 +23,9 @@ namespace mc {
 enum class chunk_type {
 	header,  // MThd
 	track,  // MTrk
-	unknown
+	unknown  // The std requires that unrecognized chunk types be permitted
 };
-enum event_type {
+enum event_type {  // MTrk events
 	midi,
 	sysex,
 	meta
@@ -63,10 +63,13 @@ unsigned char midi_event_get_status_byte(const unsigned char*);
 
 
 
-
-
+//
+// Checks for the 4-char id and the 4-byte size.  Sanity check on the value of the
+// size.  
+//
 struct detect_chunk_type_result_t {
 	chunk_type type {chunk_type::unknown};
+	int32_t size {0};
 	std::string msg {};
 	bool is_valid {};
 		// False => Does not begin w/a 4 char ASCII id & a 4-byte length, or possibly
@@ -182,9 +185,9 @@ public:
 	int32_t size() const;  // Includes the delta-time
 
 	// TODO:  Replace with some sort of "safer" iterator type
-	unsigned char *begin() const;  // Starts at the delta-time
-	unsigned char *data_begin() const;  // Starts just after the delta-time
-	unsigned char *end() const;
+	const unsigned char *begin() const;  // Starts at the delta-time
+	const unsigned char *data_begin() const;  // Starts just after the delta-time
+	const unsigned char *end() const;
 private:
 	const unsigned char *p_ {};
 	int32_t size_ {0};  // delta_t + payload
@@ -226,6 +229,8 @@ public:
 		: container_(c), container_offset_(o), midi_status_(ms) {};
 	mtrk_event_container_t operator*() const;
 	mtrk_container_iterator& operator++();
+	bool operator<(const mtrk_container_iterator&) const;
+	bool operator==(const mtrk_container_iterator&) const;
 private:
 	const mtrk_container_t *container_ {};
 	int32_t container_offset_ {0};  // offset from this->container_.beg_
@@ -243,45 +248,89 @@ public:
 private:
 	const unsigned char *p_ {};  // Points at "MTrk..."
 	int32_t size_ {0};
-	friend struct mtrk_container_iterator;
+	friend class mtrk_container_iterator;
 };
 
 
-
-
-
-
-
-
+//
+// smf_container_t & friends
+//
+// As was the case for the mtrk_event_container_t and mtrk_container_t above, an 
+// smf_container_t is nothing more than an assurance that the pointed to range is a valid 
+// smf.  It contains exactly one MThd chunk and one or more unknown or MTrk chunks.  The
+// sizes of all chunks are validated, so the chunk_container_t returned from the appropriate
+// methods are guaranteed correct.  Further, for the MThd and Mtrk chunk types, all sub-data
+// is validated (ie, all events in an MTrk are valid).
+//
+//
+struct validate_smf_result_t {
+	bool is_valid {};
+	std::string msg {};
+	const unsigned char *p {};
+	int32_t size {0};
+};
+//validate_smf_result_t validate_smf(const std::filesystem::path&);
+validate_smf_result_t validate_smf(const unsigned char*);
 
 class smf_container_t {
 public:
-	smf_container_t()=default;
-	smf_container_t(const std::vector<int32_t>& o, const std::vector<unsigned char>& d)
-		: chunk_offset_(o), data_(d) {};
+	smf_container_t(const validate_smf_result_t&);
+
 	mthd_container_t get_header() const;
 	mtrk_container_t get_track(int) const;
+	bool get_chunk(int) const;  // unknown chunks allowed...
+	
+	int n_tracks() const;
+	int n_chunks() const;  // Includes MThd
 private:
-	std::vector<int32_t> chunk_offset_ {};  // MThd, Mtrk, unknown
-	std::vector<unsigned char> data_ {};
+	const unsigned char *p_ {};
+	int32_t size_ {0};
 };
-
-struct read_smf_result_t {
-	bool is_valid {};
-	std::string msg {};
-	smf_container_t smf {};
-};
-read_smf_result_t read_smf(const std::filesystem::path&);
-
 
 std::string print(const smf_container_t&);
 bool play(const smf_container_t&);
 
 
 
+//---------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------
 
 
+//
+// Breaks the sequence-dependence of the event stream such that MTrk events are random-
+// accessible.  The downside is that this uses a shitload more memory, and locality is
+// not so great since the index is separate from the data.  
+//
+class indexed_smf_t {
+public:
+	struct yikes_t {
+		// The largest vl-quantity allowed is 0x0FFFFFFF, hence the MS-nybble can be used as
+		// a flag.  0 => payload is the message, 1 => payload is a "ptr" to the message.  
+		std::array<unsigned char,4> dt_flag {};
+		std::array<unsigned char,8> payload {};
+	};
+private:
+	// Format 1 => Tracks are played simultaneously
+	// All midi events contain their status byte.  Since here i am storing different tracks 
+	// interleaved, need to deal with the fact that different tracks can have different 
+	// running-status at the same time.  
+	struct event_idx_t {
+		int32_t t_on {0};  // Cumulative
+		int32_t offset {0};  // into member "augmented" MTrk chunk vector
+		int8_t track_num {0};  // 0 => MThd, ...
+	};
 
+	struct event_idx2_t {
+		int32_t t_on {0};  // Cumulative
+		int32_t offset {0};  // into member "augmented" MTrk chunk vector
+		int8_t track_num {0};  // 0 => MThd, ...
+	};
+
+	std::vector<std::vector<>> didx_ {};  // in-file order of the chunks
+
+	std::vector<unsigned char> data_ {};  // raw file data; whole file
+};
 
 
 

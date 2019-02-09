@@ -19,15 +19,15 @@ detect_chunk_type_result_t detect_chunk_type(const unsigned char *p) {
 	}
 	p+=4;
 
-	int32_t data_length = midi_raw_interpret<int32_t>(p);
+	result.size = midi_raw_interpret<int32_t>(p);
 	p+=4;
 
-	if (data_length < 0) {
+	if (result.size < 0) {
 		result.msg = "MIDI chunks must have data length >= 0";
 		result.is_valid = false;
 		return result;
 	}
-
+	/*
 	if (result.type == chunk_type::header && data_length != 6) {
 		result.msg = "MThd chunks must have a data length of 6";
 		result.is_valid = false;
@@ -40,7 +40,7 @@ detect_chunk_type_result_t detect_chunk_type(const unsigned char *p) {
 			result.is_valid = false;
 			return result;
 		}
-	}
+	}*/
 	result.is_valid = true;
 	return result;
 }
@@ -164,14 +164,14 @@ event_type mtrk_event_container_t::type() const {
 	return detect_mtrk_event_type_unsafe(this->data_begin());
 }
 // Starts at the delta-time
-unsigned char *mtrk_event_container_t::begin() const {
+const unsigned char *mtrk_event_container_t::begin() const {
 	return this->p_;
 }
 // Starts just after the delta-time
-unsigned char *mtrk_event_container_t::data_begin() const {
+const unsigned char *mtrk_event_container_t::data_begin() const {
 	return (this->p_ + midi_interpret_vl_field(this->p_).N);
 }
-unsigned char *mtrk_event_container_t::end() const {
+const unsigned char *mtrk_event_container_t::end() const {
 	return this->p_ + this->size_;
 }
 
@@ -384,6 +384,8 @@ mtrk_event_container_t mtrk_container_iterator::operator*() const {
 }
 
 mtrk_container_iterator& mtrk_container_iterator::operator++() {
+	// Get the size of the presently indicated event and increment 
+	// this->container_offset_ by that ammount.  
 	const unsigned char *curr_p = this->container_->p_ + this->container_offset_;
 	parse_mtrk_event_result_t curr_event = parse_mtrk_event_type(curr_p);
 	int32_t curr_size {0};
@@ -399,6 +401,17 @@ mtrk_container_iterator& mtrk_container_iterator::operator++() {
 	}
 
 	this->container_offset_ += curr_size;
+
+	// If this was the last event set the midi_status_ to 0 and return.  The value
+	// of 0 is also set for the value of midi_status_ when an iterator is returned
+	// from the end() method of the parent container.  
+	if (this->container_offset_ == this->container_->size_) {
+		this->midi_status_ = 0;
+		return *this;
+	}
+
+	// If this was not the last event, set midi_status_ for the event pointed to by 
+	// this->container_offset_.  Below i refer to this as the "new" event.  
 	const unsigned char *new_p = this->container_->p_ + this->container_offset_;
 	parse_mtrk_event_result_t new_event = parse_mtrk_event_type(new_p);
 	if (new_event.type==event_type::sysex) {
@@ -418,11 +431,81 @@ mtrk_container_iterator& mtrk_container_iterator::operator++() {
 	return *this;
 }
 
+bool mtrk_container_iterator::operator<(const mtrk_container_iterator& rhs) const {
+	if (this->container_ == rhs.container_) {
+		return this->container_offset_ < rhs.container_offset_;
+	} else {
+		return false;
+	}
+}
+bool mtrk_container_iterator::operator==(const mtrk_container_iterator& rhs) const {
+	// I *could* compare midi_status_ as well, however, it is an error condition if it's
+	// different for the same offset.  
+	if (this->container_ == rhs.container_) {
+		return this->container_offset_ == rhs.container_offset_;
+	} else {
+		return false;
+	}
+}
+
+//
+//TODO:  The offset checks are repetitive...
+//
+validate_smf_result_t validate_smf(const unsigned char *p, int32_t size) {
+	validate_smf_result_t result {};
+
+	int32_t offset {0};
+	while (offset<size) {  // For each chunk...
+		detect_chunk_type_result_t curr_chunk = detect_chunk_type(p+offset);
+		if (!curr_chunk.is_valid) {
+			result.is_valid = false;
+			result.msg += "!curr_chunk.is_valid\ncurr_chunk_type.msg== ";
+			result.msg += curr_chunk.msg;
+			return result;
+		}
+
+		if (curr_chunk.type == chunk_type::header) {
+			if (offset > 0) {
+				result.is_valid = false;
+				result.msg += "curr_chunk.type == chunk_type::header but offset > 0.  ";
+				result.msg += "A valid midi file must contain only one MThd @ the very start.  \n";
+				return result;
+			}
+		}
+
+		if (curr_chunk.type == chunk_type::track) {
+			if (offset == 0) {
+				result.is_valid = false;
+				result.msg += "curr_chunk.type == chunk_type::track but offset == 0.  ";
+				result.msg += "A valid midi file must begin w/an MThd chunk.  \n";
+				return result;
+			}
+			validate_mtrk_chunk_result_t curr_track = validate_mtrk_chunk(p+offset);
+			if (!curr_track.is_valid) {
+				result.msg += "!curr_track.is_valid\ncurr_track.msg==";
+				result.msg += curr_track.msg;
+				return result;
+			}
+
+		} else if (curr_chunk.type == chunk_type::unknown) {
+			if (offset == 0) {
+				result.is_valid = false;
+				result.msg += "curr_chunk.type == chunk_type::unknown but offset == 0.  ";
+				result.msg += "A valid midi file must begin w/an MThd chunk.  \n";
+				return result;
+			}
+		}
+
+		offset += curr_chunk.size;
+	}
+
+	result.smf = smf_container_t(chunk_offsets,data);
+	return result;
+}
 
 
 
-
-
+/*
 read_smf_result_t read_smf(const std::filesystem::path& fp) {
 	read_smf_result_t result {};
 	auto data = dbk::readfile(fp).d;
@@ -463,7 +546,10 @@ read_smf_result_t read_smf(const std::filesystem::path& fp) {
 
 	result.smf = smf_container_t(chunk_offsets,data);
 	return result;
-}
+}*/
+
+
+
 
 
 };  // namespace mc
