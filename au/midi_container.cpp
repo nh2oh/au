@@ -356,10 +356,13 @@ int32_t mtrk_container_t::size() const {
 }
 mtrk_container_iterator mtrk_container_t::begin() const {
 	// From the std p.135:  "The first event in each MTrk chunk must specify status"
-	return mtrk_container_iterator { this, 8, midi_event_get_status_byte(this->beg_+8) };
+	// thus we know midi_event_get_status_byte(this->p_+8) will succeed
+	return mtrk_container_iterator {this, int32_t{8}, midi_event_get_status_byte(this->p_+8)};
 }
 mtrk_container_iterator mtrk_container_t::end() const {
-	return mtrk_container_iterator { this, this->size()};
+	// Note that i am supplying an invalid midi status byte for this one-past-the-end 
+	// iterator.  
+	return mtrk_container_iterator {this, this->size(),unsigned char {0}};
 }
 
 
@@ -375,9 +378,8 @@ mtrk_container_iterator mtrk_container_t::end() const {
 
 
 mtrk_event_container_t mtrk_container_iterator::operator*() const {
-	const unsigned char *p = *this->container_.beg_+this->container_offset_;
+	const unsigned char *p = this->container_->p_+this->container_offset_;
 	auto sz = parse_midi_event(p, this->midi_status_).size;
-	parse_midi_event_result_t parse_midi_event(, unsigned char=0);
 	return mtrk_event_container_t {p,sz};
 }
 

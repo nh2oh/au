@@ -171,7 +171,8 @@ std::string print(const mthd_container_t&);
 //
 class mtrk_event_container_t {
 public:
-	mtrk_event_container_t(const unsigned char*, int32_t);  // beg_, size
+	mtrk_event_container_t(const unsigned char *p, int32_t sz)
+		: p_(p), size_(sz) {};
 
 	// size of the event not including the delta-t field (but including the length field 
 	// in the case of sysex & meta events)
@@ -185,7 +186,7 @@ public:
 	unsigned char *data_begin() const;  // Starts just after the delta-time
 	unsigned char *end() const;
 private:
-	unsigned char *p_ {};
+	const unsigned char *p_ {};
 	int32_t size_ {0};  // delta_t + payload
 };
 
@@ -200,7 +201,15 @@ std::string print(const mtrk_event_container_t&);
 //
 // mtrk_container_t & friends
 //
+// As with the mtrk_event_container_t above, an mtrk_container_t is little more than an
+// assurance that the pointed to range is a valid MTrk chunk.  This is still useful, however:
+// The event sequence pointed to by an mtrk_container_t object has already been validated 
+// and can therefore be parsed using the fast parse_*_usafe(const unsigned char*) family 
+// of functions.  
+//
+//
 class mtrk_container_iterator;
+class mtrk_container_t;
 
 struct validate_mtrk_chunk_result_t {
 	bool is_valid {false};
@@ -209,6 +218,19 @@ struct validate_mtrk_chunk_result_t {
 	int32_t size {0};
 };
 validate_mtrk_chunk_result_t validate_mtrk_chunk(const unsigned char*);
+
+// Obtained from the begin() && end() methods of class mtrk_container_t.  
+class mtrk_container_iterator {
+public:
+	mtrk_container_iterator(const mtrk_container_t* c, int32_t o, unsigned char ms)
+		: container_(c), container_offset_(o), midi_status_(ms) {};
+	mtrk_event_container_t operator*() const;
+	mtrk_container_iterator& operator++();
+private:
+	const mtrk_container_t *container_ {};
+	int32_t container_offset_ {0};  // offset from this->container_.beg_
+	unsigned char midi_status_ {0};
+};
 
 class mtrk_container_t {
 public:
@@ -225,16 +247,7 @@ private:
 };
 
 
-// Obtained from the begin() && end() methods of class mtrk_container_t.  
-class mtrk_container_iterator {
-public:
-	mtrk_event_container_t operator*() const;
-	mtrk_container_iterator& operator++();
-private:
-	mtrk_container_t *container_ {};
-	int32_t container_offset_ {0};  // offset from this->container_.beg_
-	unsigned char midi_status_ {0};
-};
+
 
 
 
