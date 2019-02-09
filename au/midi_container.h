@@ -129,11 +129,32 @@ midi_smpte_field interpret_smpte_field(const mthd_container_t&);  // assumes mid
 std::string print(const mthd_container_t&);
 
 
+
+//---------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------
+
+
 //
-// What's the point of this?  This is a convienience class for working with mtrk events
-// originating as part of a sequence where each member had a delta_time, midi_status, etc.  
-// If you have one of these you have a ptr to a legal, validated mtrk event of type midi, sysex,
-// or meta.  
+// mtrk_event_container_t
+//
+// This is a convienience class for working with mtrk events event_type:: midi, sysex 
+// && meta.  If you have one of these you have a ptr to a legal, validated mtrk event.  
+// The event in question may or may not be part of a sequence of events as in an MTrk section
+// of an smf.  In the case of midi events occuring as part of such a sequence, "running 
+// status" may be in effect, in which case it is not possible to detect and assign midi 
+// events at arbitrary locations internal to the sequence; the relevant status byte may have
+// been set in a previous midi event, possibly distantly removed from the present event.  
+// For example, for a midi event without a status byte, if the byte after the first data byte 
+// begins w/ 0, it can not be distingished from the first byte of a single-byte delta_time vl
+// quantity for the next event.  
+// An mtrk_event_container_t associates the size (number of bytes) with the pointer to the
+// event, hence even if running status is in effect, a pointer into an MTrk sequence in the
+// form of a valid mtrk_event_container_t can be used to extract an entire complete event
+// (though in the case of midi events you still may not be able to determine the value of the
+// applicible status byte).  This allows an mtrk_event_container_t to act as a handle to any
+// concrete MTrk event in memory, since if it exists in memory it _must_ have a size, 
+// regardless of whether or not that size can be determined by examining *p and *(p+n) alone.  
 //
 // The four methods are applicable to _all_ mtrk events are:
 // (1) delta_time(mtrk_event_container_t)
@@ -141,14 +162,7 @@ std::string print(const mthd_container_t&);
 // (3) non-interpreted print:  <delta_t>-<type>-hex-ascii (note that the size is needed for this)
 // (4) data_size() && size()
 //
-// Note that for a byte sequence starting at p_ corresponding to a midi event, it is not in
-// general possible to determine the length of the event since it may have been specified in the
-// status byte of a previous midi event.  
-// For example, for an event without a status byte, if the byte after the first data byte 
-// begins w/ 0, it can not be distingished from the first byte of a single-byte delta_time vl
-// quantity for the next event.  
 //
-
 class mtrk_event_container_t {
 public:
 	mtrk_event_container_t(const unsigned char*, int32_t);  // beg_, size
@@ -156,12 +170,16 @@ public:
 	// size of the event not including the delta-t field (but including the length field 
 	// in the case of sysex & meta events)
 	int32_t delta_time() const;
-	event_type type() const;
-	int32_t data_length() const;
-	int32_t size() const;
+	event_type type() const;  // enum event_type:: midi || sysex || meta
+	int32_t data_size() const;  // Does not include the delta-time
+	int32_t size() const;  // Includes the delta-time
 
+	// TODO:  Replace with some sort of "safer" iterator type
+	unsigned char *begin() const;  // Starts at the delta-time
+	unsigned char *data_begin() const;  // Starts just after the delta-time
+	unsigned char *end() const;
 private:
-	unsigned char *beg_ {};
+	unsigned char *p_ {};
 	int32_t size_ {0};  // delta_t + payload
 };
 
@@ -173,24 +191,23 @@ struct parse_mtrk_event_result_t {
 parse_mtrk_event_result_t parse_mtrk_event_type(const unsigned char*);
 std::string print(const mtrk_event_container_t&);
 
+//
+// mtrk_container_t & friends
+//
+class mtrk_container_iterator;
 
 struct validate_mtrk_chunk_result_t {
 	bool is_valid {false};
 	std::string msg {};
+	const unsigned char *p;
 };
 validate_mtrk_chunk_result_t validate_mtrk_chunk(const unsigned char*);
 
-//
-//
-//
-class mtrk_container_iterator;
-
 class mtrk_container_t {
 public:
-	mtrk_container_t()=default;
-	mtrk_container_t(const unsigned char*);
+	mtrk_container_t(const validate_mtrk_chunk_result_t&);
 
-	std::array<char,4> id() const {
+	std::array<char,4> id() const {  // "MTrk"
 		std::array<char,4> result {};
 		std::copy(beg_,beg_+4,result.begin());
 		return result;
@@ -213,6 +230,7 @@ public:
 	
 private:
 	const unsigned char *beg_ {};  // Points at "MTrk..."
+	const int32_t size_ {0};
 	friend struct mtrk_container_iterator;
 };
 

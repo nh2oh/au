@@ -107,8 +107,13 @@ midi_smpte_field interpret_smpte_field(const mthd_container_t& mthd) {
 
 
 
+//---------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------
 
 
+
+/*
 int32_t mtrk_event_container_t::size() const {
 	int32_t result {0};
 	auto p = this->beg_;
@@ -117,7 +122,7 @@ int32_t mtrk_event_container_t::size() const {
 	result += delta_t_vl.N;
 	
 	switch (detect_mtrk_event_type(this->beg_)) {
-		case mtrk_event_container_t::event_type::midi:  
+		case event_type::midi:  
 			if (this->midi_status_ > 0) {
 				result += 1;  // event contains a status byte (running_status == false)
 			}
@@ -128,13 +133,13 @@ int32_t mtrk_event_container_t::size() const {
 				result += 2;
 			}
 			return result;
-		case mtrk_event_container_t::event_type::meta:
+		case event_type::meta:
 			p += 2;  // Go past the 0xFF ('id') and 'type' bytes
 			result += 2;
 			auto vl_len_field = midi_interpret_vl_field(p);
 			result += (vl_len_field.N + vl_len_field.val);
 			return result;
-		case mtrk_event_container_t::event_type::sysex:
+		case event_type::sysex:
 			p += 1;  // Go past the 'id' byte
 			result += 1;
 			auto vl_len_field = midi_interpret_vl_field(p);
@@ -143,12 +148,49 @@ int32_t mtrk_event_container_t::size() const {
 		default:  
 			std::abort();
 	}
+}*/
+
+int32_t mtrk_event_container_t::data_size() const {
+	return (this->size() - midi_interpret_vl_field(this->p_).N);
+}
+int32_t mtrk_event_container_t::delta_time() const {
+	return midi_interpret_vl_field(this->p_).val;
+}
+int32_t mtrk_event_container_t::size() const {
+	return this->size_;
+}
+// Assumes that this indicates a valid event
+event_type mtrk_event_container_t::type() const {
+	return detect_mtrk_event_type_unsafe(this->data_begin());
+}
+// Starts at the delta-time
+unsigned char *mtrk_event_container_t::begin() const {
+	return this->p_;
+}
+// Starts just after the delta-time
+unsigned char *mtrk_event_container_t::data_begin() const {
+	return (this->p_ + midi_interpret_vl_field(this->p_).N);
+}
+unsigned char *mtrk_event_container_t::end() const {
+	return this->p_ + this->size_;
 }
 
-int32_t mtrk_event_container_t::data_length() const {
-	return (this->size() - midi_interpret_vl_field(this->beg_).N);
-}
 
+
+// Pointer to the first data byte (following the delta-time), _not_ to the start of
+// the delta-time.  
+event_type detect_mtrk_event_type_unsafe(const unsigned char *p) {
+	if (*p == static_cast<unsigned char>(0xF0) || *p == static_cast<unsigned char>(0xF7)) {
+		// sysex event; 0xF0==240, 0xF7==247
+		return event_type::sysex;
+	} else if (*p == static_cast<unsigned char>(0xFF)) {  
+		// meta event; 0xFF == 255
+		return event_type::meta;
+	} else {
+		// midi event
+		return event_type::midi;
+	}
+}
 
 parse_mtrk_event_result_t parse_mtrk_event_type(const unsigned char *p) {
 	parse_mtrk_event_result_t result {};
