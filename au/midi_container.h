@@ -80,64 +80,67 @@ struct detect_chunk_type_result_t {
 	chunk_type type {chunk_type::unknown};
 	int32_t size {0};
 	std::string msg {};
-	bool is_valid {};
+	bool is_valid {false};
 		// False => Does not begin w/a 4 char ASCII id & a 4-byte length, or possibly
 		// the length => a buffer overrun.  
+	const unsigned char* p {};
 };
-detect_chunk_type_result_t detect_chunk_type(const unsigned char*);
+detect_chunk_type_result_t detect_chunk_type(const unsigned char*, int32_t);
 
 // Why not a generic midi_chunk_container_t<T> template?  Because MThd and MTrk containers
 // are radically different and it really does not make sense to write generic functions to 
 // operate on either type.  
 class mthd_container_t {
 public:
-	mthd_container_t()=default;
+	mthd_container_t(const detect_chunk_type_result_t&);
 	mthd_container_t(const unsigned char *p) : p_(p) {};
 
-	std::array<char,4> id() const {
-		std::array<char,4> result {};
-		std::copy(p_,p_+4,result.begin());
-		return result;
-	};
+	int16_t format() const;
+	int16_t ntrks() const;
+	uint16_t division() const;
 
-	int32_t data_length() const {
-		return midi_raw_interpret<int32_t>(p_+4);
-	};
+
+	//std::array<char,4> id() const {
+	//	std::array<char,4> result {};
+	//	std::copy(p_,p_+4,result.begin());
+	//	return result;
+	//};
+
+	// Does not include the 4 byte "MThd" and 4 byte data-length fields
+	int32_t data_size() const;
 
 	// Includes the "MThd" and data-length fields
-	int32_t size() const {
-		return this->data_length() + 8;
-	};
+	int32_t size() const;
 
-	// begin(), end() allow me to hide the member p_
+	/*// begin(), end() allow me to hide the member p_
 	// iterators... ?
 	const unsigned char *begin() const {
 		return this->p_+8;
 	};
 	const unsigned char *end() const {
 		return this->p_+this->size();
-	};
+	};*/
 	
 private:
 	const unsigned char *p_ {};
-	// const uint64_t size ??
+	int32_t size_ {0};
 };
 
 
-int16_t fmt_type(const mthd_container_t&);
-int16_t num_trks(const mthd_container_t&);
+//int16_t fmt_type(const mthd_container_t&);
+//int16_t num_trks(const mthd_container_t&);
 
 enum class midi_time_division_field_type_t {
 	ticks_per_quarter,
 	SMPTE
 };
-midi_time_division_field_type_t detect_midi_time_division_type(const mthd_container_t&);
-uint16_t interpret_tpq_field(const mthd_container_t&);  // assumes midi_time_division_field_type_t::ticks_per_quarter
+midi_time_division_field_type_t detect_midi_time_division_type(uint16_t);
+uint16_t interpret_tpq_field(uint16_t);  // assumes midi_time_division_field_type_t::ticks_per_quarter
 struct midi_smpte_field {
 	int8_t time_code_fmt {0};
 	uint8_t units_per_frame {0};
 };
-midi_smpte_field interpret_smpte_field(const mthd_container_t&);  // assumes midi_time_division_field_type_t::SMPTE
+midi_smpte_field interpret_smpte_field(uint16_t);  // assumes midi_time_division_field_type_t::SMPTE
 std::string print(const mthd_container_t&);
 
 
@@ -231,7 +234,7 @@ struct validate_mtrk_chunk_result_t {
 	const unsigned char *p;
 	int32_t size {0};
 };
-validate_mtrk_chunk_result_t validate_mtrk_chunk(const unsigned char*);
+validate_mtrk_chunk_result_t validate_mtrk_chunk(const unsigned char*, int32_t);
 
 // Obtained from the begin() && end() methods of class mtrk_container_t.  
 class mtrk_container_iterator {

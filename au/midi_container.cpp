@@ -1,24 +1,34 @@
 #include "midi_container.h"
 #include "dbklib\binfile.h"
-
+#include <iostream>
+#include <string>
+#include <vector>
 
 namespace mc {
 
 
 void midi_example() {
 	auto rawfiledata = dbk::readfile("C:\\Users\\ben\\Desktop\\scr\\CLEMENTI.MID").d;
+	//auto rawfiledata = dbk::readfile("C:\\Users\\ben\\Desktop\\scr\\test.mid").d;
 	auto rawfile_check_result = validate_smf(&rawfiledata[0],rawfiledata.size());
 
 	smf_container_t mf {rawfile_check_result};
 	
+	auto h = mf.get_header();
+	std::cout << print(h) << std::endl;
 	auto t1 = mf.get_track(1);
 }
 
 
 
-detect_chunk_type_result_t detect_chunk_type(const unsigned char *p) {
+detect_chunk_type_result_t detect_chunk_type(const unsigned char *p, int32_t max_size) {
 	detect_chunk_type_result_t result {};
-	
+	result.p = p;
+	if (max_size < 8) {
+		result.is_valid = false;
+		return result;
+	}
+
 	// All chunks begin w/ A 4-char identifier
 	std::string idstr {};
 	std::copy(p,p+4,std::back_inserter(idstr));
@@ -39,6 +49,11 @@ detect_chunk_type_result_t detect_chunk_type(const unsigned char *p) {
 		result.is_valid = false;
 		return result;
 	}
+	if (data_length+8 > max_size) {
+		result.msg = "data_length+8 > max_size";
+		result.is_valid = false;
+		return result;
+	}
 	/*
 	if (result.type == chunk_type::header && data_length != 6) {
 		result.msg = "MThd chunks must have a data length of 6";
@@ -53,11 +68,35 @@ detect_chunk_type_result_t detect_chunk_type(const unsigned char *p) {
 			return result;
 		}
 	}*/
-	result.size = 4 + 4 + data_length;  // id + length_field + 
+	result.size = 4 + 4 + data_length;  // id + length_field + ...
+
 	result.is_valid = true;
 	return result;
 }
 
+
+mthd_container_t::mthd_container_t(const detect_chunk_type_result_t& mthd) {
+	if (!mthd.is_valid) {
+		std::abort();
+	}
+	this->p_=mthd.p;
+	this->size_=mthd.size;
+}
+int16_t mthd_container_t::format() const {
+	return midi_raw_interpret<int16_t>(this->p_+8);
+}
+int16_t mthd_container_t::ntrks() const {
+	return midi_raw_interpret<int16_t>(this->p_+8+4);
+}
+uint16_t mthd_container_t::division() const {
+	return midi_raw_interpret<uint16_t>(this->p_+8+4+4);
+}
+int32_t mthd_container_t::size() const {
+	return this->size_;
+}
+int32_t mthd_container_t::data_size() const {
+	return this->size_-8;
+}
 
 parse_meta_event_result_t parse_meta_event(const unsigned char *p) {
 	parse_meta_event_result_t result {};
@@ -163,16 +202,16 @@ parse_midi_event_result_t parse_midi_event(const unsigned char *p, unsigned char
 std::string print(const mthd_container_t& mthd) {
 	std::string s {};
 
-	s += ("Format type = " + std::to_string(fmt_type(mthd)) + "    \n");
-	s += ("Num Tracks = " + std::to_string(num_trks(mthd)) + "    \n");
+	s += ("Format type = " + std::to_string(mthd.format()) + "    \n");
+	s += ("Num Tracks = " + std::to_string(mthd.ntrks()) + "    \n");
 
 	s += "Time Division = ";
-	auto timediv_type = detect_midi_time_division_type(mthd);
+	auto timediv_type = detect_midi_time_division_type(mthd.division());
 	if (timediv_type == midi_time_division_field_type_t::SMPTE) {
 		s += "(SMPTE) WTF";
 	} else if (timediv_type == midi_time_division_field_type_t::ticks_per_quarter) {
 		s += "(ticks-per-quarter-note) ";
-		s += std::to_string(interpret_tpq_field(mthd));
+		s += std::to_string(interpret_tpq_field(mthd.division()));
 	}
 	s += "\n";
 
@@ -183,7 +222,7 @@ std::string print(const mthd_container_t& mthd) {
 
 
 
-
+/*
 int16_t fmt_type(const mthd_container_t& mthd) {
 	const unsigned char *p = mthd.begin();
 	return midi_raw_interpret<int16_t>(p);
@@ -191,30 +230,40 @@ int16_t fmt_type(const mthd_container_t& mthd) {
 int16_t num_trks(const mthd_container_t& mthd) {
 	const unsigned char *p = mthd.begin()+2;
 	return midi_raw_interpret<int16_t>(p);
-};
+};*/
 
-midi_time_division_field_type_t detect_midi_time_division_type(const mthd_container_t& mthd) {
-	const unsigned char *p = mthd.begin()+4;
-	if ((*p)>>7 == 1) {
+midi_time_division_field_type_t detect_midi_time_division_type(uint16_t division_field) {
+	if ((division_field>>15) == 1) {
 		return midi_time_division_field_type_t::SMPTE;
 	} else {
 		return midi_time_division_field_type_t::ticks_per_quarter;
 	}
+
+	//const unsigned char *p = mthd.begin()+4;
+	//if ((*p)>>7 == 1) {
+	//	return midi_time_division_field_type_t::SMPTE;
+	//} else {
+	//	return midi_time_division_field_type_t::ticks_per_quarter;
+	//}
 }
 // assumes midi_time_division_field_type_t::ticks_per_quarter
-uint16_t interpret_tpq_field(const mthd_container_t& mthd) {
-	const unsigned char *p = mthd.begin()+4;
-
-	std::array<unsigned char,2> field {(*p)&0x7F, *(++p)};
-	return midi_raw_interpret<uint16_t>(&(field[0]));
+uint16_t interpret_tpq_field(uint16_t division_field) {
+	return division_field&(0x7FFF);
+	
+	//const unsigned char *p = mthd.begin()+4;
+	//std::array<unsigned char,2> field {(*p)&0x7F, *(++p)};
+	//return midi_raw_interpret<uint16_t>(&(field[0]));
 }
 // assumes midi_time_division_field_type_t::SMPTE
-midi_smpte_field interpret_smpte_field(const mthd_container_t& mthd) {
-	const unsigned char *p = mthd.begin()+8;
-
+midi_smpte_field interpret_smpte_field(uint16_t division_field) {
 	midi_smpte_field result {};
-	result.time_code_fmt = static_cast<int8_t>(*p);
-	result.units_per_frame = static_cast<uint8_t>(*(++p));
+	result.time_code_fmt = static_cast<int8_t>(division_field>>8);
+	result.units_per_frame = static_cast<uint8_t>(division_field&0xFF);
+	
+	//const unsigned char *p = mthd.begin()+8;
+	//midi_smpte_field result {};
+	//result.time_code_fmt = static_cast<int8_t>(*p);
+	//result.units_per_frame = static_cast<uint8_t>(*(++p));
 	return result;
 }
 
@@ -373,10 +422,10 @@ unsigned char midi_event_get_status_byte(const unsigned char* p) {
 // status), etc.  
 // 
 //
-validate_mtrk_chunk_result_t validate_mtrk_chunk(const unsigned char *p) {
+validate_mtrk_chunk_result_t validate_mtrk_chunk(const unsigned char *p, int32_t max_size) {
 	validate_mtrk_chunk_result_t result {};
 
-	detect_chunk_type_result_t chunk_detect = detect_chunk_type(p);
+	detect_chunk_type_result_t chunk_detect = detect_chunk_type(p,max_size);
 	if (!(chunk_detect.is_valid) || chunk_detect.type != chunk_type::track) {
 		result.is_valid = false;
 		result.msg += "!(chunk_detect.is_valid) || chunk_detect.type != midi_chunk_t::track\n";
@@ -571,15 +620,15 @@ bool mtrk_container_iterator::operator==(const mtrk_container_iterator& rhs) con
 //
 //TODO:  The offset checks are repetitive...
 //
-validate_smf_result_t validate_smf(const unsigned char *p, int32_t size) {
+validate_smf_result_t validate_smf(const unsigned char *p, int32_t offset_end) {
 	validate_smf_result_t result {};
 	int n_tracks {0};
 	int n_unknown {0};
 	std::vector<chunk_idx_t> chunk_idxs {};
 
 	int32_t offset {0};
-	while (offset<size) {  // For each chunk...
-		detect_chunk_type_result_t curr_chunk = detect_chunk_type(p+offset);
+	while (offset<offset_end) {  // For each chunk...
+		detect_chunk_type_result_t curr_chunk = detect_chunk_type(p+offset,offset_end-offset);
 		if (!curr_chunk.is_valid) {
 			result.is_valid = false;
 			result.msg += "!curr_chunk.is_valid\ncurr_chunk_type.msg== ";
@@ -603,7 +652,7 @@ validate_smf_result_t validate_smf(const unsigned char *p, int32_t size) {
 				result.msg += "A valid midi file must begin w/an MThd chunk.  \n";
 				return result;
 			}
-			validate_mtrk_chunk_result_t curr_track = validate_mtrk_chunk(p+offset);
+			validate_mtrk_chunk_result_t curr_track = validate_mtrk_chunk(p+offset,offset_end-offset);
 			if (!curr_track.is_valid) {
 				result.msg += "!curr_track.is_valid\ncurr_track.msg==";
 				result.msg += curr_track.msg;
