@@ -41,7 +41,7 @@ struct parse_meta_event_result_t {
 	//uint8_t size {0};  // does not include delta_time; is 2+length.N+length.val
 	//uint8_t id {0};  // FF
 	uint8_t type {0};
-	midi_vl_field_interpreted data_size {};
+	int32_t data_size {};  // Everything not delta_time
 };
 parse_meta_event_result_t parse_meta_event(const unsigned char*);
 
@@ -51,7 +51,7 @@ struct parse_sysex_event_result_t {
 	// F0 (sometimes F7 ...see std) <length> <bytes to be transmitted after F0||F7>
 	//uint8_t size {0}; // does not include delta_time; is 1+length.N+length.val
 	uint8_t type {0};  // F0 or F7
-	midi_vl_field_interpreted data_size {};
+	int32_t data_size {};  // Everything not delta_time
 };
 parse_sysex_event_result_t parse_sysex_event(const unsigned char*);
 
@@ -62,7 +62,7 @@ struct parse_midi_event_result_t {
 	uint8_t status_byte {0};
 	uint8_t n_data_bytes {0};  // 0, 1, 2
 	// does not include delta_time;  0 || 1 (status) + 1 || 2 (data) => 1 || 2 || 3
-	midi_vl_field_interpreted delta_t {};
+	int32_t data_size {};  // Everything not delta_time
 };
 parse_midi_event_result_t parse_midi_event(const unsigned char*, unsigned char=0);
 bool midi_event_has_status_byte(const unsigned char*);

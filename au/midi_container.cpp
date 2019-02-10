@@ -31,10 +31,10 @@ detect_chunk_type_result_t detect_chunk_type(const unsigned char *p) {
 	}
 	p+=4;
 
-	result.size = midi_raw_interpret<int32_t>(p);
+	auto data_length = midi_raw_interpret<int32_t>(p);
 	p+=4;
 
-	if (result.size < 0) {
+	if (data_length < 0) {
 		result.msg = "MIDI chunks must have data length >= 0";
 		result.is_valid = false;
 		return result;
@@ -53,6 +53,7 @@ detect_chunk_type_result_t detect_chunk_type(const unsigned char *p) {
 			return result;
 		}
 	}*/
+	result.size = 4 + 4 + data_length;  // id + length_field + 
 	result.is_valid = true;
 	return result;
 }
@@ -76,7 +77,8 @@ parse_meta_event_result_t parse_meta_event(const unsigned char *p) {
 	result.type = *p;
 	++p;
 
-	result.data_size = midi_interpret_vl_field(p);
+	auto length_field = midi_interpret_vl_field(p);
+	result.data_size = 2 + length_field.N + length_field.val;
 
 	result.is_valid = true;
 	return result;
@@ -98,7 +100,8 @@ parse_sysex_event_result_t parse_sysex_event(const unsigned char *p) {
 	result.type = *p;
 	++p;
 
-	result.data_size = midi_interpret_vl_field(p);
+	auto length_field = midi_interpret_vl_field(p);
+	result.data_size = 1 + length_field.N + length_field.val;
 
 	result.is_valid = true;
 	return result;
@@ -113,9 +116,11 @@ parse_midi_event_result_t parse_midi_event(const unsigned char *p, unsigned char
 	}
 	p += result.delta_t.N;
 
+	result.data_size = 0;
 	if ((*p & 0x80) == 0x80) {  // Present message has a status byte
 		result.has_status_byte = true;
 		result.status_byte = *p;
+		result.data_size += 1;
 		++p;
 	} else {
 		result.has_status_byte = false;
@@ -134,6 +139,7 @@ parse_midi_event_result_t parse_midi_event(const unsigned char *p, unsigned char
 	} else {
 		result.n_data_bytes = 2;
 	}
+	result.data_size += result.n_data_bytes;
 
 	// Check first data byte
 	if ((*p & 0x80) != 0) {
@@ -379,7 +385,7 @@ validate_mtrk_chunk_result_t validate_mtrk_chunk(const unsigned char *p) {
 	}
 
 	// Validate each mtrk event in the chunk
-	auto mtrk_reported_size = midi_raw_interpret<int32_t>(p+4);
+	auto mtrk_reported_size = chunk_detect.size;  // midi_raw_interpret<int32_t>(p+4);
 	int32_t i {8};
 	unsigned char most_recent_midi_status_byte {0};
 	while (i<mtrk_reported_size) {
@@ -405,7 +411,7 @@ validate_mtrk_chunk_result_t validate_mtrk_chunk(const unsigned char *p) {
 				result.msg = "!(sx.is_valid)";
 				return result;
 			}
-			curr_event_length = curr_event.delta_t.N + sx.size;
+			curr_event_length = curr_event.delta_t.N + sx.data_size;
 		} else if (curr_event.type == event_type::meta) {
 			// From the std (p.136):
 			// Sysex events and meta-events cancel any running status which was in effect.  
@@ -418,7 +424,7 @@ validate_mtrk_chunk_result_t validate_mtrk_chunk(const unsigned char *p) {
 				result.msg = "!(mt.is_valid)";
 				return result;
 			}
-			curr_event_length = curr_event.delta_t.N + mt.size;
+			curr_event_length = curr_event.delta_t.N + mt.data_size;
 		} else if (curr_event.type == event_type::midi) {
 			auto md = parse_midi_event(p+i,most_recent_midi_status_byte);
 			if (!(md.is_valid)) {
@@ -426,8 +432,8 @@ validate_mtrk_chunk_result_t validate_mtrk_chunk(const unsigned char *p) {
 				result.msg = "!(md.is_valid)";
 				return result;
 			}
-			curr_event_length = curr_event.delta_t.N + md.size;
-			if (!(md.running_status)) {
+			curr_event_length = curr_event.delta_t.N + md.data_size;
+			if (!(md.has_status_byte)) {
 				most_recent_midi_status_byte = midi_event_get_status_byte(p+i);
 			}
 		} else {
@@ -493,7 +499,7 @@ mtrk_container_iterator mtrk_container_t::end() const {
 
 mtrk_event_container_t mtrk_container_iterator::operator*() const {
 	const unsigned char *p = this->container_->p_+this->container_offset_;
-	auto sz = parse_midi_event(p, this->midi_status_).size;
+	auto sz = parse_midi_event(p, this->midi_status_).data_size;
 	return mtrk_event_container_t {p,sz};
 }
 
@@ -505,13 +511,13 @@ mtrk_container_iterator& mtrk_container_iterator::operator++() {
 	int32_t curr_size {0};
 	if (curr_event.type==event_type::sysex) {
 		auto sx = parse_sysex_event(curr_p);
-		curr_size = sx.size;
+		curr_size = sx.delta_t.N + sx.data_size;
 	} else if (curr_event.type==event_type::meta) {
 		auto mt = parse_meta_event(curr_p);
-		curr_size = mt.size;
+		curr_size = mt.delta_t.N + mt.data_size;
 	} else if (curr_event.type==event_type::midi) {
 		auto md = parse_midi_event(curr_p,this->midi_status_);
-		curr_size = md.size;
+		curr_size = md.delta_t.N + md.data_size;
 	}
 
 	this->container_offset_ += curr_size;
@@ -536,7 +542,7 @@ mtrk_container_iterator& mtrk_container_iterator::operator++() {
 		// this->midi_status_ currently holds the midi status byte applicable to the
 		// previous event
 		auto md = parse_midi_event(new_p,this->midi_status_);
-		if (!md.running_status) {
+		if (!md.has_status_byte) {
 			// The present (new) event contains a status byte
 			this->midi_status_ = midi_event_get_status_byte(new_p);
 		}
@@ -591,7 +597,6 @@ validate_smf_result_t validate_smf(const unsigned char *p, int32_t size) {
 		}
 
 		if (curr_chunk.type == chunk_type::track) {
-			++n_tracks;
 			if (offset == 0) {
 				result.is_valid = false;
 				result.msg += "curr_chunk.type == chunk_type::track but offset == 0.  ";
@@ -604,7 +609,7 @@ validate_smf_result_t validate_smf(const unsigned char *p, int32_t size) {
 				result.msg += curr_track.msg;
 				return result;
 			}
-
+			++n_tracks;
 		} else if (curr_chunk.type == chunk_type::unknown) {
 			++n_unknown;
 			if (offset == 0) {
@@ -618,6 +623,7 @@ validate_smf_result_t validate_smf(const unsigned char *p, int32_t size) {
 		offset += curr_chunk.size;
 	}
 
+	result.is_valid = true;
 	result.chunk_idxs = chunk_idxs;
 	result.n_mtrk = n_tracks;
 	result.n_unknown = n_unknown;
