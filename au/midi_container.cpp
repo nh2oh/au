@@ -15,10 +15,40 @@ void midi_example() {
 	smf_container_t mf {rawfile_check_result};
 	
 	auto h = mf.get_header();
-	std::cout << print(h) << std::endl;
+	std::cout << print(h) << std::endl << std::endl;
 	auto t1 = mf.get_track(1);
+	std::cout << print(t1) << std::endl << std::endl;
 }
 
+// Default value of sep == ' '; see header
+std::string print_hexascii(const unsigned char *p, int n, const char sep) {
+	std::string s {};  s.reserve(3*n);
+
+	std::array<unsigned char,16> nybble2ascii {'0','1','2','3','4','5',
+		'6','7','8','9','A','B','C','D','E','F'};
+
+	for (int i=0; i<n; ++i) {
+		s += nybble2ascii[((*p) & 0xF0)>>4];
+		s += nybble2ascii[((*p) & 0x0F)];
+		s += sep;
+		++p;
+	}
+
+	return s;
+}
+
+
+
+
+std::string print(const event_type& et) {
+	if (et == event_type::meta) {
+		return "meta";
+	} else if (et == event_type::midi) {
+		return "midi";
+	} else if (et == event_type::sysex) {
+		return "sysex";
+	}
+}
 
 
 detect_chunk_type_result_t detect_chunk_type(const unsigned char *p, int32_t max_size) {
@@ -337,6 +367,16 @@ const unsigned char *mtrk_event_container_t::end() const {
 	return this->p_ + this->size_;
 }
 
+std::string print(const mtrk_event_container_t& evnt) {
+	std::string s {};
+	s += ("delta_time == " + std::to_string(evnt.delta_time()) + ", ");
+	s += ("type == " + print(evnt.type()) + ", ");
+	s += ("data_size == " + std::to_string(evnt.data_size()) + ", ");
+	s += ("size == " + std::to_string(evnt.size()) + "\n\t");
+	s += print_hexascii(evnt.data_begin(), evnt.end()-evnt.data_begin(), ' ');
+
+	return s;
+}
 
 event_type detect_mtrk_event_type_dtstart_unsafe(const unsigned char *p) {
 	auto dt = midi_interpret_vl_field(p);
@@ -534,7 +574,16 @@ mtrk_container_iterator mtrk_container_t::end() const {
 	return mtrk_container_iterator {this, this->size(),unsigned char {0}};
 }
 
+std::string print(const mtrk_container_t& mtrk) {
+	std::string s {};
 
+	for (auto const& e : mtrk) {
+		s += print(e);
+		s += "\n";
+	}
+
+	return s;
+}
 
 
 
@@ -615,6 +664,9 @@ bool mtrk_container_iterator::operator==(const mtrk_container_iterator& rhs) con
 	} else {
 		return false;
 	}
+}
+bool mtrk_container_iterator::operator!=(const mtrk_container_iterator& rhs) const {
+	return !(*this==rhs);
 }
 
 //

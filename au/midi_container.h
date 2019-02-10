@@ -16,6 +16,11 @@ void midi_example();
 // TODO:  validate_, parse_, detect_ naming inconsistency
 //
 
+
+
+std::string print_hexascii(const unsigned char*, int, const char = ' ');
+
+
 //
 // There are two types of chunks: the Header chunk, containing data pertaining to the entire file 
 // (only one per file), and the Track chunk (possibly >1 per file).  Both chunk types have the 
@@ -33,6 +38,7 @@ enum event_type {  // MTrk events
 	sysex,
 	meta
 };
+std::string print(const event_type&);
 
 struct parse_meta_event_result_t {
 	bool is_valid {false};
@@ -226,6 +232,7 @@ public:
 	mtrk_container_iterator& operator++();
 	bool operator<(const mtrk_container_iterator&) const;
 	bool operator==(const mtrk_container_iterator&) const;
+	bool operator!=(const mtrk_container_iterator&) const;
 private:
 	const mtrk_container_t *container_ {};
 	int32_t container_offset_ {0};  // offset from this->container_.beg_
@@ -247,6 +254,7 @@ private:
 	friend class mtrk_container_iterator;
 };
 
+std::string print(const mtrk_container_t&);
 
 //
 // smf_container_t & friends
