@@ -4,6 +4,18 @@
 
 namespace mc {
 
+
+void midi_example() {
+	auto rawfiledata = dbk::readfile("C:\\Users\\ben\\Desktop\\scr\\CLEMENTI.MID").d;
+	auto rawfile_check_result = validate_smf(&rawfiledata[0],rawfiledata.size());
+
+	smf_container_t mf {rawfile_check_result};
+	
+	auto t1 = mf.get_track(1);
+}
+
+
+
 detect_chunk_type_result_t detect_chunk_type(const unsigned char *p) {
 	detect_chunk_type_result_t result {};
 	
@@ -176,7 +188,11 @@ const unsigned char *mtrk_event_container_t::end() const {
 }
 
 
-
+event_type detect_mtrk_event_type_dtstart_unsafe(const unsigned char *p) {
+	auto dt = midi_interpret_vl_field(p);
+	p += dt.N;
+	return detect_mtrk_event_type_unsafe(p);
+}
 // Pointer to the first data byte (following the delta-time), _not_ to the start of
 // the delta-time.  
 event_type detect_mtrk_event_type_unsafe(const unsigned char *p) {
@@ -345,7 +361,10 @@ mtrk_container_t::mtrk_container_t(const validate_mtrk_chunk_result_t& mtrk) {
 
 	this->p_ = mtrk.p;
 	this->size_ = mtrk.size;
-
+}
+mtrk_container_t::mtrk_container_t(const unsigned char *p, int32_t sz) {
+	this->p_ = p;
+	this->size_ = sz;
 }
 
 int32_t mtrk_container_t::data_size() const {
@@ -453,6 +472,9 @@ bool mtrk_container_iterator::operator==(const mtrk_container_iterator& rhs) con
 //
 validate_smf_result_t validate_smf(const unsigned char *p, int32_t size) {
 	validate_smf_result_t result {};
+	int n_tracks {0};
+	int n_unknown {0};
+	std::vector<chunk_idx_t> chunk_idxs {};
 
 	int32_t offset {0};
 	while (offset<size) {  // For each chunk...
@@ -474,6 +496,7 @@ validate_smf_result_t validate_smf(const unsigned char *p, int32_t size) {
 		}
 
 		if (curr_chunk.type == chunk_type::track) {
+			++n_tracks;
 			if (offset == 0) {
 				result.is_valid = false;
 				result.msg += "curr_chunk.type == chunk_type::track but offset == 0.  ";
@@ -488,6 +511,7 @@ validate_smf_result_t validate_smf(const unsigned char *p, int32_t size) {
 			}
 
 		} else if (curr_chunk.type == chunk_type::unknown) {
+			++n_unknown;
 			if (offset == 0) {
 				result.is_valid = false;
 				result.msg += "curr_chunk.type == chunk_type::unknown but offset == 0.  ";
@@ -495,13 +519,19 @@ validate_smf_result_t validate_smf(const unsigned char *p, int32_t size) {
 				return result;
 			}
 		}
-
+		chunk_idxs.push_back({curr_chunk.type,offset,curr_chunk.size});
 		offset += curr_chunk.size;
 	}
 
-	result.smf = smf_container_t(chunk_offsets,data);
+	result.chunk_idxs = chunk_idxs;
+	result.n_mtrk = n_tracks;
+	result.n_unknown = n_unknown;
+	result.size = offset;
+	result.p = p;
+
 	return result;
 }
+
 
 
 
@@ -547,6 +577,55 @@ read_smf_result_t read_smf(const std::filesystem::path& fp) {
 	result.smf = smf_container_t(chunk_offsets,data);
 	return result;
 }*/
+
+
+
+smf_container_t::smf_container_t(const validate_smf_result_t& maybe_smf) {
+	if (!maybe_smf.is_valid) {
+		std::abort();
+	}
+
+	this ->chunk_idxs_ = maybe_smf.chunk_idxs;
+	this->n_mtrk_ = maybe_smf.n_mtrk;
+	this->n_unknown_ = maybe_smf.n_unknown;
+	this->p_ = maybe_smf.p;
+	this->size_ = maybe_smf.size;
+}
+
+int smf_container_t::n_tracks() const {
+	return this->n_mtrk_;
+}
+int smf_container_t::n_chunks() const {
+	return this->n_mtrk_ + this->n_unknown_ + 1;  // +1 => MThd
+}
+mthd_container_t smf_container_t::get_header() const {
+	return mthd_container_t {this->p_};
+}
+mtrk_container_t smf_container_t::get_track(int n) const {
+	int curr_trackn {0};
+	for (const auto& e : this->chunk_idxs_) {
+		if (e.type == chunk_type::track) {
+			if (n == curr_trackn) {
+				return mtrk_container_t {this->p_ + e.offset, e.size};
+			}
+			++curr_trackn;
+		}
+	}
+
+	std::abort();
+}
+bool smf_container_t::get_chunk(int n) const {
+	// don't yet have a generic chunk container
+
+	return false;
+}
+
+
+
+
+
+
+
 
 
 

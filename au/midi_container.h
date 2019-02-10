@@ -8,6 +8,9 @@
 
 namespace mc {
 
+void midi_example();
+
+
 
 //
 // TODO:  validate_, parse_, detect_ naming inconsistency
@@ -200,6 +203,8 @@ struct parse_mtrk_event_result_t {
 };
 parse_mtrk_event_result_t parse_mtrk_event_type(const unsigned char*);
 std::string print(const mtrk_event_container_t&);
+event_type detect_mtrk_event_type_dtstart_unsafe(const unsigned char*);
+event_type detect_mtrk_event_type_unsafe(const unsigned char*);
 
 //
 // mtrk_container_t & friends
@@ -240,6 +245,7 @@ private:
 class mtrk_container_t {
 public:
 	mtrk_container_t(const validate_mtrk_chunk_result_t&);
+	mtrk_container_t(const unsigned char*, int32_t);
 
 	int32_t data_size() const;
 	int32_t size() const;
@@ -263,14 +269,22 @@ private:
 // is validated (ie, all events in an MTrk are valid).
 //
 //
+struct chunk_idx_t {
+	chunk_type type {};
+	int32_t offset {0};
+	int32_t size {0};
+};
 struct validate_smf_result_t {
 	bool is_valid {};
 	std::string msg {};
 	const unsigned char *p {};
 	int32_t size {0};
+	int n_mtrk {0};  // Number of MTrk chunks
+	int n_unknown {0};
+	std::vector<chunk_idx_t> chunk_idxs {};
 };
 //validate_smf_result_t validate_smf(const std::filesystem::path&);
-validate_smf_result_t validate_smf(const unsigned char*);
+validate_smf_result_t validate_smf(const unsigned char*, int32_t);
 
 class smf_container_t {
 public:
@@ -283,6 +297,11 @@ public:
 	int n_tracks() const;
 	int n_chunks() const;  // Includes MThd
 private:
+	std::vector<chunk_idx_t> chunk_idxs_ {};
+
+	// Total number of chunks is n_unknown + n_mtrk + 1 (MThd)
+	int8_t n_mtrk_ {0};
+	int8_t n_unknown_ {0};
 	const unsigned char *p_ {};
 	int32_t size_ {0};
 };
@@ -296,12 +315,51 @@ bool play(const smf_container_t&);
 //---------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------
 
+//
+// An MTrk event stream has global state from at least 4 sources:
+// 1) Time - the onset time for event n depends on the delta-t vl field for all prior
+//    events.  
+// 2) Midi status - the midi status byte for event n may not be specified; it may
+//    be inherited from some prior event.  
+// 3) The interpretation of event n depends in general on all prior control/program-
+//    change events.  These may occur mid-stream any number of times (ex, the 
+//    instrument could change in the middle of a stream).  
+// 4) Status from opaque sysex or meta events not understood by the parser.  
+//
+// Without taking a huge amount of memory, it is probably not possible to obtain
+// random, O(1) access to the values of all of the state variables in an MTrk event
+// stream.  
+//
+//
+
 
 //
-// Breaks the sequence-dependence of the event stream such that MTrk events are random-
-// accessible.  The downside is that this uses a shitload more memory, and locality is
-// not so great since the index is separate from the data.  
+// For Format 1 files, combines the events of all tracks into a single array where
+// events are ordered first by onset time, then by track number.  
 //
+class smf_t {
+public:
+private:
+	std::vector<unsigned char> data_ {};  // raw file data; whole file
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
 class indexed_smf_t {
 public:
 	struct yikes_t {
@@ -322,17 +380,15 @@ private:
 	};
 
 	struct event_idx2_t {
-		int32_t t_on {0};  // Cumulative
-		int32_t offset {0};  // into member "augmented" MTrk chunk vector
-		int8_t track_num {0};  // 0 => MThd, ...
+		int8_t track {0};
+		yikes_t d {};
 	};
 
 	std::vector<std::vector<>> didx_ {};  // in-file order of the chunks
 
 	std::vector<unsigned char> data_ {};  // raw file data; whole file
 };
-
-
+*/
 
 };  // namespace mc
 
