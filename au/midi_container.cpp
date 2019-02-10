@@ -76,7 +76,7 @@ detect_chunk_type_result_t detect_chunk_type(const unsigned char *p, int32_t max
 
 
 mthd_container_t::mthd_container_t(const detect_chunk_type_result_t& mthd) {
-	if (!mthd.is_valid) {
+	if (!mthd.is_valid || mthd.type != chunk_type::header) {
 		std::abort();
 	}
 	this->p_=mthd.p;
@@ -86,10 +86,10 @@ int16_t mthd_container_t::format() const {
 	return midi_raw_interpret<int16_t>(this->p_+8);
 }
 int16_t mthd_container_t::ntrks() const {
-	return midi_raw_interpret<int16_t>(this->p_+8+4);
+	return midi_raw_interpret<int16_t>(this->p_+8+2);
 }
 uint16_t mthd_container_t::division() const {
-	return midi_raw_interpret<uint16_t>(this->p_+8+4+4);
+	return midi_raw_interpret<uint16_t>(this->p_+8+2+2);
 }
 int32_t mthd_container_t::size() const {
 	return this->size_;
@@ -201,7 +201,7 @@ parse_midi_event_result_t parse_midi_event(const unsigned char *p, unsigned char
 
 std::string print(const mthd_container_t& mthd) {
 	std::string s {};
-
+	s += ("Data size = " + std::to_string(mthd.data_size()) + "    \n");
 	s += ("Format type = " + std::to_string(mthd.format()) + "    \n");
 	s += ("Num Tracks = " + std::to_string(mthd.ntrks()) + "    \n");
 
@@ -749,7 +749,9 @@ int smf_container_t::n_chunks() const {
 	return this->n_mtrk_ + this->n_unknown_ + 1;  // +1 => MThd
 }
 mthd_container_t smf_container_t::get_header() const {
-	return mthd_container_t {this->p_};
+	// I am assuming this->chunk_idxs_[0] has .type == chunk_type::header
+	// and offser == 0
+	return mthd_container_t {this->p_,this->chunk_idxs_[0].size};
 }
 mtrk_container_t smf_container_t::get_track(int n) const {
 	int curr_trackn {0};

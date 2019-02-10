@@ -93,42 +93,23 @@ detect_chunk_type_result_t detect_chunk_type(const unsigned char*, int32_t);
 class mthd_container_t {
 public:
 	mthd_container_t(const detect_chunk_type_result_t&);
-	mthd_container_t(const unsigned char *p) : p_(p) {};
+
+	// NB:  Second arg is the _exact_ size, not a max size
+	mthd_container_t(const unsigned char *p, int32_t sz) 
+		: p_(p),size_(sz) {};
 
 	int16_t format() const;
 	int16_t ntrks() const;
 	uint16_t division() const;
 
-
-	//std::array<char,4> id() const {
-	//	std::array<char,4> result {};
-	//	std::copy(p_,p_+4,result.begin());
-	//	return result;
-	//};
-
 	// Does not include the 4 byte "MThd" and 4 byte data-length fields
 	int32_t data_size() const;
-
 	// Includes the "MThd" and data-length fields
-	int32_t size() const;
-
-	/*// begin(), end() allow me to hide the member p_
-	// iterators... ?
-	const unsigned char *begin() const {
-		return this->p_+8;
-	};
-	const unsigned char *end() const {
-		return this->p_+this->size();
-	};*/
-	
+	int32_t size() const;	
 private:
 	const unsigned char *p_ {};
 	int32_t size_ {0};
 };
-
-
-//int16_t fmt_type(const mthd_container_t&);
-//int16_t num_trks(const mthd_container_t&);
 
 enum class midi_time_division_field_type_t {
 	ticks_per_quarter,
