@@ -8,7 +8,7 @@
 
 namespace mc {
 
-void midi_example();
+int midi_example();
 
 
 
@@ -43,9 +43,6 @@ std::string print(const event_type&);
 struct parse_meta_event_result_t {
 	bool is_valid {false};
 	midi_vl_field_interpreted delta_t {};
-	// FF <type> <length> <bytes>N+
-	//uint8_t size {0};  // does not include delta_time; is 2+length.N+length.val
-	//uint8_t id {0};  // FF
 	uint8_t type {0};
 	int32_t data_size {};  // Everything not delta_time
 };
@@ -54,8 +51,6 @@ parse_meta_event_result_t parse_meta_event(const unsigned char*);
 struct parse_sysex_event_result_t {
 	bool is_valid {false};
 	midi_vl_field_interpreted delta_t {};
-	// F0 (sometimes F7 ...see std) <length> <bytes to be transmitted after F0||F7>
-	//uint8_t size {0}; // does not include delta_time; is 1+length.N+length.val
 	uint8_t type {0};  // F0 or F7
 	int32_t data_size {};  // Everything not delta_time
 };
@@ -67,7 +62,6 @@ struct parse_midi_event_result_t {
 	bool has_status_byte {false};
 	uint8_t status_byte {0};
 	uint8_t n_data_bytes {0};  // 0, 1, 2
-	// does not include delta_time;  0 || 1 (status) + 1 || 2 (data) => 1 || 2 || 3
 	int32_t data_size {};  // Everything not delta_time
 };
 parse_midi_event_result_t parse_midi_event(const unsigned char*, unsigned char=0);
@@ -79,16 +73,15 @@ unsigned char midi_event_get_status_byte(const unsigned char*);
 
 
 //
-// Checks for the 4-char id and the 4-byte size.  Sanity check on the value of the
-// size.  
+// Checks for the 4-char id and the 4-byte size.  Verifies that the id + size field 
+// + the reported size does not exceed the max_size suppled as the second argument.  
+// Does _not_ inspect anything past the end of the length field.  
 //
 struct detect_chunk_type_result_t {
 	chunk_type type {chunk_type::unknown};
 	int32_t size {0};
 	std::string msg {};
 	bool is_valid {false};
-		// False => Does not begin w/a 4 char ASCII id & a 4-byte length, or possibly
-		// the length => a buffer overrun.  
 	const unsigned char* p {};
 };
 detect_chunk_type_result_t detect_chunk_type(const unsigned char*, int32_t);
@@ -96,6 +89,11 @@ detect_chunk_type_result_t detect_chunk_type(const unsigned char*, int32_t);
 // Why not a generic midi_chunk_container_t<T> template?  Because MThd and MTrk containers
 // are radically different and it really does not make sense to write generic functions to 
 // operate on either type.  
+//
+// Need:
+// validate_mthd_result_t validate_mthd(detect_chunk_type_result_t)
+// Then change the mthd_container_t ctor to accept this.  
+//
 class mthd_container_t {
 public:
 	mthd_container_t(const detect_chunk_type_result_t&);

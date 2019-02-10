@@ -7,7 +7,7 @@
 namespace mc {
 
 
-void midi_example() {
+int midi_example() {
 	auto rawfiledata = dbk::readfile("C:\\Users\\ben\\Desktop\\scr\\CLEMENTI.MID").d;
 	//auto rawfiledata = dbk::readfile("C:\\Users\\ben\\Desktop\\scr\\test.mid").d;
 	auto rawfile_check_result = validate_smf(&rawfiledata[0],rawfiledata.size());
@@ -16,8 +16,14 @@ void midi_example() {
 	
 	auto h = mf.get_header();
 	std::cout << print(h) << std::endl << std::endl;
-	auto t1 = mf.get_track(1);
-	std::cout << print(t1) << std::endl << std::endl;
+	auto t1 = mf.get_track(0);
+	std::cout << "TRACK 1\n" << print(t1) << std::endl << std::endl;
+	auto t2 = mf.get_track(1);
+	std::cout << "TRACK 2\n" << print(t2) << std::endl << std::endl;
+	auto t3 = mf.get_track(2);
+	std::cout << "TRACK 3\n" << print(t3) << std::endl << std::endl;
+
+	return 0;
 }
 
 // Default value of sep == ' '; see header
