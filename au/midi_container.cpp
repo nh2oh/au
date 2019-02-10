@@ -58,6 +58,101 @@ detect_chunk_type_result_t detect_chunk_type(const unsigned char *p) {
 }
 
 
+parse_meta_event_result_t parse_meta_event(const unsigned char *p) {
+	parse_meta_event_result_t result {};
+	result.delta_t = midi_interpret_vl_field(p);
+	if (result.delta_t.N > 4) {
+		result.is_valid = false;
+		return result;
+	}
+	p += result.delta_t.N;
+
+	if (*p != 0xFF) {
+		result.is_valid = false;
+		return result;
+	}
+	++p;
+
+	result.type = *p;
+	++p;
+
+	result.data_size = midi_interpret_vl_field(p);
+
+	result.is_valid = true;
+	return result;
+}
+
+parse_sysex_event_result_t parse_sysex_event(const unsigned char *p) {
+	parse_sysex_event_result_t result {};
+	result.delta_t = midi_interpret_vl_field(p);
+	if (result.delta_t.N > 4) {
+		result.is_valid = false;
+		return result;
+	}
+	p += result.delta_t.N;
+
+	if (*p != 0xF0 || *p != 0xFF) {
+		result.is_valid = false;
+		return result;
+	}
+	result.type = *p;
+	++p;
+
+	result.data_size = midi_interpret_vl_field(p);
+
+	result.is_valid = true;
+	return result;
+}
+
+parse_midi_event_result_t parse_midi_event(const unsigned char *p, unsigned char prev_status_byte) {
+	parse_midi_event_result_t result {};
+	result.delta_t = midi_interpret_vl_field(p);
+	if (result.delta_t.N > 4) {
+		result.is_valid = false;
+		return result;
+	}
+	p += result.delta_t.N;
+
+	if ((*p & 0x80) == 0x80) {  // Present message has a status byte
+		result.has_status_byte = true;
+		result.status_byte = *p;
+		++p;
+	} else {
+		result.has_status_byte = false;
+		if ((prev_status_byte& 0x80) != 0x80) {
+			// prev_status_byte is invalid
+			result.is_valid = false;
+			return result;
+		}
+		result.status_byte = prev_status_byte;
+		// Not incrementing p; *p is the first data byte in running-status mode
+	}
+	// At this point, p points at the first data byte
+
+	if ((result.status_byte & 0xF0) == 0xC0 || (result.status_byte & 0xF0) == 0xD0) {
+		result.n_data_bytes = 1;
+	} else {
+		result.n_data_bytes = 2;
+	}
+
+	// Check first data byte
+	if ((*p & 0x80) != 0) {
+		result.is_valid = false;
+		return result;
+	}
+
+	// Optionally check second data byte
+	if (result.n_data_bytes == 2) {
+		++p;
+		if ((*p & 0x80) != 0) {
+			result.is_valid = false;
+			return result;
+		}
+	}
+
+	result.is_valid = true;
+	return result;
+}
 
 std::string print(const mthd_container_t& mthd) {
 	std::string s {};
