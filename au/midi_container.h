@@ -1,3 +1,4 @@
+#pragma once
 #include "..\aulib\input\midi_util.h"
 #include <cstdint>
 #include <array>
@@ -5,6 +6,32 @@
 #include <string>
 #include <vector>
 #include <filesystem>
+
+namespace mdata {
+struct meta_event_desc_t {
+	const uint8_t type {};
+	const std::array<char,25> d {};
+};
+inline const std::array<const meta_event_desc_t,17> meta {
+	meta_event_desc_t {0x00,"Sequence-Number"},
+	meta_event_desc_t {0x01,"Text-Event"},
+	meta_event_desc_t {0x02,"Copyright Notice"},
+	meta_event_desc_t {0x03,"Sequence/Track Name"},
+	meta_event_desc_t {0x04,"Instrument Name"},
+	meta_event_desc_t {0x05,"Lyric"},
+	meta_event_desc_t {0x06,"Marker"},
+	meta_event_desc_t {0x07,"Cue Point"},
+	meta_event_desc_t {0x20,"MIDI Channel Prefix"},
+	meta_event_desc_t {0x2F,"End-of-Track"},
+	meta_event_desc_t {0x51,"Set-Tempo"},
+	meta_event_desc_t {0x54,"SMPTE Offset"},
+	meta_event_desc_t {0x58,"Time-Signature"},
+	meta_event_desc_t {0x59,"Key-Signature"},
+	meta_event_desc_t {0x7F,"Sequencer-Specific"}
+};
+
+
+};
 
 namespace mc {
 
@@ -227,6 +254,22 @@ event_type detect_mtrk_event_type_unsafe(const unsigned char*);
 // and can therefore be parsed internally using the fast but generally unsafe 
 // parse_*_usafe(const unsigned char*) family of functions.  
 //
+// MTrk event sequqences are not random-accessible, since (1) midi, sysex, and meta events are
+// of variable length, and (2) since at each point in the sequence there is an implicit 
+// "running status" that can be determined only by parsing the the preceeding most recent midi
+// status byte.  This byte may occur hundreds of bytes to the left of the MTrk event of interest.  
+// To read MTrk event n in the container, it is necessary to iterate through events 0->(n-1).  
+// For this purpose, the begin() and end() methods of mtrk_container_t return an
+// mtrk_container_iterator_t, a special iterator dereferencing to an mtrk_event_container_t.  
+// An mtrk_container_iterator_t can only be forward-incremented, but keeps track of the most
+// recent midi status byte.  This is the smallest amount of information required to determine
+// the size of an MTrk event from a pointer to the first byte of its delta-time field.  
+//
+// It should be noted that midi status is not the only type of state implicit to an MTrk event
+// stream.  At any point in a stream, tempo, time-signature, etc can change.  A user interested 
+// in these data is responsible for keeping track of their values.  The midi-status byte is 
+// stored in the iterator because it is the only way it is possible to determine the size of the
+// next midi message in a running-status sequence.  
 //
 class mtrk_container_iterator_t;
 class mtrk_container_t;
@@ -257,6 +300,9 @@ private:
 	unsigned char midi_status_ {0};
 };
 
+//
+//
+//
 class mtrk_container_t {
 public:
 	mtrk_container_t(const validate_mtrk_chunk_result_t&);
