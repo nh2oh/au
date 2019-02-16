@@ -15,7 +15,7 @@ int midi_example() {
 
 	smf_container_t mf {rawfile_check_result};
 	
-	//std::cout << print(mf) << std::endl << std::endl;
+	std::cout << print(mf) << std::endl << std::endl;
 
 	//auto h = mf.get_header();
 	//std::cout << print(h) << std::endl << std::endl;
@@ -23,8 +23,8 @@ int midi_example() {
 	//std::cout << "TRACK 1\n" << print(t1) << std::endl << std::endl;
 	//auto t2 = mf.get_track(1);
 	//std::cout << "TRACK 2\n" << print(t2) << std::endl << std::endl;
-	auto t3 = mf.get_track(2);
-	std::cout << "TRACK 3\n" << print(t3) << std::endl << std::endl;
+	//auto t3 = mf.get_track(2);
+	//std::cout << "TRACK 3\n" << print(t3) << std::endl << std::endl;
 
 	return 0;
 }
@@ -573,45 +573,24 @@ int32_t mtrk_container_t::size() const {
 	//return this->data_size()+4;
 	return this->size_;
 }
-mtrk_container_iterator mtrk_container_t::begin() const {
+mtrk_container_iterator_t mtrk_container_t::begin() const {
 	// From the std p.135:  "The first event in each MTrk chunk must specify status"
 	// thus we know midi_event_get_status_byte(this->p_+8) will succeed
-	return mtrk_container_iterator {this, int32_t{8}, midi_event_get_status_byte(this->p_+8)};
+	return mtrk_container_iterator_t {this, int32_t{8}, midi_event_get_status_byte(this->p_+8)};
 }
-mtrk_container_iterator mtrk_container_t::end() const {
+mtrk_container_iterator_t mtrk_container_t::end() const {
 	// Note that i am supplying an invalid midi status byte for this one-past-the-end 
 	// iterator.  
-	return mtrk_container_iterator {this, this->size(), unsigned char {0}};
+	return mtrk_container_iterator_t {this, this->size(), unsigned char {0}};
 }
 
 std::string print(const mtrk_container_t& mtrk) {
 	std::string s {};
 
-	//auto eit = mtrk.end();
-	//std::cout << (eit==mtrk.begin()) << std::endl;
-
-	for (mtrk_container_iterator it = mtrk.begin(); it != mtrk.end(); ++it) {
-		/*auto curr_event = *it;
-		auto dt = curr_event.delta_time();
-
-		if (dt == 339 && it.container_offset_ != 1185) {
-			auto t = curr_event.type();
-			auto sz = curr_event.size();
-
-			auto it_cpy = it;
-			++it_cpy;
-			bool iteqeit = (it_cpy==eit);
-			bool itneqeit = (it_cpy!=eit);
-			std::cout << "iteqeit: " << iteqeit << "itneqeit: " << itneqeit << std::endl;
-			std::cout << "dt=" << dt << "  sz=" << sz << " (*it_cpy).size()=" << (*it_cpy).size() << std::endl;
-			std::cout << "yay" << std::endl;
-		}*/
-
+	for (mtrk_container_iterator_t it = mtrk.begin(); it != mtrk.end(); ++it) {
 		s += print(*it);
 		s += "\n";
-
 	}
-
 	/*for (auto const& e : mtrk) {
 		s += print(e);
 		s += "\n";
@@ -630,13 +609,13 @@ std::string print(const mtrk_container_t& mtrk) {
 
 
 
-mtrk_event_container_t mtrk_container_iterator::operator*() const {
+mtrk_event_container_t mtrk_container_iterator_t::operator*() const {
 	const unsigned char *p = this->container_->p_+this->container_offset_;
 	auto sz = parse_midi_event(p, this->midi_status_).data_size;
 	return mtrk_event_container_t {p,sz};
 }
 
-mtrk_container_iterator& mtrk_container_iterator::operator++() {
+mtrk_container_iterator_t& mtrk_container_iterator_t::operator++() {
 	// Get the size of the presently indicated event and increment 
 	// this->container_offset_ by that ammount.  
 	const unsigned char *curr_p = this->container_->p_ + this->container_offset_;
@@ -684,14 +663,14 @@ mtrk_container_iterator& mtrk_container_iterator::operator++() {
 	return *this;
 }
 
-bool mtrk_container_iterator::operator<(const mtrk_container_iterator& rhs) const {
+bool mtrk_container_iterator_t::operator<(const mtrk_container_iterator_t& rhs) const {
 	if (this->container_ == rhs.container_) {
 		return this->container_offset_ < rhs.container_offset_;
 	} else {
 		return false;
 	}
 }
-bool mtrk_container_iterator::operator==(const mtrk_container_iterator& rhs) const {
+bool mtrk_container_iterator_t::operator==(const mtrk_container_iterator_t& rhs) const {
 	// I *could* compare midi_status_ as well, however, it is an error condition if it's
 	// different for the same offset.  
 	if (this->container_ == rhs.container_) {
@@ -700,7 +679,7 @@ bool mtrk_container_iterator::operator==(const mtrk_container_iterator& rhs) con
 		return false;
 	}
 }
-bool mtrk_container_iterator::operator!=(const mtrk_container_iterator& rhs) const {
+bool mtrk_container_iterator_t::operator!=(const mtrk_container_iterator_t& rhs) const {
 	return !(*this==rhs);
 }
 
