@@ -10,16 +10,19 @@ namespace mc {
 int midi_example() {
 	auto rawfiledata = dbk::readfile("C:\\Users\\ben\\Desktop\\scr\\CLEMENTI.MID").d;
 	//auto rawfiledata = dbk::readfile("C:\\Users\\ben\\Desktop\\scr\\test.mid").d;
-	auto rawfile_check_result = validate_smf(&rawfiledata[0],rawfiledata.size());
+	auto rawfile_check_result = validate_smf(&rawfiledata[0],rawfiledata.size(),
+		"C:\\Users\\ben\\Desktop\\scr\\CLEMENTI.MID");
 
 	smf_container_t mf {rawfile_check_result};
 	
-	auto h = mf.get_header();
-	std::cout << print(h) << std::endl << std::endl;
-	auto t1 = mf.get_track(0);
-	std::cout << "TRACK 1\n" << print(t1) << std::endl << std::endl;
-	auto t2 = mf.get_track(1);
-	std::cout << "TRACK 2\n" << print(t2) << std::endl << std::endl;
+	//std::cout << print(mf) << std::endl << std::endl;
+
+	//auto h = mf.get_header();
+	//std::cout << print(h) << std::endl << std::endl;
+	//auto t1 = mf.get_track(0);
+	//std::cout << "TRACK 1\n" << print(t1) << std::endl << std::endl;
+	//auto t2 = mf.get_track(1);
+	//std::cout << "TRACK 2\n" << print(t2) << std::endl << std::endl;
 	auto t3 = mf.get_track(2);
 	std::cout << "TRACK 3\n" << print(t3) << std::endl << std::endl;
 
@@ -567,7 +570,8 @@ int32_t mtrk_container_t::data_size() const {
 	return midi_raw_interpret<int32_t>(this->p_+4);
 }
 int32_t mtrk_container_t::size() const {
-	return this->data_size()+4;
+	//return this->data_size()+4;
+	return this->size_;
 }
 mtrk_container_iterator mtrk_container_t::begin() const {
 	// From the std p.135:  "The first event in each MTrk chunk must specify status"
@@ -577,16 +581,41 @@ mtrk_container_iterator mtrk_container_t::begin() const {
 mtrk_container_iterator mtrk_container_t::end() const {
 	// Note that i am supplying an invalid midi status byte for this one-past-the-end 
 	// iterator.  
-	return mtrk_container_iterator {this, this->size(),unsigned char {0}};
+	return mtrk_container_iterator {this, this->size(), unsigned char {0}};
 }
 
 std::string print(const mtrk_container_t& mtrk) {
 	std::string s {};
 
-	for (auto const& e : mtrk) {
+	//auto eit = mtrk.end();
+	//std::cout << (eit==mtrk.begin()) << std::endl;
+
+	for (mtrk_container_iterator it = mtrk.begin(); it != mtrk.end(); ++it) {
+		/*auto curr_event = *it;
+		auto dt = curr_event.delta_time();
+
+		if (dt == 339 && it.container_offset_ != 1185) {
+			auto t = curr_event.type();
+			auto sz = curr_event.size();
+
+			auto it_cpy = it;
+			++it_cpy;
+			bool iteqeit = (it_cpy==eit);
+			bool itneqeit = (it_cpy!=eit);
+			std::cout << "iteqeit: " << iteqeit << "itneqeit: " << itneqeit << std::endl;
+			std::cout << "dt=" << dt << "  sz=" << sz << " (*it_cpy).size()=" << (*it_cpy).size() << std::endl;
+			std::cout << "yay" << std::endl;
+		}*/
+
+		s += print(*it);
+		s += "\n";
+
+	}
+
+	/*for (auto const& e : mtrk) {
 		s += print(e);
 		s += "\n";
-	}
+	}*/
 
 	return s;
 }
@@ -678,7 +707,8 @@ bool mtrk_container_iterator::operator!=(const mtrk_container_iterator& rhs) con
 //
 //TODO:  The offset checks are repetitive...
 //
-validate_smf_result_t validate_smf(const unsigned char *p, int32_t offset_end) {
+validate_smf_result_t validate_smf(const unsigned char *p, int32_t offset_end, 
+									const std::string& fname) {
 	validate_smf_result_t result {};
 	int n_tracks {0};
 	int n_unknown {0};
@@ -731,6 +761,7 @@ validate_smf_result_t validate_smf(const unsigned char *p, int32_t offset_end) {
 	}
 
 	result.is_valid = true;
+	result.fname = fname;
 	result.chunk_idxs = chunk_idxs;
 	result.n_mtrk = n_tracks;
 	result.n_unknown = n_unknown;
@@ -793,6 +824,7 @@ smf_container_t::smf_container_t(const validate_smf_result_t& maybe_smf) {
 		std::abort();
 	}
 
+	this->fname_ = maybe_smf.fname;
 	this ->chunk_idxs_ = maybe_smf.chunk_idxs;
 	this->n_mtrk_ = maybe_smf.n_mtrk;
 	this->n_unknown_ = maybe_smf.n_unknown;
@@ -830,7 +862,36 @@ bool smf_container_t::get_chunk(int n) const {
 	return false;
 }
 
+std::string smf_container_t::fname() const {
+	return this->fname_;
+}
 
+std::string print(const smf_container_t& smf) {
+	std::string s {};
+
+	s += smf.fname();
+	s += "\n";
+
+	auto mthd = smf.get_header();
+	s += "Header (MThd) \t(data_size = ";
+	s += std::to_string(mthd.data_size()) ;
+	s += ", size = ";
+	s += std::to_string(mthd.size());
+	s += "):\n";
+	s += print(mthd);
+	s += "\n";
+
+	for (int i=0; i<smf.n_tracks(); ++i) {
+		auto curr_trk = smf.get_track(i);
+		s += ("Track (MTrk) " + std::to_string(i) 
+			+ "\t(data_size = " + std::to_string(curr_trk.data_size())
+			+ ", size = " + std::to_string(curr_trk.size()) + "):\n");
+		s += print(curr_trk);
+		s += "\n";
+	}
+
+	return s;
+}
 
 
 

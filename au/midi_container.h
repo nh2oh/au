@@ -161,6 +161,13 @@ std::string print(const mthd_container_t&);
 // lack an explicit status - for example, if writing a program to write out a novel smf.  
 // Nevertheless, to exist at all these events must ipso facto have a concrete size.  
 //
+// Note that this 96 byte class will in the majority of simple smf files be pointing into
+// an array of mostly 4-byte (delta-t+status+p1+p2) and 3-byte logical entities.  
+// Nevertheless, i do this because smf files and midi streams in general may contain 
+// arbitrary-length sysex (& possibly meta) messages.  
+// TODO:  SSO-style union for midi messages?
+//
+//
 //
 // The four methods are applicable to _all_ mtrk events are:
 // (1) delta_time(mtrk_event_container_t)
@@ -231,9 +238,11 @@ public:
 	bool operator<(const mtrk_container_iterator&) const;
 	bool operator==(const mtrk_container_iterator&) const;
 	bool operator!=(const mtrk_container_iterator&) const;
-private:
+public:
 	const mtrk_container_t *container_ {};
 	int32_t container_offset_ {0};  // offset from this->container_.beg_
+
+	// All points in a midi stream have an implied (or explicit) midi-status
 	unsigned char midi_status_ {0};
 };
 
@@ -273,6 +282,9 @@ struct chunk_idx_t {
 struct validate_smf_result_t {
 	bool is_valid {};
 	std::string msg {};
+
+	// Needed by the smf_container_t ctor
+	std::string fname {};
 	const unsigned char *p {};
 	int32_t size {0};
 	int n_mtrk {0};  // Number of MTrk chunks
@@ -280,7 +292,7 @@ struct validate_smf_result_t {
 	std::vector<chunk_idx_t> chunk_idxs {};
 };
 //validate_smf_result_t validate_smf(const std::filesystem::path&);
-validate_smf_result_t validate_smf(const unsigned char*, int32_t);
+validate_smf_result_t validate_smf(const unsigned char*, int32_t, const std::string&);
 
 class smf_container_t {
 public:
@@ -289,10 +301,12 @@ public:
 	mthd_container_t get_header() const;
 	mtrk_container_t get_track(int) const;
 	bool get_chunk(int) const;  // unknown chunks allowed...
-	
+	std::string fname() const;
+
 	int n_tracks() const;
 	int n_chunks() const;  // Includes MThd
 private:
+	std::string fname_ {};
 	std::vector<chunk_idx_t> chunk_idxs_ {};
 
 	// Total number of chunks is n_unknown + n_mtrk + 1 (MThd)
