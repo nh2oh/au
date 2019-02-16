@@ -8,30 +8,46 @@
 #include <filesystem>
 
 namespace mdata {
-struct meta_event_desc_t {
+struct byte_desc_t {
 	const uint8_t type {};
-	const std::array<char,25> d {};
+	const std::array<char,30> d {};
 };
-inline const std::array<const meta_event_desc_t,17> meta {
-	meta_event_desc_t {0x00,"Sequence-Number"},
-	meta_event_desc_t {0x01,"Text-Event"},
-	meta_event_desc_t {0x02,"Copyright Notice"},
-	meta_event_desc_t {0x03,"Sequence/Track Name"},
-	meta_event_desc_t {0x04,"Instrument Name"},
-	meta_event_desc_t {0x05,"Lyric"},
-	meta_event_desc_t {0x06,"Marker"},
-	meta_event_desc_t {0x07,"Cue Point"},
-	meta_event_desc_t {0x20,"MIDI Channel Prefix"},
-	meta_event_desc_t {0x2F,"End-of-Track"},
-	meta_event_desc_t {0x51,"Set-Tempo"},
-	meta_event_desc_t {0x54,"SMPTE Offset"},
-	meta_event_desc_t {0x58,"Time-Signature"},
-	meta_event_desc_t {0x59,"Key-Signature"},
-	meta_event_desc_t {0x7F,"Sequencer-Specific"}
+inline const std::array<const byte_desc_t,17> meta {
+	byte_desc_t {0x00,"Sequence-Number"},
+	byte_desc_t {0x01,"Text-Event"},
+	byte_desc_t {0x02,"Copyright Notice"},
+	byte_desc_t {0x03,"Sequence/Track Name"},
+	byte_desc_t {0x04,"Instrument Name"},
+	byte_desc_t {0x05,"Lyric"},
+	byte_desc_t {0x06,"Marker"},
+	byte_desc_t {0x07,"Cue Point"},
+	byte_desc_t {0x20,"MIDI Channel Prefix"},
+	byte_desc_t {0x2F,"End-of-Track"},
+	byte_desc_t {0x51,"Set-Tempo"},
+	byte_desc_t {0x54,"SMPTE Offset"},
+	byte_desc_t {0x58,"Time-Signature"},
+	byte_desc_t {0x59,"Key-Signature"},
+	byte_desc_t {0x7F,"Sequencer-Specific"}
 };
 
-
+// For midi-status bytes of type "channel-voice," mask w/ 0xF0.  See Std p. 100.  
+// Note that They byte must be channel-voice, not channel-mode, since for channel-mode, 
+// 0xB0 => "Select channel mode"  Ex:
+// (status_type & 0xF0) ==
+inline const std::array<const byte_desc_t,7> midi_status_ch_voice {
+	byte_desc_t {0x80,"Note-off"},
+	byte_desc_t {0x90,"Note-on"},
+	byte_desc_t {0xA0,"Aftertouch/Key-pressure"},
+	byte_desc_t {0xB0,"Control-change"},
+	byte_desc_t {0xC0,"Program-change"},
+	byte_desc_t {0xD0,"Aftertouch/Channel-pressure"},
+	byte_desc_t {0xE0,"Pitch-bend-change"}
 };
+inline const std::array<const byte_desc_t,3> midi_status_ch_mode {
+	byte_desc_t {0xB0,"Select-channel-mode"}
+};
+
+};  // namespace mdata
 
 namespace mc {
 
@@ -411,52 +427,36 @@ private:
 };
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-class indexed_smf_t {
-public:
-	struct yikes_t {
-		// The largest vl-quantity allowed is 0x0FFFFFFF, hence the MS-nybble can be used as
-		// a flag.  0 => payload is the message, 1 => payload is a "ptr" to the message.  
-		std::array<unsigned char,4> dt_flag {};
-		std::array<unsigned char,8> payload {};
-	};
-private:
-	// Format 1 => Tracks are played simultaneously
-	// All midi events contain their status byte.  Since here i am storing different tracks 
-	// interleaved, need to deal with the fact that different tracks can have different 
-	// running-status at the same time.  
-	struct event_idx_t {
-		int32_t t_on {0};  // Cumulative
-		int32_t offset {0};  // into member "augmented" MTrk chunk vector
-		int8_t track_num {0};  // 0 => MThd, ...
-	};
-
-	struct event_idx2_t {
-		int8_t track {0};
-		yikes_t d {};
-	};
-
-	std::vector<std::vector<>> didx_ {};  // in-file order of the chunks
-
-	std::vector<unsigned char> data_ {};  // raw file data; whole file
-};
-*/
-
 };  // namespace mc
+
+
+//---------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------
+
+//
+// Owning containers
+//
+// TODO:  Packing rules probably => room for one more 8-bit member
+//
+class midi_event_t {
+public:
+
+	unsigned char status() const;
+	bool explicit_status() const;
+
+
+	bool set_status(unsigned char);  // False if failed
+	void set_status_explicit();  // False if failed
+	void set_status_implicit(u);  // False if failed
+private:
+	unsigned char status;  // < 0 => implicit (running-status)
+	unsigned char p1;
+	unsigned char p2;
+};
+
+
+
+
 
 

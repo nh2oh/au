@@ -17,8 +17,6 @@ int midi_example() {
 	
 	std::cout << print(mf) << std::endl << std::endl;
 
-	auto x = mdata::what[0].d;
-
 	//auto h = mf.get_header();
 	//std::cout << print(h) << std::endl << std::endl;
 	//auto t1 = mf.get_track(0);
