@@ -90,9 +90,6 @@
     <ClCompile Include="melgen\melody_hiller.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="input\midi_util.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="util\au_util.h">
@@ -192,9 +189,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="types\voice_t.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="input\midi_util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

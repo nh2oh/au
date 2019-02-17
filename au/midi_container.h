@@ -1,5 +1,5 @@
 #pragma once
-#include "..\aulib\input\midi_util.h"
+#include "midi_raw.h"
 #include <cstdint>
 #include <array>
 #include <algorithm>
@@ -7,127 +7,10 @@
 #include <vector>
 #include <filesystem>
 
-namespace mdata {
-struct byte_desc_t {
-	const uint8_t type {};
-	const std::array<char,30> d {};
-};
-inline const std::array<const byte_desc_t,17> meta {
-	byte_desc_t {0x00,"Sequence-Number"},
-	byte_desc_t {0x01,"Text-Event"},
-	byte_desc_t {0x02,"Copyright Notice"},
-	byte_desc_t {0x03,"Sequence/Track Name"},
-	byte_desc_t {0x04,"Instrument Name"},
-	byte_desc_t {0x05,"Lyric"},
-	byte_desc_t {0x06,"Marker"},
-	byte_desc_t {0x07,"Cue Point"},
-	byte_desc_t {0x20,"MIDI Channel Prefix"},
-	byte_desc_t {0x2F,"End-of-Track"},
-	byte_desc_t {0x51,"Set-Tempo"},
-	byte_desc_t {0x54,"SMPTE Offset"},
-	byte_desc_t {0x58,"Time-Signature"},
-	byte_desc_t {0x59,"Key-Signature"},
-	byte_desc_t {0x7F,"Sequencer-Specific"}
-};
-
-// For midi-status bytes of type "channel-voice," mask w/ 0xF0.  See Std p. 100.  
-// Note that They byte must be channel-voice, not channel-mode, since for channel-mode, 
-// 0xB0 => "Select channel mode"  Ex:
-// (status_type & 0xF0) ==
-inline const std::array<const byte_desc_t,7> midi_status_ch_voice {
-	byte_desc_t {0x80,"Note-off"},
-	byte_desc_t {0x90,"Note-on"},
-	byte_desc_t {0xA0,"Aftertouch/Key-pressure"},
-	byte_desc_t {0xB0,"Control-change"},
-	byte_desc_t {0xC0,"Program-change"},
-	byte_desc_t {0xD0,"Aftertouch/Channel-pressure"},
-	byte_desc_t {0xE0,"Pitch-bend-change"}
-};
-inline const std::array<const byte_desc_t,3> midi_status_ch_mode {
-	byte_desc_t {0xB0,"Select-channel-mode"}
-};
-
-};  // namespace mdata
 
 namespace mc {
 
 int midi_example();
-
-
-
-//
-// TODO:  validate_, parse_, detect_ naming inconsistency
-//
-
-
-
-std::string print_hexascii(const unsigned char*, int, const char = ' ');
-
-
-//
-// There are two types of chunks: the Header chunk, containing data pertaining to the entire file 
-// (only one per file), and the Track chunk (possibly >1 per file).  Both chunk types have the 
-// layout implied by struct midi_chunk.  Note that the length field is always 4 bytes and is not a
-// vl-type quantity.  From p. 132: "Your programs should expect alien chunks and treat them as if
-// they weren't there."  
-//
-enum class chunk_type {
-	header,  // MThd
-	track,  // MTrk
-	unknown  // The std requires that unrecognized chunk types be permitted
-};
-enum event_type {  // MTrk events
-	midi,
-	sysex,
-	meta
-};
-std::string print(const event_type&);
-
-struct parse_meta_event_result_t {
-	bool is_valid {false};
-	midi_vl_field_interpreted delta_t {};
-	uint8_t type {0};
-	int32_t data_size {};  // Everything not delta_time
-};
-parse_meta_event_result_t parse_meta_event(const unsigned char*);
-
-struct parse_sysex_event_result_t {
-	bool is_valid {false};
-	midi_vl_field_interpreted delta_t {};
-	uint8_t type {0};  // F0 or F7
-	int32_t data_size {};  // Everything not delta_time
-};
-parse_sysex_event_result_t parse_sysex_event(const unsigned char*);
-
-struct parse_midi_event_result_t {
-	bool is_valid {false};
-	midi_vl_field_interpreted delta_t {};
-	bool has_status_byte {false};
-	uint8_t status_byte {0};
-	uint8_t n_data_bytes {0};  // 0, 1, 2
-	int32_t data_size {};  // Everything not delta_time
-};
-parse_midi_event_result_t parse_midi_event(const unsigned char*, unsigned char=0);
-bool midi_event_has_status_byte(const unsigned char*);
-unsigned char midi_event_get_status_byte(const unsigned char*);
-
-
-
-
-
-//
-// Checks for the 4-char id and the 4-byte size.  Verifies that the id + size field 
-// + the reported size does not exceed the max_size suppled as the second argument.  
-// Does _not_ inspect anything past the end of the length field.  
-//
-struct detect_chunk_type_result_t {
-	chunk_type type {chunk_type::unknown};
-	int32_t size {0};
-	std::string msg {};
-	bool is_valid {false};
-	const unsigned char* p {};
-};
-detect_chunk_type_result_t detect_chunk_type(const unsigned char*, int32_t);
 
 //
 // Why not a generic midi_chunk_container_t<T> template?  Because MThd and MTrk containers
@@ -178,12 +61,6 @@ struct midi_smpte_field {
 };
 midi_smpte_field interpret_smpte_field(uint16_t);  // assumes midi_time_division_field_type_t::SMPTE
 std::string print(const mthd_container_t&);
-
-
-
-//---------------------------------------------------------------------------------------
-//---------------------------------------------------------------------------------------
-//---------------------------------------------------------------------------------------
 
 
 //
@@ -251,15 +128,7 @@ private:
 	int32_t size_ {0};  // delta_t + payload
 };
 
-struct parse_mtrk_event_result_t {
-	bool is_valid {false};  // False if the delta-t vl field does not validate
-	midi_vl_field_interpreted delta_t {};
-	event_type type {event_type::midi};
-};
-parse_mtrk_event_result_t parse_mtrk_event_type(const unsigned char*);
 std::string print(const mtrk_event_container_t&);
-event_type detect_mtrk_event_type_dtstart_unsafe(const unsigned char*);
-event_type detect_mtrk_event_type_unsafe(const unsigned char*);
 
 //
 // mtrk_container_t & friends
@@ -287,16 +156,24 @@ event_type detect_mtrk_event_type_unsafe(const unsigned char*);
 // stored in the iterator because it is the only way it is possible to determine the size of the
 // next midi message in a running-status sequence.  
 //
+// An MTrk event stream has global state from at least 4 sources:
+// 1) Time - the onset time for event n depends on the delta-t vl field for all prior
+//    events.  
+// 2) Midi status - the midi status byte for event n may not be specified; it may
+//    be inherited from some prior event.  
+// 3) The interpretation of event n depends in general on all prior control/program-
+//    change events.  These may occur mid-stream any number of times (ex, the 
+//    instrument could change in the middle of a stream).  
+// 4) Status from opaque sysex or meta events not understood by the parser.  
+//
+// Without taking a huge amount of memory, it is probably not possible to obtain
+// random, O(1) access to the values of all of the state variables in an MTrk event
+// stream.  
+//
+//
 class mtrk_container_iterator_t;
 class mtrk_container_t;
 
-struct validate_mtrk_chunk_result_t {
-	bool is_valid {false};
-	std::string msg {};
-	const unsigned char *p;
-	int32_t size {0};
-};
-validate_mtrk_chunk_result_t validate_mtrk_chunk(const unsigned char*, int32_t);
 
 // Obtained from the begin() && end() methods of class mtrk_container_t.  
 class mtrk_container_iterator_t {
@@ -316,9 +193,7 @@ private:
 	unsigned char midi_status_ {0};
 };
 
-//
-//
-//
+
 class mtrk_container_t {
 public:
 	mtrk_container_t(const validate_mtrk_chunk_result_t&);
@@ -333,8 +208,8 @@ private:
 	int32_t size_ {0};
 	friend class mtrk_container_iterator_t;
 };
-
 std::string print(const mtrk_container_t&);
+
 
 //
 // smf_container_t & friends
@@ -347,26 +222,6 @@ std::string print(const mtrk_container_t&);
 // is validated (ie, all events in an MTrk are valid).
 //
 //
-struct chunk_idx_t {
-	chunk_type type {};
-	int32_t offset {0};
-	int32_t size {0};
-};
-struct validate_smf_result_t {
-	bool is_valid {};
-	std::string msg {};
-
-	// Needed by the smf_container_t ctor
-	std::string fname {};
-	const unsigned char *p {};
-	int32_t size {0};
-	int n_mtrk {0};  // Number of MTrk chunks
-	int n_unknown {0};
-	std::vector<chunk_idx_t> chunk_idxs {};
-};
-//validate_smf_result_t validate_smf(const std::filesystem::path&);
-validate_smf_result_t validate_smf(const unsigned char*, int32_t, const std::string&);
-
 class smf_container_t {
 public:
 	smf_container_t(const validate_smf_result_t&);
@@ -392,41 +247,6 @@ private:
 std::string print(const smf_container_t&);
 bool play(const smf_container_t&);
 
-
-
-//---------------------------------------------------------------------------------------
-//---------------------------------------------------------------------------------------
-//---------------------------------------------------------------------------------------
-
-//
-// An MTrk event stream has global state from at least 4 sources:
-// 1) Time - the onset time for event n depends on the delta-t vl field for all prior
-//    events.  
-// 2) Midi status - the midi status byte for event n may not be specified; it may
-//    be inherited from some prior event.  
-// 3) The interpretation of event n depends in general on all prior control/program-
-//    change events.  These may occur mid-stream any number of times (ex, the 
-//    instrument could change in the middle of a stream).  
-// 4) Status from opaque sysex or meta events not understood by the parser.  
-//
-// Without taking a huge amount of memory, it is probably not possible to obtain
-// random, O(1) access to the values of all of the state variables in an MTrk event
-// stream.  
-//
-//
-
-
-//
-// For Format 1 files, combines the events of all tracks into a single array where
-// events are ordered first by onset time, then by track number.  
-//
-class smf_t {
-public:
-private:
-	std::vector<unsigned char> data_ {};  // raw file data; whole file
-};
-
-
 };  // namespace mc
 
 
@@ -434,8 +254,9 @@ private:
 //---------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------
 
+/*
 //
-// Owning containers
+// Statically-sized containers
 //
 // TODO:  Packing rules probably => room for one more 8-bit member
 //
@@ -448,13 +269,13 @@ public:
 
 	bool set_status(unsigned char);  // False if failed
 	void set_status_explicit();  // False if failed
-	void set_status_implicit(u);  // False if failed
+	void set_status_implicit();  // False if failed
 private:
 	unsigned char status;  // < 0 => implicit (running-status)
 	unsigned char p1;
 	unsigned char p2;
 };
-
+*/
 
 
 

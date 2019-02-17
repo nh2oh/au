@@ -1,5 +1,5 @@
 #pragma once
-#include "..\aulib\input\midi_util.h"
+/*
 #include "dbklib\binfile.h"
 #include <filesystem>
 #include <array>
@@ -255,4 +255,6 @@ private:
 	std::vector<midi_file::chunk_idx> chunk_idx_ {};  // header chunk and all track chunks
 	std::vector<std::vector<midi_file::mtrk_event_idx>> mtrk_event_idx_ {};  // inner idx => track num
 };
+
+*/
 

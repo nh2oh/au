@@ -100,6 +100,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="midiread.h" />
+    <ClInclude Include="midi_data.h" />
+    <ClInclude Include="midi_raw.h" />
     <ClInclude Include="scr.h" />
     <ClInclude Include="scr2.h" />
     <ClInclude Include="midi_container.h" />
@@ -109,6 +111,7 @@
     <ClCompile Include="au.cpp" />
     <ClCompile Include="midiread.cpp" />
     <ClCompile Include="midi_container.cpp" />
+    <ClCompile Include="midi_raw.cpp" />
     <ClCompile Include="scr.cpp" />
     <ClCompile Include="scr2.cpp" />
     <ClCompile Include="wavwr.cpp" />
