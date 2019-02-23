@@ -5,37 +5,6 @@
 #include <string>
 #include <vector>
 
-namespace mc {
-
-
-int midi_example() {
-	auto rawfiledata = dbk::readfile("C:\\Users\\ben\\Desktop\\scr\\CLEMENTI.MID").d;
-	//auto rawfiledata = dbk::readfile("C:\\Users\\ben\\Desktop\\scr\\test.mid").d;
-	auto rawfile_check_result = validate_smf(&rawfiledata[0],rawfiledata.size(),
-		"C:\\Users\\ben\\Desktop\\scr\\CLEMENTI.MID");
-
-	smf_container_t mf {rawfile_check_result};
-	
-	std::cout << print(mf) << std::endl << std::endl;
-
-	//auto h = mf.get_header();
-	//std::cout << print(h) << std::endl << std::endl;
-	//auto t1 = mf.get_track(0);
-	//std::cout << "TRACK 1\n" << print(t1) << std::endl << std::endl;
-	//auto t2 = mf.get_track(1);
-	//std::cout << "TRACK 2\n" << print(t2) << std::endl << std::endl;
-	//auto t3 = mf.get_track(2);
-	//std::cout << "TRACK 3\n" << print(t3) << std::endl << std::endl;
-
-	return 0;
-}
-
-
-
-
-
-
-
 
 mthd_container_t::mthd_container_t(const detect_chunk_type_result_t& mthd) {
 	if (!mthd.is_valid || mthd.type != chunk_type::header) {
@@ -117,6 +86,10 @@ event_type mtrk_event_container_t::type() const {
 const unsigned char *mtrk_event_container_t::begin() const {
 	return this->p_;
 }
+// Starts at the delta-time
+const unsigned char *mtrk_event_container_t::raw_begin() const {
+	return this->p_;
+}
 // Starts just after the delta-time
 const unsigned char *mtrk_event_container_t::data_begin() const {
 	return (this->p_ + midi_interpret_vl_field(this->p_).N);
@@ -131,10 +104,80 @@ std::string print(const mtrk_event_container_t& evnt) {
 	s += ("type == " + print(evnt.type()) + ", ");
 	s += ("data_size == " + std::to_string(evnt.data_size()) + ", ");
 	s += ("size == " + std::to_string(evnt.size()) + "\n\t");
-	s += print_hexascii(evnt.data_begin(), evnt.end()-evnt.data_begin(), ' ');
+
+	auto ss = evnt.size();
+	auto ds = evnt.data_size();
+	std::string tests = print_hexascii(evnt.begin(), 10, ' ');
+
+	s += ("[" + print_hexascii(evnt.begin(), evnt.size()-evnt.data_size(), ' ') + "] ");
+	s += print_hexascii(evnt.data_begin(), evnt.data_size(), ' ');
 
 	return s;
 }
+
+
+
+// channel_voice, channel_mode, sysex_common, ...
+midi_msg_t midi_event_container_t::type() const {
+	return parse_midi_event(this->p_, this->midi_status_).type;
+	/*auto p = this->p_;
+	auto event_parsed = parse_midi_event(this->p_, this->midi_status_);
+	p += event_parsed.delta_t.N;
+	if (event_parsed.has_status_byte && event_parsed.n_data_bytes>0) {
+		p+=1;
+	}
+	// p now points at the first data byte.  Note that for allidi messages, n_data_bytes
+	// == 1 or 2.  
+
+	if ((this->midi_status_ & 0xF0) == 0xB0) {
+		if ((*p & 0xF8) == 0x78) {
+			return midi_msg_t::channel_mode;
+		}
+	} else if ((this->midi_status_ & 0xF0) == 0xF0) {
+		return midi_msg_t::system_something;
+	} else {
+		return midi_msg_t::channel_voice;
+	}*/
+}
+
+channel_msg_t midi_event_container_t::channel_msg_type() const {
+	if (type() == midi_msg_t::channel_voice) {
+		switch (this->midi_status_ & 0xF0) {
+			case 0x80:  return channel_msg_t::note_off; break;
+			case 0x90:  return channel_msg_t::note_on; break;
+			case 0xA0:  return channel_msg_t::key_pressure; break;
+			case 0xB0:  return channel_msg_t::control_change; break;
+			case 0xC0:  return channel_msg_t::program_change; break;
+			case 0xD0:  return channel_msg_t::channel_pressure; break;
+			case 0xE0:  return channel_msg_t::pitch_bend; break;
+		}
+	} else if (type() == midi_msg_t::channel_mode) {
+		return channel_msg_t::channel_mode;
+	}
+
+	return channel_msg_t::invalid;
+}
+
+// for midi_msg_t::channel_voice || channel_mode
+int8_t midi_event_container_t::channel_number() const {
+	return this->midi_status_ & 0x0F;
+}
+
+// for channel_msg_t::note_on || note_off || key_pressure
+int8_t midi_event_container_t::note_number() const {
+	auto p = this->p_;
+	auto event_parsed = parse_midi_event(this->p_, this->midi_status_);
+	p += event_parsed.delta_t.N;
+	if (event_parsed.has_status_byte && event_parsed.n_data_bytes>0) {
+		p+=1;
+	}
+	// p now points at the first data byte, unless event_parsed.n_data_bytes==0, in which
+	// case p points at the status byte.  
+
+	return *p;
+}
+
+
 
 mtrk_container_t::mtrk_container_t(const validate_mtrk_chunk_result_t& mtrk) {
 	if (!mtrk.is_valid) {
@@ -183,9 +226,15 @@ std::string print(const mtrk_container_t& mtrk) {
 }
 
 
-
+unsigned char mtrk_container_iterator_t::midi_status() const {
+	return this->midi_status_;
+}
 mtrk_event_container_t mtrk_container_iterator_t::operator*() const {
 	const unsigned char *p = this->container_->p_+this->container_offset_;
+	//
+	// _why_ am i calling parse_midi_event() ???  Should i not detect the type then call
+	// parse_midi_..., parse_meta_,...  ???
+	//
 	auto sz = parse_midi_event(p, this->midi_status_).data_size;
 	return mtrk_event_container_t {p,sz};
 }
@@ -332,20 +381,5 @@ std::string print(const smf_container_t& smf) {
 
 	return s;
 }
-
-
-
-
-
-
-
-
-
-
-};  // namespace mc
-
-
-
-
 
 

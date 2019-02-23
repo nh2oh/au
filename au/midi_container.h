@@ -8,9 +8,7 @@
 #include <filesystem>
 
 
-namespace mc {
 
-int midi_example();
 
 //
 // Why not a generic midi_chunk_container_t<T> template?  Because MThd and MTrk containers
@@ -123,12 +121,70 @@ public:
 	const unsigned char *begin() const;  // Starts at the delta-time
 	const unsigned char *data_begin() const;  // Starts just after the delta-time
 	const unsigned char *end() const;
+
+	const unsigned char *raw_begin() const;
 private:
-	const unsigned char *p_ {};
+	const unsigned char *p_ {};  // points at the first byte of the delta-time
+	int32_t size_ {0};  // delta_t + payload
+};
+std::string print(const mtrk_event_container_t&);
+
+
+//
+// In an alternative design, i just have functions like is_midi_msg(), is_channel_voice(),
+// is_note_on() functions that are either members of a midi_event_t class (as below), take
+// arguments of some sort of midi_event_t class, or take an mtrk_event_container_t.  Since 
+// they return bools, no assurances about the underlying data are required.  This might help
+// reduce the enum class explosion.  It might be simpler than having member functions like type()
+// and channel_msg_type().  
+//
+// function template mtrk_event_container_t.is_a(T)
+// T is one of a family of structs holding static field sizes, byte patterns for status bytes,
+// etc.  
+//
+//
+
+enum class channel_msg_t {
+	note_on,
+	note_off,
+	key_pressure,
+	control_change,
+	program_change,
+	channel_pressure,
+	pitch_bend,
+	channel_mode,
+	invalid
+};
+class midi_event_container_t {
+public:
+	midi_event_container_t(mtrk_event_container_t mtrkev, unsigned char status) 
+		: midi_status_(status), p_(mtrkev.raw_begin()), size_(mtrkev.size()) {};
+
+	unsigned char raw_status() const;
+	bool status_is_running() const;
+
+	midi_msg_t type() const;  // channel_voice, channel_mode, sysex_common, ...
+	channel_msg_t channel_msg_type() const;  // channel_msg_t::...
+
+	int8_t channel_number() const;  // for midi_msg_t::channel_voice || channel_mode
+
+	int8_t note_number() const;  // for channel_msg_t::note_on || note_off || key_pressure
+	int8_t velocity() const;  // for channel_msg_t::note_on || note_off
+	int8_t key_pressure() const;   // for channel_msg_t::key_pressure
+	int8_t control_number() const;  // for channel_msg_t::control_change
+	int8_t control_value() const;  // for channel_msg_t::control_change
+	int8_t program_number();  // for channel_msg_t::program_change
+	int8_t channel_pressure();  // for channel_msg_t::channel_pressure
+	int16_t pitch_bend_value() const;  // for channel_msg_t::pitch_bend
+
+private:
+	unsigned char midi_status_ {0};
+	const unsigned char *p_ {};  // points at the delta_t
 	int32_t size_ {0};  // delta_t + payload
 };
 
-std::string print(const mtrk_event_container_t&);
+
+
 
 //
 // mtrk_container_t & friends
@@ -181,6 +237,11 @@ public:
 	mtrk_container_iterator_t(const mtrk_container_t* c, int32_t o, unsigned char ms)
 		: container_(c), container_offset_(o), midi_status_(ms) {};
 	mtrk_event_container_t operator*() const;
+
+	// If you got your iterator from an mtrk_container_t, all points in the
+	// stream should have a valid midi status byte.  
+	unsigned char midi_status() const;
+
 	mtrk_container_iterator_t& operator++();
 	bool operator<(const mtrk_container_iterator_t&) const;
 	bool operator==(const mtrk_container_iterator_t&) const;
@@ -204,11 +265,14 @@ public:
 	mtrk_container_iterator_t begin() const;
 	mtrk_container_iterator_t end() const;
 private:
-	const unsigned char *p_ {};  // Points at "MTrk..."
+	const unsigned char *p_ {};  // Points at the 'M' of "MTrk..."
 	int32_t size_ {0};
 	friend class mtrk_container_iterator_t;
 };
 std::string print(const mtrk_container_t&);
+
+
+
 
 
 //
@@ -246,8 +310,6 @@ private:
 
 std::string print(const smf_container_t&);
 bool play(const smf_container_t&);
-
-};  // namespace mc
 
 
 //---------------------------------------------------------------------------------------

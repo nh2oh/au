@@ -36,6 +36,12 @@
     <ClInclude Include="midi_data.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="midi_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="midi_examples.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="au.cpp">
@@ -57,6 +63,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="midi_raw.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="midi_utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="midi_examples.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

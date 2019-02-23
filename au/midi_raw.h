@@ -69,8 +69,6 @@ std::array<unsigned char,4> midi_encode_vl_field(T val) {
 };
 
 
-namespace mc {
-
 std::string print_hexascii(const unsigned char*, int, const char = ' ');
 
 
@@ -87,9 +85,10 @@ enum class chunk_type {
 	unknown  // The std requires that unrecognized chunk types be permitted
 };
 enum event_type {  // MTrk events
-	midi,
-	sysex,
-	meta
+	midi,  // really only midi_channel messages
+	sysex,  // really also includes system_common, system_realtime
+	meta,
+	invalid
 };
 std::string print(const event_type&);
 
@@ -110,8 +109,18 @@ struct parse_sysex_event_result_t {
 };
 parse_sysex_event_result_t parse_sysex_event(const unsigned char*);
 
+enum class midi_msg_t {
+	channel_voice,
+	channel_mode,
+	system_exclusive,  // I don't consider this to be an event_type::midi
+	system_common,  // I don't consider this to be an event_type::midi
+	system_realtime,  // I don't consider this to be an event_type::midi
+	system_something,  // I don't consider this to be an event_type::midi
+	invalid
+};
 struct parse_midi_event_result_t {
 	bool is_valid {false};
+	midi_msg_t type {midi_msg_t::invalid};
 	midi_vl_field_interpreted delta_t {};
 	bool has_status_byte {false};
 	uint8_t status_byte {0};
@@ -121,7 +130,6 @@ struct parse_midi_event_result_t {
 parse_midi_event_result_t parse_midi_event(const unsigned char*, unsigned char=0);
 bool midi_event_has_status_byte(const unsigned char*);
 unsigned char midi_event_get_status_byte(const unsigned char*);
-
 
 //
 // Checks for the 4-char id and the 4-byte size.  Verifies that the id + size field 
@@ -178,11 +186,4 @@ struct validate_smf_result_t {
 };
 validate_smf_result_t validate_smf(const unsigned char*, int32_t, const std::string&);
 
-
-
-
-
-
-
-};  // namespace mc
 

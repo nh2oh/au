@@ -2,7 +2,7 @@
 #include <string>
 #include <array>
 #include <vector>
-
+#include <exception>
 
 
 // TODO:  Max 4 bytes; stop after 4 bytes
@@ -23,8 +23,6 @@ midi_vl_field_interpreted midi_interpret_vl_field(const unsigned char* p) {
 	return result;
 };
 
-
-namespace mc {
 
 // Default value of sep == ' '; see header
 std::string print_hexascii(const unsigned char *p, int n, const char sep) {
@@ -133,11 +131,42 @@ parse_midi_event_result_t parse_midi_event(const unsigned char *p, unsigned char
 	}
 	// At this point, p points at the first data byte
 
-	if ((result.status_byte & 0xF0) == 0xC0 || (result.status_byte & 0xF0) == 0xD0) {
+	if ((result.status_byte & 0xF0) < 0xF0) {  // => not a system msg
+		if ((result.status_byte & 0xF0) == 0xB0) {
+			if ((*p & 0x78) == 0x78) {  // channel mode msg w/ 2 data bytes
+				result.type = midi_msg_t::channel_mode;
+				result.n_data_bytes = 2;
+			} else {
+				result.type = midi_msg_t::channel_voice;
+				result.n_data_bytes = 2;
+			}
+		} else if ((result.status_byte & 0xF0) == 0xC0  || (result.status_byte & 0xF0) == 0xD0) {
+			result.type = midi_msg_t::channel_voice;
+			result.n_data_bytes = 1;
+		} else {
+			result.type = midi_msg_t::channel_voice;
+			result.n_data_bytes = 2;
+		}
+	} else { // some sort of system message
+		// I do not consider anything here to be of event_type::midi; it's all event_type::sysex.
+		// None of this should ever trigger.  
+		if (*p == 0xF0) {  
+			result.type = midi_msg_t::system_exclusive;
+			// unknown n_data_bytes
+		} else if ((*p & 0xF8) == 0xF8) {
+			result.type = midi_msg_t::system_realtime;
+			result.n_data_bytes = 0;
+		} else if ((*p & 0xF8) == 0xF0) {
+			result.type = midi_msg_t::system_common;
+			// unknown n_data_bytes:  0 or 2
+		}
+	}
+
+	/*if ((result.status_byte & 0xF0) == 0xC0 || (result.status_byte & 0xF0) == 0xD0) {
 		result.n_data_bytes = 1;
 	} else {
 		result.n_data_bytes = 2;
-	}
+	}*/
 	result.data_size += result.n_data_bytes;
 
 	// Check first data byte
@@ -221,10 +250,24 @@ event_type detect_mtrk_event_type_dtstart_unsafe(const unsigned char *p) {
 	return detect_mtrk_event_type_unsafe(p);
 }
 
-// Pointer to the first data byte (following the delta-time), _not_ to the start of
+// Pointer to the first data byte following the delta-time, _not_ to the start of
 // the delta-time.  
 event_type detect_mtrk_event_type_unsafe(const unsigned char *p) {
-	if (*p == static_cast<unsigned char>(0xF0) || *p == static_cast<unsigned char>(0xF7)) {
+	if ((*p & 0xF0) >= 0x80 && (*p & 0xF0) <= 0xE0) {
+		return event_type::midi;
+	} else if (*p == 0xFF) { 
+		// meta event in an smf; system_realtime in a stream.  All system_realtime messages
+		// are single byte events (status byte only); in a meta-event, the status byte is followed
+		// by an "event type" byte then a vl-field giving the number of subsequent data bytes.
+		// It should be possible to peek forward and distinguish meta from system_realtime, but
+		// at present i am not doing that.  
+		return event_type::meta;
+	} else if ((*p & 0xF8) == 0xF7) {
+		// system_exclusive or system_common
+		return event_type::sysex;
+	}
+	return event_type::invalid;
+	/*if (*p == static_cast<unsigned char>(0xF0) || *p == static_cast<unsigned char>(0xF7)) {
 		// sysex event; 0xF0==240, 0xF7==247
 		return event_type::sysex;
 	} else if (*p == static_cast<unsigned char>(0xFF)) {  
@@ -233,13 +276,14 @@ event_type detect_mtrk_event_type_unsafe(const unsigned char *p) {
 	} else {
 		// midi event
 		return event_type::midi;
-	}
+	}*/
 }
 
 // Pointer to the first byte of the vl delta-time field.
-// If the delta-time validates, the event is either meta, sysex, or midi (by the std, 
-// anything not sysex or meta is midi).  This function is therefore somewhat useless.
-// You might as well just validate the delta-time then call detect_mtrk_event_type_unsafe().  
+// If the delta-time validates, the event is either meta, sysex, or midi_channel.  Implicitly, 
+// the std seems to disallow system_realtime and system_common messages as part of an MTrk event
+// stream.  
+//
 parse_mtrk_event_result_t parse_mtrk_event_type(const unsigned char *p) {
 	parse_mtrk_event_result_t result {};
 	// All mtrk events begin with a delta-time occupying a maximum of 4 bytes
@@ -250,7 +294,15 @@ parse_mtrk_event_result_t parse_mtrk_event_type(const unsigned char *p) {
 	}
 	p += result.delta_t.N;
 
-	if (*p == static_cast<unsigned char>(0xF0) || *p == static_cast<unsigned char>(0xF7)) {
+	result.type = detect_mtrk_event_type_unsafe(p);
+	if (result.type == event_type::invalid) {
+		result.is_valid = false;
+	}
+
+	result.is_valid = true;
+	return result;
+
+	/*if (*p == static_cast<unsigned char>(0xF0) || *p == static_cast<unsigned char>(0xF7)) {
 		// sysex event; 0xF0==240, 0xF7==247
 		result.is_valid = true;
 		result.type=event_type::sysex;
@@ -263,7 +315,7 @@ parse_mtrk_event_result_t parse_mtrk_event_type(const unsigned char *p) {
 		result.is_valid = true;
 		result.type = event_type::midi;
 	}
-	return result;
+	return result;*/
 }
 
 bool midi_event_has_status_byte(const unsigned char *p) {
@@ -282,12 +334,6 @@ unsigned char midi_event_get_status_byte(const unsigned char* p) {
 	p += delta_t_vl.N;
 	return *p;
 }
-
-
-
-
-
-
 
 
 //
@@ -457,15 +503,3 @@ validate_smf_result_t validate_smf(const unsigned char *p, int32_t offset_end,
 
 	return result;
 }
-
-
-
-
-
-
-
-
-
-
-};  // namespace mc
-
