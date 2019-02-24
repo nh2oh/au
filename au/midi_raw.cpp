@@ -43,12 +43,12 @@ std::string print_hexascii(const unsigned char *p, int n, const char sep) {
 
 
 
-std::string print(const event_type& et) {
-	if (et == event_type::meta) {
+std::string print(const event_type_deprecated& et) {
+	if (et == event_type_deprecated::meta) {
 		return "meta";
-	} else if (et == event_type::midi) {
+	} else if (et == event_type_deprecated::midi) {
 		return "midi";
-	} else if (et == event_type::sysex) {
+	} else if (et == event_type_deprecated::sysex) {
 		return "sysex";
 	}
 }
@@ -59,13 +59,93 @@ std::string print(const smf_event_type& et) {
 		return "channel_voice";
 	} else if (et == smf_event_type::channel_mode) {
 		return "channel_mode";
-	} else if (et == smf_event_type::sys_exclusive) {
-		return "sys_exclusive";
-	} else if (et == smf_event_type::sys_common) {
-		return "sys_common";
+	} else if (et == smf_event_type::sysex_f0) {
+		return "sysex_f0";
+	} else if (et == smf_event_type::sysex_f7) {
+		return "sysex_f7";
 	} else if (et == smf_event_type::invalid) {
 		return "invalid";
 	}
+}
+
+
+
+
+
+smf_event_type detect_mtrk_event_type_dtstart_unsafe(const unsigned char *p) {
+	auto dt = midi_interpret_vl_field(p);
+	p += dt.N;
+	return detect_mtrk_event_type_unsafe(p);
+}
+
+//
+// Pointer to the first data byte following the delta-time, _not_ to the start of
+// the delta-time.  This function may have to increment the pointer by 1 byte (to classify
+// an 0xB0 status byte as channel_voice or channel_mode.  
+// For sysex_f0 messages, this function does not validate the length field.  
+//
+smf_event_type detect_mtrk_event_type_unsafe(const unsigned char *p) {
+	if ((*p & 0xF0) >= 0x80 && (*p & 0xF0) <= 0xE0) {
+		if ((*p & 0xF0) == 0xB0) {
+			++p;
+			if ((*p & 0x80) == 0x80) {
+				// The first data byte should not have its high bit set
+				return smf_event_type::invalid;
+			}
+			uint8_t p1 = midi_raw_interpret<uint8_t>(p);
+			if (p1 >= 121 && p1 <= 127) {
+				return smf_event_type::channel_mode;
+			} else {
+				return smf_event_type::channel_voice;
+			}
+		}
+		return smf_event_type::channel_voice;
+	} else if (*p == 0xFF) { 
+		// meta event in an smf; system_realtime in a stream.  All system_realtime messages
+		// are single byte events (status byte only); in a meta-event, the status byte is followed
+		// by an "event type" byte then a vl-field giving the number of subsequent data bytes.
+		return smf_event_type::meta;
+	} else if (*p == 0xF7) {
+		// system_exclusive or system_common
+		return smf_event_type::sysex_f7;
+	} else if (*p == 0xF0) {
+		return smf_event_type::sysex_f0;
+	}
+	return smf_event_type::invalid;
+}
+
+//
+// Takes a pointer to the first byte of the vl delta-time field.
+//
+parse_mtrk_event_result_t parse_mtrk_event_type(const unsigned char *p, int32_t max_inc) {
+	parse_mtrk_event_result_t result {};
+	if (max_inc == 0) {
+		result.type = smf_event_type::invalid;
+		return result;
+	}
+	// All mtrk events begin with a delta-time occupying a maximum of 4 bytes
+	result.delta_t = midi_interpret_vl_field(p);
+	if (result.delta_t.N > 4) {
+		result.type = smf_event_type::invalid;
+		return result;
+	}
+	p += result.delta_t.N;
+
+	max_inc -= result.delta_t.N;
+	if (max_inc <= 0) {
+		result.type = smf_event_type::invalid;
+		return result;
+	}
+	if ((*p & 0xF0) == 0xB0 && max_inc < 2) {
+		// indicates a channel_mode or channel_voice message, both of which have 2 data bytes
+		// following the status byte *p.  detect_mtrk_event_type_unsafe(p) will increment p to
+		// the first data byte to classify this type of event, which is obv a problem if the
+		// array is to short.  
+		result.type = smf_event_type::invalid;
+	}
+	result.type = detect_mtrk_event_type_unsafe(p);
+
+	return result;
 }
 
 
@@ -206,37 +286,33 @@ parse_midi_event_result_t parse_midi_event(const unsigned char *p, unsigned char
 
 detect_chunk_type_result_t detect_chunk_type(const unsigned char *p, int32_t max_size) {
 	detect_chunk_type_result_t result {};
-	result.p = p;
 	if (max_size < 8) {
-		result.is_valid = false;
+		result.type = chunk_type::invalid;
+		result.msg = "(max_size < 8) but all smf chunks begin with an 8 byte header.";
 		return result;
 	}
 
 	// All chunks begin w/ A 4-char identifier
-	std::string idstr {};
-	std::copy(p,p+4,std::back_inserter(idstr));
-	if (idstr == "MThd") {
+	uint32_t id = midi_raw_interpret<uint32_t>(p);
+	if (id == 0x4D546864) {  // Mthd
 		result.type = chunk_type::header;
-	} else if (idstr == "MTrk") {
+	} else if (id == 0x4D54726B) {  // MTrk
 		result.type = chunk_type::track;
 	} else {
 		result.type = chunk_type::unknown;
 	}
 	p+=4;
 
-	auto data_length = midi_raw_interpret<int32_t>(p);
-	p+=4;
+	result.data_length = midi_raw_interpret<int32_t>(p);
+	result.size = 8 + result.data_length;
 
-	if (data_length < 0) {
-		result.msg = "MIDI chunks must have data length >= 0";
-		result.is_valid = false;
+	if (result.data_length < 0 || result.size > max_size) {
+		result.type = chunk_type::invalid;
+		result.msg = "result.data_length < 0 || result.size > max_size.  ";
+		result.msg += "SMF chunks must have data length >= 0 but not exceeding the size of the file.";
 		return result;
 	}
-	if (data_length+8 > max_size) {
-		result.msg = "data_length+8 > max_size";
-		result.is_valid = false;
-		return result;
-	}
+
 	/*
 	if (result.type == chunk_type::header && data_length != 6) {
 		result.msg = "MThd chunks must have a data length of 6";
@@ -251,88 +327,11 @@ detect_chunk_type_result_t detect_chunk_type(const unsigned char *p, int32_t max
 			return result;
 		}
 	}*/
-	result.size = 4 + 4 + data_length;  // id + length_field + ...
-
-	result.is_valid = true;
-	return result;
-}
-
-
-smf_event_type detect_mtrk_event_type_dtstart_unsafe(const unsigned char *p) {
-	auto dt = midi_interpret_vl_field(p);
-	p += dt.N;
-	return detect_mtrk_event_type_unsafe(p);
-}
-
-//
-// Pointer to the first data byte following the delta-time, _not_ to the start of
-// the delta-time.  This function may have to increment the pointer by 1 byte (to classify
-// an 0xB0 status byte as channel_voice or channel_mode.  
-// For sysex_f0 messages, this function does not validate the length field.  
-//
-smf_event_type detect_mtrk_event_type_unsafe(const unsigned char *p) {
-	if ((*p & 0xF0) >= 0x80 && (*p & 0xF0) <= 0xE0) {
-		if ((*p & 0xF0) == 0xB0) {
-			++p;
-			if ((*p & 0x80) == 0x80) {
-				// The first data byte should not have its high bit set
-				return smf_event_type::invalid;
-			}
-			uint8_t p1 = midi_raw_interpret<uint8_t>(p);
-			if (p1 >= 121 && p1 <= 127) {
-				return smf_event_type::channel_mode;
-			} else {
-				return smf_event_type::channel_voice;
-			}
-		}
-		return smf_event_type::channel_voice;
-	} else if (*p == 0xFF) { 
-		// meta event in an smf; system_realtime in a stream.  All system_realtime messages
-		// are single byte events (status byte only); in a meta-event, the status byte is followed
-		// by an "event type" byte then a vl-field giving the number of subsequent data bytes.
-		return smf_event_type::meta;
-	} else if (*p == 0xF7) {
-		// system_exclusive or system_common
-		return smf_event_type::sysex_f7;
-	} else if (*p == 0xF0) {
-		return smf_event_type::sysex_f0;
-	}
-	return smf_event_type::invalid;
-}
-
-//
-// Takes a pointer to the first byte of the vl delta-time field.
-//
-parse_mtrk_event_result_t parse_mtrk_event_type(const unsigned char *p, int32_t max_inc) {
-	parse_mtrk_event_result_t result {};
-	if (max_inc == 0) {
-		result.type = smf_event_type::invalid;
-		return result;
-	}
-	// All mtrk events begin with a delta-time occupying a maximum of 4 bytes
-	result.delta_t = midi_interpret_vl_field(p);
-	if (result.delta_t.N > 4) {
-		result.is_valid = false;
-		return result;
-	}
-	p += result.delta_t.N;
-
-	max_inc -= result.delta_t.N;
-	if (max_inc <= 0) {
-		result.type = smf_event_type::invalid;
-		return result;
-	}
-	if ((*p & 0xF0) == 0xB0 && max_inc < 2) {
-		// indicates a channel_mode or channel_voice message, both of which have 2 data bytes
-		// following the status byte *p.  detect_mtrk_event_type_unsafe(p) will increment p to
-		// the first data byte to classify this type of event, which is obv a problem if the
-		// array is to short.  
-		result.type = smf_event_type::invalid;
-	}
-	result.type = detect_mtrk_event_type_unsafe(p);
 
 	return result;
 }
+
+
 
 bool midi_event_has_status_byte(const unsigned char *p) {
 	auto delta_t_vl = midi_interpret_vl_field(p);

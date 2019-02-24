@@ -84,15 +84,40 @@ std::string print_hexascii(const unsigned char*, int, const char = ' ');
 enum class chunk_type {
 	header,  // MThd
 	track,  // MTrk
-	unknown  // The std requires that unrecognized chunk types be permitted
+	unknown,  // The std requires that unrecognized chunk types be permitted
+	invalid
 };
-enum event_type {  // MTrk events
+
+//
+// Checks for the 4-char id and the 4-byte size.  Verifies that the id + size field 
+// + the reported size does not exceed the max_size suppled as the second argument.  
+// Does _not_ inspect anything past the end of the length field.  
+//
+struct detect_chunk_type_result_t {
+	chunk_type type {chunk_type::invalid};
+	int32_t size {0};  // byte header + reported length
+	int32_t data_length {0};  // reported length (not inclusing the 8 byte header)
+	std::string msg {};
+};
+detect_chunk_type_result_t detect_chunk_type(const unsigned char*, int32_t);
+
+
+struct validate_mtrk_chunk_result_t {
+	bool is_valid {false};
+	std::string msg {};
+	const unsigned char *p;
+	int32_t size {0};
+};
+validate_mtrk_chunk_result_t validate_mtrk_chunk(const unsigned char*, int32_t);
+
+
+enum event_type_deprecated {  // MTrk events
 	midi,  // really only midi_channel messages
 	sysex,  // really also includes system_common, system_realtime
 	meta,
 	invalid
 };
-std::string print(const event_type&);
+std::string print(const event_type_deprecated&);
 
 //
 // There are no sys_realtime messages in an mtrk event stream.  The set of valid sys_realtime 
@@ -126,8 +151,8 @@ struct parse_mtrk_event_result_t {
 	smf_event_type type {smf_event_type::invalid};
 };
 parse_mtrk_event_result_t parse_mtrk_event_type(const unsigned char*, int32_t=0);
-event_type detect_mtrk_event_type_dtstart_unsafe(const unsigned char*);
-event_type detect_mtrk_event_type_unsafe(const unsigned char*);
+smf_event_type detect_mtrk_event_type_dtstart_unsafe(const unsigned char*);
+smf_event_type detect_mtrk_event_type_unsafe(const unsigned char*);
 
 
 
@@ -172,32 +197,12 @@ parse_midi_event_result_t parse_midi_event(const unsigned char*, unsigned char=0
 bool midi_event_has_status_byte(const unsigned char*);
 unsigned char midi_event_get_status_byte(const unsigned char*);
 
-//
-// Checks for the 4-char id and the 4-byte size.  Verifies that the id + size field 
-// + the reported size does not exceed the max_size suppled as the second argument.  
-// Does _not_ inspect anything past the end of the length field.  
-//
-struct detect_chunk_type_result_t {
-	chunk_type type {chunk_type::unknown};
-	int32_t size {0};
-	std::string msg {};
-	bool is_valid {false};
-	const unsigned char* p {};
-};
-detect_chunk_type_result_t detect_chunk_type(const unsigned char*, int32_t);
 
 
 
 
 
 
-struct validate_mtrk_chunk_result_t {
-	bool is_valid {false};
-	std::string msg {};
-	const unsigned char *p;
-	int32_t size {0};
-};
-validate_mtrk_chunk_result_t validate_mtrk_chunk(const unsigned char*, int32_t);
 
 
 
