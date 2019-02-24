@@ -24,6 +24,7 @@
 //
 //
 
+/*  in midi_raw.h
 enum class channel_msg_t {
 	note_on,
 	note_off,
@@ -34,7 +35,7 @@ enum class channel_msg_t {
 	pitch_bend,
 	channel_mode,
 	invalid
-};
+};*/
 class midi_event_container_t {
 public:
 	midi_event_container_t(mtrk_event_container_t mtrkev, unsigned char status) 

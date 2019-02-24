@@ -175,7 +175,7 @@ parse_meta_event_result_t parse_meta_event(const unsigned char *p) {
 	return result;
 }
 
-parse_sysex_event_result_t parse_sysex_event(const unsigned char *p) {
+parse_sysex_event_result_t parse_sysex_event(const unsigned char *p, int32_t max_size) {
 	parse_sysex_event_result_t result {};
 	result.delta_t = midi_interpret_vl_field(p);
 	if (result.delta_t.N > 4) {
@@ -183,22 +183,139 @@ parse_sysex_event_result_t parse_sysex_event(const unsigned char *p) {
 		return result;
 	}
 	p += result.delta_t.N;
+	max_size -= result.delta_t.N;
+	if (max_size <= 0) {
+		result.is_valid = false;
+		return result;
+	}
 
 	if (*p != 0xF0 || *p != 0xFF) {
 		result.is_valid = false;
 		return result;
 	}
 	result.type = *p;
-	++p;
+	++p;  --max_size;
+	if (max_size <= 0) {
+		result.is_valid = false;
+		return result;
+	}
 
-	auto length_field = midi_interpret_vl_field(p);
-	result.data_size = 1 + length_field.N + length_field.val;
+	result.length = midi_interpret_vl_field(p);
+	result.data_length = 1 + result.length.N + result.length.val;
+	result.size = result.data_length + result.delta_t.N;
+	max_size -= (result.length.N + result.length.val);
+	if (max_size < 0) {
+		result.is_valid = false;
+		return result;
+	}
 
+	result.has_terminating_f7 = (*(--p) == 0xF7);
 	result.is_valid = true;
 	return result;
 }
 
-parse_midi_event_result_t parse_midi_event(const unsigned char *p, unsigned char prev_status_byte) {
+
+//
+// TODO:  There are some other conditions to verify:  I thuk only certain types of 
+// channel_msg_type are allowed to be in running_status mode.  
+//
+parse_channel_event_result_t parse_channel_event(const unsigned char *p,
+				unsigned char prev_status_byte,	int32_t max_size) {
+	parse_channel_event_result_t result {};
+	result.delta_t = midi_interpret_vl_field(p);
+	if (result.delta_t.N > 4) {
+		result.is_valid = false;
+		return result;
+	}
+	p += result.delta_t.N;
+	max_size -= result.delta_t.N;
+	if (max_size <= 0) {
+		result.is_valid = false;
+		return result;
+	}
+
+	result.data_length = 0;
+	if ((*p & 0x80) == 0x80) {  // Present message has a status byte
+		result.has_status_byte = true;
+		result.status_byte = *p;
+		result.data_length += 1;
+		++p; --max_size;
+		if (max_size <= 0) {
+			result.is_valid = false;
+			return result;
+		}
+	} else {
+		result.has_status_byte = false;
+		if ((prev_status_byte & 0x80) != 0x80) {
+			// prev_status_byte is invalid
+			result.is_valid = false;
+			return result;
+		}
+		result.status_byte = prev_status_byte;
+		// Not incrementing p; *p is the first data byte in running-status mode
+	}
+	// At this point, p points at the first data byte
+
+	result.type = channel_msg_type::invalid;
+	if ((result.status_byte & 0xF0) != 0xB0) {
+		switch (result.status_byte & 0xF0) {
+			case 0x80:  result.type = channel_msg_type::note_off; break;
+			case 0x90: result.type = channel_msg_type::note_on; break;
+			case 0xA0:  result.type = channel_msg_type::key_pressure; break;
+			//case 0xB0:  ....
+			case 0xC0:  result.type = channel_msg_type::program_change; break;
+			case 0xD0:  result.type = channel_msg_type::channel_pressure; break;
+			case 0xE0:  result.type = channel_msg_type::pitch_bend; break;
+			default: result.type = channel_msg_type::invalid; break;
+		}
+	} else if ((result.status_byte & 0xF0) == 0xB0) {
+		if (result.status_byte >= 121 && result.status_byte <= 127) {
+			// channel_mode event
+			result.type = channel_msg_type::channel_mode;
+		} else {
+			result.type = channel_msg_type::control_change;
+		}
+	}
+	if (result.type == channel_msg_type::invalid) {
+		result.is_valid = false;
+		return result;
+	}
+
+	if ((result.status_byte & 0xF0) == 0xC0 || (result.status_byte & 0xF0) == 0xD0) {
+		result.n_data_bytes = 1;
+	} else {
+		result.n_data_bytes = 2;
+	}
+	result.data_length += result.n_data_bytes;
+	max_size -= result.n_data_bytes;
+	if (max_size < 0) {
+		result.is_valid = false;
+		return result;
+	}
+
+	// Check that the first and second (if appropriate) data bytes do not have the high bit set, 
+	// a state only valid for status bytes.  
+	if ((*p & 0x80) != 0) {
+		result.is_valid = false;
+		return result;
+	}
+	if (result.n_data_bytes == 2) {
+		++p;
+		if ((*p & 0x80) != 0) {
+			result.is_valid = false;
+			return result;
+		}
+	}
+	result.size = result.data_length + result.delta_t.N;
+	result.is_valid = true;
+	return result;
+}
+
+
+
+
+parse_midi_event_result_t parse_midi_event(const unsigned char *p,
+				unsigned char prev_status_byte,	int32_t max_size) {
 	parse_midi_event_result_t result {};
 	result.delta_t = midi_interpret_vl_field(p);
 	if (result.delta_t.N > 4) {
@@ -371,9 +488,9 @@ validate_mtrk_chunk_result_t validate_mtrk_chunk(const unsigned char *p, int32_t
 	validate_mtrk_chunk_result_t result {};
 
 	detect_chunk_type_result_t chunk_detect = detect_chunk_type(p,max_size);
-	if (!(chunk_detect.is_valid) || chunk_detect.type != chunk_type::track) {
+	if (chunk_detect.type != chunk_type::track) {
 		result.is_valid = false;
-		result.msg += "!(chunk_detect.is_valid) || chunk_detect.type != midi_chunk_t::track\n";
+		result.msg += "chunk_detect.type != chunk_type::track\n";
 		result.msg += ("chunk_detect.msg = " + chunk_detect.msg + "\n");
 		return result;
 	}
@@ -386,14 +503,15 @@ validate_mtrk_chunk_result_t validate_mtrk_chunk(const unsigned char *p, int32_t
 		int32_t curr_event_length {0};
 
 		// Classify the present event as midi, sysex, or meta
-		auto curr_event = parse_mtrk_event_type(p+i);
-		if (!(curr_event.is_valid)) {
+		auto curr_event = parse_mtrk_event_type(p+i,mtrk_reported_size-i);
+		if (curr_event.type == smf_event_type::invalid) {
 			result.is_valid = false;
-			result.msg += "!(curr_event.is_valid)";
+			result.msg += "curr_event.type == smf_event_type::invalid\n";
+			result.msg += ("at offset from MTrk id field i == " + std::to_string(i));
 			return result;
 		}
 
-		if (curr_event.type == event_type::sysex) {
+		if (curr_event.type == smf_event_type::sysex_f0 || curr_event.type == smf_event_type::sysex_f7) {
 			// From the std (p.136):
 			// Sysex events and meta-events cancel any running status which was in effect.  
 			// Running status does not apply to and may not be used for these messages.
@@ -406,7 +524,7 @@ validate_mtrk_chunk_result_t validate_mtrk_chunk(const unsigned char *p, int32_t
 				return result;
 			}
 			curr_event_length = curr_event.delta_t.N + sx.data_size;
-		} else if (curr_event.type == event_type::meta) {
+		} else if (curr_event.type == smf_event_type::meta) {
 			// From the std (p.136):
 			// Sysex events and meta-events cancel any running status which was in effect.  
 			// Running status does not apply to and may not be used for these messages.
@@ -419,7 +537,7 @@ validate_mtrk_chunk_result_t validate_mtrk_chunk(const unsigned char *p, int32_t
 				return result;
 			}
 			curr_event_length = curr_event.delta_t.N + mt.data_size;
-		} else if (curr_event.type == event_type::midi) {
+		} else if (curr_event.type == smf_event_type::channel_voice || curr_event.type == smf_event_type::channel_mode) {
 			auto md = parse_midi_event(p+i,most_recent_midi_status_byte);
 			if (!(md.is_valid)) {
 				result.is_valid = false;
@@ -428,10 +546,13 @@ validate_mtrk_chunk_result_t validate_mtrk_chunk(const unsigned char *p, int32_t
 			}
 			curr_event_length = curr_event.delta_t.N + md.data_size;
 			if (!(md.has_status_byte)) {
-				most_recent_midi_status_byte = midi_event_get_status_byte(p+i);
+				//most_recent_midi_status_byte = midi_event_get_status_byte(p+i);
+				most_recent_midi_status_byte = *(p+=curr_event.delta_t.N);
 			}
 		} else {
-			std::abort();
+			result.is_valid = false;
+			result.msg = "curr_event.type somehow didn't match anything i am prepared to parse.";
+			return result;
 		}
 
 		i += curr_event_length;
@@ -445,7 +566,8 @@ validate_mtrk_chunk_result_t validate_mtrk_chunk(const unsigned char *p, int32_t
 
 	result.is_valid = true;
 	result.size = i;
-	result.p = p;
+	result.data_length = i-8;
+	result.p = p;  // pointer to _start_ of mtrk chunk
 	return result;
 }
 

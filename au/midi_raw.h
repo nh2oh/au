@@ -99,16 +99,16 @@ struct detect_chunk_type_result_t {
 	int32_t data_length {0};  // reported length (not inclusing the 8 byte header)
 	std::string msg {};
 };
-detect_chunk_type_result_t detect_chunk_type(const unsigned char*, int32_t);
-
+detect_chunk_type_result_t detect_chunk_type(const unsigned char*, int32_t=0);
 
 struct validate_mtrk_chunk_result_t {
 	bool is_valid {false};
 	std::string msg {};
-	const unsigned char *p;
-	int32_t size {0};
+	int32_t data_length {0};  // Includes the "MTrk" and length fields
+	int32_t size {0};  //  == reported size + 8
+	const unsigned char *p {};
 };
-validate_mtrk_chunk_result_t validate_mtrk_chunk(const unsigned char*, int32_t);
+validate_mtrk_chunk_result_t validate_mtrk_chunk(const unsigned char*, int32_t=0);
 
 
 enum event_type_deprecated {  // MTrk events
@@ -170,11 +170,27 @@ parse_meta_event_result_t parse_meta_event(const unsigned char*);
 struct parse_sysex_event_result_t {
 	bool is_valid {false};
 	midi_vl_field_interpreted delta_t {};
+	midi_vl_field_interpreted length {};
 	uint8_t type {0};  // F0 or F7
-	int32_t data_size {};  // Everything not delta_time
+	int32_t size {0};
+	int32_t data_length {};  // Everything not delta_time
+	bool has_terminating_f7 {false};
 };
-parse_sysex_event_result_t parse_sysex_event(const unsigned char*);
+parse_sysex_event_result_t parse_sysex_event(const unsigned char*,int32_t=0);
 
+
+enum class channel_msg_type {
+	note_on,
+	note_off,
+	key_pressure,
+	control_change,
+	program_change,
+	channel_pressure,
+	pitch_bend,
+	channel_mode,
+	invalid
+};
+/*
 enum class midi_msg_t {
 	channel_voice,
 	channel_mode,
@@ -183,17 +199,18 @@ enum class midi_msg_t {
 	system_realtime,  // I don't consider this to be an event_type::midi
 	system_something,  // I don't consider this to be an event_type::midi
 	invalid
-};
-struct parse_midi_event_result_t {
+};*/
+struct parse_channel_event_result_t {
 	bool is_valid {false};
-	midi_msg_t type {midi_msg_t::invalid};
+	channel_msg_type type {channel_msg_type::invalid};
 	midi_vl_field_interpreted delta_t {};
 	bool has_status_byte {false};
 	uint8_t status_byte {0};
 	uint8_t n_data_bytes {0};  // 0, 1, 2
-	int32_t data_size {};  // Everything not delta_time
+	int32_t size {0};
+	int32_t data_length {0};  // Everything not delta_time
 };
-parse_midi_event_result_t parse_midi_event(const unsigned char*, unsigned char=0);
+parse_channel_event_result_t parse_channel_event(const unsigned char*, unsigned char=0, int32_t=0);
 bool midi_event_has_status_byte(const unsigned char*);
 unsigned char midi_event_get_status_byte(const unsigned char*);
 
