@@ -258,7 +258,7 @@ detect_chunk_type_result_t detect_chunk_type(const unsigned char *p, int32_t max
 }
 
 
-event_type detect_mtrk_event_type_dtstart_unsafe(const unsigned char *p) {
+smf_event_type detect_mtrk_event_type_dtstart_unsafe(const unsigned char *p) {
 	auto dt = midi_interpret_vl_field(p);
 	p += dt.N;
 	return detect_mtrk_event_type_unsafe(p);
@@ -266,33 +266,38 @@ event_type detect_mtrk_event_type_dtstart_unsafe(const unsigned char *p) {
 
 //
 // Pointer to the first data byte following the delta-time, _not_ to the start of
-// the delta-time.  
+// the delta-time.  This function may have to increment the pointer by 1 byte (to classify
+// an 0xB0 status byte as channel_voice or channel_mode.  
+// For sysex_f0 messages, this function does not validate the length field.  
 //
 smf_event_type detect_mtrk_event_type_unsafe(const unsigned char *p) {
 	if ((*p & 0xF0) >= 0x80 && (*p & 0xF0) <= 0xE0) {
+		if ((*p & 0xF0) == 0xB0) {
+			++p;
+			if ((*p & 0x80) == 0x80) {
+				// The first data byte should not have its high bit set
+				return smf_event_type::invalid;
+			}
+			uint8_t p1 = midi_raw_interpret<uint8_t>(p);
+			if (p1 >= 121 && p1 <= 127) {
+				return smf_event_type::channel_mode;
+			} else {
+				return smf_event_type::channel_voice;
+			}
+		}
 		return smf_event_type::channel_voice;
 	} else if (*p == 0xFF) { 
 		// meta event in an smf; system_realtime in a stream.  All system_realtime messages
 		// are single byte events (status byte only); in a meta-event, the status byte is followed
 		// by an "event type" byte then a vl-field giving the number of subsequent data bytes.
-		// It should be possible to peek forward and distinguish meta from system_realtime, but
-		// at present i am not doing that.  
-		return event_type::meta;
-	} else if ((*p & 0xF8) == 0xF7) {
+		return smf_event_type::meta;
+	} else if (*p == 0xF7) {
 		// system_exclusive or system_common
-		return event_type::sysex;
+		return smf_event_type::sysex_f7;
+	} else if (*p == 0xF0) {
+		return smf_event_type::sysex_f0;
 	}
-	return event_type::invalid;
-	/*if (*p == static_cast<unsigned char>(0xF0) || *p == static_cast<unsigned char>(0xF7)) {
-		// sysex event; 0xF0==240, 0xF7==247
-		return event_type::sysex;
-	} else if (*p == static_cast<unsigned char>(0xFF)) {  
-		// meta event; 0xFF == 255
-		return event_type::meta;
-	} else {
-		// midi event
-		return event_type::midi;
-	}*/
+	return smf_event_type::invalid;
 }
 
 //
@@ -317,28 +322,16 @@ parse_mtrk_event_result_t parse_mtrk_event_type(const unsigned char *p, int32_t 
 		result.type = smf_event_type::invalid;
 		return result;
 	}
+	if ((*p & 0xF0) == 0xB0 && max_inc < 2) {
+		// indicates a channel_mode or channel_voice message, both of which have 2 data bytes
+		// following the status byte *p.  detect_mtrk_event_type_unsafe(p) will increment p to
+		// the first data byte to classify this type of event, which is obv a problem if the
+		// array is to short.  
+		result.type = smf_event_type::invalid;
+	}
 	result.type = detect_mtrk_event_type_unsafe(p);
-	if (result.type == event_type::invalid) {
-		result.is_valid = false;
-	}
 
-	result.is_valid = true;
 	return result;
-
-	/*if (*p == static_cast<unsigned char>(0xF0) || *p == static_cast<unsigned char>(0xF7)) {
-		// sysex event; 0xF0==240, 0xF7==247
-		result.is_valid = true;
-		result.type=event_type::sysex;
-	} else if (*p == static_cast<unsigned char>(0xFF)) {  
-		// meta event; 0xFF == 255
-		result.is_valid = true;
-		result.type = event_type::meta;
-	} else {
-		// midi event
-		result.is_valid = true;
-		result.type = event_type::midi;
-	}
-	return result;*/
 }
 
 bool midi_event_has_status_byte(const unsigned char *p) {

@@ -108,13 +108,26 @@ std::string print(const event_type&);
 enum class smf_event_type {  // MTrk events
 	channel_voice,
 	channel_mode,
-	sys_common,
-	sys_exclusive,
+	sysex_f0,
+	sysex_f7,
 	meta,
 	invalid
 };
 std::string print(const smf_event_type&);
 
+
+//
+// parse_mtrk_event_type() will parse & validate the delta-t field and evaluate the status
+// byte immediately following.  It will _not_ validate other quantities internal to the event
+// (ie, beyond the status byte) such as the <length> field in sysex_f0/f7 events.  
+//
+struct parse_mtrk_event_result_t {
+	midi_vl_field_interpreted delta_t {};
+	smf_event_type type {smf_event_type::invalid};
+};
+parse_mtrk_event_result_t parse_mtrk_event_type(const unsigned char*, int32_t=0);
+event_type detect_mtrk_event_type_dtstart_unsafe(const unsigned char*);
+event_type detect_mtrk_event_type_unsafe(const unsigned char*);
 
 
 
@@ -175,14 +188,7 @@ detect_chunk_type_result_t detect_chunk_type(const unsigned char*, int32_t);
 
 
 
-struct parse_mtrk_event_result_t {
-	bool is_valid {false};  // False if the delta-t vl field does not validate
-	midi_vl_field_interpreted delta_t {};
-	smf_event_type type {smf_event_type::invalid};
-};
-parse_mtrk_event_result_t parse_mtrk_event_type(const unsigned char*);
-event_type detect_mtrk_event_type_dtstart_unsafe(const unsigned char*);
-event_type detect_mtrk_event_type_unsafe(const unsigned char*);
+
 
 
 struct validate_mtrk_chunk_result_t {
