@@ -42,6 +42,15 @@
     <ClInclude Include="midi_examples.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="mthd_container_t.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="smf_container_t.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mtrk_container_t.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="au.cpp">
@@ -69,6 +78,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="midi_examples.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mthd_container_t.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="smf_container_t.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mtrk_container_t.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

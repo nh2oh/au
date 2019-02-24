@@ -79,6 +79,8 @@ std::string print_hexascii(const unsigned char*, int, const char = ' ');
 // vl-type quantity.  From p. 132: "Your programs should expect alien chunks and treat them as if
 // they weren't there."  
 //
+// Sysex events and meta-events cancel any running status which was in effect.  Running status
+// does not apply to and may not be used for these messages (p.136).  
 enum class chunk_type {
 	header,  // MThd
 	track,  // MTrk
@@ -91,6 +93,32 @@ enum event_type {  // MTrk events
 	invalid
 };
 std::string print(const event_type&);
+
+//
+// There are no sys_realtime messages in an mtrk event stream.  The set of valid sys_realtime 
+// status bytes includes 0xFF, which is the leading byte for a "meta" event.  
+//
+// Why do i include "invalid," which is clearly not a member of the "class" of things-that-are-
+// smf-events?  Because users switch behavior on functions that return a value of this type (ex,
+// while iterating through an mtrk chunk, the type of event at the present position in the chunk
+// is detected by parse_mtrk_event()).  I want to force users to deal with the error case rather
+// than relying on the convention that some kind of parse_mtrk_event_result.is_valid field be 
+// checked before moving forward with parse_mtrk_event_result.detected_type.  
+//
+enum class smf_event_type {  // MTrk events
+	channel_voice,
+	channel_mode,
+	sys_common,
+	sys_exclusive,
+	meta,
+	invalid
+};
+std::string print(const smf_event_type&);
+
+
+
+
+
 
 
 struct parse_meta_event_result_t {
@@ -150,7 +178,7 @@ detect_chunk_type_result_t detect_chunk_type(const unsigned char*, int32_t);
 struct parse_mtrk_event_result_t {
 	bool is_valid {false};  // False if the delta-t vl field does not validate
 	midi_vl_field_interpreted delta_t {};
-	event_type type {event_type::midi};
+	smf_event_type type {smf_event_type::invalid};
 };
 parse_mtrk_event_result_t parse_mtrk_event_type(const unsigned char*);
 event_type detect_mtrk_event_type_dtstart_unsafe(const unsigned char*);

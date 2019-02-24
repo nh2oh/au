@@ -52,7 +52,21 @@ std::string print(const event_type& et) {
 		return "sysex";
 	}
 }
-
+std::string print(const smf_event_type& et) {
+	if (et == smf_event_type::meta) {
+		return "meta";
+	} else if (et == smf_event_type::channel_voice) {
+		return "channel_voice";
+	} else if (et == smf_event_type::channel_mode) {
+		return "channel_mode";
+	} else if (et == smf_event_type::sys_exclusive) {
+		return "sys_exclusive";
+	} else if (et == smf_event_type::sys_common) {
+		return "sys_common";
+	} else if (et == smf_event_type::invalid) {
+		return "invalid";
+	}
+}
 
 
 
@@ -250,11 +264,13 @@ event_type detect_mtrk_event_type_dtstart_unsafe(const unsigned char *p) {
 	return detect_mtrk_event_type_unsafe(p);
 }
 
+//
 // Pointer to the first data byte following the delta-time, _not_ to the start of
 // the delta-time.  
-event_type detect_mtrk_event_type_unsafe(const unsigned char *p) {
+//
+smf_event_type detect_mtrk_event_type_unsafe(const unsigned char *p) {
 	if ((*p & 0xF0) >= 0x80 && (*p & 0xF0) <= 0xE0) {
-		return event_type::midi;
+		return smf_event_type::channel_voice;
 	} else if (*p == 0xFF) { 
 		// meta event in an smf; system_realtime in a stream.  All system_realtime messages
 		// are single byte events (status byte only); in a meta-event, the status byte is followed
@@ -279,13 +295,15 @@ event_type detect_mtrk_event_type_unsafe(const unsigned char *p) {
 	}*/
 }
 
-// Pointer to the first byte of the vl delta-time field.
-// If the delta-time validates, the event is either meta, sysex, or midi_channel.  Implicitly, 
-// the std seems to disallow system_realtime and system_common messages as part of an MTrk event
-// stream.  
 //
-parse_mtrk_event_result_t parse_mtrk_event_type(const unsigned char *p) {
+// Takes a pointer to the first byte of the vl delta-time field.
+//
+parse_mtrk_event_result_t parse_mtrk_event_type(const unsigned char *p, int32_t max_inc) {
 	parse_mtrk_event_result_t result {};
+	if (max_inc == 0) {
+		result.type = smf_event_type::invalid;
+		return result;
+	}
 	// All mtrk events begin with a delta-time occupying a maximum of 4 bytes
 	result.delta_t = midi_interpret_vl_field(p);
 	if (result.delta_t.N > 4) {
@@ -294,6 +312,11 @@ parse_mtrk_event_result_t parse_mtrk_event_type(const unsigned char *p) {
 	}
 	p += result.delta_t.N;
 
+	max_inc -= result.delta_t.N;
+	if (max_inc <= 0) {
+		result.type = smf_event_type::invalid;
+		return result;
+	}
 	result.type = detect_mtrk_event_type_unsafe(p);
 	if (result.type == event_type::invalid) {
 		result.is_valid = false;

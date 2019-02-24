@@ -1,5 +1,8 @@
 #include "midi_examples.h"
 #include "midi_raw.h"
+#include "mthd_container_t.h"
+#include "mtrk_container_t.h"
+#include "smf_container_t.h"
 #include "midi_container.h"
 #include "midi_utils.h"
 #include "dbklib\binfile.h"
