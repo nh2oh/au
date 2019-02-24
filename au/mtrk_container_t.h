@@ -143,7 +143,7 @@ public:
 	// size of the event not including the delta-t field (but including the length field 
 	// in the case of sysex & meta events)
 	int32_t delta_time() const;
-	event_type type() const;  // enum event_type:: midi || sysex || meta
+	smf_event_type type() const;  // enum event_type:: midi || sysex || meta
 	int32_t data_size() const;  // Does not include the delta-time
 	int32_t size() const;  // Includes the delta-time
 

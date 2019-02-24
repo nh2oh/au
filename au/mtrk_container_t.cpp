@@ -13,7 +13,7 @@ mtrk_event_container_t mtrk_container_iterator_t::operator*() const {
 	// _why_ am i calling parse_midi_event() ???  Should i not detect the type then call
 	// parse_midi_..., parse_meta_,...  ???
 	//
-	auto sz = parse_midi_event(p, this->midi_status_).data_size;
+	auto sz = parse_channel_event(p, this->midi_status_).data_length;
 	return mtrk_event_container_t {p,sz};
 }
 
@@ -21,17 +21,18 @@ mtrk_container_iterator_t& mtrk_container_iterator_t::operator++() {
 	// Get the size of the presently indicated event and increment 
 	// this->container_offset_ by that ammount.  
 	const unsigned char *curr_p = this->container_->p_ + this->container_offset_;
-	parse_mtrk_event_result_t curr_event = parse_mtrk_event_type(curr_p);
+	int32_t max_inc = this->container_->size_-this->container_offset_;
+	parse_mtrk_event_result_t curr_event = parse_mtrk_event_type(curr_p, this->midi_status_, max_inc);
 	int32_t curr_size {0};
-	if (curr_event.type==event_type::sysex) {
-		auto sx = parse_sysex_event(curr_p);
-		curr_size = sx.delta_t.N + sx.data_size;
-	} else if (curr_event.type==event_type::meta) {
-		auto mt = parse_meta_event(curr_p);
-		curr_size = mt.delta_t.N + mt.data_size;
-	} else if (curr_event.type==event_type::midi) {
-		auto md = parse_midi_event(curr_p,this->midi_status_);
-		curr_size = md.delta_t.N + md.data_size;
+	if (curr_event.type==smf_event_type::sysex_f0 || curr_event.type==smf_event_type::sysex_f7) {
+		auto sx = parse_sysex_event(curr_p,max_inc);
+		curr_size = sx.size;
+	} else if (curr_event.type==smf_event_type::meta) {
+		auto mt = parse_meta_event(curr_p,max_inc);
+		curr_size = mt.size;
+	} else if (curr_event.type==smf_event_type::channel_voice || curr_event.type==smf_event_type::channel_mode) {
+		auto md = parse_channel_event(curr_p,this->midi_status_,max_inc);
+		curr_size = md.size;
 	}
 
 	this->container_offset_ += curr_size;
@@ -47,19 +48,20 @@ mtrk_container_iterator_t& mtrk_container_iterator_t::operator++() {
 	// If this was not the last event, set midi_status_ for the event pointed to by 
 	// this->container_offset_.  Below i refer to this as the "new" event.  
 	const unsigned char *new_p = this->container_->p_ + this->container_offset_;
-	parse_mtrk_event_result_t new_event = parse_mtrk_event_type(new_p);
-	if (new_event.type==event_type::sysex) {
-		this->midi_status_ = 0;  // sysex && meta events reset midi status
-	} else if (new_event.type==event_type::meta) {
-		this->midi_status_ = 0;  // sysex && meta events reset midi status
-	} else if (new_event.type==event_type::midi) {
+	max_inc = this->container_->size_-this->container_offset_;
+	parse_mtrk_event_result_t new_event = parse_mtrk_event_type(new_p,this->midi_status,max_inc);
+	if (new_event.type==smf_event_type::channel_voice || new_event.type==smf_event_type::channel_mode) {
 		// this->midi_status_ currently holds the midi status byte applicable to the
 		// previous event
-		auto md = parse_midi_event(new_p,this->midi_status_);
-		if (!md.has_status_byte) {
-			// The present (new) event contains a status byte
-			this->midi_status_ = midi_event_get_status_byte(new_p);
+		auto md = parse_channel_event(new_p,this->midi_status_,max_inc);
+		if (md.is_valid) {
+			this->midi_status_ = md.status_byte;
+		} else {
+			this->midi_status_ = 0;  // Not a valid status byte
 		}
+	} else {
+		// sysex && meta events reset the midi status
+		this->midi_status_ = 0;  // Not a valid status byte
 	}
 
 	return *this;
@@ -147,7 +149,7 @@ int32_t mtrk_event_container_t::size() const {
 	return this->size_;
 }
 // Assumes that this indicates a valid event
-event_type mtrk_event_container_t::type() const {
+smf_event_type mtrk_event_container_t::type() const {
 	return detect_mtrk_event_type_unsafe(this->data_begin());
 }
 // Starts at the delta-time

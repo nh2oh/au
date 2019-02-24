@@ -3,7 +3,7 @@
 #include <array>
 #include <vector>
 #include <exception>
-
+#include <cstdint>
 
 // TODO:  Max 4 bytes; stop after 4 bytes
 midi_vl_field_interpreted midi_interpret_vl_field(const unsigned char* p) {
@@ -42,7 +42,7 @@ std::string print_hexascii(const unsigned char *p, int n, const char sep) {
 }
 
 
-
+/*
 std::string print(const event_type_deprecated& et) {
 	if (et == event_type_deprecated::meta) {
 		return "meta";
@@ -51,7 +51,7 @@ std::string print(const event_type_deprecated& et) {
 	} else if (et == event_type_deprecated::sysex) {
 		return "sysex";
 	}
-}
+}*/
 std::string print(const smf_event_type& et) {
 	if (et == smf_event_type::meta) {
 		return "meta";
@@ -65,6 +65,8 @@ std::string print(const smf_event_type& et) {
 		return "sysex_f7";
 	} else if (et == smf_event_type::invalid) {
 		return "invalid";
+	} else {
+		return "std::string print(const smf_event_type&) can't deal with this type of smf_event.";
 	}
 }
 
@@ -72,43 +74,57 @@ std::string print(const smf_event_type& et) {
 
 
 
-smf_event_type detect_mtrk_event_type_dtstart_unsafe(const unsigned char *p) {
+smf_event_type detect_mtrk_event_type_dtstart_unsafe(const unsigned char *p, unsigned char s) {
 	auto dt = midi_interpret_vl_field(p);
 	p += dt.N;
-	return detect_mtrk_event_type_unsafe(p);
+	return detect_mtrk_event_type_unsafe(p,s);
 }
 
 //
 // Pointer to the first data byte following the delta-time, _not_ to the start of
 // the delta-time.  This function may have to increment the pointer by 1 byte (to classify
-// an 0xB0 status byte as channel_voice or channel_mode.  
-// For sysex_f0 messages, this function does not validate the length field.  
-//
-smf_event_type detect_mtrk_event_type_unsafe(const unsigned char *p) {
-	if ((*p & 0xF0) >= 0x80 && (*p & 0xF0) <= 0xE0) {
-		if ((*p & 0xF0) == 0xB0) {
-			++p;
-			if ((*p & 0x80) == 0x80) {
-				// The first data byte should not have its high bit set
+smf_event_type detect_mtrk_event_type_unsafe(const unsigned char *p, unsigned char s) {
+	// The tests below are made on s, not p.  If p is a valid status byte (high bit is set),
+	// the value of s is overwritten with *p.  If p is _not_ a valid status byte, ::invalid is 
+	// returned if s == FF || F0 || F7; although these are valid status bytes, they are not
+	// valid _running_-status bytes.  
+	//
+	// If p is not a valid status byte (high bit set), overwrite s with *p, then attempt to 
+	// classify s as channel_mode or channel_voice
+	if ((*p & 0x80) != 0x80) {  // *p is _not_ a valid status byte
+		if (s == 0xFF || s == 0xF0 || s == 0xF7) {
+			return smf_event_type::invalid;
+		}
+	} else {  // *p _is_ a valid status byte
+		s = *p;
+	}
+
+	if ((s & 0xF0) >= 0x80 && (s & 0xF0) <= 0xE0) {  // channel msg
+		if ((s & 0xF0) == 0xB0) {
+			// The first data byte should not have its high bit set.  
+			// I need the first data byte.  If we're using s, *p is the first data byte; if
+			// we're using *p, *++p is the first data byte.  
+			if ((*p & 0x80) == 0x80) {  // We're using *p
+				++p;
+			}
+			if ((*p & 0x80) == 0x80) {  // First data byte has its high bit set
 				return smf_event_type::invalid;
 			}
-			uint8_t p1 = midi_raw_interpret<uint8_t>(p);
-			if (p1 >= 121 && p1 <= 127) {
+			if (*p >= 121 && *p <= 127) {
 				return smf_event_type::channel_mode;
 			} else {
 				return smf_event_type::channel_voice;
 			}
 		}
 		return smf_event_type::channel_voice;
-	} else if (*p == 0xFF) { 
+	} else if (s == 0xFF) { 
 		// meta event in an smf; system_realtime in a stream.  All system_realtime messages
 		// are single byte events (status byte only); in a meta-event, the status byte is followed
 		// by an "event type" byte then a vl-field giving the number of subsequent data bytes.
 		return smf_event_type::meta;
-	} else if (*p == 0xF7) {
-		// system_exclusive or system_common
+	} else if (s == 0xF7) {
 		return smf_event_type::sysex_f7;
-	} else if (*p == 0xF0) {
+	} else if (s == 0xF0) {
 		return smf_event_type::sysex_f0;
 	}
 	return smf_event_type::invalid;
@@ -117,7 +133,7 @@ smf_event_type detect_mtrk_event_type_unsafe(const unsigned char *p) {
 //
 // Takes a pointer to the first byte of the vl delta-time field.
 //
-parse_mtrk_event_result_t parse_mtrk_event_type(const unsigned char *p, int32_t max_inc) {
+parse_mtrk_event_result_t parse_mtrk_event_type(const unsigned char *p, unsigned char s, int32_t max_inc) {
 	parse_mtrk_event_result_t result {};
 	if (max_inc == 0) {
 		result.type = smf_event_type::invalid;
@@ -136,21 +152,22 @@ parse_mtrk_event_result_t parse_mtrk_event_type(const unsigned char *p, int32_t 
 		result.type = smf_event_type::invalid;
 		return result;
 	}
-	if ((*p & 0xF0) == 0xB0 && max_inc < 2) {
+
+	if (((*p & 0xF0)==0xB0 && max_inc<2) || ((*p & 0x80)!=0x80 && (s & 0xF0)==0xB0 && max_inc < 1)) {
 		// indicates a channel_mode or channel_voice message, both of which have 2 data bytes
 		// following the status byte *p.  detect_mtrk_event_type_unsafe(p) will increment p to
 		// the first data byte to classify this type of event, which is obv a problem if the
 		// array is to short.  
 		result.type = smf_event_type::invalid;
 	}
-	result.type = detect_mtrk_event_type_unsafe(p);
+	result.type = detect_mtrk_event_type_unsafe(p,s);
 
 	return result;
 }
 
 
 
-parse_meta_event_result_t parse_meta_event(const unsigned char *p) {
+parse_meta_event_result_t parse_meta_event(const unsigned char *p, int32_t max_size) {
 	parse_meta_event_result_t result {};
 	result.delta_t = midi_interpret_vl_field(p);
 	if (result.delta_t.N > 4) {
@@ -158,18 +175,28 @@ parse_meta_event_result_t parse_meta_event(const unsigned char *p) {
 		return result;
 	}
 	p += result.delta_t.N;
+	max_size -= result.delta_t.N;
+	if (max_size <= 2) {
+		result.is_valid = false;
+		return result;
+	}
 
 	if (*p != 0xFF) {
 		result.is_valid = false;
 		return result;
 	}
-	++p;
+	++p;  --max_size;
 
 	result.type = *p;
-	++p;
+	++p;  --max_size;
 
-	auto length_field = midi_interpret_vl_field(p);
-	result.data_size = 2 + length_field.N + length_field.val;
+	result.length = midi_interpret_vl_field(p);
+	result.data_length = 2 + result.length.N + result.length.val;
+	max_size -= (result.length.N + result.length.val);
+	if (max_size < 0) {
+		result.is_valid = false;
+		return result;
+	}
 
 	result.is_valid = true;
 	return result;
@@ -216,7 +243,7 @@ parse_sysex_event_result_t parse_sysex_event(const unsigned char *p, int32_t max
 
 
 //
-// TODO:  There are some other conditions to verify:  I thuk only certain types of 
+// TODO:  There are some other conditions to verify:  I think only certain types of 
 // channel_msg_type are allowed to be in running_status mode.  
 //
 parse_channel_event_result_t parse_channel_event(const unsigned char *p,
@@ -310,95 +337,6 @@ parse_channel_event_result_t parse_channel_event(const unsigned char *p,
 	result.is_valid = true;
 	return result;
 }
-
-
-
-
-parse_midi_event_result_t parse_midi_event(const unsigned char *p,
-				unsigned char prev_status_byte,	int32_t max_size) {
-	parse_midi_event_result_t result {};
-	result.delta_t = midi_interpret_vl_field(p);
-	if (result.delta_t.N > 4) {
-		result.is_valid = false;
-		return result;
-	}
-	p += result.delta_t.N;
-
-	result.data_size = 0;
-	if ((*p & 0x80) == 0x80) {  // Present message has a status byte
-		result.has_status_byte = true;
-		result.status_byte = *p;
-		result.data_size += 1;
-		++p;
-	} else {
-		result.has_status_byte = false;
-		if ((prev_status_byte& 0x80) != 0x80) {
-			// prev_status_byte is invalid
-			result.is_valid = false;
-			return result;
-		}
-		result.status_byte = prev_status_byte;
-		// Not incrementing p; *p is the first data byte in running-status mode
-	}
-	// At this point, p points at the first data byte
-
-	if ((result.status_byte & 0xF0) < 0xF0) {  // => not a system msg
-		if ((result.status_byte & 0xF0) == 0xB0) {
-			if ((*p & 0x78) == 0x78) {  // channel mode msg w/ 2 data bytes
-				result.type = midi_msg_t::channel_mode;
-				result.n_data_bytes = 2;
-			} else {
-				result.type = midi_msg_t::channel_voice;
-				result.n_data_bytes = 2;
-			}
-		} else if ((result.status_byte & 0xF0) == 0xC0  || (result.status_byte & 0xF0) == 0xD0) {
-			result.type = midi_msg_t::channel_voice;
-			result.n_data_bytes = 1;
-		} else {
-			result.type = midi_msg_t::channel_voice;
-			result.n_data_bytes = 2;
-		}
-	} else { // some sort of system message
-		// I do not consider anything here to be of event_type::midi; it's all event_type::sysex.
-		// None of this should ever trigger.  
-		if (*p == 0xF0) {  
-			result.type = midi_msg_t::system_exclusive;
-			// unknown n_data_bytes
-		} else if ((*p & 0xF8) == 0xF8) {
-			result.type = midi_msg_t::system_realtime;
-			result.n_data_bytes = 0;
-		} else if ((*p & 0xF8) == 0xF0) {
-			result.type = midi_msg_t::system_common;
-			// unknown n_data_bytes:  0 or 2
-		}
-	}
-
-	/*if ((result.status_byte & 0xF0) == 0xC0 || (result.status_byte & 0xF0) == 0xD0) {
-		result.n_data_bytes = 1;
-	} else {
-		result.n_data_bytes = 2;
-	}*/
-	result.data_size += result.n_data_bytes;
-
-	// Check first data byte
-	if ((*p & 0x80) != 0) {
-		result.is_valid = false;
-		return result;
-	}
-
-	// Optionally check second data byte
-	if (result.n_data_bytes == 2) {
-		++p;
-		if ((*p & 0x80) != 0) {
-			result.is_valid = false;
-			return result;
-		}
-	}
-
-	result.is_valid = true;
-	return result;
-}
-
 
 
 detect_chunk_type_result_t detect_chunk_type(const unsigned char *p, int32_t max_size) {
@@ -503,7 +441,7 @@ validate_mtrk_chunk_result_t validate_mtrk_chunk(const unsigned char *p, int32_t
 		int32_t curr_event_length {0};
 
 		// Classify the present event as midi, sysex, or meta
-		auto curr_event = parse_mtrk_event_type(p+i,mtrk_reported_size-i);
+		auto curr_event = parse_mtrk_event_type(p+i,most_recent_midi_status_byte,mtrk_reported_size-i);
 		if (curr_event.type == smf_event_type::invalid) {
 			result.is_valid = false;
 			result.msg += "curr_event.type == smf_event_type::invalid\n";
@@ -517,38 +455,35 @@ validate_mtrk_chunk_result_t validate_mtrk_chunk(const unsigned char *p, int32_t
 			// Running status does not apply to and may not be used for these messages.
 			//
 			most_recent_midi_status_byte = unsigned char {0};
-			auto sx = parse_sysex_event(p+i);
+			auto sx = parse_sysex_event(p+i,mtrk_reported_size-i);
 			if (!(sx.is_valid)) {
 				result.is_valid = false;
 				result.msg = "!(sx.is_valid)";
 				return result;
 			}
-			curr_event_length = curr_event.delta_t.N + sx.data_size;
+			curr_event_length = curr_event.delta_t.N + sx.data_length;
 		} else if (curr_event.type == smf_event_type::meta) {
 			// From the std (p.136):
 			// Sysex events and meta-events cancel any running status which was in effect.  
 			// Running status does not apply to and may not be used for these messages.
 			//
 			most_recent_midi_status_byte = unsigned char {0};
-			auto mt = parse_meta_event(p+i);
+			auto mt = parse_meta_event(p+i,mtrk_reported_size-i);
 			if (!(mt.is_valid)) {
 				result.is_valid = false;
 				result.msg = "!(mt.is_valid)";
 				return result;
 			}
-			curr_event_length = curr_event.delta_t.N + mt.data_size;
+			curr_event_length = curr_event.delta_t.N + mt.data_length;
 		} else if (curr_event.type == smf_event_type::channel_voice || curr_event.type == smf_event_type::channel_mode) {
-			auto md = parse_midi_event(p+i,most_recent_midi_status_byte);
+			auto md = parse_channel_event(p+i,most_recent_midi_status_byte,mtrk_reported_size-i);
 			if (!(md.is_valid)) {
 				result.is_valid = false;
 				result.msg = "!(md.is_valid)";
 				return result;
 			}
-			curr_event_length = curr_event.delta_t.N + md.data_size;
-			if (!(md.has_status_byte)) {
-				//most_recent_midi_status_byte = midi_event_get_status_byte(p+i);
-				most_recent_midi_status_byte = *(p+=curr_event.delta_t.N);
-			}
+			curr_event_length = curr_event.delta_t.N + md.data_length;
+			most_recent_midi_status_byte = md.status_byte;
 		} else {
 			result.is_valid = false;
 			result.msg = "curr_event.type somehow didn't match anything i am prepared to parse.";
@@ -587,23 +522,19 @@ validate_smf_result_t validate_smf(const unsigned char *p, int32_t offset_end,
 	int32_t offset {0};
 	while (offset<offset_end) {  // For each chunk...
 		detect_chunk_type_result_t curr_chunk = detect_chunk_type(p+offset,offset_end-offset);
-		if (!curr_chunk.is_valid) {
+		if (curr_chunk.type == chunk_type::invalid) {
 			result.is_valid = false;
-			result.msg += "!curr_chunk.is_valid\ncurr_chunk_type.msg== ";
+			result.msg += "curr_chunk.type == chunk_type::invalid\ncurr_chunk_type.msg== ";
 			result.msg += curr_chunk.msg;
 			return result;
-		}
-
-		if (curr_chunk.type == chunk_type::header) {
+		} else if (curr_chunk.type == chunk_type::header) {
 			if (offset > 0) {
 				result.is_valid = false;
 				result.msg += "curr_chunk.type == chunk_type::header but offset > 0.  ";
 				result.msg += "A valid midi file must contain only one MThd @ the very start.  \n";
 				return result;
 			}
-		}
-
-		if (curr_chunk.type == chunk_type::track) {
+		} else if (curr_chunk.type == chunk_type::track) {
 			if (offset == 0) {
 				result.is_valid = false;
 				result.msg += "curr_chunk.type == chunk_type::track but offset == 0.  ";
@@ -626,8 +557,15 @@ validate_smf_result_t validate_smf(const unsigned char *p, int32_t offset_end,
 				return result;
 			}
 		}
+
 		chunk_idxs.push_back({curr_chunk.type,offset,curr_chunk.size});
 		offset += curr_chunk.size;
+	}
+
+	if (offset != offset_end) {
+		result.is_valid = false;
+		result.msg = "offset != offset_end.";
+		return result;
 	}
 
 	result.is_valid = true;

@@ -2,6 +2,8 @@
 #include <algorithm>  // std::reverse_copy() in midi_raw_interpret()
 #include <string>
 #include <vector>
+#include <array>
+
 
 //
 // TODO:  validate_, parse_, detect_ naming inconsistency
@@ -72,6 +74,12 @@ std::array<unsigned char,4> midi_encode_vl_field(T val) {
 std::string print_hexascii(const unsigned char*, int, const char = ' ');
 
 
+
+
+
+
+
+
 //
 // There are two types of chunks: the Header chunk, containing data pertaining to the entire file 
 // (only one per file), and the Track chunk (possibly >1 per file).  Both chunk types have the 
@@ -87,7 +95,6 @@ enum class chunk_type {
 	unknown,  // The std requires that unrecognized chunk types be permitted
 	invalid
 };
-
 //
 // Checks for the 4-char id and the 4-byte size.  Verifies that the id + size field 
 // + the reported size does not exceed the max_size suppled as the second argument.  
@@ -111,14 +118,6 @@ struct validate_mtrk_chunk_result_t {
 validate_mtrk_chunk_result_t validate_mtrk_chunk(const unsigned char*, int32_t=0);
 
 
-enum event_type_deprecated {  // MTrk events
-	midi,  // really only midi_channel messages
-	sysex,  // really also includes system_common, system_realtime
-	meta,
-	invalid
-};
-std::string print(const event_type_deprecated&);
-
 //
 // There are no sys_realtime messages in an mtrk event stream.  The set of valid sys_realtime 
 // status bytes includes 0xFF, which is the leading byte for a "meta" event.  
@@ -139,34 +138,54 @@ enum class smf_event_type {  // MTrk events
 	invalid
 };
 std::string print(const smf_event_type&);
-
-
 //
 // parse_mtrk_event_type() will parse & validate the delta-t field and evaluate the status
 // byte immediately following.  It will _not_ validate other quantities internal to the event
-// (ie, beyond the status byte) such as the <length> field in sysex_f0/f7 events.  
+// (ie, beyond the status byte) such as the <length> field in sysex_f0/f7 events.  Will return
+// smf_event_type::invalid under the following circumstances:
+// -> the delta_t field is invalid (ex: > 4 bytes) or > max_size
+// -> the size of the delta_t field + the calculated num-data/status-bytes > max_size
+// -> the byte immediately following the delta_t field is not a status byte AND (s is not
+//    a status byte, or is a disallowed running_status status byte such as FF, F0, F7).  
+// -> an 0xB0 status byte is not followed by a valid data byte
+// Note that except in the one limited case above, the data bytes are not validated as plausible
+// data bytes.  This is up to the relevant parse_() function.  
+//
+// It would be really nice if this could return the size of the event, however, the size 
+// calculation is different for sysex, meta, and channel events, and in the latter case can not
+// even be made without knowing the present midi_status (for running_status streams).  Although
+// I am trying to treat mtrk events "polymorphically," since all events have a size, that size
+// can only be calculated once the event has been classified/parsed.  
+//
 //
 struct parse_mtrk_event_result_t {
 	midi_vl_field_interpreted delta_t {};
 	smf_event_type type {smf_event_type::invalid};
 };
-parse_mtrk_event_result_t parse_mtrk_event_type(const unsigned char*, int32_t=0);
-smf_event_type detect_mtrk_event_type_dtstart_unsafe(const unsigned char*);
-smf_event_type detect_mtrk_event_type_unsafe(const unsigned char*);
-
-
-
-
-
+parse_mtrk_event_result_t parse_mtrk_event_type(const unsigned char*, unsigned char, int32_t=0);
+//
+// Pointer to the first data byte following the delta-time, _not_ to the start of the delta-time.  
+// This is the most lightweight status-byte classifier that i have in this lib.  The pointer may
+// have to be incremented by 1 byte to classify an 0xB0 status byte as channel_voice or 
+// channel_mode.  In this case, will return smf_event_type::invalid if said data byte is an  
+// invalid data byte (has its high bit set).  
+//
+// For meta and sysex_f0 messages (status byte == 0xFF, 0xF0 or 0xF7) the length field subsequent to
+// the status byte is not validated.  It *only* classifies the status byte (and if neessary to make
+// the classification, reads the first data byte).  
+//
+smf_event_type detect_mtrk_event_type_unsafe(const unsigned char*, unsigned char=0);
+smf_event_type detect_mtrk_event_type_dtstart_unsafe(const unsigned char*, unsigned char=0);
 
 struct parse_meta_event_result_t {
 	bool is_valid {false};
 	midi_vl_field_interpreted delta_t {};
-	uint8_t type {0};
-	int32_t data_size {};  // Everything not delta_time
+	midi_vl_field_interpreted length {};
+	unsigned char type {0};
+	int32_t size {0};
+	int32_t data_length {};  // Everything not delta_time
 };
-parse_meta_event_result_t parse_meta_event(const unsigned char*);
-
+parse_meta_event_result_t parse_meta_event(const unsigned char*,int32_t=0);
 struct parse_sysex_event_result_t {
 	bool is_valid {false};
 	midi_vl_field_interpreted delta_t {};
@@ -177,8 +196,6 @@ struct parse_sysex_event_result_t {
 	bool has_terminating_f7 {false};
 };
 parse_sysex_event_result_t parse_sysex_event(const unsigned char*,int32_t=0);
-
-
 enum class channel_msg_type {
 	note_on,
 	note_off,
@@ -190,36 +207,23 @@ enum class channel_msg_type {
 	channel_mode,
 	invalid
 };
-/*
-enum class midi_msg_t {
-	channel_voice,
-	channel_mode,
-	system_exclusive,  // I don't consider this to be an event_type::midi
-	system_common,  // I don't consider this to be an event_type::midi
-	system_realtime,  // I don't consider this to be an event_type::midi
-	system_something,  // I don't consider this to be an event_type::midi
-	invalid
-};*/
+// NB:  validate_mtrk_chunk() keeps track of the most recent status byte by assigning from the 
+// status_byte field of this struct.  Change this before adopting any sort of sign convention for
+// implied running_status.  
 struct parse_channel_event_result_t {
 	bool is_valid {false};
 	channel_msg_type type {channel_msg_type::invalid};
 	midi_vl_field_interpreted delta_t {};
 	bool has_status_byte {false};
-	uint8_t status_byte {0};
+	unsigned char status_byte {0};
 	uint8_t n_data_bytes {0};  // 0, 1, 2
 	int32_t size {0};
 	int32_t data_length {0};  // Everything not delta_time
 };
 parse_channel_event_result_t parse_channel_event(const unsigned char*, unsigned char=0, int32_t=0);
+
 bool midi_event_has_status_byte(const unsigned char*);
 unsigned char midi_event_get_status_byte(const unsigned char*);
-
-
-
-
-
-
-
 
 
 
@@ -236,10 +240,34 @@ struct validate_smf_result_t {
 	std::string fname {};
 	const unsigned char *p {};
 	int32_t size {0};
-	int n_mtrk {0};  // Number of MTrk chunks
-	int n_unknown {0};
+	int32_t n_mtrk {0};  // Number of MTrk chunks
+	int32_t n_unknown {0};
 	std::vector<chunk_idx_t> chunk_idxs {};
 };
 validate_smf_result_t validate_smf(const unsigned char*, int32_t, const std::string&);
+
+
+
+
+/*
+enum event_type_deprecated {  // MTrk events
+	midi,  // really only midi_channel messages
+	sysex,  // really also includes system_common, system_realtime
+	meta,
+	invalid
+};
+std::string print(const event_type_deprecated&);*/
+/*
+enum class midi_msg_t {
+	channel_voice,
+	channel_mode,
+	system_exclusive,  // I don't consider this to be an event_type::midi
+	system_common,  // I don't consider this to be an event_type::midi
+	system_realtime,  // I don't consider this to be an event_type::midi
+	system_something,  // I don't consider this to be an event_type::midi
+	invalid
+};*/
+
+
 
 
