@@ -90,7 +90,6 @@ private:
 std::string print(const mtrk_container_t&);
 
 
-
 //
 // mtrk_event_container_t
 //
@@ -121,7 +120,7 @@ std::string print(const mtrk_container_t&);
 // lacking explicit status bytes are valid midi events.  
 //
 // Note that for the majority of simple smf files comprised of a large number of midi events,
-// this 96-byte pointer,size class will mostly be into 5-byte (2-byte-delta-t+status+p1+p2) 
+// this 12-byte pointer,size class will mostly reference 5-byte (2-byte-delta-t+status+p1+p2) 
 // or 4-byte arrays.  mtrk_event_t is useful therefore as a generic return type from the MTrk
 // container iterator.  Do not try to "index" each event in an n-thousand event midi file with 
 // a vector of mtrk_event_t.  

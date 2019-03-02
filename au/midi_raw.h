@@ -9,8 +9,6 @@
 // TODO:  validate_, parse_, detect_ naming inconsistency
 //
 
-
-
 // 
 // Copies the bytes in the range [p,p+sizeof(T)) into the range occupied by a T such that the
 // byte order in the source and destination ranges are the reverse of oneanother.  Hence
@@ -76,13 +74,10 @@ std::string print_hexascii(const unsigned char*, int, const char = ' ');
 
 //
 // There are two types of chunks: the Header chunk, containing data pertaining to the entire file 
-// (only one per file), and the Track chunk (possibly >1 per file).  Both chunk types have the 
-// layout implied by struct midi_chunk.  Note that the length field is always 4 bytes and is not a
-// vl-type quantity.  From p. 132: "Your programs should expect alien chunks and treat them as if
-// they weren't there."  
+// (only one per file), and the Track chunk (possibly >1 per file).  Both have a length field 
+// that is is always 4 bytes (is not a vl-type quantity).  From p. 132: "Your programs should 
+// expect alien chunks and treat them as if they weren't there."  
 //
-// Sysex events and meta-events cancel any running status which was in effect.  Running status
-// does not apply to and may not be used for these messages (p.136).  
 enum class chunk_type {
 	header,  // MThd
 	track,  // MTrk
@@ -131,6 +126,9 @@ validate_mtrk_chunk_result_t validate_mtrk_chunk(const unsigned char*, int32_t=0
 // is detected by parse_mtrk_event()).  I want to force users to deal with the error case rather
 // than relying on the convention that some kind of parse_mtrk_event_result.is_valid field be 
 // checked before moving forward with parse_mtrk_event_result.detected_type.  
+//
+// Sysex events and meta-events cancel any running status which was in effect.  Running status
+// does not apply to and may not be used for these messages (p.136).  
 //
 enum class smf_event_type {  // MTrk events
 	channel_voice,
@@ -253,29 +251,4 @@ struct validate_smf_result_t {
 	std::vector<chunk_idx_t> chunk_idxs {};
 };
 validate_smf_result_t validate_smf(const unsigned char*, int32_t, const std::string&);
-
-
-
-
-/*
-enum event_type_deprecated {  // MTrk events
-	midi,  // really only midi_channel messages
-	sysex,  // really also includes system_common, system_realtime
-	meta,
-	invalid
-};
-std::string print(const event_type_deprecated&);*/
-/*
-enum class midi_msg_t {
-	channel_voice,
-	channel_mode,
-	system_exclusive,  // I don't consider this to be an event_type::midi
-	system_common,  // I don't consider this to be an event_type::midi
-	system_realtime,  // I don't consider this to be an event_type::midi
-	system_something,  // I don't consider this to be an event_type::midi
-	invalid
-};*/
-
-
-
 
