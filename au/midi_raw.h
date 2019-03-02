@@ -74,12 +74,6 @@ std::array<unsigned char,4> midi_encode_vl_field(T val) {
 std::string print_hexascii(const unsigned char*, int, const char = ' ');
 
 
-
-
-
-
-
-
 //
 // There are two types of chunks: the Header chunk, containing data pertaining to the entire file 
 // (only one per file), and the Track chunk (possibly >1 per file).  Both chunk types have the 
@@ -221,10 +215,15 @@ struct parse_channel_event_result_t {
 	int32_t data_length {0};  // Everything not delta_time
 };
 parse_channel_event_result_t parse_channel_event(const unsigned char*, unsigned char=0, int32_t=0);
-
 bool midi_event_has_status_byte(const unsigned char*);
 unsigned char midi_event_get_status_byte(const unsigned char*);
-
+// Result is only valid for channel_voice or channel_mode status bytes:  Does not 
+// verify that the input is a legit channel_voice or _mode status byte.  
+int8_t channel_number_from_status_byte_unsafe(unsigned char);
+// arg 1 => status byte, arg 2 => first data byte, needed iff arg1 & 0xF0 == 0xB0.  
+// Not really "_unsafe"-worthy since will return channel_msg_type::invalid if the
+// status byte is not legit.  
+channel_msg_type channel_msg_type_from_status_byte(unsigned char, unsigned char=0);
 
 
 struct chunk_idx_t {

@@ -1,4 +1,5 @@
 #include "midi_utils.h"
+#include "midi_raw.h"
 #include "midi_container.h"
 #include <string>
 #include <vector>
@@ -8,7 +9,7 @@
 
 //
 // Maybe a better way to do this is to let some sort of note_event iterator be ctor-ible
-// from an mtrk_container_t...  End-users don;t want to nec. deal with all the details of
+// from an mtrk_container_t...  End-users don't want to nec. deal with all the details of
 // which types of midi events turn notes on or off...
 //
 //
@@ -27,24 +28,17 @@ std::string print_notelist(const mtrk_container_t& mtrk) {
 	for (mtrk_container_iterator_t it=mtrk.begin(); it!=mtrk.end(); ++it) {
 		mtrk_event_container_t curr_event = *it;
 		cumtime += curr_event.delta_time();
-		if (curr_event.type() != event_type::midi) { continue; }
+		if (curr_event.type() != smf_event_type::channel_voice 
+			|| curr_event.type() != smf_event_type::channel_mode) { continue; }
 
 		midi_event_container_t curr_midi {curr_event, it.midi_status()};
-		auto ct = curr_midi.type();
-		auto cct = curr_midi.channel_msg_type();
-		if (curr_midi.type() != midi_msg_t::channel_voice 
-			|| curr_midi.channel_msg_type() != channel_msg_t::note_on
-			|| curr_midi.channel_msg_type() != channel_msg_t::note_off) {
-			continue;
-		}
-
-		if (curr_midi.channel_msg_type() == channel_msg_t::note_on) {
+		if (curr_midi.channel_msg_type() == channel_msg_type::note_on) {
 			note_onoff_table_t curr_entry {};
 			curr_entry.note = curr_midi.note_number();
 			curr_entry.voice = curr_midi.channel_number();
 			curr_entry.t_on = cumtime;
 			note_table.push_back(curr_entry);
-		} else if (curr_midi.channel_msg_type() == channel_msg_t::note_off) {
+		} else if (curr_midi.channel_msg_type() == channel_msg_type::note_off) {
 			if (note_table.size() == 0) { continue; }
 			for (int i=note_table.size()-1; i>=0; --i) {
 				if (note_table[i].voice != curr_midi.channel_number()

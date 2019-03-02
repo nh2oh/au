@@ -42,6 +42,54 @@ std::string print_hexascii(const unsigned char *p, int n, const char sep) {
 }
 
 
+detect_chunk_type_result_t detect_chunk_type(const unsigned char *p, int32_t max_size) {
+	detect_chunk_type_result_t result {};
+	if (max_size < 8) {
+		result.type = chunk_type::invalid;
+		result.msg = "(max_size < 8) but all smf chunks begin with an 8 byte header.";
+		return result;
+	}
+
+	// All chunks begin w/ A 4-char identifier
+	uint32_t id = midi_raw_interpret<uint32_t>(p);
+	if (id == 0x4D546864) {  // Mthd
+		result.type = chunk_type::header;
+	} else if (id == 0x4D54726B) {  // MTrk
+		result.type = chunk_type::track;
+	} else {
+		result.type = chunk_type::unknown;
+	}
+	p+=4;
+
+	result.data_length = midi_raw_interpret<int32_t>(p);
+	result.size = 8 + result.data_length;
+
+	if (result.data_length < 0 || result.size > max_size) {
+		result.type = chunk_type::invalid;
+		result.msg = "result.data_length < 0 || result.size > max_size.  ";
+		result.msg += "SMF chunks must have data length >= 0 but not exceeding the size of the file.";
+		return result;
+	}
+
+	/*
+	if (result.type == chunk_type::header && data_length != 6) {
+		result.msg = "MThd chunks must have a data length of 6";
+		result.is_valid = false;
+		return result;
+	} else if (result.type == chunk_type::track) {
+		auto first_event = parse_mtrk_event_type(p);
+		if (!(first_event.is_valid) || first_event.type != event_type::midi
+			|| !midi_event_has_status_byte(p)) {
+			result.msg = "MTrk chunks must begin w/a MIDI event containing a status byte";
+			result.is_valid = false;
+			return result;
+		}
+	}*/
+
+	return result;
+}
+
+
 /*
 std::string print(const event_type_deprecated& et) {
 	if (et == event_type_deprecated::meta) {
@@ -283,26 +331,13 @@ parse_channel_event_result_t parse_channel_event(const unsigned char *p,
 	}
 	// At this point, p points at the first data byte
 
-	result.type = channel_msg_type::invalid;
-	if ((result.status_byte & 0xF0) != 0xB0) {
-		switch (result.status_byte & 0xF0) {
-			case 0x80:  result.type = channel_msg_type::note_off; break;
-			case 0x90: result.type = channel_msg_type::note_on; break;
-			case 0xA0:  result.type = channel_msg_type::key_pressure; break;
-			//case 0xB0:  ....
-			case 0xC0:  result.type = channel_msg_type::program_change; break;
-			case 0xD0:  result.type = channel_msg_type::channel_pressure; break;
-			case 0xE0:  result.type = channel_msg_type::pitch_bend; break;
-			default: result.type = channel_msg_type::invalid; break;
-		}
-	} else if ((result.status_byte & 0xF0) == 0xB0) {
-		if (result.status_byte >= 121 && result.status_byte <= 127) {
-			// channel_mode event
-			result.type = channel_msg_type::channel_mode;
-		} else {
-			result.type = channel_msg_type::control_change;
-		}
-	}
+	// To distinguish a channel_mode from a control_change msg, have to look at the
+	// first data byte.  
+	// TODO:  Should probably check max_size before doing this ???
+	// TODO:  parse_mtrk_event_type has already made this classification as 
+	// smf_event_type::channel_mode || smf_event_type::channel_voice
+	result.type = channel_msg_type_from_status_byte(result.status_byte, *p);
+
 	if (result.type == channel_msg_type::invalid) {
 		result.is_valid = false;
 		return result;
@@ -339,55 +374,6 @@ parse_channel_event_result_t parse_channel_event(const unsigned char *p,
 }
 
 
-detect_chunk_type_result_t detect_chunk_type(const unsigned char *p, int32_t max_size) {
-	detect_chunk_type_result_t result {};
-	if (max_size < 8) {
-		result.type = chunk_type::invalid;
-		result.msg = "(max_size < 8) but all smf chunks begin with an 8 byte header.";
-		return result;
-	}
-
-	// All chunks begin w/ A 4-char identifier
-	uint32_t id = midi_raw_interpret<uint32_t>(p);
-	if (id == 0x4D546864) {  // Mthd
-		result.type = chunk_type::header;
-	} else if (id == 0x4D54726B) {  // MTrk
-		result.type = chunk_type::track;
-	} else {
-		result.type = chunk_type::unknown;
-	}
-	p+=4;
-
-	result.data_length = midi_raw_interpret<int32_t>(p);
-	result.size = 8 + result.data_length;
-
-	if (result.data_length < 0 || result.size > max_size) {
-		result.type = chunk_type::invalid;
-		result.msg = "result.data_length < 0 || result.size > max_size.  ";
-		result.msg += "SMF chunks must have data length >= 0 but not exceeding the size of the file.";
-		return result;
-	}
-
-	/*
-	if (result.type == chunk_type::header && data_length != 6) {
-		result.msg = "MThd chunks must have a data length of 6";
-		result.is_valid = false;
-		return result;
-	} else if (result.type == chunk_type::track) {
-		auto first_event = parse_mtrk_event_type(p);
-		if (!(first_event.is_valid) || first_event.type != event_type::midi
-			|| !midi_event_has_status_byte(p)) {
-			result.msg = "MTrk chunks must begin w/a MIDI event containing a status byte";
-			result.is_valid = false;
-			return result;
-		}
-	}*/
-
-	return result;
-}
-
-
-
 bool midi_event_has_status_byte(const unsigned char *p) {
 	auto delta_t_vl = midi_interpret_vl_field(p);
 	if (delta_t_vl.N > 4) {
@@ -404,6 +390,37 @@ unsigned char midi_event_get_status_byte(const unsigned char* p) {
 	p += delta_t_vl.N;
 	return *p;
 }
+int8_t channel_number_from_status_byte_unsafe(unsigned char s) {
+	return int8_t {(s & 0x0F) + 1};
+}
+channel_msg_type channel_msg_type_from_status_byte(unsigned char s, unsigned char p1) {
+	channel_msg_type result = channel_msg_type::invalid;
+	if ((s & 0xF0) != 0xB0) {
+		switch (s & 0xF0) {
+			case 0x80:  result = channel_msg_type::note_off; break;
+			case 0x90: result = channel_msg_type::note_on; break;
+			case 0xA0:  result = channel_msg_type::key_pressure; break;
+			//case 0xB0:  ....
+			case 0xC0:  result = channel_msg_type::program_change; break;
+			case 0xD0:  result = channel_msg_type::channel_pressure; break;
+			case 0xE0:  result = channel_msg_type::pitch_bend; break;
+			default: result = channel_msg_type::invalid; break;
+		}
+	} else if ((s & 0xF0) == 0xB0) {
+		// To distinguish a channel_mode from a control_change msg, have to look at the
+		// first data byte.  
+		if (p1 >= 121 && p1 <= 127) {
+			result = channel_msg_type::channel_mode;
+		} else {
+			result = channel_msg_type::control_change;
+		}
+	}
+
+	return result;
+}
+
+
+
 
 
 //

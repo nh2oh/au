@@ -1,69 +1,43 @@
 #include "midi_container.h"
 #include "midi_raw.h"
+#include "mtrk_container_t.h"
 #include "dbklib\binfile.h"
 #include <iostream>
 #include <string>
 #include <vector>
 
 
-// channel_voice, channel_mode, sysex_common, ...
-midi_msg_t midi_event_container_t::type() const {
-	return parse_midi_event(this->p_, this->midi_status_).type;
-	/*auto p = this->p_;
-	auto event_parsed = parse_midi_event(this->p_, this->midi_status_);
-	p += event_parsed.delta_t.N;
-	if (event_parsed.has_status_byte && event_parsed.n_data_bytes>0) {
-		p+=1;
-	}
-	// p now points at the first data byte.  Note that for allidi messages, n_data_bytes
-	// == 1 or 2.  
+midi_event_container_t::midi_event_container_t(const mtrk_event_container_t& mtrkev,
+				unsigned char status) {
+	auto chev_parsed = parse_channel_event(mtrkev.raw_begin(),status,mtrkev.size());
+	this->midi_status_ = chev_parsed.status_byte;
+	
+	int8_t offset = chev_parsed.has_status_byte ? 1 : 0;
 
-	if ((this->midi_status_ & 0xF0) == 0xB0) {
-		if ((*p & 0xF8) == 0x78) {
-			return midi_msg_t::channel_mode;
-		}
-	} else if ((this->midi_status_ & 0xF0) == 0xF0) {
-		return midi_msg_t::system_something;
-	} else {
-		return midi_msg_t::channel_voice;
-	}*/
+	if (chev_parsed.n_data_bytes == 0) {
+		this->p1_ = 0;
+		this->p2_ = 0;
+	} else if (chev_parsed.n_data_bytes == 1) {
+		this->p1_ = *(mtrkev.data_begin()+offset);
+		this->p2_ = 0;
+	} else if (chev_parsed.n_data_bytes == 2) {
+		this->p1_ = *(mtrkev.data_begin()+offset);
+		this->p2_ = *(mtrkev.data_begin()+offset+1);
+	}
 }
 
-channel_msg_t midi_event_container_t::channel_msg_type() const {
-	if (type() == midi_msg_t::channel_voice) {
-		switch (this->midi_status_ & 0xF0) {
-			case 0x80:  return channel_msg_t::note_off; break;
-			case 0x90:  return channel_msg_t::note_on; break;
-			case 0xA0:  return channel_msg_t::key_pressure; break;
-			case 0xB0:  return channel_msg_t::control_change; break;
-			case 0xC0:  return channel_msg_t::program_change; break;
-			case 0xD0:  return channel_msg_t::channel_pressure; break;
-			case 0xE0:  return channel_msg_t::pitch_bend; break;
-		}
-	} else if (type() == midi_msg_t::channel_mode) {
-		return channel_msg_t::channel_mode;
-	}
-
-	return channel_msg_t::invalid;
+channel_msg_type midi_event_container_t::channel_msg_type() const {
+	return channel_msg_type_from_status_byte(this->midi_status_, this->p1_);
 }
 
 // for midi_msg_t::channel_voice || channel_mode
 int8_t midi_event_container_t::channel_number() const {
-	return this->midi_status_ & 0x0F;
+	return channel_number_from_status_byte_unsafe(this->midi_status_);
 }
 
 // for channel_msg_t::note_on || note_off || key_pressure
 int8_t midi_event_container_t::note_number() const {
-	auto p = this->p_;
-	auto event_parsed = parse_midi_event(this->p_, this->midi_status_);
-	p += event_parsed.delta_t.N;
-	if (event_parsed.has_status_byte && event_parsed.n_data_bytes>0) {
-		p+=1;
-	}
-	// p now points at the first data byte, unless event_parsed.n_data_bytes==0, in which
-	// case p points at the status byte.  
-
-	return *p;
+	return this->p1_;
 }
 
 

@@ -4,7 +4,7 @@
 
 
 mthd_container_t::mthd_container_t(const detect_chunk_type_result_t& mthd) {
-	if (!mthd.is_valid || mthd.type != chunk_type::header) {
+	if (mthd.type != chunk_type::header) {
 		std::abort();
 	}
 	this->p_=mthd.p;

@@ -37,7 +37,7 @@ public:
 	// Includes the "MThd" and data-length fields
 	int32_t size() const;	
 private:
-	const unsigned char *p_ {};
+	const unsigned char *p_ {};  // points at the 'M' of "MThd..."
 	int32_t size_ {0};
 };
 

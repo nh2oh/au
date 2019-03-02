@@ -24,44 +24,35 @@
 //
 //
 
-/*  in midi_raw.h
-enum class channel_msg_t {
-	note_on,
-	note_off,
-	key_pressure,
-	control_change,
-	program_change,
-	channel_pressure,
-	pitch_bend,
-	channel_mode,
-	invalid
-};*/
+
 class midi_event_container_t {
 public:
-	midi_event_container_t(mtrk_event_container_t mtrkev, unsigned char status) 
-		: midi_status_(status), p_(mtrkev.raw_begin()), size_(mtrkev.size()) {};
+	//midi_event_container_t(mtrk_event_container_t mtrkev, unsigned char status) 
+	//	: p_(mtrkev.raw_begin()), size_(mtrkev.size()), midi_status_(status) {};
+	midi_event_container_t(const mtrk_event_container_t&, unsigned char);
 
 	unsigned char raw_status() const;
 	bool status_is_running() const;
 
-	midi_msg_t type() const;  // channel_voice, channel_mode, sysex_common, ...
-	channel_msg_t channel_msg_type() const;  // channel_msg_t::...
+	//midi_msg_t type() const;  // channel_voice, channel_mode, sysex_common, ...
+	channel_msg_type channel_msg_type() const;  // channel_msg_type::...
 
-	int8_t channel_number() const;  // for midi_msg_t::channel_voice || channel_mode
+	int8_t channel_number() const;  // for channel_voice || channel_mode types
 
-	int8_t note_number() const;  // for channel_msg_t::note_on || note_off || key_pressure
-	int8_t velocity() const;  // for channel_msg_t::note_on || note_off
-	int8_t key_pressure() const;   // for channel_msg_t::key_pressure
-	int8_t control_number() const;  // for channel_msg_t::control_change
-	int8_t control_value() const;  // for channel_msg_t::control_change
-	int8_t program_number();  // for channel_msg_t::program_change
-	int8_t channel_pressure();  // for channel_msg_t::channel_pressure
-	int16_t pitch_bend_value() const;  // for channel_msg_t::pitch_bend
-
+	int8_t note_number() const;  // for channel_msg_type::note_on || note_off || key_pressure types
+	int8_t velocity() const;  // for note_on || note_off
+	int8_t key_pressure() const;   // for channel_msg_type::key_pressure
+	int8_t control_number() const;  // for channel_msg_type::control_change
+	int8_t control_value() const;  // for channel_msg_type::control_change
+	int8_t program_number();  // for channel_msg_type::program_change
+	int8_t channel_pressure();  // for channel_msg_type::channel_pressure
+	int16_t pitch_bend_value() const;  // for channel_msg_type::pitch_bend
 private:
+	//const unsigned char *p_ {};  // points at the delta_t
+	//int32_t size_ {0};  // delta_t + payload
 	unsigned char midi_status_ {0};
-	const unsigned char *p_ {};  // points at the delta_t
-	int32_t size_ {0};  // delta_t + payload
+	unsigned char p1_ {0};
+	unsigned char p2_ {0};
 };
 
 
