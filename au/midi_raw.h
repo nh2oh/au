@@ -91,7 +91,7 @@ enum class chunk_type {
 };
 //
 // Checks for the 4-char id and the 4-byte size.  Verifies that the id + size field 
-// + the reported size does not exceed the max_size suppled as the second argument.  
+// + the reported size does not exceed the max_size supplied as the second argument.  
 // Does _not_ inspect anything past the end of the length field.  
 //
 struct detect_chunk_type_result_t {
@@ -102,12 +102,21 @@ struct detect_chunk_type_result_t {
 };
 detect_chunk_type_result_t detect_chunk_type(const unsigned char*, int32_t=0);
 
+struct validate_mthd_chunk_result_t {
+	bool is_valid {false};
+	std::string msg {};
+	int32_t data_length {0};  // the reported length; does not include the "MThd" and length fields
+	int32_t size {0};  //  Always == reported size (data_length) + 8
+	const unsigned char *p {};  // points at the 'M' of "MThd"...
+};
+validate_mthd_chunk_result_t validate_mthd_chunk(const unsigned char*, int32_t=0);
+
 struct validate_mtrk_chunk_result_t {
 	bool is_valid {false};
 	std::string msg {};
-	int32_t data_length {0};  // Includes the "MTrk" and length fields
-	int32_t size {0};  //  == reported size + 8
-	const unsigned char *p {};
+	int32_t data_length {0};  // the reported length; does not include the "MTrk" and length fields
+	int32_t size {0};  //  Always == reported size (data_length) + 8
+	const unsigned char *p {};  // points at the 'M' of "MTrk"...
 };
 validate_mtrk_chunk_result_t validate_mtrk_chunk(const unsigned char*, int32_t=0);
 

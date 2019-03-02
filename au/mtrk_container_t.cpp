@@ -13,7 +13,21 @@ mtrk_event_container_t mtrk_container_iterator_t::operator*() const {
 	// _why_ am i calling parse_midi_event() ???  Should i not detect the type then call
 	// parse_midi_..., parse_meta_,...  ???
 	//
-	auto sz = parse_channel_event(p, this->midi_status_).data_length;
+	//auto sz = parse_channel_event(p, this->midi_status_).data_length;
+
+	auto type = detect_mtrk_event_type_dtstart_unsafe(p,this->midi_status_);
+	int32_t maxinc = this->container_->size_-this->container_offset_;
+	int32_t sz {0};
+	if (type == smf_event_type::channel_mode || type == smf_event_type::channel_voice) {
+		sz = parse_channel_event(p,this->midi_status_,maxinc).size;
+	} else if (type == smf_event_type::meta) {
+		sz = parse_meta_event(p,maxinc).size;
+	} else if (type == smf_event_type::sysex_f0 || type == smf_event_type::sysex_f7) {
+		sz = parse_sysex_event(p,maxinc).size;
+	} else {
+		std::abort();
+	}
+
 	return mtrk_event_container_t {p,sz};
 }
 
@@ -49,7 +63,7 @@ mtrk_container_iterator_t& mtrk_container_iterator_t::operator++() {
 	// this->container_offset_.  Below i refer to this as the "new" event.  
 	const unsigned char *new_p = this->container_->p_ + this->container_offset_;
 	max_inc = this->container_->size_-this->container_offset_;
-	parse_mtrk_event_result_t new_event = parse_mtrk_event_type(new_p,this->midi_status,max_inc);
+	parse_mtrk_event_result_t new_event = parse_mtrk_event_type(new_p,this->midi_status_,max_inc);
 	if (new_event.type==smf_event_type::channel_voice || new_event.type==smf_event_type::channel_mode) {
 		// this->midi_status_ currently holds the midi status byte applicable to the
 		// previous event
@@ -125,7 +139,8 @@ std::string print(const mtrk_container_t& mtrk) {
 	std::string s {};
 
 	for (mtrk_container_iterator_t it = mtrk.begin(); it != mtrk.end(); ++it) {
-		s += print(*it);
+		auto ev = *it;
+		s += print(ev);
 		s += "\n";
 	}
 	//for (auto const& e : mtrk) {

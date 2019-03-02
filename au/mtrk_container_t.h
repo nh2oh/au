@@ -25,7 +25,7 @@ public:
 	bool operator!=(const mtrk_container_iterator_t&) const;
 private:
 	const mtrk_container_t *container_ {};
-	int32_t container_offset_ {0};  // offset from this->container_.beg_
+	int32_t container_offset_ {0};  // offset from this->container_.p_
 
 	// All points in a midi stream have an implied (or explicit) midi-status
 	unsigned char midi_status_ {0};

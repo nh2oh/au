@@ -16,13 +16,9 @@
 // int16_t mthd_container_t::ntrks() is always == 1 for a fmt-type 0 file.  
 //
 //
-// Need:
-// validate_mthd_result_t validate_mthd(detect_chunk_type_result_t)
-// Then change the mthd_container_t ctor to accept this.  
-//
 class mthd_container_t {
 public:
-	mthd_container_t(const detect_chunk_type_result_t&);
+	mthd_container_t(const validate_mthd_chunk_result_t&);
 
 	// NB:  Second arg is the _exact_ size, not a max size
 	mthd_container_t(const unsigned char *p, int32_t sz) 

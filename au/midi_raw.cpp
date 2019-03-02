@@ -71,23 +71,139 @@ detect_chunk_type_result_t detect_chunk_type(const unsigned char *p, int32_t max
 		return result;
 	}
 
-	/*
-	if (result.type == chunk_type::header && data_length != 6) {
+	return result;
+}
+
+
+//
+// Checks that p points at the start of a valid MThd chunk (ie, the 'M' of MThd...),
+// and that the size of the chunk is what is expected for an MThd.  
+// 
+validate_mthd_chunk_result_t validate_mthd_chunk(const unsigned char *p, int32_t max_size) {
+	validate_mthd_chunk_result_t result {};
+
+	detect_chunk_type_result_t chunk_detect = detect_chunk_type(p,max_size);
+	if (chunk_detect.type != chunk_type::header) {
+		result.is_valid = false;
+		result.msg += "chunk_detect.type != chunk_type::header\n";
+		result.msg += ("chunk_detect.msg = " + chunk_detect.msg + "\n");
+		return result;
+	}
+
+	if (chunk_detect.data_length != 6) {
 		result.msg = "MThd chunks must have a data length of 6";
 		result.is_valid = false;
 		return result;
-	} else if (result.type == chunk_type::track) {
-		auto first_event = parse_mtrk_event_type(p);
-		if (!(first_event.is_valid) || first_event.type != event_type::midi
-			|| !midi_event_has_status_byte(p)) {
-			result.msg = "MTrk chunks must begin w/a MIDI event containing a status byte";
-			result.is_valid = false;
-			return result;
-		}
-	}*/
-
+	}
+	
+	result.is_valid = true;
+	result.size = chunk_detect.size;
+	result.data_length = chunk_detect.data_length;
+	result.p = p;  // pointer to the 'M' of "MThd"..., ie the _start_ of the mthd chunk
 	return result;
 }
+
+
+//
+// Checks that p points at the start of a valid MTrk chunk (ie, the 'M' of MTrk...),
+// then moves through the all events in the track and validates that each begins with a
+// valid vl delta-time, is one of midi, meta, or sysex, and that for each such event a
+// valid mtrk_event_container_t object can be created if necessary (it must be possible to
+// determine the size in bytes of each event).  
+//
+// If the input is a valid MTrk chunk, the validate_mtrk_chunk_result_t returned can be
+// passed to the ctor of mtrk_container_t to instantiate a valid object.  
+//
+// All the rules of the midi standard as regards sequences of MTrk events are validated
+// here for the case of the single track indicated by the input.  Ex, that each midi 
+// event has a status byte (either as part of the event or implictly through running 
+// status), etc.  
+// 
+//
+validate_mtrk_chunk_result_t validate_mtrk_chunk(const unsigned char *p, int32_t max_size) {
+	validate_mtrk_chunk_result_t result {};
+
+	detect_chunk_type_result_t chunk_detect = detect_chunk_type(p,max_size);
+	if (chunk_detect.type != chunk_type::track) {
+		result.is_valid = false;
+		result.msg += "chunk_detect.type != chunk_type::track\n";
+		result.msg += ("chunk_detect.msg = " + chunk_detect.msg + "\n");
+		return result;
+	}
+
+	// Validate each mtrk event in the chunk
+	auto mtrk_reported_size = chunk_detect.size;  // midi_raw_interpret<int32_t>(p+4);
+	int32_t i {8};
+	unsigned char most_recent_midi_status_byte {0};
+	while (i<mtrk_reported_size) {
+		int32_t curr_event_length {0};
+
+		// Classify the present event as midi, sysex, or meta
+		auto curr_event = parse_mtrk_event_type(p+i,most_recent_midi_status_byte,mtrk_reported_size-i);
+		if (curr_event.type == smf_event_type::invalid) {
+			result.is_valid = false;
+			result.msg += "curr_event.type == smf_event_type::invalid\n";
+			result.msg += ("at offset from MTrk id field i == " + std::to_string(i));
+			return result;
+		}
+
+		if (curr_event.type == smf_event_type::sysex_f0 || curr_event.type == smf_event_type::sysex_f7) {
+			// From the std (p.136):
+			// Sysex events and meta-events cancel any running status which was in effect.  
+			// Running status does not apply to and may not be used for these messages.
+			//
+			most_recent_midi_status_byte = unsigned char {0};
+			auto sx = parse_sysex_event(p+i,mtrk_reported_size-i);
+			if (!(sx.is_valid)) {
+				result.is_valid = false;
+				result.msg = "!(sx.is_valid)";
+				return result;
+			}
+			curr_event_length = curr_event.delta_t.N + sx.data_length;
+		} else if (curr_event.type == smf_event_type::meta) {
+			// From the std (p.136):
+			// Sysex events and meta-events cancel any running status which was in effect.  
+			// Running status does not apply to and may not be used for these messages.
+			//
+			most_recent_midi_status_byte = unsigned char {0};
+			auto mt = parse_meta_event(p+i,mtrk_reported_size-i);
+			if (!(mt.is_valid)) {
+				result.is_valid = false;
+				result.msg = "!(mt.is_valid)";
+				return result;
+			}
+			curr_event_length = curr_event.delta_t.N + mt.data_length;
+		} else if (curr_event.type == smf_event_type::channel_voice || curr_event.type == smf_event_type::channel_mode) {
+			auto md = parse_channel_event(p+i,most_recent_midi_status_byte,mtrk_reported_size-i);
+			if (!(md.is_valid)) {
+				result.is_valid = false;
+				result.msg = "!(md.is_valid)";
+				return result;
+			}
+			curr_event_length = curr_event.delta_t.N + md.data_length;
+			most_recent_midi_status_byte = md.status_byte;
+		} else {
+			result.is_valid = false;
+			result.msg = "curr_event.type somehow didn't match anything i am prepared to parse.";
+			return result;
+		}
+
+		i += curr_event_length;
+	}
+
+	if (i != mtrk_reported_size) {
+		result.is_valid = false;
+		result.msg += "i != mtrk_reported_size";
+		return result;
+	}
+
+	result.is_valid = true;
+	result.size = i;
+	result.data_length = i-8;  // -4 for "MTrk", -4 for the length field
+	result.p = p;  // pointer to the 'M' of "MTrk"..., ie the _start_ of the mtrk chunk
+	return result;
+}
+
 
 
 /*
@@ -240,6 +356,7 @@ parse_meta_event_result_t parse_meta_event(const unsigned char *p, int32_t max_s
 
 	result.length = midi_interpret_vl_field(p);
 	result.data_length = 2 + result.length.N + result.length.val;
+	result.size = result.data_length + result.delta_t.N;
 	max_size -= (result.length.N + result.length.val);
 	if (max_size < 0) {
 		result.is_valid = false;
@@ -422,106 +539,6 @@ channel_msg_type channel_msg_type_from_status_byte(unsigned char s, unsigned cha
 
 
 
-
-//
-// Checks that p points at the start of a valid MTrk chunk (ie, the 'M' of MTrk...),
-// then moves through the all events in the track and validates that each begins with a
-// valid vl delta-time, is one of midi, meta, or sysex, and that for each such event a
-// valid mtrk_event_container_t object can be created if necessary (it must be possible to
-// determine the size in bytes of each event).  
-//
-// If the input is a valid MTrk chunk, the validate_mtrk_chunk_result_t returned can be
-// passed to the ctor of mtrk_container_t to instantiate a valid object.  
-//
-// All the rules of the midi standard as regards sequences of MTrk events are validated
-// here for the case of the single track indicated by the input.  Ex, that each midi 
-// event has a status byte (either as part of the event or implictly through running 
-// status), etc.  
-// 
-//
-validate_mtrk_chunk_result_t validate_mtrk_chunk(const unsigned char *p, int32_t max_size) {
-	validate_mtrk_chunk_result_t result {};
-
-	detect_chunk_type_result_t chunk_detect = detect_chunk_type(p,max_size);
-	if (chunk_detect.type != chunk_type::track) {
-		result.is_valid = false;
-		result.msg += "chunk_detect.type != chunk_type::track\n";
-		result.msg += ("chunk_detect.msg = " + chunk_detect.msg + "\n");
-		return result;
-	}
-
-	// Validate each mtrk event in the chunk
-	auto mtrk_reported_size = chunk_detect.size;  // midi_raw_interpret<int32_t>(p+4);
-	int32_t i {8};
-	unsigned char most_recent_midi_status_byte {0};
-	while (i<mtrk_reported_size) {
-		int32_t curr_event_length {0};
-
-		// Classify the present event as midi, sysex, or meta
-		auto curr_event = parse_mtrk_event_type(p+i,most_recent_midi_status_byte,mtrk_reported_size-i);
-		if (curr_event.type == smf_event_type::invalid) {
-			result.is_valid = false;
-			result.msg += "curr_event.type == smf_event_type::invalid\n";
-			result.msg += ("at offset from MTrk id field i == " + std::to_string(i));
-			return result;
-		}
-
-		if (curr_event.type == smf_event_type::sysex_f0 || curr_event.type == smf_event_type::sysex_f7) {
-			// From the std (p.136):
-			// Sysex events and meta-events cancel any running status which was in effect.  
-			// Running status does not apply to and may not be used for these messages.
-			//
-			most_recent_midi_status_byte = unsigned char {0};
-			auto sx = parse_sysex_event(p+i,mtrk_reported_size-i);
-			if (!(sx.is_valid)) {
-				result.is_valid = false;
-				result.msg = "!(sx.is_valid)";
-				return result;
-			}
-			curr_event_length = curr_event.delta_t.N + sx.data_length;
-		} else if (curr_event.type == smf_event_type::meta) {
-			// From the std (p.136):
-			// Sysex events and meta-events cancel any running status which was in effect.  
-			// Running status does not apply to and may not be used for these messages.
-			//
-			most_recent_midi_status_byte = unsigned char {0};
-			auto mt = parse_meta_event(p+i,mtrk_reported_size-i);
-			if (!(mt.is_valid)) {
-				result.is_valid = false;
-				result.msg = "!(mt.is_valid)";
-				return result;
-			}
-			curr_event_length = curr_event.delta_t.N + mt.data_length;
-		} else if (curr_event.type == smf_event_type::channel_voice || curr_event.type == smf_event_type::channel_mode) {
-			auto md = parse_channel_event(p+i,most_recent_midi_status_byte,mtrk_reported_size-i);
-			if (!(md.is_valid)) {
-				result.is_valid = false;
-				result.msg = "!(md.is_valid)";
-				return result;
-			}
-			curr_event_length = curr_event.delta_t.N + md.data_length;
-			most_recent_midi_status_byte = md.status_byte;
-		} else {
-			result.is_valid = false;
-			result.msg = "curr_event.type somehow didn't match anything i am prepared to parse.";
-			return result;
-		}
-
-		i += curr_event_length;
-	}
-
-	if (i != mtrk_reported_size) {
-		result.is_valid = false;
-		result.msg += "i != mtrk_reported_size";
-		return result;
-	}
-
-	result.is_valid = true;
-	result.size = i;
-	result.data_length = i-8;
-	result.p = p;  // pointer to _start_ of mtrk chunk
-	return result;
-}
 
 
 

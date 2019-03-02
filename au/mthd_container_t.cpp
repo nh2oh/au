@@ -3,8 +3,8 @@
 #include <string>
 
 
-mthd_container_t::mthd_container_t(const detect_chunk_type_result_t& mthd) {
-	if (mthd.type != chunk_type::header) {
+mthd_container_t::mthd_container_t(const validate_mthd_chunk_result_t& mthd) {
+	if (!mthd.is_valid) {
 		std::abort();
 	}
 	this->p_=mthd.p;
