@@ -28,8 +28,9 @@ std::string print_notelist(const mtrk_container_t& mtrk) {
 	for (mtrk_container_iterator_t it=mtrk.begin(); it!=mtrk.end(); ++it) {
 		mtrk_event_container_t curr_event = *it;
 		cumtime += curr_event.delta_time();
+		auto ct = curr_event.type();
 		if (curr_event.type() != smf_event_type::channel_voice 
-			|| curr_event.type() != smf_event_type::channel_mode) { continue; }
+			&& curr_event.type() != smf_event_type::channel_mode) { continue; }
 
 		midi_event_container_t curr_midi {curr_event, it.midi_status()};
 		if (curr_midi.channel_msg_type() == channel_msg_type::note_on) {

@@ -19,8 +19,8 @@ int midi_example() {
 
 	smf_container_t mf {rawfile_check_result};
 	
-	std::cout << print(mf) << std::endl << std::endl;
-	//std::cout << print_notelist(mf.get_track(1)) << std::endl << std::endl;
+	//std::cout << print(mf) << std::endl << std::endl;
+	std::cout << print_notelist(mf.get_track(1)) << std::endl << std::endl;
 
 	//auto h = mf.get_header();
 	//std::cout << print(h) << std::endl << std::endl;
