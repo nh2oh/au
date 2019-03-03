@@ -1,29 +1,13 @@
 #pragma once
-#include <algorithm>  // std::reverse_copy() in midi_raw_interpret()
 #include <string>
 #include <vector>
 #include <array>
 #include <limits> // CHAR_BIT
-#include <type_traits> // std::enable_if
+#include <type_traits> // std::enable_if<>
 
 //
 // TODO:  validate_, parse_, detect_ naming inconsistency
 //
-
-// 
-// Copies the bytes in the range [p,p+sizeof(T)) into the range occupied by a T such that the
-// byte order in the source and destination ranges are the reverse of oneanother.  Hence
-// big-endian encoded T in [p,p+sizeof(T)) is corrrectly interpreted on an LE architecture.  
-// Obviously this byte order swapping is only needed for interpreting midi files on LE 
-// architectures.  
-// 
-/*template<typename T>
-T midi_raw_interpret(const unsigned char* p) {
-	T result {};
-	unsigned char *p_result = static_cast<unsigned char*>(static_cast<void*>(&result));
-	std::reverse_copy(p,p+sizeof(T),p_result);
-	return result;
-};*/
 
 //
 // SMF files are big endian; be_2_native() interprets the bytes in the range
@@ -42,22 +26,28 @@ T be_2_native(const unsigned char *p) {
 	return result;
 };
 
+//
+// TODO:  Untested
+//
 template<typename T, typename = typename std::enable_if<std::is_integral<T>::value,T>::type>
 T le_2_native(const unsigned char *p) {
 	T result {0};
 	for (int i=0; i<sizeof(T); ++i) {
-		result += (*(p+i) << CHAR_BIT);
+		result += (*(p+i) << CHAR_BIT*i);
 	}
 	return result;
 };
 
 
 // 
-// The max size of a vl field is 4 bytes; returns [0,4]
+// The max size of a vl field is 4 bytes, and the largest value it may encode is
+// 0x0FFFFFFF (BE-encoded as: FF FF FF 7F) => 268,435,455, which fits safely in
+// an int32_t:  std::numeric_limits<int32_t>::max() == 2,147,483,647;
 //
 struct midi_vl_field_interpreted {
+	int32_t val {0};
 	int8_t N {0};
-	int32_t val {0};  // TODO:  uint32_t ???
+	bool is_valid {false};
 };
 midi_vl_field_interpreted midi_interpret_vl_field(const unsigned char*);
 

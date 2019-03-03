@@ -6,7 +6,6 @@
 #include <cstdint>
 #include <iostream>
 
-// TODO:  Max 4 bytes; stop after 4 bytes
 midi_vl_field_interpreted midi_interpret_vl_field(const unsigned char* p) {
 	midi_vl_field_interpreted result {};
 	result.val = 0;
@@ -14,13 +13,20 @@ midi_vl_field_interpreted midi_interpret_vl_field(const unsigned char* p) {
 	while (true) {
 		result.val += (*p & 0x7F);
 		++(result.N);
-		if (!(*p & 0x80) || result.N==4) { 
+		if (!(*p & 0x80) || result.N==4) { // the high-bit is not set
 			break;
 		} else {
 			result.val = result.val << 7;
 			++p;
 		}
 	}
+
+	// If the high-bit of the last byte added to result.val is set, the *p
+	// passed in was not indicating a valid vl-field.  The loop breaks after
+	// 4 bytes have been added so (*p & 0x80) => N == 4; there is no need to
+	// also check that result.N==4.  
+	result.is_valid = (*p & 0x80);
+
 	return result;
 };
 
