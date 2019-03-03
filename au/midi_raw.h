@@ -51,6 +51,22 @@ struct midi_vl_field_interpreted {
 };
 midi_vl_field_interpreted midi_interpret_vl_field(const unsigned char*);
 
+//
+// Computes the size (in bytes) of the field required to encode a given number as
+// a vl-quantity.  
+//
+template<typename T, typename = typename std::enable_if<std::is_integral<T>::value,T>::type>
+constexpr int midi_vl_field_size(T val) {
+	int n {0};
+	do {
+		val >>= 7;
+		++n;
+	} while (val != 0);
+
+	return n;
+};
+int test_vlfsz();
+
 
 //
 // Encodes T in the form of a VL quantity, the maximum size of which, according

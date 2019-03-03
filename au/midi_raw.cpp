@@ -30,6 +30,27 @@ midi_vl_field_interpreted midi_interpret_vl_field(const unsigned char* p) {
 	return result;
 };
 
+int test_vlfsz() {
+	constexpr int a = midi_vl_field_size(0x00);
+	constexpr int b = midi_vl_field_size(0x40);
+	constexpr int c = midi_vl_field_size(0x7F);
+	constexpr bool abc = (a==b==c==1);
+	constexpr int d = midi_vl_field_size(0x80);
+	constexpr int e = midi_vl_field_size(0x2000);
+	constexpr int f = midi_vl_field_size(0x3FFF);
+	constexpr bool def = (d==e && e==f && f==2);
+	constexpr int g = midi_vl_field_size(0x4000);
+	constexpr int h = midi_vl_field_size(0x100000);
+	constexpr int i = midi_vl_field_size(0x1FFFFF);
+	constexpr bool ghi = (g==h && h==i && i==3);
+	constexpr int j = midi_vl_field_size(0x02000000);
+	constexpr int k = midi_vl_field_size(0x08000000);
+	constexpr int l = midi_vl_field_size(0x0FFFFFFF);
+	constexpr bool jkl = (j==k && k==l && l==4);
+
+
+	return 0;
+}
 
 // Default value of sep == ' '; see header
 std::string print_hexascii(const unsigned char *p, int n, const char sep) {
