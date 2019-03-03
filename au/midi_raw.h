@@ -51,6 +51,24 @@ struct midi_vl_field_interpreted {
 };
 midi_vl_field_interpreted midi_interpret_vl_field(const unsigned char*);
 
+template<typename T,
+	typename = typename std::enable_if<std::is_integral<T>::value
+	&& std::is_unsigned<T>::value,T>::type>
+uint32_t midi_vl_field_equiv_value(T val) {
+	uint32_t res {0};
+
+	while (val>0) {
+		res <<= 8;
+		if (val>>7 > 0) {  // If there's going to be a byte after this...
+			res |= 0x80;
+		}
+		res += 0x7F&val;
+		val>>7;
+	}
+
+	return res;
+}
+
 //
 // Computes the size (in bytes) of the field required to encode a given number as
 // a vl-quantity.  
@@ -70,11 +88,10 @@ int test_vlfsz();
 
 //
 // Encodes T in the form of a VL quantity, the maximum size of which, according
-// to the MIDI std is 4 bytes.  
-// For values requiring less than 4 bytes in encoded form, the rightmost
-// bytes of the array will be 0.  
+// to the MIDI std is 4 bytes.  For values requiring less than 4 bytes in 
+// encoded form, the rightmost bytes of the array will be 0.  
 //
-template<typename T>  // T ~ integral
+template<typename T, typename = typename std::enable_if<std::is_integral<T>::value,T>::type>
 std::array<unsigned char,4> midi_encode_vl_field(T val) {
 	static_assert(sizeof(T)<=4);  // The max size of a vl field is 4 bytes
 	std::array<unsigned char,4> result {0x00,0x00,0x00,0x00};
@@ -125,8 +142,8 @@ enum class chunk_type {
 //
 struct detect_chunk_type_result_t {
 	chunk_type type {chunk_type::invalid};
-	int32_t size {0};  // byte header + reported length
-	int32_t data_length {0};  // reported length (not inclusing the 8 byte header)
+	int32_t size {0};  // 4-byte ASCII header + 4-byte length field + reported length
+	int32_t data_length {0};  // reported length (not including the 8 byte header)
 	std::string msg {};
 };
 detect_chunk_type_result_t detect_chunk_type(const unsigned char*, int32_t=0);

@@ -48,7 +48,6 @@ int test_vlfsz() {
 	constexpr int l = midi_vl_field_size(0x0FFFFFFF);
 	constexpr bool jkl = (j==k && k==l && l==4);
 
-
 	return 0;
 }
 
@@ -65,6 +64,7 @@ std::string print_hexascii(const unsigned char *p, int n, const char sep) {
 		s += sep;
 		++p;
 	}
+	if (n>0) { s.pop_back(); }
 
 	return s;
 }
