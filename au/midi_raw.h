@@ -3,7 +3,8 @@
 #include <string>
 #include <vector>
 #include <array>
-
+#include <limits> // CHAR_BIT
+#include <type_traits> // std::enable_if
 
 //
 // TODO:  validate_, parse_, detect_ naming inconsistency
@@ -16,13 +17,40 @@
 // Obviously this byte order swapping is only needed for interpreting midi files on LE 
 // architectures.  
 // 
-template<typename T>
+/*template<typename T>
 T midi_raw_interpret(const unsigned char* p) {
 	T result {};
 	unsigned char *p_result = static_cast<unsigned char*>(static_cast<void*>(&result));
 	std::reverse_copy(p,p+sizeof(T),p_result);
 	return result;
+};*/
+
+//
+// SMF files are big endian; be_2_native() interprets the bytes in the range
+// [p,p+sizeof(T)) such that a BE-encode integer is interpreted correctly on
+// both LE and BE architectures.  
+//
+template<typename T, typename = typename std::enable_if<std::is_integral<T>::value,T>::type>
+T be_2_native(const unsigned char *p) {
+	T result {0};
+	for (int i=0; i<sizeof(T); ++i) {
+		result = result << CHAR_BIT;
+		result += *(p+i);
+		// Note that the endianness of the native architecture is irrelevant; the 
+		// MSB is always going to be left-shifted CHAR_BIT*(sizeof(T)-1) times.  
+	}
+	return result;
 };
+
+template<typename T, typename = typename std::enable_if<std::is_integral<T>::value,T>::type>
+T le_2_native(const unsigned char *p) {
+	T result {0};
+	for (int i=0; i<sizeof(T); ++i) {
+		result += (*(p+i) << CHAR_BIT);
+	}
+	return result;
+};
+
 
 // 
 // The max size of a vl field is 4 bytes; returns [0,4]

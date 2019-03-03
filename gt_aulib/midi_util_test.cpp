@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include "..\aulib\input\midi_util.h"
+#include "..\au\midi_raw.h"
 #include <vector>
 #include <array>
 

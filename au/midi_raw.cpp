@@ -4,6 +4,7 @@
 #include <vector>
 #include <exception>
 #include <cstdint>
+#include <iostream>
 
 // TODO:  Max 4 bytes; stop after 4 bytes
 midi_vl_field_interpreted midi_interpret_vl_field(const unsigned char* p) {
@@ -51,7 +52,7 @@ detect_chunk_type_result_t detect_chunk_type(const unsigned char *p, int32_t max
 	}
 
 	// All chunks begin w/ A 4-char identifier
-	uint32_t id = midi_raw_interpret<uint32_t>(p);
+	uint32_t id = be_2_native<uint32_t>(p);
 	if (id == 0x4D546864) {  // Mthd
 		result.type = chunk_type::header;
 	} else if (id == 0x4D54726B) {  // MTrk
@@ -61,7 +62,7 @@ detect_chunk_type_result_t detect_chunk_type(const unsigned char *p, int32_t max
 	}
 	p+=4;
 
-	result.data_length = midi_raw_interpret<int32_t>(p);
+	result.data_length = be_2_native<int32_t>(p);
 	result.size = 8 + result.data_length;
 
 	if (result.data_length < 0 || result.size > max_size) {

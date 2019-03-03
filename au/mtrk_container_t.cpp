@@ -118,7 +118,7 @@ mtrk_container_t::mtrk_container_t(const unsigned char *p, int32_t sz) {
 }
 
 int32_t mtrk_container_t::data_size() const {
-	return midi_raw_interpret<int32_t>(this->p_+4);
+	return be_2_native<int32_t>(this->p_+4);
 }
 int32_t mtrk_container_t::size() const {
 	//return this->data_size()+4;

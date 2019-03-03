@@ -11,13 +11,13 @@ mthd_container_t::mthd_container_t(const validate_mthd_chunk_result_t& mthd) {
 	this->size_=mthd.size;
 }
 int16_t mthd_container_t::format() const {
-	return midi_raw_interpret<int16_t>(this->p_+8);
+	return be_2_native<int16_t>(this->p_+8);
 }
 int16_t mthd_container_t::ntrks() const {
-	return midi_raw_interpret<int16_t>(this->p_+8+2);
+	return be_2_native<int16_t>(this->p_+8+2);
 }
 uint16_t mthd_container_t::division() const {
-	return midi_raw_interpret<uint16_t>(this->p_+8+2+2);
+	return be_2_native<uint16_t>(this->p_+8+2+2);
 }
 int32_t mthd_container_t::size() const {
 	return this->size_;
