@@ -74,8 +74,9 @@ uint32_t midi_vl_field_equiv_value(T val) {
 // a vl-quantity.  
 // TODO:  static_assert is better than SFINAE here
 //
-template<typename T, typename = typename std::enable_if<std::is_integral<T>::value,T>::type>
+template<typename T>
 constexpr int midi_vl_field_size(T val) {
+	static_assert(std::is_integral<T>::value,"MIDI VL fields only encode integral values");
 	int n {0};
 	do {
 		val >>= 7;
@@ -84,7 +85,6 @@ constexpr int midi_vl_field_size(T val) {
 
 	return n;
 };
-int test_vlfsz();
 
 
 //
