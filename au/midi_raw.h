@@ -72,6 +72,7 @@ uint32_t midi_vl_field_equiv_value(T val) {
 //
 // Computes the size (in bytes) of the field required to encode a given number as
 // a vl-quantity.  
+// TODO:  static_assert is better than SFINAE here
 //
 template<typename T, typename = typename std::enable_if<std::is_integral<T>::value,T>::type>
 constexpr int midi_vl_field_size(T val) {
