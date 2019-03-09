@@ -14,8 +14,10 @@
 // [p,p+sizeof(T)) such that a BE-encode integer is interpreted correctly on
 // both LE and BE architectures.  
 //
-template<typename T, typename = typename std::enable_if<std::is_integral<T>::value,T>::type>
+template<typename T>
 T be_2_native(const unsigned char *p) {
+	static_assert(std::is_integral<T>::value);
+
 	T result {0};
 	for (int i=0; i<sizeof(T); ++i) {
 		result = result << CHAR_BIT;
@@ -29,15 +31,16 @@ T be_2_native(const unsigned char *p) {
 //
 // TODO:  Untested
 //
-template<typename T, typename = typename std::enable_if<std::is_integral<T>::value,T>::type>
+template<typename T>
 T le_2_native(const unsigned char *p) {
+	static_assert(std::is_integral<T>::value);
+
 	T result {0};
 	for (int i=0; i<sizeof(T); ++i) {
 		result += (*(p+i) << CHAR_BIT*i);
 	}
 	return result;
 };
-
 
 // 
 // The max size of a vl field is 4 bytes, and the largest value it may encode is
@@ -51,6 +54,9 @@ struct midi_vl_field_interpreted {
 };
 midi_vl_field_interpreted midi_interpret_vl_field(const unsigned char*);
 
+//
+// TODO:  What is this???
+//
 template<typename T,
 	typename = typename std::enable_if<std::is_integral<T>::value
 	&& std::is_unsigned<T>::value,T>::type>
@@ -72,7 +78,6 @@ uint32_t midi_vl_field_equiv_value(T val) {
 //
 // Computes the size (in bytes) of the field required to encode a given number as
 // a vl-quantity.  
-// TODO:  static_assert is better than SFINAE here
 //
 template<typename T>
 constexpr int midi_vl_field_size(T val) {
@@ -119,7 +124,6 @@ std::array<unsigned char,4> midi_encode_vl_field(T val) {
 
 	return result;
 };
-
 
 std::string print_hexascii(const unsigned char*, int, const char = ' ');
 
@@ -210,10 +214,15 @@ std::string print(const smf_event_type&);
 // I am trying to treat mtrk events "polymorphically," since all events have a size, that size
 // can only be calculated once the event has been classified/parsed.  
 //
+// TODO:  Rename to "detect_...()" ?
 //
 struct parse_mtrk_event_result_t {
 	midi_vl_field_interpreted delta_t {};
 	smf_event_type type {smf_event_type::invalid};
+
+	// 030919
+	int32_t size {0};
+	int32_t data_length {0};
 };
 parse_mtrk_event_result_t parse_mtrk_event_type(const unsigned char*, unsigned char, int32_t=0);
 //
@@ -276,6 +285,12 @@ struct parse_channel_event_result_t {
 parse_channel_event_result_t parse_channel_event(const unsigned char*, unsigned char=0, int32_t=0);
 bool midi_event_has_status_byte(const unsigned char*);
 unsigned char midi_event_get_status_byte(const unsigned char*);
+// For the midi _channel_ event implied by the status byte arg 1 (or, if arg 1
+// is not a status byte, the status byte arg 2), returns the number of expected
+// data bytes + 1 if the first arg is a valid status byte; + 0 if arg 1 is not
+// a valid status byte but arg 2 is a valid status byte.  Returns 0 if neither
+// arg 1, arg 2 are valid status bytes.
+int midi_channel_event_n_bytes(unsigned char, unsigned char); 
 // Result is only valid for channel_voice or channel_mode status bytes:  Does not 
 // verify that the input is a legit channel_voice or _mode status byte.  
 int8_t channel_number_from_status_byte_unsafe(unsigned char);

@@ -261,7 +261,7 @@ smf_event_type detect_mtrk_event_type_unsafe(const unsigned char *p, unsigned ch
 	// returned if s == FF || F0 || F7; although these are valid status bytes, they are not
 	// valid _running_-status bytes.  
 	//
-	// If p is not a valid status byte (high bit set), overwrite s with *p, then attempt to 
+	// If p _is_ a valid status byte (high bit set), overwrite s with *p, then attempt to 
 	// classify s as channel_mode or channel_voice
 	if ((*p & 0x80) != 0x80) {  // *p is _not_ a valid status byte
 		if (s == 0xFF || s == 0xF0 || s == 0xF7) {
@@ -333,6 +333,18 @@ parse_mtrk_event_result_t parse_mtrk_event_type(const unsigned char *p, unsigned
 		result.type = smf_event_type::invalid;
 	}
 	result.type = detect_mtrk_event_type_unsafe(p,s);
+
+	//
+	// TODO:  Compute size, data_length ...
+	//
+	if (result.type == smf_event_type::meta || result.type == smf_event_type::sysex_f0 
+		|| result.type == smf_event_type::sysex_f7) {
+		//.. process the length field
+	} else if (result.type == smf_event_type::channel_mode 
+		| result.type == smf_event_type::channel_voice) {
+		
+		result.data_length = midi_channel_event_n_bytes(*p,s);
+	}
 
 	return result;
 }
@@ -514,6 +526,27 @@ unsigned char midi_event_get_status_byte(const unsigned char* p) {
 	}
 	p += delta_t_vl.N;
 	return *p;
+}
+int midi_channel_event_n_bytes(unsigned char p, unsigned char s) {
+	int N = 0;
+	if ((p & 0x80)==0x80) {
+		++N;
+		s=p;
+	} else if ((s & 0x80) != 0x80) {  // Both p,s are not status bytes
+		return 0;
+	}
+
+	// At this point, s is the status byte of interest.  If p was a valid status byte,
+	// the value of p has replaced the value passed in as s and N == 1; if p was not
+	// a valid status byte but s was, N == 0.  If neither p, s were valid status bytes
+	// this point will not be reached.  
+	if ((s & 0xF0) == 0xC0 || (s & 0xF0) == 0xD0) {
+		N += 1;
+	} else {
+		N += 2;
+	}
+
+	return N;
 }
 int8_t channel_number_from_status_byte_unsafe(unsigned char s) {
 	return int8_t {(s & 0x0F) + 1};
