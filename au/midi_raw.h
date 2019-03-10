@@ -107,8 +107,27 @@ constexpr int midi_vl_field_size(T val) {
 	} while (val != 0);
 
 	return n;
-};
+}
 
+template<typename It, typename T>
+It midi_write_vl_field(It beg, It end, T val) {
+	static_assert(CHAR_BIT == 8);
+	
+	auto vlval = midi_vl_field_equiv_value(val);
+	
+	uint32_t mask=0xFF000000;
+	while (vlval&mask==0 && mask>0) {
+		mask>>=8;
+	}
+
+	while (mask>0 && beg!=end) {
+		*beg = vlval&mask;
+		mask>>=8;
+		++beg;
+	}
+
+	return beg;
+}
 
 //
 // Encodes T in the form of a VL quantity, the maximum size of which, according
