@@ -3,7 +3,7 @@
 #include <vector>
 #include <array>
 #include <limits> // CHAR_BIT
-#include <type_traits> // std::enable_if<>
+#include <type_traits> // std::enable_if<>, is_integral<>, is_unsigned<>
 
 //
 // TODO:  validate_, parse_, detect_ naming inconsistency
@@ -109,6 +109,9 @@ constexpr int midi_vl_field_size(T val) {
 	return n;
 }
 
+//
+// TODO: untested
+//
 template<typename It, typename T>
 It midi_write_vl_field(It beg, It end, T val) {
 	static_assert(CHAR_BIT == 8);

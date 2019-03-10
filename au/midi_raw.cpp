@@ -372,7 +372,7 @@ parse_mtrk_event_result_t parse_mtrk_event_type(const unsigned char *p, unsigned
 		|| result.type == smf_event_type::sysex_f7) {
 		//.. process the length field
 	} else if (result.type == smf_event_type::channel_mode 
-		| result.type == smf_event_type::channel_voice) {
+		|| result.type == smf_event_type::channel_voice) {
 		
 		result.data_length = midi_channel_event_n_bytes(*p,s);
 	}
