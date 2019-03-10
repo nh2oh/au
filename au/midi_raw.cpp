@@ -6,6 +6,37 @@
 #include <cstdint>
 #include <iostream>
 
+
+int test_midi_vl_field_equiv_value() {
+
+	uint32_t a {137};
+	uint32_t a_ans = 33033;
+	uint32_t a_test = midi_vl_field_equiv_value(a);
+
+	uint32_t b {106903};
+	uint32_t b_ans = 8831767;
+	uint32_t b_test = midi_vl_field_equiv_value(b);
+	uint32_t b_testr = midi_vl_field_equiv_value(b_test);
+
+	uint32_t c {268435455};  // 0x0F'FF'FF'FF 
+	uint32_t c_ans = 4294967167;  // 0xFF'FF'FF'7F 
+	uint32_t c_test = midi_vl_field_equiv_value(c);
+
+	uint32_t d = 0xFFFFFFFF;
+	uint32_t d_ans = 1; 
+	uint32_t d_test = midi_vl_field_equiv_value(d);
+
+	uint32_t e = 255;
+	uint32_t e_ans = 0x817F; 
+	uint32_t e_test = midi_vl_field_equiv_value(e);
+
+	return 0;
+}
+
+
+
+
+
 midi_vl_field_interpreted midi_interpret_vl_field(const unsigned char* p) {
 	midi_vl_field_interpreted result {};
 	result.val = 0;

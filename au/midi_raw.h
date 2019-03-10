@@ -13,6 +13,7 @@
 // SMF files are big endian; be_2_native() interprets the bytes in the range
 // [p,p+sizeof(T)) such that a BE-encode integer is interpreted correctly on
 // both LE and BE architectures.  
+// TODO:  Require unsigned?
 //
 template<typename T>
 T be_2_native(const unsigned char *p) {
@@ -55,29 +56,46 @@ struct midi_vl_field_interpreted {
 midi_vl_field_interpreted midi_interpret_vl_field(const unsigned char*);
 
 //
-// TODO:  What is this???
+// Returns an integer with the bit representation of the input encoded as a midi
+// vl quantity.  Ex for:
+// input 0b1111'1111 == 0xFF == 255 => 0b1000'0001''0111'1111 == 0x817F == 33151
+// The largest value a midi vl field can accomodate is 0x0FFFFFFF == 268,435,455
+// (note that the MSB of the max value is 0, not 7, corresponding to 4 leading 
+// 0's in the MSB of the binary representation).  
 //
-template<typename T,
-	typename = typename std::enable_if<std::is_integral<T>::value
-	&& std::is_unsigned<T>::value,T>::type>
-uint32_t midi_vl_field_equiv_value(T val) {
+// The midi-vl representation of a given int is not necessarily unique; above,
+// 0xFF == 255 => 0x81'7F == 33,151
+//             => 0x80'81'7F == 8,421,759
+//             => 0x80'80'81'7F == 2,155,905,407
+//
+template<typename T>
+constexpr uint32_t midi_vl_field_equiv_value(T val) {
+	static_assert(CHAR_BIT == 8);
+	static_assert(std::is_integral<T>::value && std::is_unsigned<T>::value);
+	if (val > 0x0FFFFFFF) {
+		return 0;
+	}
 	uint32_t res {0};
 
-	while (val>0) {
-		res <<= 8;
-		if (val>>7 > 0) {  // If there's going to be a byte after this...
-			res |= 0x80;
+	for (int i=0; val>0; ++i) {
+		if (i > 0) {
+			res |= (0x80<<(i*8));
 		}
-		res += 0x7F&val;
-		val>>7;
+		res += (val & 0x7Fu)<<(i*8);
+		// The u is needed on the 0x7F; otherwise (val & 0x7F) may be cast to a signed
+		// type (ex, if T == uint16_t), for which left-shift is implementation-defined.  
+		val>>=7;
 	}
 
 	return res;
 }
+int test_midi_vl_field_equiv_value();
+
 
 //
 // Computes the size (in bytes) of the field required to encode a given number as
 // a vl-quantity.  
+// TODO:  Is shifting a signed value UB/ID ???
 //
 template<typename T>
 constexpr int midi_vl_field_size(T val) {
