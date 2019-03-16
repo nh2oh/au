@@ -160,3 +160,52 @@ std::string print(const mtrk_event_container_t&);
 
 
 
+
+
+
+
+
+//
+// TODO:
+// - Need to consider alignment ... would be nice to make an array of these to represent
+//   the midi file
+//
+class mtrk_event_container_sbo_t {
+public:
+	mtrk_event_container_sbo_t(const unsigned char *p, int32_t sz);
+
+	// size of the event not including the delta-t field (but including the length field 
+	// in the case of sysex & meta events)
+	int32_t delta_time() const;
+	smf_event_type type() const;  // enum event_type:: midi || sysex || meta
+	int32_t data_size() const;  // Does not include the delta-time
+	int32_t size() const;  // Includes the delta-time
+
+private:
+
+	struct big {
+		unsigned char *p;
+		size_t size;
+		size_t capacity;
+	};
+	struct small {
+		std::array<unsigned char,sizeof(big)> arry;
+	};
+
+	union bigsmall {
+		big b;
+		small s;
+	};
+
+	bigsmall d_;
+
+	bool is_small() {
+		// 0b10000001 is invalid as the initial byte of a delta-time
+		return (d_.s.arry[0] != 0x81u);
+	};
+
+	const unsigned char *p_ {};  // points at the first byte of the delta-time
+	int32_t size_ {0};  // delta_t + payload
+};
+std::string print(const mtrk_event_container_t&);
+

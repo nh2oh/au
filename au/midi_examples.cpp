@@ -12,6 +12,9 @@
 
 
 int midi_example() {
+	constexpr auto xs = sizeof(std::string);
+	constexpr auto xv = sizeof(std::vector<int>);
+	constexpr auto xa = sizeof(std::array<char,2>);
 	test_midi_vl_field_equiv_value();
 
 	auto rawfiledata = dbk::readfile("C:\\Users\\ben\\Desktop\\scr\\CLEMENTI.MID").d;
