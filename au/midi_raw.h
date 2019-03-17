@@ -43,6 +43,8 @@ T le_2_native(const unsigned char *p) {
 	return result;
 };
 
+
+
 // 
 // The max size of a vl field is 4 bytes, and the largest value it may encode is
 // 0x0FFFFFFF (BE-encoded as: FF FF FF 7F) => 268,435,455, which fits safely in
@@ -257,7 +259,7 @@ validate_mtrk_chunk_result_t validate_mtrk_chunk(const unsigned char*, int32_t=0
 // Sysex events and meta-events cancel any running status which was in effect.  Running status
 // does not apply to and may not be used for these messages (p.136).  
 //
-enum class smf_event_type {  // MTrk events
+enum class smf_event_type : uint8_t {  // MTrk events
 	channel_voice,
 	channel_mode,
 	sysex_f0,
@@ -265,6 +267,7 @@ enum class smf_event_type {  // MTrk events
 	meta,
 	invalid
 };
+
 std::string print(const smf_event_type&);
 //
 // parse_mtrk_event_type() will parse & validate the delta-t field and evaluate the status

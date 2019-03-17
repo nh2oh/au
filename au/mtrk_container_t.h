@@ -7,6 +7,7 @@
 
 class mtrk_container_t;
 class mtrk_event_container_t;
+class mtrk_event_container_sbo_t;
 
 // Obtained from the begin() && end() methods of class mtrk_container_t.  
 class mtrk_container_iterator_t {
@@ -164,36 +165,30 @@ std::string print(const mtrk_event_container_t&);
 
 
 
-
+/*
 //
 // TODO:
-// - Need to consider alignment ... would be nice to make an array of these to represent
-//   the midi file
+// - Should rename the present "container" types to "view;" these are still useful and 
+//   can form the basis for the internal implementation.  
 //
 class mtrk_event_container_sbo_t {
-public:
-	mtrk_event_container_sbo_t(const unsigned char *p, int32_t sz);
-
-	// size of the event not including the delta-t field (but including the length field 
-	// in the case of sysex & meta events)
-	int32_t delta_time() const;
-	smf_event_type type() const;  // enum event_type:: midi || sysex || meta
-	int32_t data_size() const;  // Does not include the delta-time
-	int32_t size() const;  // Includes the delta-time
-
 private:
 	//
 	// About:
-	// ->  struct big is "stylized;" the size & capacity fields are interpreted as LE.  
-	// ->  le_2_native(big.capacity) >= le_2_native(big.size)
-	// ->  The maximum value of le_2_native(big.capacity) is:  0x0x00'FF'FF'FF'FF'FF'FF'FF.
+	// ->  big.capacity >= big.size
+	// ->  The maximum value of le_2_native(big.capacity) is:  0xFF'FF'FF'FF.
 	//     Hence, the MSB (corresponding to small.f) is == 0x00 when union bigsmall => big.  
 	//     Any other value => union bigsmall => small.  
 	//
-	struct big {  // Stylized:  size & capacity are LE
+	struct tag_t {
+		uint32_t dt_fixed;
+		smf_event_type sevt;
+	};
+	struct big {
 		unsigned char *p;
-		uint64_t size;
-		uint64_t capacity;
+		uint32_t size;
+		uint32_t capacity;
+		std::array<unsigned char, 8> arry;
 	};  // sizeof() == 24
 	enum sbo_constants {
 		obj_size = sizeof(big),
@@ -212,18 +207,66 @@ private:
 		small s;
 	};
 
-
 	bigsmall d_;
 
-	bool is_small() {
+	bool is_small() const {  // small <=> the last byte is nonzero
 		return (d_.s.f != 0x00u);
 	};
-	bool is_big() {
+	bool is_big() const {  // big <=> the last byte is zero
 		return !is_small();
 	};
+	void set_flag_big() {
+		this->d_.s.f = 0x00u;
+	}
+	void set_flag_small() {
+		this->d_.s.f = 0x01u;
+	}
 
-	const unsigned char *p_ {};  // points at the first byte of the delta-time
-	int32_t size_ {0};  // delta_t + payload
+public:
+	mtrk_event_container_sbo_t(const unsigned char *p, int32_t sz, unsigned char s=0) {
+		if (sz > sbo_constants::data_seq_size) {
+			this->d_.b.p = new unsigned char[sz];
+			this->d_.b.size = sz;  // TODO:  Must be le
+			this->d_.b.capacity = sz;  // TODO:  Must be le
+			std::copy(p,p+sz,this->d_.b.p);
+
+			this->set_flag_big();
+		} else {
+			std::copy(p,p+sz,this->d_.s.arry.begin());
+			auto evt = detect_mtrk_event_type_dtstart_unsafe(&(this->d_.s.arry[0]),s);
+			if (evt==smf_event_type::channel_mode || evt==smf_event_type::channel_voice) {
+
+
+			this->set_flag_small();
+		}
+	};
+	~mtrk_event_container_sbo_t() {
+		if (this->is_big()) {
+			delete this->d_.b.p;
+		}
+	}
+
+	// size of the event not including the delta-t field (but including the length field 
+	// in the case of sysex & meta events)
+	int32_t delta_time() const {
+		if (this->is_small()) {
+			return midi_interpret_vl_field(&(this->d_.s.arry[0])).val;
+		} else {
+			return midi_interpret_vl_field(this->d_.b.p).val;
+		}
+	};
+
+	smf_event_type type() const {  // channel_voice, channel_mode,sysex_f0,sysex_f7,meta,invalid
+		if (this->is_small()) {
+			return detect_mtrk_event_type_dtstart_unsafe(&(this->d_.s.arry[0]));
+		} else {
+			return detect_mtrk_event_type_dtstart_unsafe(this->d_.b.p);
+		}
+	};
+
+
+	int32_t data_size() const;  // Does not include the delta-time
+	int32_t size() const;  // Includes the delta-time
 };
-std::string print(const mtrk_event_container_t&);
-
+std::string print(const mtrk_event_container_sbo_t&);
+*/

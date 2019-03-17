@@ -12,7 +12,7 @@
 #include <type_traits>
 
 int midi_example() {
-	struct big_t {
+	/*struct big_t {
 		unsigned char *p;
 		uint64_t size;
 		uint64_t capacity;
@@ -32,7 +32,7 @@ int midi_example() {
 	constexpr auto ast = alignof(small_t);
 	constexpr auto xs = sizeof(std::string);
 	constexpr auto xv = sizeof(std::vector<int>);
-	constexpr auto xa = sizeof(std::array<char,2>);
+	constexpr auto xa = sizeof(std::array<char,2>);*/
 	test_midi_vl_field_equiv_value();
 
 	auto rawfiledata = dbk::readfile("C:\\Users\\ben\\Desktop\\scr\\CLEMENTI.MID").d;
