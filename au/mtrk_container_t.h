@@ -15,6 +15,7 @@ public:
 	mtrk_container_iterator_t(const mtrk_container_t* c, int32_t o, unsigned char ms)
 		: container_(c), container_offset_(o), midi_status_(ms) {};
 	mtrk_event_container_t operator*() const;
+	mtrk_event_container_sbo_t operator!() const;
 
 	// If you got your iterator from an mtrk_container_t, all points in the
 	// stream should have a valid midi status byte.  
@@ -256,6 +257,22 @@ public:
 		}
 	}
 
+	unsigned char operator[](int32_t i) const {
+		if (this->is_small()) {
+			return this->d_.s.arry[i];
+		} else {
+			return this->d_.b.p[i];
+		}
+	}
+
+	const unsigned char *data() const {
+		if (this->is_small()) {
+			return &(this->d_.s.arry[0]);
+		} else {
+			return this->d_.b.p;
+		}
+	}
+
 	// size of the event not including the delta-t field (but including the length field 
 	// in the case of sysex & meta events)
 	int32_t delta_time() const {
@@ -284,7 +301,8 @@ public:
 			}
 			return evt.data_length;
 		} else {
-			return this->d_.b.size - midi_vl_field_size(this->d_.b.dt_fixed);
+			return this->d_.b.size - midi_interpret_vl_field(this->d_.b.p).N;
+			//return this->d_.b.size - midi_vl_field_size(this->d_.b.dt_fixed);
 			// TODO:  This assumes that the dt field does not contain a leading sequence
 			// of 0x80's
 		}
@@ -297,11 +315,18 @@ public:
 			if (evt.type == smf_event_type::invalid) {
 				std::abort();
 			}
+			if (evt.size <= 0) {
+				std::abort();
+			}
 			return evt.size;
 		} else {
 			return this->d_.b.size;
 		}
 	};
 };
+
 std::string print(const mtrk_event_container_sbo_t&);
+
+
+
 

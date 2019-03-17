@@ -31,6 +31,26 @@ mtrk_event_container_t mtrk_container_iterator_t::operator*() const {
 	return mtrk_event_container_t {p,sz};
 }
 
+mtrk_event_container_sbo_t mtrk_container_iterator_t::operator!() const {
+	const unsigned char *p = this->container_->p_+this->container_offset_;
+
+	auto type = detect_mtrk_event_type_dtstart_unsafe(p,this->midi_status_);
+	int32_t maxinc = this->container_->size_-this->container_offset_;
+	int32_t sz {0};  unsigned char s = 0;
+	if (type == smf_event_type::channel_mode || type == smf_event_type::channel_voice) {
+		sz = parse_channel_event(p,this->midi_status_,maxinc).size;
+		s = parse_channel_event(p,this->midi_status_,maxinc).status_byte;
+	} else if (type == smf_event_type::meta) {
+		sz = parse_meta_event(p,maxinc).size;
+	} else if (type == smf_event_type::sysex_f0 || type == smf_event_type::sysex_f7) {
+		sz = parse_sysex_event(p,maxinc).size;
+	} else {
+		std::abort();
+	}
+
+	return mtrk_event_container_sbo_t(p,sz,s);
+}
+
 mtrk_container_iterator_t& mtrk_container_iterator_t::operator++() {
 	// Get the size of the presently indicated event and increment 
 	// this->container_offset_ by that ammount.  
@@ -139,7 +159,8 @@ std::string print(const mtrk_container_t& mtrk) {
 	std::string s {};
 
 	for (mtrk_container_iterator_t it = mtrk.begin(); it != mtrk.end(); ++it) {
-		auto ev = *it;
+		//auto ev = *it;
+		auto ev = !it;
 		s += print(ev);
 		s += "\n";
 	}
@@ -200,4 +221,20 @@ std::string print(const mtrk_event_container_t& evnt) {
 	return s;
 }
 
+std::string print(const mtrk_event_container_sbo_t& evnt) {
+	std::string s {};
+	s += ("delta_time == " + std::to_string(evnt.delta_time()) + ", ");
+	s += ("type == " + print(evnt.type()) + ", ");
+	s += ("data_size == " + std::to_string(evnt.data_size()) + ", ");
+	s += ("size == " + std::to_string(evnt.size()) + "\n\t");
+
+	auto ss = evnt.size();
+	auto ds = evnt.data_size();
+	auto n = ss-ds;
+
+	s += ("[" + print_hexascii(evnt.data(), evnt.size()-evnt.data_size(), ' ') + "] ");
+	s += print_hexascii(evnt.data()+n, evnt.data_size(), ' ');
+
+	return s;
+};
 

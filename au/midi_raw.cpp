@@ -285,7 +285,7 @@ smf_event_type detect_mtrk_event_type_dtstart_unsafe(const unsigned char *p, uns
 
 //
 // Pointer to the first data byte following the delta-time, _not_ to the start of
-// the delta-time.  This function may have to increment the pointer by 1 byte (to classify
+// the delta-time.  This function may have to increment the pointer by 1 byte
 smf_event_type detect_mtrk_event_type_unsafe(const unsigned char *p, unsigned char s) {
 	// The tests below are made on s, not p.  If p is a valid status byte (high bit is set),
 	// the value of s is overwritten with *p.  If p is _not_ a valid status byte, ::invalid is 
@@ -368,13 +368,24 @@ parse_mtrk_event_result_t parse_mtrk_event_type(const unsigned char *p, unsigned
 	//
 	// TODO:  Compute size, data_length ...
 	//
-	if (result.type == smf_event_type::meta || result.type == smf_event_type::sysex_f0 
+	if (result.type == smf_event_type::meta) {
+		// *p == 0xFF || 0xF0 || 0xF7; running-status is not allowed for these values
+		++p;  // 0xFF
+		++p;  // type-byte
+		auto length_field = midi_interpret_vl_field(p);
+		result.size = result.delta_t.N + 2 + length_field.N + length_field.val;
+		result.data_length = result.size - result.delta_t.N;
+	} else if (result.type == smf_event_type::sysex_f0 
 		|| result.type == smf_event_type::sysex_f7) {
-		//.. process the length field
+		++p;  // 0xF0 || 0xF7
+		auto length_field = midi_interpret_vl_field(p);
+		result.size = result.delta_t.N + 1+ length_field.N + length_field.val;
+		result.data_length = result.size - result.delta_t.N;
 	} else if (result.type == smf_event_type::channel_mode 
 		|| result.type == smf_event_type::channel_voice) {
-		
+		//...
 		result.data_length = midi_channel_event_n_bytes(*p,s);
+		result.size = result.data_length + result.delta_t.N;
 	}
 
 	return result;
