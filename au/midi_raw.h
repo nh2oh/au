@@ -332,7 +332,7 @@ struct parse_sysex_event_result_t {
 	bool has_terminating_f7 {false};
 };
 parse_sysex_event_result_t parse_sysex_event(const unsigned char*,int32_t=0);
-enum class channel_msg_type {
+enum class channel_msg_type : uint8_t {
 	note_on,
 	note_off,
 	key_pressure,

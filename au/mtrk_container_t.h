@@ -165,7 +165,7 @@ std::string print(const mtrk_event_container_t&);
 
 
 
-/*
+
 //
 // TODO:
 // - Should rename the present "container" types to "view;" these are still useful and 
@@ -177,66 +177,83 @@ private:
 	// About:
 	// ->  big.capacity >= big.size
 	// ->  The maximum value of le_2_native(big.capacity) is:  0xFF'FF'FF'FF.
-	//     Hence, the MSB (corresponding to small.f) is == 0x00 when union bigsmall => big.  
-	//     Any other value => union bigsmall => small.  
+	//     
 	//
 	struct tag_t {
 		uint32_t dt_fixed;
 		smf_event_type sevt;
+		unsigned char midi_status;
+			// (sevt == channel_mode || channel_voice) && (midi_status & 0x80 == 0)
+			// => running status w/ 
+		uint8_t unused;
 	};
-	struct big {
+	struct big_t {
 		unsigned char *p;
 		uint32_t size;
 		uint32_t capacity;
-		std::array<unsigned char, 8> arry;
-	};  // sizeof() == 24
-	enum sbo_constants {
-		obj_size = sizeof(big),
-		data_seq_size = sizeof(big)-1,
-		idx_first = 0,
-		idx_end = sizeof(big),
-		idx_last = sizeof(big)-2,
-		idx_flags = sizeof(big)-1
+		tag_t tag;
+	};  // sizeof() == 23
+	struct small_t {
+		std::array<unsigned char, sizeof(big_t)> arry;
 	};
-	struct small {
-		std::array<unsigned char, sbo_constants::data_seq_size> arry;
-		unsigned char f;
-	};
-	union bigsmall {
-		big b;
-		small s;
+	union bigsmall_t {
+		big_t b;
+		small_t s;
 	};
 
-	bigsmall d_;
+	bigsmall_t d_;
+	unsigned char bigsmall_flag;  // ==1u => small; ==0u => big
 
-	bool is_small() const {  // small <=> the last byte is nonzero
-		return (d_.s.f != 0x00u);
+
+	bool is_small() const {
+		return (this->bigsmall_flag == 0x01u);
 	};
-	bool is_big() const {  // big <=> the last byte is zero
+	bool is_big() const {
 		return !is_small();
 	};
 	void set_flag_big() {
-		this->d_.s.f = 0x00u;
+		this->bigsmall_flag = 0x00u;
 	}
 	void set_flag_small() {
-		this->d_.s.f = 0x01u;
+		this->bigsmall_flag = 0x01u;
 	}
 
 public:
-	mtrk_event_container_sbo_t(const unsigned char *p, int32_t sz, unsigned char s=0) {
-		if (sz > sbo_constants::data_seq_size) {
+	// For callers who have pre-computed the exact size of the event and who
+	// can also supply a midi status byte if applicible, ex, an mtrk_container_iterator_t.  
+	// For values of sz => bigsmall_t => big_t, d_.b.tag.midi_status == 0, since
+	// the indicated event can not be channel_voice or channel_mode.  
+	// For values of sz => bigsmall_t => small_t, and where the indicated event is 
+	// channel_voice or channel_mode, the last byte of the local data array,
+	// d_.s.arry[sizeof(small_t)-1] == the status byte.  
+	mtrk_event_container_sbo_t(const unsigned char *p, uint32_t sz, unsigned char s=0) {
+		if (sz > sizeof(small_t)) {
 			this->d_.b.p = new unsigned char[sz];
-			this->d_.b.size = sz;  // TODO:  Must be le
-			this->d_.b.capacity = sz;  // TODO:  Must be le
+			this->d_.b.size = sz;
+			this->d_.b.capacity = sz;
 			std::copy(p,p+sz,this->d_.b.p);
+
+			auto ev = parse_mtrk_event_type(p,s,sz);
+			this->d_.b.tag.dt_fixed = ev.delta_t.val;
+			this->d_.b.tag.sevt = ev.type;
+			this->d_.b.tag.midi_status = 0x00;
+			// Since all smf_event_type::channel_voice || channel_mode messages have
+			// a max size of 4 + 1 + 2 == 7, ev.type will always be sysex_f*, meta, or
+			// invalid.  The former two cancel any running status so the midi_status
+			// byte does not apply.  
 
 			this->set_flag_big();
 		} else {
-			std::copy(p,p+sz,this->d_.s.arry.begin());
-			auto evt = detect_mtrk_event_type_dtstart_unsafe(&(this->d_.s.arry[0]),s);
-			if (evt==smf_event_type::channel_mode || evt==smf_event_type::channel_voice) {
-
-
+			auto end = std::copy(p,p+sz,this->d_.s.arry.begin());
+			while (end!=this->d_.s.arry.end()) {
+				*end++ = 0x00;
+			}
+			
+			// If this is a meta or sysex_f0/f7 event, chev.is_valid == false;
+			auto chev = parse_channel_event(&(this->d_.s.arry[0]),s,sizeof(small_t));
+			if (chev.is_valid) {
+				this->d_.s.arry[sizeof(small_t)-1] = chev.status_byte;
+			}
 			this->set_flag_small();
 		}
 	};
@@ -256,11 +273,11 @@ public:
 		}
 	};
 
-	smf_event_type type() const {  // channel_voice, channel_mode,sysex_f0,sysex_f7,meta,invalid
+	smf_event_type type() const {  // channel_{voice,mode},sysex_{f0,f7},meta,invalid
 		if (this->is_small()) {
 			return detect_mtrk_event_type_dtstart_unsafe(&(this->d_.s.arry[0]));
 		} else {
-			return detect_mtrk_event_type_dtstart_unsafe(this->d_.b.p);
+			return this->d_.b.tag.sevt;
 		}
 	};
 
@@ -269,4 +286,4 @@ public:
 	int32_t size() const;  // Includes the delta-time
 };
 std::string print(const mtrk_event_container_sbo_t&);
-*/
+
