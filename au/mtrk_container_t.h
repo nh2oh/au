@@ -176,8 +176,6 @@ private:
 	//
 	// About:
 	// ->  big.capacity >= big.size
-	// 
-	//     
 	//
 	struct big_t {  // sizeof() == 23
 		unsigned char *p;
@@ -270,15 +268,40 @@ public:
 
 	smf_event_type type() const {  // channel_{voice,mode},sysex_{f0,f7},meta,invalid
 		if (this->is_small()) {
-			return detect_mtrk_event_type_dtstart_unsafe(&(this->d_.s.arry[0]));
+			return detect_mtrk_event_type_dtstart_unsafe(&(this->d_.s.arry[0]),
+				this->d_.s.arry[sizeof(small_t)-1] );
 		} else {
 			return this->d_.b.sevt;
 		}
 	};
 
+	int32_t data_size() const {  // Does not include the delta-time
+		if (this->is_small()) {
+			auto evt = parse_mtrk_event_type(&(this->d_.s.arry[0]),
+				this->d_.s.arry[sizeof(small_t)-1],sizeof(small_t));
+			if (evt.type == smf_event_type::invalid) {
+				std::abort();
+			}
+			return evt.data_length;
+		} else {
+			return this->d_.b.size - midi_vl_field_size(this->d_.b.dt_fixed);
+			// TODO:  This assumes that the dt field does not contain a leading sequence
+			// of 0x80's
+		}
+	};
 
-	int32_t data_size() const;  // Does not include the delta-time
-	int32_t size() const;  // Includes the delta-time
+	int32_t size() const {  // Includes the delta-time
+		if (this->is_small()) {
+			auto evt = parse_mtrk_event_type(&(this->d_.s.arry[0]),
+				this->d_.s.arry[sizeof(small_t)-1],sizeof(small_t));
+			if (evt.type == smf_event_type::invalid) {
+				std::abort();
+			}
+			return evt.size;
+		} else {
+			return this->d_.b.size;
+		}
+	};
 };
 std::string print(const mtrk_event_container_sbo_t&);
 
