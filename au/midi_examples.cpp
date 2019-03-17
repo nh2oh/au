@@ -12,6 +12,10 @@
 
 
 int midi_example() {
+	struct myweirdtype_t {
+		//...
+	};
+	constexpr auto xmwt = sizeof(myweirdtype_t);
 	constexpr auto xs = sizeof(std::string);
 	constexpr auto xv = sizeof(std::vector<int>);
 	constexpr auto xa = sizeof(std::array<char,2>);
