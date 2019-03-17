@@ -176,23 +176,18 @@ private:
 	//
 	// About:
 	// ->  big.capacity >= big.size
-	// ->  The maximum value of le_2_native(big.capacity) is:  0xFF'FF'FF'FF.
+	// 
 	//     
 	//
-	struct tag_t {
-		uint32_t dt_fixed;
-		smf_event_type sevt;
-		unsigned char midi_status;
-			// (sevt == channel_mode || channel_voice) && (midi_status & 0x80 == 0)
-			// => running status w/ 
-		uint8_t unused;
-	};
-	struct big_t {
+	struct big_t {  // sizeof() == 23
 		unsigned char *p;
 		uint32_t size;
 		uint32_t capacity;
-		tag_t tag;
-	};  // sizeof() == 23
+		uint32_t dt_fixed;
+		smf_event_type sevt;  // "smf_event_type"
+		unsigned char midi_status;
+		uint8_t unused;
+	};
 	struct small_t {
 		std::array<unsigned char, sizeof(big_t)> arry;
 	};
@@ -234,9 +229,9 @@ public:
 			std::copy(p,p+sz,this->d_.b.p);
 
 			auto ev = parse_mtrk_event_type(p,s,sz);
-			this->d_.b.tag.dt_fixed = ev.delta_t.val;
-			this->d_.b.tag.sevt = ev.type;
-			this->d_.b.tag.midi_status = 0x00;
+			this->d_.b.dt_fixed = ev.delta_t.val;
+			this->d_.b.sevt = ev.type;
+			this->d_.b.midi_status = 0x00;
 			// Since all smf_event_type::channel_voice || channel_mode messages have
 			// a max size of 4 + 1 + 2 == 7, ev.type will always be sysex_f*, meta, or
 			// invalid.  The former two cancel any running status so the midi_status
@@ -277,7 +272,7 @@ public:
 		if (this->is_small()) {
 			return detect_mtrk_event_type_dtstart_unsafe(&(this->d_.s.arry[0]));
 		} else {
-			return this->d_.b.tag.sevt;
+			return this->d_.b.sevt;
 		}
 	};
 
