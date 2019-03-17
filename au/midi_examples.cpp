@@ -9,13 +9,27 @@
 #include <iostream>
 #include <filesystem>
 #include <string>
-
+#include <type_traits>
 
 int midi_example() {
-	struct myweirdtype_t {
-		//...
+	struct big_t {
+		unsigned char *p;
+		uint64_t size;
+		uint64_t capacity;
+	};  // sizeof() == 24
+	struct small_t {
+		std::array<unsigned char,23> a;
+		unsigned char f;
 	};
-	constexpr auto xmwt = sizeof(myweirdtype_t);
+
+	constexpr auto uorb = std::has_unique_object_representations<big_t>::value;
+	constexpr auto xb = sizeof(big_t);
+	constexpr auto ab = alignof(big_t);
+	constexpr auto ao = alignof(int64_t);
+	small_t yay {};
+	constexpr auto xy = sizeof(yay);
+	constexpr auto xst = sizeof(small_t);
+	constexpr auto ast = alignof(small_t);
 	constexpr auto xs = sizeof(std::string);
 	constexpr auto xv = sizeof(std::vector<int>);
 	constexpr auto xa = sizeof(std::array<char,2>);

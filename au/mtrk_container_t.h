@@ -182,26 +182,44 @@ public:
 	int32_t size() const;  // Includes the delta-time
 
 private:
-
-	struct big {
+	//
+	// About:
+	// ->  struct big is "stylized;" the size & capacity fields are interpreted as LE.  
+	// ->  le_2_native(big.capacity) >= le_2_native(big.size)
+	// ->  The maximum value of le_2_native(big.capacity) is:  0x0x00'FF'FF'FF'FF'FF'FF'FF.
+	//     Hence, the MSB (corresponding to small.f) is == 0x00 when union bigsmall => big.  
+	//     Any other value => union bigsmall => small.  
+	//
+	struct big {  // Stylized:  size & capacity are LE
 		unsigned char *p;
-		size_t size;
-		size_t capacity;
+		uint64_t size;
+		uint64_t capacity;
+	};  // sizeof() == 24
+	enum sbo_constants {
+		obj_size = sizeof(big),
+		data_seq_size = sizeof(big)-1,
+		idx_first = 0,
+		idx_end = sizeof(big),
+		idx_last = sizeof(big)-2,
+		idx_flags = sizeof(big)-1
 	};
 	struct small {
-		std::array<unsigned char,sizeof(big)> arry;
+		std::array<unsigned char, sbo_constants::data_seq_size> arry;
+		unsigned char f;
 	};
-
 	union bigsmall {
 		big b;
 		small s;
 	};
 
+
 	bigsmall d_;
 
 	bool is_small() {
-		// 0b10000001 is invalid as the initial byte of a delta-time
-		return (d_.s.arry[0] != 0x81u);
+		return (d_.s.f != 0x00u);
+	};
+	bool is_big() {
+		return !is_small();
 	};
 
 	const unsigned char *p_ {};  // points at the first byte of the delta-time

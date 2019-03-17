@@ -169,6 +169,8 @@ std::array<unsigned char,4> midi_encode_vl_field(T val) {
 std::string print_hexascii(const unsigned char*, int, const char = ' ');
 
 //
+// TODO:  Half-assed...
+//
 // - OIt must accept unsigned chars
 //
 template<typename InIt, typename OIt>
@@ -176,7 +178,7 @@ OIt hexascii(InIt beg, InIt end, OIt out) {
 	std::array<unsigned char,16> nybble2ascii {'0','1','2','3','4','5',
 		'6','7','8','9','A','B','C','D','E','F'};
 	
-	while (beg != end) {
+	while (beg!=end) {
 		const auto tval = *beg;
 		const unsigned char *p = &tval;
 
