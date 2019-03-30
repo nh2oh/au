@@ -50,6 +50,8 @@ T le_2_native(const unsigned char *p) {
 // 0x0FFFFFFF (BE-encoded as: FF FF FF 7F) => 268,435,455, which fits safely in
 // an int32_t:  std::numeric_limits<int32_t>::max() == 2,147,483,647;
 //
+// TODO:  Returns is_valid == false for *p==0x00  ??
+//
 struct midi_vl_field_interpreted {
 	int32_t val {0};
 	int8_t N {0};

@@ -255,7 +255,7 @@ public:
 		if (this->is_big()) {
 			delete this->d_.b.p;
 		}
-	}
+	};
 
 	unsigned char operator[](int32_t i) const {
 		if (this->is_small()) {
@@ -263,7 +263,7 @@ public:
 		} else {
 			return this->d_.b.p[i];
 		}
-	}
+	};
 
 	const unsigned char *data() const {
 		if (this->is_small()) {
@@ -271,7 +271,7 @@ public:
 		} else {
 			return this->d_.b.p;
 		}
-	}
+	};
 
 	// size of the event not including the delta-t field (but including the length field 
 	// in the case of sysex & meta events)
@@ -286,7 +286,7 @@ public:
 	smf_event_type type() const {  // channel_{voice,mode},sysex_{f0,f7},meta,invalid
 		if (this->is_small()) {
 			return detect_mtrk_event_type_dtstart_unsafe(&(this->d_.s.arry[0]),
-				this->d_.s.arry[sizeof(small_t)-1] );
+				this->d_.s.arry[sizeof(small_t)-1]);
 		} else {
 			return this->d_.b.sevt;
 		}
