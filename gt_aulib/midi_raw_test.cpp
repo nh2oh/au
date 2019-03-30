@@ -56,7 +56,6 @@ TEST(midi_raw_tests, be2native) {
 }
 
 
-
 // ...
 TEST(midi_raw_tests, MIDIVLFieldEquivValueTests) {
 	uint32_t a {137};
@@ -164,7 +163,6 @@ TEST(midi_raw_tests, midiInterpretVLFieldTests) {
 		EXPECT_EQ(res.is_valid,e.ans.is_valid);// << "Failed for e.ans==" << e.ans << "\n";
 	}
 }
-
 
 
 // midi_encode_vl_field() and all the examples from p.131 of the MIDI std.  
