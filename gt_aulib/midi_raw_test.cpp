@@ -198,22 +198,26 @@ TEST(midi_raw_tests, EncodeVLFieldStdP131Exs) {
 //
 // Tests for:
 // detect_chunk_type_result_t detect_chunk_type(const unsigned char*, int32_t=0);
+// For each example, verifies that:
+//   detect_chunk_type_result_t.size == detect_chunk_type_result_t.data_length + 8
 //
 TEST(midi_raw_tests, DetectChunkTypeTests) {
 	struct tests {
 		std::array<unsigned char,8> data {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
-		int32_t max_sz {0};
+		uint32_t max_sz {0};
 		chunk_type ans_type {chunk_type::invalid};
-		int32_t ans_data_length {0};
+		uint32_t ans_data_length {0};
 	};
 	std::vector<tests> all_tests {
-		// Invalid, no ID field
+		// Invalid: no ID field
 		{{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},100, chunk_type::invalid,0},
-		// Invalid, MTrk, data_length > max_size
+		// Invalid: MTrk, data_length > max_size
 		{{0x4D,0x54,0x72,0x6B,0x00,0x00,0x00,0xFF},0x7F, chunk_type::invalid,255},
-		// Invalid, MTrk, data_length >= max_size
+		// Invalid: MTrk, max_size<8
+		{{0x4D,0x54,0x72,0x6B,0x00,0x00,0x00,0xFF},7, chunk_type::invalid,0},
+		// Invalid: MTrk, data_length >= max_size
 		{{0x4D,0x54,0x72,0x6B,0x00,0x00,0x00,0xFF},0xFF, chunk_type::invalid,255},
-		// Invalid, MTrk, data_length==247 > max_size
+		// Invalid: MTrk, data_length==247 > max_size
 		{{0x4D,0x54,0x72,0x6B,0x00,0x00,0x00,0xF7},0x7F, chunk_type::invalid,247},
 
 		// valid, MThd, MTrk
@@ -233,8 +237,14 @@ TEST(midi_raw_tests, DetectChunkTypeTests) {
 
 		// Invalid:  Size overflows an int32_t
 		//{{0x4D,0x54,0x68,0x64,0xFF,0xFF,0xFF,0xFF},100, chunk_type::invalid,0},
-	};
 
+		// Valid:  From random MIDI Files i have laying around
+		{{0x4D,0x54,0x68,0x64,0x00,0x00,0x00,0x06},5584, chunk_type::header,6},
+		{{0x4D,0x54,0x72,0x6B,0x00,0x00,0x00,0x1C},5584-14, chunk_type::track,28},
+		{{0x4D,0x54,0x72,0x6B,0x00,0x00,0x0F,0x13},5584-50, chunk_type::track,3859},
+		{{0x4D,0x54,0x72,0x6B,0x00,0x00,0x06,0x7B},5584-3917, chunk_type::track,1659},
+	};
+	auto x = 0x067B;
 	for (const auto& e : all_tests) {
 		auto res = detect_chunk_type(&(e.data[0]),e.max_sz);
 		EXPECT_EQ(res.type,e.ans_type);
