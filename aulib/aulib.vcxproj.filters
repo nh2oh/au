@@ -90,6 +90,30 @@
     <ClCompile Include="melgen\melody_hiller.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="input\midi\midi_container.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="input\midi\midi_examples.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="input\midi\midi_raw.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="input\midi\midi_utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="input\midi\midiread.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="input\midi\mthd_container_t.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="input\midi\mtrk_container_t.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="input\midi\smf_container_t.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="util\au_util.h">
@@ -189,6 +213,33 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="types\voice_t.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="input\midi\smf_container_t.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="input\midi\midi_container.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="input\midi\midi_data.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="input\midi\midi_examples.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="input\midi\midi_raw.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="input\midi\midi_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="input\midi\midiread.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="input\midi\mthd_container_t.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="input\midi\mtrk_container_t.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -11,6 +11,14 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="input\midi\midiread.cpp" />
+    <ClCompile Include="input\midi\midi_container.cpp" />
+    <ClCompile Include="input\midi\midi_examples.cpp" />
+    <ClCompile Include="input\midi\midi_raw.cpp" />
+    <ClCompile Include="input\midi\midi_utils.cpp" />
+    <ClCompile Include="input\midi\mthd_container_t.cpp" />
+    <ClCompile Include="input\midi\mtrk_container_t.cpp" />
+    <ClCompile Include="input\midi\smf_container_t.cpp" />
     <ClCompile Include="input\notefile.cpp" />
     <ClCompile Include="ks_key.cpp" />
     <ClCompile Include="melgen\melody_a.cpp" />
@@ -39,6 +47,15 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="aulib_all.h" />
+    <ClInclude Include="input\midi\midiread.h" />
+    <ClInclude Include="input\midi\midi_container.h" />
+    <ClInclude Include="input\midi\midi_data.h" />
+    <ClInclude Include="input\midi\midi_examples.h" />
+    <ClInclude Include="input\midi\midi_raw.h" />
+    <ClInclude Include="input\midi\midi_utils.h" />
+    <ClInclude Include="input\midi\mthd_container_t.h" />
+    <ClInclude Include="input\midi\mtrk_container_t.h" />
+    <ClInclude Include="input\midi\smf_container_t.h" />
     <ClInclude Include="input\notefile.h" />
     <ClInclude Include="melgen\hiller.h" />
     <ClInclude Include="melgen\randmel_gens.h" />

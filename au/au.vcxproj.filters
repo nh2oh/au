@@ -24,33 +24,6 @@
     <ClInclude Include="wavwr.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="midiread.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="midi_container.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="midi_raw.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="midi_data.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="midi_utils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="midi_examples.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="mthd_container_t.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="smf_container_t.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="mtrk_container_t.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="au.cpp">
@@ -63,30 +36,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="wavwr.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="midiread.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="midi_container.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="midi_raw.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="midi_utils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="midi_examples.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="mthd_container_t.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="smf_container_t.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="mtrk_container_t.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
