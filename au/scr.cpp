@@ -1,6 +1,7 @@
 #include <vector>
 #include <cstdint>
 
+/*
 int what();
 
 enum class bingus_t : uint8_t {
@@ -30,4 +31,4 @@ int what() {
 
 	return 0;
 }
-
+*/

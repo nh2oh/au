@@ -131,3 +131,52 @@ TEST(mtrk_event_container_sbo_tests, metaEventsSmallCopyCtorAndCopyAssign) {
 
 }
 
+
+
+// 
+// "Big" (in the SBO-sense) meta events from the midi std and from files
+// observed in the wild.  
+//
+// Tests of the mtrk_event_container_sbo_t(unsigned char *, int, unsigned char) ctor
+//
+TEST(mtrk_event_container_sbo_tests, metaEventsBig) {
+	struct test_ans_t {
+		bool is_small {true};
+		uint32_t delta_time {0};
+		//smf_event_type type {smf_event_type::meta};
+		uint32_t size {0};
+		uint32_t data_size {0};
+	};
+	struct tests_t {
+		std::vector<unsigned char> bytes {};
+		test_ans_t ans {};
+	};
+
+	std::vector<tests_t> tests {
+	//
+	// Not from the midi std:
+	//
+		{{0x00,0xFF,0x03,0x1D,0x48,0x61,0x6C,0x6C,0x65,0x6C,0x75,0x6A,
+			0x61,0x68,0x21,0x20,0x4A,0x6F,0x79,0x20,0x74,0x6F,0x20,0x74,
+			0x68,0x65,0x20,0x57,0x6F,0x72,0x6C,0x64,0x21},  // Tempo (CLEMENTI.MID)
+		{false,0x00,33,32}}
+	};
+
+	for (const auto& e : tests) {
+		mtrk_event_container_sbo_t c(e.bytes.data(),e.bytes.size(),0);
+		//EXPECT_EQ(c.type(),e.ans.type);
+		EXPECT_EQ(c.type(),smf_event_type::meta);
+		EXPECT_EQ(c.delta_time(),e.ans.delta_time);
+
+		EXPECT_FALSE(c.is_small());
+		EXPECT_TRUE(c.is_big());
+		EXPECT_EQ(c.size(),e.ans.size);
+		EXPECT_EQ(c.data_size(),e.ans.data_size);
+		for (int i=0; i<e.ans.size; ++i) {
+			EXPECT_EQ(c[i],e.bytes[i]);
+			EXPECT_EQ(*(c.data()+i),e.bytes[i]);
+		}
+	}
+
+}
+
