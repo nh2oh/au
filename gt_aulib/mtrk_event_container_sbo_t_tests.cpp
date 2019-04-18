@@ -2,13 +2,14 @@
 #include "..\aulib\input\midi\midi_raw.h"
 #include "..\aulib\input\midi\mtrk_container_t.h"
 #include <vector>
-#include <array>
 #include <cstdint>
 
 
 // 
 // "Small" (in the SBO-sense) meta events from the midi std and from files
 // observed in the wild.  
+//
+// Tests of the mtrk_event_container_sbo_t(unsigned char *, int, unsigned char) ctor
 //
 TEST(mtrk_event_container_sbo_tests, metaEventsSmall) {
 	
@@ -68,5 +69,65 @@ TEST(mtrk_event_container_sbo_tests, metaEventsSmall) {
 		}
 	}
 	
+}
+
+
+TEST(mtrk_event_container_sbo_tests, metaEventsSmallCopyCtorAndCopyAssign) {
+	std::vector<std::vector<unsigned char>> tests {
+		//
+		// From p.142 of the midi std
+		//
+		{{0x00,0xFF,0x58,0x04,0x04,0x02,0x18,0x08}},  // Time sig
+		{{0x00,0xFF,0x51,0x03,0x07,0xA1,0x20}},  // Tempo
+		{{0x00,0xFF,0x2F,0x00}},  // End of track
+		//
+		// Not from the midi std
+		//
+		{{0x00,0xFF,0x51,0x03,0x07,0xA1,0x20}},  // Tempo (CLEMENTI.MID)
+		// Padded w/ zeros, but otherwise identical to above:
+		{{0x00,0xFF,0x51,0x03,0x07,0xA1,0x20,0x00,0x00,0x00,0x00}},
+		{{0x00,0xFF,0x01,0x10,0x48,0x61,0x72,0x70,0x73,0x69,0x63,0x68,
+			0x6F,0x72,0x64,0x20,0x48,0x69,0x67,0x68}}   // Text element "Harpsichord High"
+	};
+
+	for (const auto& e : tests) {
+		mtrk_event_container_sbo_t c1(e.data(),e.size(),0);
+		
+		//---------------------------------------------------------------------------
+		// copy ctor:
+		auto c2 = c1;
+
+		//EXPECT_EQ(c2.type(),c1.type());
+		EXPECT_EQ(c2.type(),c1.type());
+		EXPECT_EQ(c2.delta_time(),c1.delta_time());
+
+		EXPECT_TRUE(c2.is_small());
+		EXPECT_FALSE(c2.is_big());
+		EXPECT_EQ(c2.size(),c1.size());
+		EXPECT_EQ(c2.data_size(),c1.data_size());
+		for (int i=0; i<e.size(); ++i) {
+			EXPECT_EQ(c2[i],e[i]);
+			EXPECT_EQ(*(c2.data()+i),e[i]);
+		}
+
+		//---------------------------------------------------------------------------
+		// copy assign:
+		mtrk_event_container_sbo_t c3(tests[0].data(),tests[0].size(),0);
+		c3 = c1;
+
+		//EXPECT_EQ(c3.type(),c1.type());
+		EXPECT_EQ(c3.type(),c1.type());
+		EXPECT_EQ(c3.delta_time(),c1.delta_time());
+
+		EXPECT_TRUE(c3.is_small());
+		EXPECT_FALSE(c3.is_big());
+		EXPECT_EQ(c3.size(),c1.size());
+		EXPECT_EQ(c3.data_size(),c1.data_size());
+		for (int i=0; i<e.size(); ++i) {
+			EXPECT_EQ(c3[i],e[i]);
+			EXPECT_EQ(*(c3.data()+i),e[i]);
+		}
+	}
+
 }
 
