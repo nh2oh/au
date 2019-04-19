@@ -5,6 +5,8 @@
 #include <array>
 #include <cstdint>
 
+// TODO:  Many (all?) of these are tests of things now in dbklib; tests should
+// move to dbklib.  
 
 // Big-endian encoded multi-byte ints
 TEST(midi_raw_tests, be2native) {
