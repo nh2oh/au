@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include "..\aulib\input\midi\midi_raw.h"
+#include "dbklib\byte_manipulation.h"
 #include <vector>
 #include <array>
 #include <cstdint>
@@ -30,7 +31,7 @@ TEST(midi_raw_tests, be2native) {
 		{{0x00,0x7F,0xFF,0x3F},0x007FFF3F},
 	};
 	for (const auto& e : i32_tests) {
-		auto res = be_2_native<int32_t>(&(e.field[0]));
+		auto res = dbk::be_2_native<uint32_t>(&(e.field[0]));
 		EXPECT_EQ(res,e.ans) << "Failed for e.ans==" << e.ans << "\n";
 	}
 
@@ -50,7 +51,7 @@ TEST(midi_raw_tests, be2native) {
 		{{0x00,0x00,0x00,0x00,0x00,0x7F,0xFF,0x3F},0x00000000007FFF3F},
 	};
 	for (const auto& e : ui64_tests) {
-		auto res = be_2_native<uint64_t>(&(e.field[0]));
+		auto res = dbk::be_2_native<uint64_t>(&(e.field[0]));
 		EXPECT_EQ(res,e.ans) << "Failed for e.ans==" << e.ans << "\n";
 	}
 }
