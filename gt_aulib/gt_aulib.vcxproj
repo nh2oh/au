@@ -99,6 +99,7 @@
     <ClCompile Include="line_t_test.cpp" />
     <ClCompile Include="melody_a_testcpp.cpp" />
     <ClCompile Include="melody_temperley_test.cpp" />
+    <ClCompile Include="midi_raw_mtrk_events.cpp" />
     <ClCompile Include="midi_raw_test.cpp" />
     <ClCompile Include="midi_util_test.cpp" />
     <ClCompile Include="mtrk_event_container_sbo_t_tests.cpp" />
