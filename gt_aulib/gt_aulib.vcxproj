@@ -104,6 +104,7 @@
     <ClCompile Include="midi_raw_test_data.cpp" />
     <ClCompile Include="midi_util_test.cpp" />
     <ClCompile Include="mtrk_event_container_sbo_t_tests.cpp" />
+    <ClCompile Include="mtrk_event_get_size_unsafe.cpp" />
     <ClCompile Include="musel_t_test.cpp" />
     <ClCompile Include="notefile_test.cpp" />
     <ClCompile Include="note_t_tests.cpp" />

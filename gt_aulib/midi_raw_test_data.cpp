@@ -7,6 +7,7 @@
 //
 // Tests for:
 // mtrk_event_get_midi_status_byte_unsafe(const unsigned char*, unsigned char=0u);
+// mtrk_event_get_size_dtstart_unsafe(const unsigned char*, unsigned char=0u);
 //
 // Part 1:  running-status is a valid midi status byte.
 //
@@ -14,9 +15,9 @@
 // "random" but valid running-status bytes.  Events also have dt fields of
 // varying size.  For sysex and meta events, 0x00 should always be returned
 // since these event types reset the running-status.  There are two sets of 
-// midi events: set 1 are all valid w/ status byte 0x90u (=> each has 2 
-// data bytes), set 2 are all valid w/ status byte 0xC0 (=> each has 1 data
-// byte).  
+// midi events: set 1 are all valid w/ status byte => each has 2 
+// data bytes, set 2 are all valid w/ status byte => each has 1 data
+// byte.  
 //
 //
 std::vector<test_setab_t> set_a_valid_rs {
@@ -50,11 +51,9 @@ std::vector<test_setab_t> set_a_valid_rs {
 	{{0x64u,0xF7u,0x04u,0x43u,0x12u,0x00u,0xF7u},1,0xC2u,0x00u},
 
 	// __set 1__ midi_channel/voice events
-	// ... _with_ event-local status byte == 0x90u; expect the event-
+	// ... _with_ event-local status byte; expect the event-
 	// local status to override the running status, even though all
-	// the rs bytes are valid.  Note that 0xC2u is an invalid status
-	// byte for the 2-byte payload 0x41u,0x00u, but the function being
-	// tested here does not count the data bytes.  
+	// the rs bytes are valid.  
 	{{0x83u,0x00u,0x90u,0x41u,0x00u},2,0xA2u,0x90u},
 	{{0x83u,0x00u,0x90u,0x41u,0x00u},2,0xB2u,0x90u},
 	{{0x83u,0x00u,0x90u,0x41u,0x00u},2,0xC2u,0x90u},
@@ -64,20 +63,18 @@ std::vector<test_setab_t> set_a_valid_rs {
 	{{0x00u,0x90u,0x41u,0x00u},1,0xC2u,0x90u},
 	{{0x00u,0x90u,0x41u,0x00u},1,0x90u,0x90u},
 	// ... the same events, but _without_ the event-local status; expect
-	// the running-status to apply.  Note that 0xC2u is an invalid status
-	// byte for the 2-byte payload 0x41u,0x00u, but the function being
-	// tested here does not count the data bytes.  
+	// the running-status to apply.  
 	{{0x83u,0x00u,0x41u,0x00u},2,0xA2u,0xA2u},
 	{{0x83u,0x00u,0x41u,0x00u},2,0xB2u,0xB2u},
-	{{0x83u,0x00u,0x41u,0x00u},2,0xC2u,0xC2u},
+	{{0x83u,0x00u,0x41u,0x00u},2,0xE2u,0xE2u},
 	{{0x83u,0x00u,0x41u,0x00u},2,0x90u,0x90u},
 	{{0x00u,0x41u,0x00u},1,0xA2u,0xA2u},
 	{{0x00u,0x41u,0x00u},1,0xB2u,0xB2u},
-	{{0x00u,0x41u,0x00u},1,0xC2u,0xC2u},
+	{{0x00u,0x41u,0x00u},1,0xE2u,0xE2u},
 	{{0x00u,0x41u,0x00u},1,0x90u,0x90u},
 
 	// __set 2__ midi_channel/voice events
-	// ... _with_ event-local status byte == 0xC0u
+	// ... _with_ event-local status byte
 	{{0x83u,0x00u,0xC0u,0x00u},2,0xA2u,0xC0u},
 	{{0x83u,0x00u,0xC0u,0x00u},2,0xB2u,0xC0u},
 	{{0x83u,0x00u,0xC0u,0x00u},2,0xC0u,0xC0u},
@@ -87,20 +84,21 @@ std::vector<test_setab_t> set_a_valid_rs {
 	{{0x00u,0xC0u,0x00u},1,0xC0u,0xC0u},
 	{{0x00u,0xC0u,0x00u},1,0x90u,0xC0u},
 	// ... the same events, but _without_ the event-local status byte
-	{{0x83u,0x00u,0x00u},2,0xA2u,0xA2u},
-	{{0x83u,0x00u,0x00u},2,0xB2u,0xB2u},
+	{{0x83u,0x00u,0x00u,0x00u},2,0xA2u,0xA2u},
+	{{0x83u,0x00u,0x00u,0x00u},2,0xB2u,0xB2u},
 	{{0x83u,0x00u,0x00u},2,0xC0u,0xC0u},
-	{{0x83u,0x00u,0x00u},2,0x90u,0x90u},
-	{{0x00u,0x00u},1,0xA2u,0xA2u},
-	{{0x00u,0x00u},1,0xB2u,0xB2u},
+	{{0x83u,0x00u,0x00u,0x00u},2,0x90u,0x90u},
+	{{0x00u,0x00u,0x00u},1,0xA2u,0xA2u},
+	{{0x00u,0x00u,0x00u},1,0xB2u,0xB2u},
 	{{0x00u,0x00u},1,0xC0u,0xC0u},
-	{{0x00u,0x00u},1,0x90u,0x90u}
+	{{0x00u,0x00u,0x00u},1,0x90u,0x90u}
 };
 
 
 //
 // Tests for:
 // mtrk_event_get_midi_status_byte_unsafe(const unsigned char*, unsigned char=0u);
+// mtrk_event_get_size_dtstart_unsafe(const unsigned char*, unsigned char=0u);
 //
 // Part 2:  running-status is an _invalid_ midi status byte.
 //
@@ -195,6 +193,7 @@ std::vector<test_setab_t> set_b_invalid_rs {
 //
 // Tests for:
 // mtrk_event_get_midi_status_byte_unsafe(const unsigned char*, unsigned char=0u);
+// mtrk_event_get_size_dtstart_unsafe(const unsigned char*, unsigned char=0u);
 //
 // Part 3:  midi events only; running-status may or may not be valid, but all 
 // composite events (data+rs byte) are valid and interpretible.  
