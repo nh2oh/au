@@ -99,8 +99,9 @@
     <ClCompile Include="line_t_test.cpp" />
     <ClCompile Include="melody_a_testcpp.cpp" />
     <ClCompile Include="melody_temperley_test.cpp" />
-    <ClCompile Include="midi_raw_mtrk_events.cpp" />
+    <ClCompile Include="get_midi_status_byte_unsafe_test.cpp" />
     <ClCompile Include="midi_raw_test.cpp" />
+    <ClCompile Include="midi_raw_test_data.cpp" />
     <ClCompile Include="midi_util_test.cpp" />
     <ClCompile Include="mtrk_event_container_sbo_t_tests.cpp" />
     <ClCompile Include="musel_t_test.cpp" />
@@ -123,6 +124,9 @@
     <ProjectReference Include="..\aulib\aulib.vcxproj">
       <Project>{0ffa5ec5-e53d-4f20-ace1-ac704d0be313}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="midi_raw_test_data.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
