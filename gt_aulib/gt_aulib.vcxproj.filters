@@ -93,7 +93,7 @@
     <ClCompile Include="get_midi_status_byte_unsafe_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="mtrk_event_get_size_unsafe.cpp">
+    <ClCompile Include="mtrk_event_get_size_unsafe_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
