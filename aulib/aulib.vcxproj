@@ -19,7 +19,6 @@
     <ClCompile Include="input\midi\midi_utils.cpp" />
     <ClCompile Include="input\midi\mthd_container_t.cpp" />
     <ClCompile Include="input\midi\mtrk_container_t.cpp" />
-    <ClCompile Include="input\midi\mtrk_container_t_old.cpp" />
     <ClCompile Include="input\midi\smf_container_t.cpp" />
     <ClCompile Include="input\notefile.cpp" />
     <ClCompile Include="ks_key.cpp" />
@@ -58,7 +57,6 @@
     <ClInclude Include="input\midi\midi_utils.h" />
     <ClInclude Include="input\midi\mthd_container_t.h" />
     <ClInclude Include="input\midi\mtrk_container_t.h" />
-    <ClInclude Include="input\midi\mtrk_container_t_old.h" />
     <ClInclude Include="input\midi\smf_container_t.h" />
     <ClInclude Include="input\notefile.h" />
     <ClInclude Include="melgen\hiller.h" />
