@@ -117,6 +117,9 @@
     <ClCompile Include="input\midi\midi_raw_test_parts.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="input\midi\midi_maybe.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="util\au_util.h">
@@ -246,6 +249,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="input\midi\midi_raw_test_parts.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="input\midi\midi_maybe.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -14,6 +14,7 @@
     <ClCompile Include="input\midi\midiread.cpp" />
     <ClCompile Include="input\midi\midi_container.cpp" />
     <ClCompile Include="input\midi\midi_examples.cpp" />
+    <ClCompile Include="input\midi\midi_maybe.cpp" />
     <ClCompile Include="input\midi\midi_raw.cpp" />
     <ClCompile Include="input\midi\midi_raw_test_parts.cpp" />
     <ClCompile Include="input\midi\midi_utils.cpp" />
@@ -52,6 +53,7 @@
     <ClInclude Include="input\midi\midi_container.h" />
     <ClInclude Include="input\midi\midi_data.h" />
     <ClInclude Include="input\midi\midi_examples.h" />
+    <ClInclude Include="input\midi\midi_maybe.h" />
     <ClInclude Include="input\midi\midi_raw.h" />
     <ClInclude Include="input\midi\midi_raw_test_parts.h" />
     <ClInclude Include="input\midi\midi_utils.h" />
