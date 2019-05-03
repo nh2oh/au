@@ -96,6 +96,9 @@
     <ClCompile Include="mtrk_event_get_size_unsafe_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="smf_chrono_iterator_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="midi_raw_test_data.h">
