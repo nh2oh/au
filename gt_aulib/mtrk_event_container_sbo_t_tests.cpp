@@ -49,22 +49,7 @@ TEST(mtrk_event_container_sbo_tests, assortedSMFEventTypesSmall) {
 	};
 
 	for (const auto& e : tests) {
-		mtrk_event_container_sbo_t c(e.bytes.data(),e.bytes.size(),0);
-		//EXPECT_EQ(c.type(),e.ans.type);  // TODO:  Add test when vs fixes its enum class issues
-		EXPECT_EQ(c.delta_time(),e.ans.delta_time);
-
-		EXPECT_TRUE(c.is_small());
-		EXPECT_FALSE(c.is_big());
-		EXPECT_EQ(c.size(),e.ans.size);
-		EXPECT_EQ(c.data_size(),e.ans.data_size);
-		for (int i=0; i<e.ans.size; ++i) {
-			EXPECT_EQ(c[i],e.bytes[i]);
-			EXPECT_EQ(*(c.data()+i),e.bytes[i]);
-		}
-
-
-
-		mecsbo2_t c2(e.bytes.data(),e.bytes.size(),0);
+		mtrk_event_t c2(e.bytes.data(),e.bytes.size(),0);
 		//EXPECT_EQ(c.type(),e.ans.type);  // TODO:  Add test when vs fixes its enum class issues
 		EXPECT_EQ(c2.delta_time(),e.ans.delta_time);
 
@@ -209,26 +194,7 @@ TEST(mtrk_event_container_sbo_tests, randMIDIEvntsRandRunningStatRandDt) {
 	};
 
 	for (const auto& e : tests) {
-		mtrk_event_container_sbo_t c(e.data.data(),e.data.size(),e.midisb_prev_event);
-		//EXPECT_EQ(c.type(),e.ans.type);  // TODO:  Add test when vs fixes its enum class issues
-		EXPECT_EQ(c.delta_time(),e.dt_value);
-
-		EXPECT_TRUE(c.is_small());
-		EXPECT_FALSE(c.is_big());
-		EXPECT_EQ(c.size(),e.data.size());
-		EXPECT_EQ(c.data_size(),e.data_length);
-		for (int i=0; i<e.data.size(); ++i) {
-			EXPECT_EQ(c[i],e.data[i]);
-			EXPECT_EQ(*(c.data()+i),e.data[i]);
-		}
-
-
-
-
-
-
-
-		mecsbo2_t c2(e.data.data(),e.data.size(),e.midisb_prev_event);
+		mtrk_event_t c2(e.data.data(),e.data.size(),e.midisb_prev_event);
 		//EXPECT_EQ(c.type(),e.ans.type);  // TODO:  Add test when vs fixes its enum class issues
 		EXPECT_EQ(c2.delta_time(),e.dt_value);
 
@@ -292,25 +258,7 @@ TEST(mtrk_event_container_sbo_tests, metaEventsSmall) {
 	};
 	
 	for (const auto& e : tests) {
-		mtrk_event_container_sbo_t c(e.bytes.data(),e.bytes.size(),0);
-		//EXPECT_EQ(c.type(),e.ans.type);
-		EXPECT_EQ(c.type(),smf_event_type::meta);
-		EXPECT_EQ(c.delta_time(),e.ans.delta_time);
-		
-		EXPECT_TRUE(c.is_small());
-		EXPECT_FALSE(c.is_big());
-		EXPECT_EQ(c.size(),e.ans.size);
-		EXPECT_EQ(c.data_size(),e.ans.data_size);
-		for (int i=0; i<e.ans.size; ++i) {
-			EXPECT_EQ(c[i],e.bytes[i]);
-			EXPECT_EQ(*(c.data()+i),e.bytes[i]);
-		}
-
-
-
-
-
-		mecsbo2_t c2(e.bytes.data(),e.bytes.size(),0);
+		mtrk_event_t c2(e.bytes.data(),e.bytes.size(),0);
 		//EXPECT_EQ(c.type(),e.ans.type);
 		EXPECT_EQ(c2.type(),smf_event_type::meta);
 		EXPECT_EQ(c2.delta_time(),e.ans.delta_time);
@@ -348,7 +296,7 @@ TEST(mtrk_event_container_sbo_tests, metaEventsSmallCopyCtorAndCopyAssign) {
 	};
 
 	for (const auto& e : tests) {
-		mtrk_event_container_sbo_t c1(e.data(),e.size(),0);
+		mtrk_event_t c1(e.data(),e.size(),0);
 		
 		//---------------------------------------------------------------------------
 		// copy ctor:
@@ -369,49 +317,7 @@ TEST(mtrk_event_container_sbo_tests, metaEventsSmallCopyCtorAndCopyAssign) {
 
 		//---------------------------------------------------------------------------
 		// copy assign:
-		mtrk_event_container_sbo_t c3(tests[0].data(),tests[0].size(),0);
-		c3 = c1;
-
-		//EXPECT_EQ(c3.type(),c1.type());
-		EXPECT_EQ(c3.type(),c1.type());
-		EXPECT_EQ(c3.delta_time(),c1.delta_time());
-
-		EXPECT_TRUE(c3.is_small());
-		EXPECT_FALSE(c3.is_big());
-		EXPECT_EQ(c3.size(),c1.size());
-		EXPECT_EQ(c3.data_size(),c1.data_size());
-		for (int i=0; i<e.size(); ++i) {
-			EXPECT_EQ(c3[i],e[i]);
-			EXPECT_EQ(*(c3.data()+i),e[i]);
-		}
-	}
-
-
-
-
-	for (const auto& e : tests) {
-		mecsbo2_t c1(e.data(),e.size(),0);
-		
-		//---------------------------------------------------------------------------
-		// copy ctor:
-		auto c2 = c1;
-
-		//EXPECT_EQ(c2.type(),c1.type());
-		EXPECT_EQ(c2.type(),c1.type());
-		EXPECT_EQ(c2.delta_time(),c1.delta_time());
-
-		EXPECT_TRUE(c2.is_small());
-		EXPECT_FALSE(c2.is_big());
-		EXPECT_EQ(c2.size(),c1.size());
-		EXPECT_EQ(c2.data_size(),c1.data_size());
-		for (int i=0; i<e.size(); ++i) {
-			EXPECT_EQ(c2[i],e[i]);
-			EXPECT_EQ(*(c2.data()+i),e[i]);
-		}
-
-		//---------------------------------------------------------------------------
-		// copy assign:
-		mecsbo2_t c3(tests[0].data(),tests[0].size(),0);
+		mtrk_event_t c3(tests[0].data(),tests[0].size(),0);
 		c3 = c1;
 
 		//EXPECT_EQ(c3.type(),c1.type());
@@ -486,24 +392,7 @@ TEST(mtrk_event_container_sbo_tests, metaEventsBig) {
 	};
 
 	for (const auto& e : tests) {
-		mtrk_event_container_sbo_t c(e.bytes.data(),e.bytes.size(),0);
-		//EXPECT_EQ(c.type(),e.ans.type);
-		EXPECT_EQ(c.type(),smf_event_type::meta);
-		EXPECT_EQ(c.delta_time(),e.ans.delta_time);
-
-		EXPECT_FALSE(c.is_small());
-		EXPECT_TRUE(c.is_big());
-		EXPECT_EQ(c.size(),e.ans.size);
-		EXPECT_EQ(c.data_size(),e.ans.data_size);
-		for (int i=0; i<e.ans.size; ++i) {
-			EXPECT_EQ(c[i],e.bytes[i]);
-			EXPECT_EQ(*(c.data()+i),e.bytes[i]);
-		}
-
-
-
-
-		mecsbo2_t c2(e.bytes.data(),e.bytes.size(),0);
+		mtrk_event_t c2(e.bytes.data(),e.bytes.size(),0);
 		//EXPECT_EQ(c.type(),e.ans.type);
 		EXPECT_EQ(c2.type(),smf_event_type::meta);
 		EXPECT_EQ(c2.delta_time(),e.ans.delta_time);
@@ -562,7 +451,7 @@ TEST(mtrk_event_container_sbo_tests, metaEventsBigCopyCtorAndCopyAssign) {
 	
 	bool first_iter=true;
 	for (const auto& e : tests) {
-		mtrk_event_container_sbo_t c1(e.data(),e.size(),0);
+		mtrk_event_t c1(e.data(),e.size(),0);
 
 		//---------------------------------------------------------------------------
 		// copy ctor:
@@ -588,60 +477,7 @@ TEST(mtrk_event_container_sbo_tests, metaEventsBigCopyCtorAndCopyAssign) {
 		if (!first_iter) {
 			j=0;
 		}
-		mtrk_event_container_sbo_t c3(tests[j].data(),tests[j].size(),0);
-		c3 = c1;
-
-		EXPECT_EQ(c3.type(),c1.type());
-		EXPECT_EQ(c3.delta_time(),c1.delta_time());
-
-		EXPECT_FALSE(c3.is_small());
-		EXPECT_TRUE(c3.is_big());
-		EXPECT_EQ(c3.size(),c1.size());
-		EXPECT_EQ(c3.data_size(),c1.data_size());
-		for (int i=0; i<e.size(); ++i) {
-			EXPECT_EQ(c3[i],e[i]);
-			EXPECT_EQ(*(c3.data()+i),e[i]);
-		}
-
-		first_iter=false;
-	}
-
-
-
-
-
-
-
-
-	first_iter=true;
-	for (const auto& e : tests) {
-		mecsbo2_t c1(e.data(),e.size(),0);
-
-		//---------------------------------------------------------------------------
-		// copy ctor:
-		auto c2 = c1;
-
-		EXPECT_EQ(c2.type(),c1.type());
-		EXPECT_EQ(c2.delta_time(),c1.delta_time());
-
-		EXPECT_FALSE(c2.is_small());
-		EXPECT_TRUE(c2.is_big());
-		EXPECT_EQ(c2.size(),c1.size());
-		EXPECT_EQ(c2.data_size(),c1.data_size());
-		for (int i=0; i<e.size(); ++i) {
-			EXPECT_EQ(c2[i],e[i]);
-			EXPECT_EQ(*(c2.data()+i),e[i]);
-		}
-
-		//---------------------------------------------------------------------------
-		// copy assign:
-		// c1 is created from tests[i]; create a c3 different from c1
-		// then overwrite it with c1.  
-		int j=1;
-		if (!first_iter) {
-			j=0;
-		}
-		mecsbo2_t c3(tests[j].data(),tests[j].size(),0);
+		mtrk_event_t c3(tests[j].data(),tests[j].size(),0);
 		c3 = c1;
 
 		EXPECT_EQ(c3.type(),c1.type());
