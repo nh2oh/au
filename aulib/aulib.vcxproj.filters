@@ -99,12 +99,6 @@
     <ClCompile Include="input\midi\midi_raw.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="input\midi\midi_utils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="input\midi\midiread.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="input\midi\mthd_container_t.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -231,12 +225,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="input\midi\midi_raw.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="input\midi\midi_utils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="input\midi\midiread.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="input\midi\mthd_container_t.h">
