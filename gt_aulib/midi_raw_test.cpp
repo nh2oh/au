@@ -198,6 +198,47 @@ TEST(midi_raw_tests, EncodeVLFieldStdP131Exs) {
 }
 
 
+// midi_encode_vl_field() and all the examples from p.131 of the MIDI std.  
+TEST(midi_raw_tests, WriteVLFieldStdP131Exs) {
+	struct tests {
+		std::array<unsigned char,4> ans {0x00,0x00,0x00,0x00};
+		uint32_t num {};
+	};
+	std::vector<tests> all_tests {
+		{{0x00,0x00,0x00,0x00},0x00},
+		{{0x40,0x00,0x00,0x00},0x40},
+		{{0x7F,0x00,0x00,0x00},0x7F},
+
+		{{0x81,0x00,0x00,0x00},0x80},
+		{{0xC0,0x00,0x00,0x00},0x2000},
+		{{0xFF,0x7F,0x00,0x00},0x3FFF},
+
+		{{0x81,0x80,0x00,0x00},0x4000},
+		{{0xC0,0x80,0x00,0x00},0x100000},
+		{{0xFF,0xFF,0x7F,0x00},0x1FFFFF},
+
+		{{0x81,0x80,0x80,0x00},0x00200000},
+		{{0xC0,0x80,0x80,0x00},0x08000000},
+		{{0xFF,0xFF,0xFF,0x7F},0x0FFFFFFF}
+	};
+	for (const auto& e : all_tests) {
+		std::array<unsigned char,4> curr_result {0x00u,0x00u,0x00u,0x00u};
+		const unsigned char *p_res_field = &(curr_result[0]);
+		const unsigned char *p_ans_field = &(e.ans[0]);
+
+		auto res = midi_write_vl_field(curr_result.begin(),curr_result.end(),e.num);
+
+		auto nbytes_written = res-curr_result.begin();
+		EXPECT_EQ(nbytes_written,midi_interpret_vl_field(p_ans_field).N);
+
+		for (int i=0; i<e.ans.size(); ++i) {  // always 4 iterations
+			EXPECT_EQ(curr_result[i],e.ans[i]);
+		}
+		
+	}
+}
+
+
 //
 // Tests for:
 // detect_chunk_type_result_t detect_chunk_type(const unsigned char*, int32_t=0);
