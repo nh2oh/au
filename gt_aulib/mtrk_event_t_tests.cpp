@@ -224,6 +224,7 @@ TEST(mtrk_event_t_tests, randomSMFEvntsSmallRandomRS) {
 		EXPECT_FALSE(c2.is_big());
 		EXPECT_EQ(c2.size(),e.data.size());
 		EXPECT_EQ(c2.data_size(),e.data_length);
+		EXPECT_TRUE(c2.validate());
 		for (int i=0; i<e.data.size(); ++i) {
 			EXPECT_EQ(c2[i],e.data[i]);
 			EXPECT_EQ(*(c2.data()+i),e.data[i]);
@@ -291,6 +292,7 @@ TEST(mtrk_event_t_tests, metaEventsSmallZeroRS) {
 		EXPECT_FALSE(c2.is_big());
 		EXPECT_EQ(c2.size(),e.ans.size);
 		EXPECT_EQ(c2.data_size(),e.ans.data_size);
+		EXPECT_TRUE(c2.validate());
 		for (int i=0; i<e.ans.size; ++i) {
 			EXPECT_EQ(c2[i],e.bytes[i]);
 			EXPECT_EQ(*(c2.data()+i),e.bytes[i]);
@@ -338,6 +340,7 @@ TEST(mtrk_event_t_tests, metaEventsSmallCopyCtorAndCopyAssign) {
 		EXPECT_FALSE(c2.is_big());
 		EXPECT_EQ(c2.size(),c1.size());
 		EXPECT_EQ(c2.data_size(),c1.data_size());
+		EXPECT_TRUE(c2.validate());
 		for (int i=0; i<e.size(); ++i) {
 			EXPECT_EQ(c2[i],e[i]);
 			EXPECT_EQ(*(c2.data()+i),e[i]);
@@ -356,6 +359,7 @@ TEST(mtrk_event_t_tests, metaEventsSmallCopyCtorAndCopyAssign) {
 		EXPECT_FALSE(c3.is_big());
 		EXPECT_EQ(c3.size(),c1.size());
 		EXPECT_EQ(c3.data_size(),c1.data_size());
+		EXPECT_TRUE(c3.validate());
 		for (int i=0; i<e.size(); ++i) {
 			EXPECT_EQ(c3[i],e[i]);
 			EXPECT_EQ(*(c3.data()+i),e[i]);
@@ -428,6 +432,7 @@ TEST(mtrk_event_t_tests, metaEventsBigZeroRS) {
 		EXPECT_TRUE(c2.is_big());
 		EXPECT_EQ(c2.size(),e.ans.size);
 		EXPECT_EQ(c2.data_size(),e.ans.data_size);
+		EXPECT_TRUE(c2.validate());
 		for (int i=0; i<e.ans.size; ++i) {
 			EXPECT_EQ(c2[i],e.bytes[i]);
 			EXPECT_EQ(*(c2.data()+i),e.bytes[i]);
@@ -486,6 +491,7 @@ TEST(mtrk_event_t_tests, metaEventsBigCopyCtorAndCopyAssign) {
 		EXPECT_TRUE(c2.is_big());
 		EXPECT_EQ(c2.size(),c1.size());
 		EXPECT_EQ(c2.data_size(),c1.data_size());
+		EXPECT_TRUE(c2.validate());
 		for (int i=0; i<e.size(); ++i) {
 			EXPECT_EQ(c2[i],e[i]);
 			EXPECT_EQ(*(c2.data()+i),e[i]);
@@ -509,6 +515,7 @@ TEST(mtrk_event_t_tests, metaEventsBigCopyCtorAndCopyAssign) {
 		EXPECT_TRUE(c3.is_big());
 		EXPECT_EQ(c3.size(),c1.size());
 		EXPECT_EQ(c3.data_size(),c1.data_size());
+		EXPECT_TRUE(c3.validate());
 		for (int i=0; i<e.size(); ++i) {
 			EXPECT_EQ(c3[i],e[i]);
 			EXPECT_EQ(*(c3.data()+i),e[i]);
