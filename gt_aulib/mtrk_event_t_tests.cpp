@@ -1,17 +1,38 @@
 #include "gtest/gtest.h"
 #include "..\aulib\input\midi\midi_raw.h"
-#include "..\aulib\input\midi\mtrk_container_t.h"
+#include "..\aulib\input\midi\mtrk_event_t.h"
 #include <vector>
 #include <cstdint>
 
 
+
+
 // 
-// "Small" (in the SBO-sense) midi_channel,meta,sysex_f0/f7 events from 
-// the midi std and from files observed in the wild.  
+// Test of the default-constructed value, a 0-length meta text event
+// w/ a 0 delta-time:  0x00,0xFF,0x01,0x00,...
 //
-// Tests of the mtrk_event_container_sbo_t(unsigned char *, int, unsigned char) ctor
+TEST(mtrk_event_t_tests, defaultConstructedValue) {
+	// brace init form used to avoid vexing parse; could also do:
+	// auto default_event = mtrk_event()
+	mtrk_event_t default_event {mtrk_event_t()};
+	
+	EXPECT_EQ(default_event.delta_time(),0);
+	EXPECT_EQ(default_event.type(),smf_event_type::meta);
+	EXPECT_TRUE(default_event.is_small());
+	EXPECT_FALSE(default_event.is_big());
+	EXPECT_EQ(default_event.size(),4);
+	EXPECT_EQ(default_event.data_size(),3);
+}
+
+
 //
-TEST(mtrk_event_container_sbo_tests, assortedSMFEventTypesSmall) {
+// Tests of the mtrk_event_t(unsigned char *, int, unsigned char)
+// ctor with a set of "small" (in the SBO-sense) midi_channel,meta,sysex_f0/f7
+// events from the midi std and from files observed in the wild.  
+//
+// All events are constructed passing 0 for the running-status
+//
+TEST(mtrk_event_t_tests, assortedSMFEventsSmallZeroRS) {
 	struct test_ans_t {
 		bool is_small {true};
 		uint32_t delta_time {0};
@@ -62,24 +83,25 @@ TEST(mtrk_event_container_sbo_tests, assortedSMFEventTypesSmall) {
 			EXPECT_EQ(*(c2.data()+i),e.bytes[i]);
 		}
 	}
-
 }
 
+//
+// Tests of the mtrk_event_t(unsigned char *, int, unsigned char)
+// ctor
 // 
 // "Small" (in the SBO-sense) midi events from a random set i generated
 // on 04/21/19.  All test cases are valid midi events.  Some are in running-
 // status, others not.  The delta-times are random.  
-// Values in tests_t.midisb_prev_event are meant to test the code that invokes
-// running-status when needed to parse the event.  Some of the events have no
-// event-local status-byte, in which case the running-status byte supplied 
-// tests_t.midisb_prev_event is valid and accurately describes the number of
-// data bytes in the message.  Events that do have a valid event-local status
-// byte are sometimes coupled with a valid running-status, and sometimes with an
-// invalid running-status.  
+// Values in tests_t.midisb_prev_event are meant to test the ability of
+// the ctor to use the running-status when needed to parse the event.  
+// Some of the MIDI events have no event-local status-byte, in which case the
+// running-status byte supplied w/ the test case (tests_t.midisb_prev_event) 
+// is valid and accurately describes the number of data bytes in the message.
+// Events that _do_ have a valid event-local status byte are sometimes 
+// coupled with a valid running-status, and sometimes with an invalid 
+// running-status.  
 //
-// Tests of the mtrk_event_container_sbo_t(unsigned char *, int, unsigned char) ctor
-//
-TEST(mtrk_event_container_sbo_tests, randMIDIEvntsRandRunningStatRandDt) {
+TEST(mtrk_event_t_tests, randomSMFEvntsSmallRandomRS) {
 	// Fields applic_midi_status, n_data_bytes are not (yet) tested here
 	struct tests_t {
 		std::vector<unsigned char> data {};
@@ -206,17 +228,19 @@ TEST(mtrk_event_container_sbo_tests, randMIDIEvntsRandRunningStatRandDt) {
 			EXPECT_EQ(c2[i],e.data[i]);
 			EXPECT_EQ(*(c2.data()+i),e.data[i]);
 		}
-
 	}
 }
 
+
+//
+// Tests of the mtrk_event_t(unsigned char *, int, unsigned char)
+// ctor.  
 // 
 // "Small" (in the SBO-sense) meta events from the midi std and from files
-// observed in the wild.  
+// observed in the wild.  All constructed passing 0 for the value of the 
+// running-status.  
 //
-// Tests of the mtrk_event_container_sbo_t(unsigned char *, int, unsigned char) ctor
-//
-TEST(mtrk_event_container_sbo_tests, metaEventsSmall) {
+TEST(mtrk_event_t_tests, metaEventsSmallZeroRS) {
 	struct test_ans_t {
 		bool is_small {true};
 		uint32_t delta_time {0};
@@ -271,13 +295,17 @@ TEST(mtrk_event_container_sbo_tests, metaEventsSmall) {
 			EXPECT_EQ(c2[i],e.bytes[i]);
 			EXPECT_EQ(*(c2.data()+i),e.bytes[i]);
 		}
-
 	}
-	
 }
 
-
-TEST(mtrk_event_container_sbo_tests, metaEventsSmallCopyCtorAndCopyAssign) {
+//
+// Tests of the copy ctor and copy assignment operator.  
+//
+// Events are "small" (in the SBO-sense) meta events from the midi std and
+// from files observed in the wild.  All are initially constructed passing 
+// 0 for the value of the running-status.  
+//
+TEST(mtrk_event_t_tests, metaEventsSmallCopyCtorAndCopyAssign) {
 	std::vector<std::vector<unsigned char>> tests {
 		//
 		// From p.142 of the midi std
@@ -335,15 +363,14 @@ TEST(mtrk_event_container_sbo_tests, metaEventsSmallCopyCtorAndCopyAssign) {
 	}
 }
 
-
-
+//
+// Tests of the mtrk_event_t(unsigned char *, int, unsigned char) ctor
 // 
 // "Big" (in the SBO-sense) meta events from the midi std and from files
-// observed in the wild.  
+// observed in the wild.  All constructed passing 0 for teh value of the
+// running-status.  
 //
-// Tests of the mtrk_event_container_sbo_t(unsigned char *, int, unsigned char) ctor
-//
-TEST(mtrk_event_container_sbo_tests, metaEventsBig) {
+TEST(mtrk_event_t_tests, metaEventsBigZeroRS) {
 	struct test_ans_t {
 		bool is_small {true};
 		uint32_t delta_time {0};
@@ -406,19 +433,14 @@ TEST(mtrk_event_container_sbo_tests, metaEventsBig) {
 			EXPECT_EQ(*(c2.data()+i),e.bytes[i]);
 		}
 	}
-
 }
 
 
-
-
-// 
-// "Big" (in the SBO-sense) meta events.  
 //
-// Tests copy ctoring and copy assigning one big container from/to another big
-// container.  
+// Tests of the copy ctor and copy assignment operator invoked between
+// big events.  
 //
-TEST(mtrk_event_container_sbo_tests, metaEventsBigCopyCtorAndCopyAssign) {
+TEST(mtrk_event_t_tests, metaEventsBigCopyCtorAndCopyAssign) {
 	std::vector<std::vector<unsigned char>> tests {
 		{0x00,0xFF,0x03,0x1D,  // 0x1D==29; Sequence/track name (Hallelujah.mid)
 		0x48,0x61,0x6C,0x6C,0x65,0x6C,0x75,0x6A,
@@ -496,5 +518,172 @@ TEST(mtrk_event_container_sbo_tests, metaEventsBigCopyCtorAndCopyAssign) {
 	}
 }
 
+
+// 
+// Test of the move asssign operator by move-assigning a big event into
+// a small event.  Meta events are random events generated by dbk 05/08/19.  
+//
+TEST(mtrk_event_t_tests, metaEventsMoveAssignBigIntoSmall) {
+	struct test_t {
+		std::vector<unsigned char> bytes {};
+		uint32_t dtval {0};
+		uint8_t type_byte;
+		uint8_t payload_len;
+		uint32_t data_size {0};
+	};
+	test_t small_data {
+		{0x89,0x58,0xFF,0x58,0x04,0xDB,0x81,0x7A,0x0B},
+		1240,0x58u,4,7
+	};
+	test_t big_data {
+		{0x8B,0xD3,0x8E,0x62,0xFF,0x05,0x81,0x2C,0x4C,0x6F,0x72,0x65,0x6D,0x20,0x69,
+			0x70,0x73,0x75,0x6D,0x20,0x73,0x6F,0x64,0x61,0x6C,0x65,0x73,0x20,0x6E,
+			0x75,0x6E,0x63,0x20,0x76,0x75,0x6C,0x70,0x75,0x74,0x61,0x74,0x65,0x20,
+			0x61,0x63,0x63,0x75,0x6D,0x73,0x61,0x6E,0x20,0x20,0x20,0x20,0x20,0x20,
+			0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,
+			0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x6D,0x61,0x65,0x63,
+			0x65,0x6E,0x61,0x73,0x20,0x76,0x69,0x74,0x61,0x65,0x2C,0x20,0x65,0x6C,
+			0x69,0x74,0x20,0x65,0x6C,0x65,0x69,0x66,0x65,0x6E,0x64,0x20,0x63,0x6F,
+			0x6E,0x76,0x61,0x6C,0x6C,0x69,0x73,0x20,0x6E,0x65,0x71,0x75,0x65,0x20,
+			0x66,0x61,0x6D,0x65,0x73,0x20,0x64,0x69,0x61,0x6D,0x20,0x63,0x6F,0x6E,
+			0x73,0x65,0x71,0x75,0x61,0x74,0x2C,0x70,0x6F,0x72,0x74,0x61,0x20,0x63,
+			0x75,0x72,0x61,0x65,0x20,0x67,0x72,0x61,0x76,0x69,0x64,0x61,0x20,0x6C,
+			0x65,0x6F,0x20,0x66,0x61,0x75,0x63,0x69,0x62,0x75,0x73},
+		24430434,0x05u,172,176
+	};
+
+	mtrk_event_t small(small_data.bytes.data(),small_data.bytes.size(),0x00);
+	EXPECT_EQ(small.delta_time(),small_data.dtval);
+	EXPECT_EQ(small.type(),smf_event_type::meta);
+	EXPECT_TRUE(small.is_small());
+	EXPECT_FALSE(small.is_big());
+	EXPECT_EQ(small.size(),small_data.bytes.size());
+	EXPECT_EQ(small.data_size(),small_data.data_size);
+
+	mtrk_event_t big(big_data.bytes.data(),big_data.bytes.size(),0x00);
+	EXPECT_EQ(big.delta_time(),big_data.dtval);
+	EXPECT_EQ(big.type(),smf_event_type::meta);
+	EXPECT_TRUE(big.is_big());
+	EXPECT_FALSE(big.is_small());
+	EXPECT_EQ(big.size(),big_data.bytes.size());
+	EXPECT_EQ(big.data_size(),big_data.data_size);
+	
+	//-------------------------------------------------------------------------
+	// Force use of move assign w/ std::move()
+	auto small_mvinto = small;
+	auto big_mvfrom = big;
+	small_mvinto=std::move(big_mvfrom);
+	// big now has the moved-from state of a 0-length text event
+	EXPECT_EQ(big_mvfrom.delta_time(),0);
+	EXPECT_EQ(big_mvfrom.type(),smf_event_type::meta);
+	EXPECT_FALSE(big_mvfrom.is_big());
+	EXPECT_TRUE(big_mvfrom.is_small());
+	EXPECT_EQ(big_mvfrom.size(),4);
+	EXPECT_EQ(big_mvfrom.data_size(),3);
+	// small has the values as if constructed from big_data
+	EXPECT_EQ(small_mvinto.delta_time(),big_data.dtval);
+	EXPECT_EQ(small_mvinto.type(),smf_event_type::meta);
+	EXPECT_TRUE(small_mvinto.is_big());
+	EXPECT_FALSE(small_mvinto.is_small());
+	EXPECT_EQ(small_mvinto.size(),big_data.bytes.size());
+	EXPECT_EQ(small_mvinto.data_size(),big_data.data_size);
+
+	//-------------------------------------------------------------------------
+	// Invoke move-assign by assigning from a temporary
+	small_mvinto = small;
+	small_mvinto = mtrk_event_t(big_data.bytes.data(),big_data.bytes.size(),0x00);
+	// small has the values as if constructed from big_data
+	EXPECT_EQ(small_mvinto.delta_time(),big_data.dtval);
+	EXPECT_EQ(small_mvinto.type(),smf_event_type::meta);
+	EXPECT_TRUE(small_mvinto.is_big());
+	EXPECT_FALSE(small_mvinto.is_small());
+	EXPECT_EQ(small_mvinto.size(),big_data.bytes.size());
+	EXPECT_EQ(small_mvinto.data_size(),big_data.data_size);
+}
+
+
+// 
+// Test of the move asssign operator by move-assigning a small event into
+// a big event.  Meta events are random events generated by dbk 05/08/19.  
+//
+TEST(mtrk_event_t_tests, metaEventsMoveAssignSmallIntoBig) {
+	struct test_t {
+		std::vector<unsigned char> bytes {};
+		uint32_t dtval {0};
+		uint8_t type_byte;
+		uint8_t payload_len;
+		uint32_t data_size {0};
+	};
+	test_t small_data {
+		{0x89,0x58,0xFF,0x58,0x04,0xDB,0x81,0x7A,0x0B},
+		1240,0x58u,4,7
+	};
+	test_t big_data {
+		{0x8B,0xD3,0x8E,0x62,0xFF,0x05,0x81,0x2C,0x4C,0x6F,0x72,0x65,0x6D,0x20,0x69,
+			0x70,0x73,0x75,0x6D,0x20,0x73,0x6F,0x64,0x61,0x6C,0x65,0x73,0x20,0x6E,
+			0x75,0x6E,0x63,0x20,0x76,0x75,0x6C,0x70,0x75,0x74,0x61,0x74,0x65,0x20,
+			0x61,0x63,0x63,0x75,0x6D,0x73,0x61,0x6E,0x20,0x20,0x20,0x20,0x20,0x20,
+			0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,
+			0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x6D,0x61,0x65,0x63,
+			0x65,0x6E,0x61,0x73,0x20,0x76,0x69,0x74,0x61,0x65,0x2C,0x20,0x65,0x6C,
+			0x69,0x74,0x20,0x65,0x6C,0x65,0x69,0x66,0x65,0x6E,0x64,0x20,0x63,0x6F,
+			0x6E,0x76,0x61,0x6C,0x6C,0x69,0x73,0x20,0x6E,0x65,0x71,0x75,0x65,0x20,
+			0x66,0x61,0x6D,0x65,0x73,0x20,0x64,0x69,0x61,0x6D,0x20,0x63,0x6F,0x6E,
+			0x73,0x65,0x71,0x75,0x61,0x74,0x2C,0x70,0x6F,0x72,0x74,0x61,0x20,0x63,
+			0x75,0x72,0x61,0x65,0x20,0x67,0x72,0x61,0x76,0x69,0x64,0x61,0x20,0x6C,
+			0x65,0x6F,0x20,0x66,0x61,0x75,0x63,0x69,0x62,0x75,0x73},
+		24430434,0x05u,172,176
+	};
+
+	mtrk_event_t small(small_data.bytes.data(),small_data.bytes.size(),0x00);
+	EXPECT_EQ(small.delta_time(),small_data.dtval);
+	EXPECT_EQ(small.type(),smf_event_type::meta);
+	EXPECT_TRUE(small.is_small());
+	EXPECT_FALSE(small.is_big());
+	EXPECT_EQ(small.size(),small_data.bytes.size());
+	EXPECT_EQ(small.data_size(),small_data.data_size);
+
+	mtrk_event_t big(big_data.bytes.data(),big_data.bytes.size(),0x00);
+	EXPECT_EQ(big.delta_time(),big_data.dtval);
+	EXPECT_EQ(big.type(),smf_event_type::meta);
+	EXPECT_TRUE(big.is_big());
+	EXPECT_FALSE(big.is_small());
+	EXPECT_EQ(big.size(),big_data.bytes.size());
+	EXPECT_EQ(big.data_size(),big_data.data_size);
+	
+	//-------------------------------------------------------------------------
+	// Force use of move assign w/ std::move()
+	auto big_mvinto = big;
+	auto small_mvfrom = small;
+	big_mvinto=std::move(small_mvfrom);
+	// small_mvfrom now has the moved-from state of a 0-length text event
+	EXPECT_EQ(small_mvfrom.delta_time(),0);
+	EXPECT_EQ(small_mvfrom.type(),smf_event_type::meta);
+	EXPECT_FALSE(small_mvfrom.is_big());
+	EXPECT_TRUE(small_mvfrom.is_small());
+	EXPECT_EQ(small_mvfrom.size(),4);
+	EXPECT_EQ(small_mvfrom.data_size(),3);
+	// big_mvinto (which is no longer "big") has the values as if 
+	// constructed from small_data
+	EXPECT_EQ(big_mvinto.delta_time(),small_data.dtval);
+	EXPECT_EQ(big_mvinto.type(),smf_event_type::meta);
+	EXPECT_FALSE(big_mvinto.is_big());
+	EXPECT_TRUE(big_mvinto.is_small());
+	EXPECT_EQ(big_mvinto.size(),small_data.bytes.size());
+	EXPECT_EQ(big_mvinto.data_size(),small_data.data_size);
+
+	//-------------------------------------------------------------------------
+	// Invoke move-assign by assigning from a temporary
+	big_mvinto = big;
+	big_mvinto = mtrk_event_t(small_data.bytes.data(),small_data.bytes.size(),0x00);
+	// big_mvinto (which is no longer "big") has the values as if 
+	// constructed from small_data
+	EXPECT_EQ(big_mvinto.delta_time(),small_data.dtval);
+	EXPECT_EQ(big_mvinto.type(),smf_event_type::meta);
+	EXPECT_FALSE(big_mvinto.is_big());
+	EXPECT_TRUE(big_mvinto.is_small());
+	EXPECT_EQ(big_mvinto.size(),small_data.bytes.size());
+	EXPECT_EQ(big_mvinto.data_size(),small_data.data_size);
+}
 
 

@@ -81,9 +81,6 @@
     <ClCompile Include="midi_raw_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="mtrk_event_container_sbo_t_tests.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="midi_raw_test_data.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -97,6 +94,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="mthd_container_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mtrk_event_t_tests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
