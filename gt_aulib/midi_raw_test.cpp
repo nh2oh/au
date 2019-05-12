@@ -300,10 +300,10 @@ TEST(midi_raw_tests, DetectChunkTypeTests) {
 	};
 	auto x = 0x067B;
 	for (const auto& e : all_tests) {
-		auto res = detect_chunk_type(&(e.data[0]),e.max_sz);
+		auto res = validate_chunk_header(&(e.data[0]),e.max_sz);
 		EXPECT_EQ(res.type,e.ans_type);
 		if (res.type != chunk_type::invalid) {
-			EXPECT_EQ(res.data_length,e.ans_data_length);
+			EXPECT_EQ(res.data_size,e.ans_data_length);
 			EXPECT_EQ(res.size,e.ans_data_length+8);
 		}
 	}
