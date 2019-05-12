@@ -114,6 +114,9 @@
     <ClCompile Include="input\midi\mtrk_event_t.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="input\midi\midi_vlq.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="util\au_util.h">
@@ -240,6 +243,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="input\midi\mtrk_event_t.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="input\midi\midi_vlq.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
