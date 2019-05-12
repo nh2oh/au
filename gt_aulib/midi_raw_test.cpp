@@ -372,9 +372,8 @@ TEST(midi_raw_tests, ValidateMThdChunkTests) {
 
 	for (const auto& e : all_tests) {
 		auto res = validate_mthd_chunk(&(e.data[0]),e.max_sz);
-		EXPECT_EQ(res.is_valid,e.ans_is_valid);
 		EXPECT_EQ(res.error,e.ans_error);
-		if (res.is_valid) {
+		if (res.error==mthd_validation_error::no_error) {
 			EXPECT_EQ(res.size,e.ans_size);
 		}
 	}
