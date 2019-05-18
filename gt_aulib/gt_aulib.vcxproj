@@ -93,6 +93,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="assorted_midi_raw.cpp" />
     <ClCompile Include="cent_t_test.cpp" />
     <ClCompile Include="frq_t_test.cpp" />
     <ClCompile Include="ks_key_test.cpp" />

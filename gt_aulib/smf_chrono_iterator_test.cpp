@@ -11,6 +11,7 @@
 // Manually constructed/verified  first few events from chementi.mid.  
 // Running-status is not in use
 //
+/*
 TEST(smf_chrono_iterator_tests, clementi_no_rs) {
 	std::vector<unsigned char> raw_bytes {
 		0x4D, 0x54, 0x68, 0x64,  // MThd
@@ -128,13 +129,13 @@ TEST(smf_chrono_iterator_tests, clementi_no_rs) {
 		0x16, 0xB0, 0x7D, 0x5C, // 0x7D==123 => All notes off; velocity==0x5C (whatever)
 	};
 
-	auto rawfile_check_result = validate_smf(&raw_bytes[0],raw_bytes.size(),"clementi_no_rs.mid");
-	smf_t mf(rawfile_check_result);
+	//auto rawfile_check_result = validate_smf(&raw_bytes[0],raw_bytes.size(),"clementi_no_rs.mid");
+	//smf_t mf(rawfile_check_result);
 	
-	auto it_end = mf.event_iterator_end();
-	for (auto it=mf.event_iterator_begin(); it!=it_end; ++it) {
-
-	}
+	//auto it_end = mf.event_iterator_end();
+	//for (auto it=mf.event_iterator_begin(); it!=it_end; ++it) {
+	//
+	//}
 }
-
+*/
 
