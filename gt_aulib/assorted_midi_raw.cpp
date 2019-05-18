@@ -6,9 +6,9 @@
 
 
 // 
-// is_midi_status_byte()
+// is_channel_status_byte()
 //
-TEST(is_midi_status_byte, IsMIDIStatusByte) {
+TEST(is_channel_status_byte, IsChannelStatusByte) {
 	std::vector<unsigned char> invalid_status_byte {
 		0x00u,0x01u,0x02u,0x09u,0x0Au,0x0Fu,
 		0x70u,0x71u, 0x78u,0x79u,0x7Au,0x7Fu,
@@ -22,18 +22,18 @@ TEST(is_midi_status_byte, IsMIDIStatusByte) {
 		0xE0u,0xE1u,0xE2u,0xE7u,0xE9u,0xEAu,0xEFu
 	};
 	for (const auto& e : invalid_status_byte) {
-		EXPECT_FALSE(is_midi_status_byte(e));
+		EXPECT_FALSE(is_channel_status_byte(e));
 	}
 	for (const auto& e : valid_status_byte) {
-		EXPECT_TRUE(is_midi_status_byte(e));
+		EXPECT_TRUE(is_channel_status_byte(e));
 	}
 }
 
 
 // 
-// is_midi_data_byte()
+// is_data_byte()
 //
-TEST(is_midi_data_byte, IsMIDIDataByte) {
+TEST(is_data_byte, IsDataByte) {
 std::vector<unsigned char> invalid_data_byte {
 		0x80u,0x81u,0x82u,0x89u,0x8Au,0x8Fu,
 		0x90u,0x91u, 0x98u,0x99u,0x9Au,0x9Fu,
@@ -47,10 +47,10 @@ std::vector<unsigned char> invalid_data_byte {
 		0x70u,0x71u, 0x78u,0x79u,0x7Au,0x7Fu,
 	};	
 	for (const auto& e : invalid_data_byte) {
-		EXPECT_FALSE(is_midi_data_byte(e));
+		EXPECT_FALSE(is_data_byte(e));
 	}
 	for (const auto& e : valid_data_byte) {
-		EXPECT_TRUE(is_midi_data_byte(e));
+		EXPECT_TRUE(is_data_byte(e));
 	}
 }
 
