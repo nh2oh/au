@@ -9,7 +9,7 @@
 
 //
 // Tests for:
-// mtrk_event_get_midi_status_byte_unsafe(const unsigned char*, unsigned char=0u);
+// get_running_status_byte(unsigned char, unsigned char);
 //
 // Part 1:  running-status is a valid midi status byte.
 //
@@ -22,23 +22,26 @@
 // 1 data byte).  
 //
 //
-TEST(get_midi_status_byte_unsafe, RandomMtrkEventsAllRSBytesValid) {
+TEST(get_running_status_byte, RandomMtrkEventsAllRSBytesValid) {
 	for (const auto& e : set_a_valid_rs) {
 		const unsigned char *p_dtstart = &(e.data[0]);
-		auto s_dtstart = mtrk_event_get_midi_status_byte_dtstart_unsafe(p_dtstart, e.rs);
-		EXPECT_EQ(s_dtstart,e.ans);
-
-		const unsigned char *p = p_dtstart+e.dtsize;
-		auto s = mtrk_event_get_midi_status_byte_unsafe(p, e.rs);
-		EXPECT_EQ(s,e.ans);
+		auto dt = midi_interpret_vl_field(p_dtstart,e.data.size());
+		auto p = p_dtstart+dt.N;
+		auto rs = get_running_status_byte(*p,e.rs);
+		EXPECT_EQ(rs,e.ans);
+		//auto s_dtstart = mtrk_event_get_midi_status_byte_dtstart_unsafe(p_dtstart, e.rs);
+		//EXPECT_EQ(s_dtstart,e.ans);
+		//
+		//const unsigned char *p = p_dtstart+e.dtsize;
+		//auto s = mtrk_event_get_midi_status_byte_unsafe(p, e.rs);
+		//EXPECT_EQ(s,e.ans);
 	}
 }
 
 
 //
 // Tests for:
-// mtrk_event_get_midi_status_byte_unsafe(const unsigned char*, unsigned char=0u);
-// and the _dtstart_ version.  
+// get_running_status_byte(unsigned char, unsigned char);
 // Part 2:  running-status is an _invalid_ midi status byte.
 //
 // Sets of meta events, sysex_f0/f7 events, and midi events, paired with 
@@ -50,25 +53,31 @@ TEST(get_midi_status_byte_unsafe, RandomMtrkEventsAllRSBytesValid) {
 // byte).  Half of both sets have an event-local status byte, but the other
 // half do not.  In the latter case, since all these examples contain invalid
 // running-status bytes, are essentially "malformed," uninterpretible input;
-// mtrk_event_get_midi_status_byte_unsafe() should return 0x00.  
+// get_running_status_byte() should return 0x00.  
 //
-TEST(get_midi_status_byte_unsafe, RandomMtrkEventsAllRSBytesInvalid) {
+TEST(get_running_status_byte, RandomMtrkEventsAllRSBytesInvalid) {
 	for (const auto& e : set_b_invalid_rs) {
 		const unsigned char *p_dtstart = &(e.data[0]);
-		auto s_dtstart = mtrk_event_get_midi_status_byte_dtstart_unsafe(p_dtstart, e.rs);
-		EXPECT_EQ(s_dtstart,e.ans);
+		auto dt = midi_interpret_vl_field(p_dtstart,e.data.size());
+		auto p = p_dtstart+dt.N;
+		
+		auto rs = get_running_status_byte(*p,e.rs);
+		EXPECT_EQ(rs,e.ans);
+		
+		//const unsigned char *p_dtstart = &(e.data[0]);
+		//auto s_dtstart = mtrk_event_get_midi_status_byte_dtstart_unsafe(p_dtstart, e.rs);
+		//EXPECT_EQ(s_dtstart,e.ans);
 
-		const unsigned char *p = p_dtstart+e.dtsize;
-		auto s = mtrk_event_get_midi_status_byte_unsafe(p, e.rs);
-		EXPECT_EQ(s,e.ans);
+		//const unsigned char *p = p_dtstart+e.dtsize;
+		//auto s = mtrk_event_get_midi_status_byte_unsafe(p, e.rs);
+		//EXPECT_EQ(s,e.ans);
 	}
 }
 
 
 //
 // Tests for:
-// mtrk_event_get_midi_status_byte_unsafe(const unsigned char*, unsigned char=0u)
-//  and its _dtstart_ variant.  
+// get_running_status_byte(unsigned char, unsigned char);
 //
 // Part 3:  midi events only; running-status may or may not be valid, but all 
 // composite events (data+rs byte) are valid and interpretible.  
@@ -80,23 +89,31 @@ TEST(get_midi_status_byte_unsafe, RandomMtrkEventsAllRSBytesInvalid) {
 // event.  Events also have dt fields of varying size.  
 //
 //
-TEST(get_midi_status_byte_unsafe, RandomMIDIEventsRSandNonRS) {
+TEST(get_running_status_byte, RandomMIDIEventsRSandNonRS) {
 	for (const auto& e : set_c_midi_events_valid) {
 		const unsigned char *p_dtstart = &(e.data[0]);
-		auto s_dtstart = mtrk_event_get_midi_status_byte_dtstart_unsafe(p_dtstart,e.midisb_prev_event);
-		EXPECT_EQ(s_dtstart,e.applic_midi_status);
+		auto dt = midi_interpret_vl_field(p_dtstart,e.data.size());
+		auto p = p_dtstart+dt.N;
+		
+		auto rs = get_running_status_byte(*p,e.midisb_prev_event);
+		EXPECT_EQ(rs,e.applic_midi_status);
 
-		const unsigned char *p = p_dtstart+e.dt_field_size;
-		auto s = mtrk_event_get_midi_status_byte_unsafe(p,e.midisb_prev_event);
-		EXPECT_EQ(s,e.applic_midi_status);
+
+
+		//const unsigned char *p_dtstart = &(e.data[0]);
+		//auto s_dtstart = mtrk_event_get_midi_status_byte_dtstart_unsafe(p_dtstart,e.midisb_prev_event);
+		//EXPECT_EQ(s_dtstart,e.applic_midi_status);
+		//
+		//const unsigned char *p = p_dtstart+e.dt_field_size;
+		//auto s = mtrk_event_get_midi_status_byte_unsafe(p,e.midisb_prev_event);
+		//EXPECT_EQ(s,e.applic_midi_status);
 	}
 }
 
 
 //
 // Tests for:
-// mtrk_event_get_midi_status_byte_unsafe(const unsigned char*, unsigned char=0u)
-//  and its _dtstart_ variant.  
+// get_running_status_byte(unsigned char, unsigned char)
 //
 // Part 4:  midi events only; running-status byte is in all cases invalid, yet 
 // all events lack a local status byte.  These are essentially uninterpretible;
@@ -104,15 +121,25 @@ TEST(get_midi_status_byte_unsafe, RandomMIDIEventsRSandNonRS) {
 // I have zeroed the fields is_rs, ndata, data_length; they are not used in the
 // tests.  
 //
-TEST(get_midi_status_byte_unsafe, RandomMIDIEventsRSInvalidAndNoLocalStatusByte) {
+TEST(get_running_status_byte, RandomMIDIEventsRSInvalidAndNoLocalStatusByte) {
 	for (const auto& e : set_d_midi_events_nostatus_invalid) {
 		const unsigned char *p_dtstart = &(e.data[0]);
-		auto s_dtstart = mtrk_event_get_midi_status_byte_dtstart_unsafe(p_dtstart,e.midisb_prev_event);
-		EXPECT_EQ(s_dtstart,e.applic_midi_status);
+		auto dt = midi_interpret_vl_field(p_dtstart,e.data.size());
+		auto p = p_dtstart+dt.N;
+		
+		auto rs = get_running_status_byte(*p,e.midisb_prev_event);
+		EXPECT_EQ(rs,e.applic_midi_status);
 
-		const unsigned char *p = p_dtstart+e.dt_field_size;
-		auto s = mtrk_event_get_midi_status_byte_unsafe(p,e.midisb_prev_event);
-		EXPECT_EQ(s,e.applic_midi_status);
+
+
+
+		//const unsigned char *p_dtstart = &(e.data[0]);
+		//auto s_dtstart = mtrk_event_get_midi_status_byte_dtstart_unsafe(p_dtstart,e.midisb_prev_event);
+		//EXPECT_EQ(s_dtstart,e.applic_midi_status);
+
+		//const unsigned char *p = p_dtstart+e.dt_field_size;
+		//auto s = mtrk_event_get_midi_status_byte_unsafe(p,e.midisb_prev_event);
+		//EXPECT_EQ(s,e.applic_midi_status);
 	}
 }
 
