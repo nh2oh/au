@@ -6,10 +6,9 @@
 struct test_setab_t {
 	std::vector<unsigned char> data {};
 	uint8_t dtsize {0};
-	unsigned char rs {0x00u};
-	unsigned char ans {0x00u};
+	unsigned char rs_pre {0x00u};
+	unsigned char rs_post {0x00u};
 };
-
 extern std::vector<test_setab_t> set_a_valid_rs;
 extern std::vector<test_setab_t> set_b_invalid_rs;
 
@@ -23,6 +22,5 @@ struct test_setc_t {
 	uint32_t dt_value {};
 	uint8_t dt_field_size {};
 };
-
 extern std::vector<test_setc_t> set_c_midi_events_valid;
 extern std::vector<test_setc_t> set_d_midi_events_nostatus_invalid;

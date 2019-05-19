@@ -27,7 +27,7 @@
 TEST(mtrk_event_get_size_unsafe, RandomMtrkEventsAllRSBytesValid) {
 	for (const auto& e : set_a_valid_rs) {
 		const unsigned char *p_dtstart = &(e.data[0]);
-		auto sz_dtstart = mtrk_event_get_size_dtstart_unsafe(p_dtstart, e.rs);
+		auto sz_dtstart = mtrk_event_get_size_dtstart_unsafe(p_dtstart, e.rs_pre);
 		EXPECT_EQ(sz_dtstart,e.data.size());
 	}
 }
@@ -66,7 +66,7 @@ TEST(mtrk_event_get_size_unsafe, RandomMtrkEventsAllRSBytesInvalid) {
 			continue;
 		}
 
-		auto sz_dtstart = mtrk_event_get_size_dtstart_unsafe(p_dtstart, e.rs);
+		auto sz_dtstart = mtrk_event_get_size_dtstart_unsafe(p_dtstart, e.rs_pre);
 		EXPECT_EQ(sz_dtstart,e.data.size());
 	}
 }

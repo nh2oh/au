@@ -1,24 +1,28 @@
 #include "midi_raw_test_data.h"
 #include <vector>
 #include <cstdint>
-#include <array>
 
 
 //
-// Tests for:
-// mtrk_event_get_midi_status_byte_unsafe(const unsigned char*, unsigned char=0u);
-// mtrk_event_get_size_dtstart_unsafe(const unsigned char*, unsigned char=0u);
+// Sysex_{f0,f7}, meta, and channel_{voice,mode} events paired w/ a legal 
+// running-status byte e.rs_pre.  
 //
-// Part 1:  running-status is a valid midi status byte.
+// In all cases the running status e.rs_pre is invalid.  All sysex and meta 
+// events have an event-local 0xFF||0xF0||0xF7 status byte (as appropriate)
+// identifying them as such.  For these events, which reset the 
+// running-status, e.rs_post is in all cases 0x00u.  
 //
-// Sets of meta events, sysex_f0/f7 events, and midi events, paired with 
-// "random" but valid running-status bytes.  Events also have dt fields of
-// varying size.  For sysex and meta events, 0x00 should always be returned
-// since these event types reset the running-status.  There are two sets of 
-// midi events: set 1 are all valid w/ status byte => each has 2 
-// data bytes, set 2 are all valid w/ status byte => each has 1 data
-// byte.  
-//
+// There are two sets of midi events: 
+// set 1 are all valid w/ 2 data bytes, 
+// set 2 are all valid w/ 1 data byte.  
+// Half of each set has an appropriate event-local status byte, but the other
+// half does not.  In the latter cases, 
+// 1) the first byte s following the dt field is such that !(s&0x80u), 
+//    ie, these events contain data-bytes only and are meant to be interpreted 
+//    in running-status.  
+// and,
+// 2) the running-status byte supplied in e.rs_pre correctly describes the 
+//    number of data bytes contained in the event.  
 //
 std::vector<test_setab_t> set_a_valid_rs {
 	// Meta events; ans == 0x00u
@@ -96,22 +100,24 @@ std::vector<test_setab_t> set_a_valid_rs {
 
 
 //
-// Tests for:
-// mtrk_event_get_midi_status_byte_unsafe(const unsigned char*, unsigned char=0u);
-// mtrk_event_get_size_dtstart_unsafe(const unsigned char*, unsigned char=0u);
+// Sysex_{f0,f7}, meta, and channel_voice events paired w/ an illegal 
+// running-status byte illegal e.rs_pre.  
 //
-// Part 2:  running-status is an _invalid_ midi status byte.
-//
-// Sets of meta events, sysex_f0/f7 events, and midi events, paired with 
-// "random" but *invalid* running-status bytes.  Events also have dt fields of
-// varying size.  For sysex and meta events, 0x00 should always be returned
-// since these event types reset the running-status.  There are two sets of 
-// midi events: set 1 are all valid w/ status byte 0x90u (=> each has 2 
-// data bytes), set 2 are all valid w/ status byte 0xC0 (=> each has 1 data
-// byte).  Half of both sets have an event-local status byte, but the other
-// half do not.  In the latter case, since all these examples contain invalid
-// running-status bytes, are essentially "malformed," uninterpretible input;
-// mtrk_event_get_midi_status_byte_unsafe() should return 0x00.  
+// In all cases the running status e.rs_pre is invalid.  All sysex and meta 
+// events have an event-local 0xFF||0xF0||0xF7 status byte (as appropriate)
+// identifying them as such.  For these events, which reset the 
+// running-status, e.rs_post is in all cases 0x00u.  
+// There are two sets of midi events: 
+// set 1 are all valid w/ event-local status byte 0x90u (=> each has 2 data
+// bytes), 
+// set 2 are all valid w/ event-local status byte 0xC0 (=> each has 1 data
+// byte).  
+// Half of each set has an appropriate event-local status byte, but the other
+// half does not.  In the latter case, the first byte s following the dt field
+// is such that !(s&0x80u), ie, these events contain data-bytes only and are
+// meant to be interpreted in running-status.  Since all rs bytes in e.rs_pre
+// are invalid, these examples are essentially uninterpretible and e.rs_post 
+// is 0x00u in all cases.  
 //
 std::vector<test_setab_t> set_b_invalid_rs {
 	// Meta events; ans == 0x00u
@@ -189,21 +195,20 @@ std::vector<test_setab_t> set_b_invalid_rs {
 };
 
 
-
 //
-// Tests for:
-// mtrk_event_get_midi_status_byte_unsafe(const unsigned char*, unsigned char=0u);
-// mtrk_event_get_size_dtstart_unsafe(const unsigned char*, unsigned char=0u);
+// Channel_{voice,mode} events w/ and w/o event-local status bytes and
+// supplied w/ and w/o valid running-status.  
 //
-// Part 3:  midi events only; running-status may or may not be valid, but all 
-// composite events (data+rs byte) are valid and interpretible.  
-//
-// Set of midi events, paired with "random" but valid and invalid running-
-// status bytes.  Those events paired w/ invalid rs bytes have a valid
-// event-local status byte.  Events w/ valid rs bytes may or may not contain
-// an event-local status byte; if not, the rs byte correctly describes the
-// event.  Events also have dt fields of varying size.  
-//
+// midi events only.  Each data array is supplied w/ a "running status"
+// e.midisb_prev_event inherited from the previous event in the stream.  
+// These running-status bytes may or may not be valid as running-status
+// bytes (examples of invalid rs bytes are those such that !(rs&0x80u) or 
+// (rs&0xF0u)==0xF0u).  No matter the validity of the midisb_prev_event
+// as an rs byte, all composite events (data + midisb_prev_event) are valid
+// and interpretible channel voice or channel mode events.  Those examples 
+// w/an invalid rs have an event-local status byte appropriate to the data,
+// and those examples w/o an event-local status byte are paired w/ a value
+// of midisb_prev_event that is appropriate to the data.  
 //
 std::vector<test_setc_t> set_c_midi_events_valid {
 	// data, rs, applic-sb, is_rs, ndata, data_length, dt_val, dt.N
@@ -311,27 +316,36 @@ std::vector<test_setc_t> set_c_midi_events_valid {
 
 
 //
-// Tests for:
-// mtrk_event_get_midi_status_byte_unsafe(const unsigned char*, unsigned char=0u)
-//  and its _dtstart_ variant.  
+// Uninterpretible events
 //
-// Part 4:  midi events only; running-status byte is in all cases invalid, yet 
-// all events lack a local status byte.  These are essentially uninterpretible;
-// expect to return 0x00u in all cases.  
-// I have zeroed the fields is_rs, ndata, data_length; they are not used in the
-// tests.  
+// All events lack an event-local status byte (for all events, the
+// the status-byte in the data array d[n] is such that !(d[n]&0x80u), ie, 
+// even 0xFFu,0xF0u,0xF7u are absent).  Further, for all test cases, the 
+// "running-status" byte supplied as e.midisb_prev_event is invalid as a
+// running-status byte (for most cases !(e.midisb_prev_event&0x80u), but 
+// there are some e.midisb_prev_event==0xFFu||0xF0u||0xF7u.  Delta-time 
+// value are random.  Since there is no way to get a status byte for any of
+// the cases, they are essentially completely uninterpretible other than the
+// dt field.  
+// Where p points to the first byte following the delta-time,
+// -> get_status_byte(*p,e.midisb_prev_event) should return 0x00u for each 
+//    example.  
+// -> get_running_status_byte(*p,,e.midisb_prev_event) should return 0x00u
+//    for each example.  
+// For all test cases, e.in_running_status,.n_data_bytes,.data_length are
+// == 0.  These fields are not use in these tests.  
 //
 std::vector<test_setc_t> set_d_midi_events_nostatus_invalid {
 	// data, rs, applic-sb, is_rs, ndata, data_length, dt_val, dt.N
-	{{0x00,0x3F},0x00,0x00,0,0,0,0,1},
-	{{0x00,0xF0,0x09,0x66},0x56,0x00,0,0,0,0,1},
-	{{0xD5,0x03,0x79,0x4E},0xFF,0x00,0,0,0,10883,2},
-	{{0x5E,0x7D,0x69},0xF7,0x00,0,0,0,94,1},
-	{{0x00,0xF0,0x10,0x7F},0xF0,0x000,0,0,0,1},
-	{{0x0F,0x21,0x24},0xF0,0x00,0,0,0,15,1},
-	{{0x00,0x79},0xF7,0x00,0,0,0,0,1},
-	{{0x85,0xE2,0xC1,0x37,0x71},0x6A,0x00,0,0,0,12099767,4},
-	{{0x93,0xB2,0x5E,0x35,0x26},0xFF,0x00,0,0,0,317790,3},
-	{{0xC1,0x68,0x18,0x0F},0x00,0x00,0,0,0,8424,2}
+	{{0x00,0x3F},                0x00, 0x00, 0, 0, 0, 0,        1},
+	{{0x00,0x0F,0x09,0x66},      0x56, 0x00, 0, 0, 0, 0,        1},
+	{{0xD5,0x03,0x79,0x4E},      0xFF, 0x00, 0, 0, 0, 10883,    2},
+	{{0x5E,0x7D,0x69},           0xF7, 0x00, 0, 0, 0, 94,       1},
+	{{0x00,0x7F,0x10,0x7F},      0xF0, 0x00, 0, 0, 0, 0,        1},
+	{{0x0F,0x21,0x24},           0xF0, 0x00, 0, 0, 0, 15,       1},
+	{{0x00,0x79},                0xF7, 0x00, 0, 0, 0, 0,        1},
+	{{0x85,0xE2,0xC1,0x37,0x71}, 0x6A, 0x00, 0, 0, 0, 12099767, 4},
+	{{0x93,0xB2,0x5E,0x35,0x26}, 0xFF, 0x00, 0, 0, 0, 317790,   3},
+	{{0xC1,0x68,0x18,0x0F},      0x00, 0x00, 0, 0, 0, 8424,     2}
 };
 

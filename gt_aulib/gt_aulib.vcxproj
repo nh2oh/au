@@ -100,7 +100,7 @@
     <ClCompile Include="line_t_test.cpp" />
     <ClCompile Include="melody_a_testcpp.cpp" />
     <ClCompile Include="melody_temperley_test.cpp" />
-    <ClCompile Include="get_midi_status_byte_unsafe_test.cpp" />
+    <ClCompile Include="get_sb_and_rsb.cpp" />
     <ClCompile Include="midi_raw_test.cpp" />
     <ClCompile Include="midi_raw_test_data.cpp" />
     <ClCompile Include="mthd_container_test.cpp" />
