@@ -3,7 +3,6 @@
 #include "midi_raw_test_data.h"
 
 
-
 TEST(status_and_data_byte_classification, IsStatusByte) {
 	for (const auto& e : sbs_invalid) {
 		EXPECT_FALSE(is_status_byte(e));
@@ -125,3 +124,92 @@ TEST(status_and_data_byte_classification, ClassifyStatusByteSingleArg) {
 		EXPECT_EQ(classify_status_byte(e),smf_event_type::invalid);
 	}
 }
+
+
+TEST(status_and_data_byte_classification, ClassifyStatusByteTwoArgInvalidSBASLocal) {
+	// sbs_invalid all qualify as data bytes; a byte such as 0xF1
+	// is a "valid but unrecognized" status byte thus is not a member
+	// of sbs_invalid.  Thus, none of the elements in sbs_invalid 
+	// reset or take precedence over the running status.  
+	for (const auto& loc : sbs_invalid) {
+		// Valid rs
+		for (const auto& rs : sbs_ch_mode_voice) {
+			EXPECT_EQ(classify_status_byte(loc,rs),smf_event_type::channel);
+		}
+		// meta and sysex sbs are invalid as running-status bytes and never
+		// take precedence over the local byte, even when the local byte
+		// is invalid as a status byte.  Same deal w/ sbs_unrecognized.  
+		for (const auto& rs : sbs_meta_sysex) {
+			EXPECT_EQ(classify_status_byte(loc,rs),smf_event_type::invalid);
+		}
+		for (const auto& rs : sbs_unrecognized) {
+			EXPECT_EQ(classify_status_byte(loc,rs),smf_event_type::invalid);
+		}
+		for (const auto& rs : dbs_valid) {
+			EXPECT_EQ(classify_status_byte(loc,rs),smf_event_type::invalid);
+		}
+		for (const auto& rs : sbs_invalid) {
+			EXPECT_EQ(classify_status_byte(loc,rs),smf_event_type::invalid);
+		}
+	}
+}
+
+
+TEST(status_and_data_byte_classification, ClassifyStatusByteTwoArgValidChSBAsLocal) {
+	// the local sb always wins; rs is irrelevant
+	for (const auto& loc : sbs_ch_mode_voice) {
+		for (const auto& rs : sbs_meta_sysex) {
+			EXPECT_EQ(classify_status_byte(loc,rs),smf_event_type::channel);
+		}
+		for (const auto& rs : sbs_unrecognized) {
+			EXPECT_EQ(classify_status_byte(loc,rs),smf_event_type::channel);
+		}
+		for (const auto& rs : dbs_valid) {
+			EXPECT_EQ(classify_status_byte(loc,rs),smf_event_type::channel);
+		}
+		for (const auto& rs : sbs_invalid) {
+			EXPECT_EQ(classify_status_byte(loc,rs),smf_event_type::channel);
+		}
+	}
+}
+
+
+TEST(status_and_data_byte_classification, ClassifyStatusByteTwoArgValidSysexMetaSBAsLocal) {
+	// All events are sysex or meta.  rs is irrelevant
+	for (const auto& loc : sbs_meta_sysex) {
+		for (const auto& rs : sbs_ch_mode_voice) {
+			auto t = classify_status_byte(loc,rs);
+			EXPECT_TRUE(t==smf_event_type::meta 
+				|| t==smf_event_type::sysex_f0
+				|| t==smf_event_type::sysex_f7);
+		}
+		for (const auto& rs : sbs_meta_sysex) {
+			auto t = classify_status_byte(loc,rs);
+			EXPECT_TRUE(t==smf_event_type::meta 
+				|| t==smf_event_type::sysex_f0
+				|| t==smf_event_type::sysex_f7);
+		}
+		for (const auto& rs : sbs_unrecognized) {
+			auto t = classify_status_byte(loc,rs);
+			EXPECT_TRUE(t==smf_event_type::meta 
+				|| t==smf_event_type::sysex_f0
+				|| t==smf_event_type::sysex_f7);
+		}
+		for (const auto& rs : dbs_valid) {
+			auto t = classify_status_byte(loc,rs);
+			EXPECT_TRUE(t==smf_event_type::meta 
+				|| t==smf_event_type::sysex_f0
+				|| t==smf_event_type::sysex_f7);
+		}
+		for (const auto& rs : sbs_invalid) {
+			auto t = classify_status_byte(loc,rs);
+			EXPECT_TRUE(t==smf_event_type::meta 
+				|| t==smf_event_type::sysex_f0
+				|| t==smf_event_type::sysex_f7);
+		}
+	}
+}
+
+
+
+
