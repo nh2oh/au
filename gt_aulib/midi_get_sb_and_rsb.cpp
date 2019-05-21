@@ -41,8 +41,6 @@ TEST(get_running_status_byte, RandomMtrkEventsAllRSBytesInvalid) {
 	}
 }
 
-
-
 //
 // Tests for:
 // get_status_byte(unsigned char, unsigned char);
@@ -63,7 +61,6 @@ TEST(get_status_byte, RandomMIDIEventsRSandNonRS) {
 		EXPECT_EQ(s,e.applic_midi_status);
 	}
 }
-
 
 //
 // Tests for:

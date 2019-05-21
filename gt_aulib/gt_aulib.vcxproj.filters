@@ -99,7 +99,10 @@
     <ClCompile Include="assorted_midi_raw.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="get_sb_and_rsb.cpp">
+    <ClCompile Include="midi_get_sb_and_rsb.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="midi_sb_classification_funcs.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

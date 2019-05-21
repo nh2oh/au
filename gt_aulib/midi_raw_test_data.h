@@ -3,6 +3,22 @@
 #include <cstdint>
 
 
+
+//
+// Status bytes,data bytes; valid and invalid
+// "sbs" == "status bytes"
+// "dbs" == "data bytes"
+//
+extern std::vector<unsigned char> sbs_invalid;
+extern std::vector<unsigned char> sbs_meta_sysex;
+extern std::vector<unsigned char> sbs_unrecognized;
+extern std::vector<unsigned char> sbs_ch_mode_voice;
+extern std::vector<unsigned char> dbs_valid;
+extern std::vector<unsigned char> dbs_invalid;
+
+
+
+
 struct test_setab_t {
 	std::vector<unsigned char> data {};
 	uint8_t dtsize {0};
