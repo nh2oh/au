@@ -19,6 +19,7 @@
     <ClCompile Include="input\midi\mthd_container_t.cpp" />
     <ClCompile Include="input\midi\mtrk_container_t.cpp" />
     <ClCompile Include="input\midi\mtrk_event_t.cpp" />
+    <ClCompile Include="input\midi\mtrk_t.cpp" />
     <ClCompile Include="input\midi\smf_container_t.cpp" />
     <ClCompile Include="input\midi\smf_t.cpp" />
     <ClCompile Include="input\notefile.cpp" />
@@ -58,6 +59,7 @@
     <ClInclude Include="input\midi\mthd_container_t.h" />
     <ClInclude Include="input\midi\mtrk_container_t.h" />
     <ClInclude Include="input\midi\mtrk_event_t.h" />
+    <ClInclude Include="input\midi\mtrk_t.h" />
     <ClInclude Include="input\midi\smf_container_t.h" />
     <ClInclude Include="input\midi\smf_t.h" />
     <ClInclude Include="input\notefile.h" />
