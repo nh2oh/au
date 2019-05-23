@@ -20,6 +20,7 @@
     <ClCompile Include="input\midi\mtrk_container_t.cpp" />
     <ClCompile Include="input\midi\mtrk_event_t.cpp" />
     <ClCompile Include="input\midi\smf_container_t.cpp" />
+    <ClCompile Include="input\midi\smf_t.cpp" />
     <ClCompile Include="input\notefile.cpp" />
     <ClCompile Include="ks_key.cpp" />
     <ClCompile Include="melgen\melody_a.cpp" />
@@ -58,6 +59,7 @@
     <ClInclude Include="input\midi\mtrk_container_t.h" />
     <ClInclude Include="input\midi\mtrk_event_t.h" />
     <ClInclude Include="input\midi\smf_container_t.h" />
+    <ClInclude Include="input\midi\smf_t.h" />
     <ClInclude Include="input\notefile.h" />
     <ClInclude Include="melgen\hiller.h" />
     <ClInclude Include="melgen\randmel_gens.h" />

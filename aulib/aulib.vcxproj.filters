@@ -117,6 +117,9 @@
     <ClCompile Include="input\midi\midi_vlq.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="input\midi\smf_t.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="util\au_util.h">
@@ -246,6 +249,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="input\midi\midi_vlq.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="input\midi\smf_t.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
