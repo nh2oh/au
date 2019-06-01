@@ -90,19 +90,16 @@
     <ClCompile Include="smf_chrono_iterator_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="mthd_container_test.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="mtrk_event_t_tests.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="assorted_midi_raw.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="midi_get_sb_and_rsb.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="midi_sb_classification_funcs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mthd_t_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

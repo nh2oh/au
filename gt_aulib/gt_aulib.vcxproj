@@ -93,7 +93,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="assorted_midi_raw.cpp" />
     <ClCompile Include="cent_t_test.cpp" />
     <ClCompile Include="frq_t_test.cpp" />
     <ClCompile Include="ks_key_test.cpp" />
@@ -104,7 +103,7 @@
     <ClCompile Include="midi_raw_test.cpp" />
     <ClCompile Include="midi_raw_test_data.cpp" />
     <ClCompile Include="midi_sb_classification_funcs.cpp" />
-    <ClCompile Include="mthd_container_test.cpp" />
+    <ClCompile Include="mthd_t_test.cpp" />
     <ClCompile Include="mtrk_event_t_tests.cpp" />
     <ClCompile Include="mtrk_event_get_size_unsafe_test.cpp" />
     <ClCompile Include="musel_t_test.cpp" />

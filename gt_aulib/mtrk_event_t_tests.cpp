@@ -5,8 +5,6 @@
 #include <cstdint>
 
 
-
-
 // 
 // Test of the default-constructed value, a 0-length meta text event
 // w/ a 0 delta-time:  0x00,0xFF,0x01,0x00,...

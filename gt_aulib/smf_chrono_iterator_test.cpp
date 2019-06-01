@@ -1,9 +1,8 @@
 #include "gtest/gtest.h"
 #include "..\aulib\input\midi\midi_raw.h"
-#include "..\aulib\input\midi\mtrk_container_t.h"
-#include "..\aulib\input\midi\mthd_container_t.h"
-#include "..\aulib\input\midi\mtrk_container_t.h"
-#include "..\aulib\input\midi\smf_container_t.h"
+#include "..\aulib\input\midi\mtrk_t.h"
+#include "..\aulib\input\midi\mthd_t.h"
+#include "..\aulib\input\midi\smf_t.h"
 #include <vector>
 #include <cstdint>
 
