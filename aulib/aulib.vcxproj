@@ -18,6 +18,7 @@
     <ClCompile Include="input\midi\mthd_t.cpp" />
     <ClCompile Include="input\midi\mtrk_event_iterator_t.cpp" />
     <ClCompile Include="input\midi\mtrk_event_t.cpp" />
+    <ClCompile Include="input\midi\mtrk_integrators.cpp" />
     <ClCompile Include="input\midi\mtrk_iterator_t.cpp" />
     <ClCompile Include="input\midi\mtrk_t.cpp" />
     <ClCompile Include="input\midi\smf_t.cpp" />
@@ -57,6 +58,7 @@
     <ClInclude Include="input\midi\mthd_t.h" />
     <ClInclude Include="input\midi\mtrk_event_iterator_t.h" />
     <ClInclude Include="input\midi\mtrk_event_t.h" />
+    <ClInclude Include="input\midi\mtrk_integrators.h" />
     <ClInclude Include="input\midi\mtrk_iterator_t.h" />
     <ClInclude Include="input\midi\mtrk_t.h" />
     <ClInclude Include="input\midi\smf_t.h" />
