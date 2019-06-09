@@ -106,6 +106,8 @@
     <ClCompile Include="mthd_t_test.cpp" />
     <ClCompile Include="mtrk_event_t_tests.cpp" />
     <ClCompile Include="mtrk_event_get_size_unsafe_test.cpp" />
+    <ClCompile Include="mtrk_test_data.cpp" />
+    <ClCompile Include="mtrk_t_test.cpp" />
     <ClCompile Include="musel_t_test.cpp" />
     <ClCompile Include="notefile_test.cpp" />
     <ClCompile Include="note_t_tests.cpp" />
@@ -130,6 +132,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="midi_raw_test_data.h" />
+    <ClInclude Include="mtrk_test_data.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
