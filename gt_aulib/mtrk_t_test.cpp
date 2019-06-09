@@ -7,24 +7,105 @@
 
 using namespace mtrk_tests;
 
-// 
-// 
-//
-TEST(mtrk_t_tests, InsertEventsWithZeroDtIntoTestSetA) {
+mtrk_t make_tsa() {
 	auto mtrk_tsa = mtrk_t();  // auto to avoid MVP
 	for (const auto& e : tsa) {
 		auto curr_ev = mtrk_event_t(e.d.data(),e.d.size());
 		mtrk_tsa.push_back(curr_ev);
 	}
+	return mtrk_tsa;
+}
+
+
+// 
+// mtrk_t::mtrk_t(), mtrk_t::push_back(const mtrk_event_t&)
+//
+TEST(mtrk_t_tests, DefaultCtorMultiplePushBackTestSetA) {
+	auto mtrk_tsa = make_tsa();
+	EXPECT_EQ(mtrk_tsa.size(),tsa.size());
+	EXPECT_EQ(mtrk_tsa.nticks(),tsa_props.duration_tks);
+	for (int i=0; i<tsa.size(); ++i) {
+		auto curr_ev = mtrk_event_t(tsa[i].d.data(),tsa[i].d.size());
+		EXPECT_EQ(mtrk_tsa[i],curr_ev);
+	}
+}
+
+
+// 
+// mtrk_t::insert(mtrk_iterator_t, const mtrk_event_t&)
+//
+TEST(mtrk_t_tests, InsertEventWithZeroDtIntoTestSetA) {
+	auto mtrk_tsa = make_tsa();
+
 	// On, off events for note num 57 on ch=0; both events have delta-time
 	// == 0.  
 	mtrk_event_t e_on(0,midi_ch_event_t {0x90u,0,57,25});
 	mtrk_event_t e_off(0,midi_ch_event_t {0x90u,0,57,0});
-	std::vector<int> idxs {3,4,5,6,7,8,9,10};
-	for (const auto i : idxs) {
-		auto curr_ev = mtrk_event_t(tsa[i].d.data(),tsa[i].d.size());
-		EXPECT_EQ(mrk_tsa[i],curr_ev);
+	
+	auto old_ev4 = *(mtrk_tsa.begin()+4);
+	auto old_ev5 = *(mtrk_tsa.begin()+5);
+	auto old_ev6 = *(mtrk_tsa.begin()+6);
+	auto old_ev7 = *(mtrk_tsa.begin()+7);
+
+	auto it_new5 = mtrk_tsa.insert(mtrk_tsa.begin()+5,e_on);
+	EXPECT_EQ(mtrk_tsa.size(),tsa.size()+1);
+	EXPECT_EQ(mtrk_tsa.nticks(),tsa_props.duration_tks);
+
+	// The iterator returned by insert points at the new event
+	EXPECT_EQ(*it_new5,e_on);
+	EXPECT_EQ(mtrk_tsa[5],e_on);
+	// The numerical idx of the new event == the numerical idx of the
+	// event pointed to by the iterator passed to insert()
+	EXPECT_EQ(*(mtrk_tsa.begin()+5),e_on);
+	// Events @ idxs prior to that of the iterator passed to insert()
+	// are unaffected
+	EXPECT_EQ(*(mtrk_tsa.begin()+4),old_ev4);
+	// Events w/ idx >= to that of the iterator passed to insert have
+	// their old idxs-1.  
+	EXPECT_EQ(*(mtrk_tsa.begin()+6),old_ev5);
+	EXPECT_EQ(*(mtrk_tsa.begin()+7),old_ev6);
+	EXPECT_EQ(*(mtrk_tsa.begin()+8),old_ev7);
+}
+
+
+// 
+// at_cumtk_result_t<mtrk_const_iterator_t> at_cumtk(uint64_t) const;
+//
+TEST(mtrk_t_tests, AtCumtkTestSetA) {
+	auto mtrk_tsa = make_tsa();
+	
+	// at_cumtk() returns the first event w/a cumtk >= the cumtk provided
+	struct test_t {
+		uint64_t cumtk_arg;
+		mtrk_event_t ev_ans;
+		uint64_t cumtk_ans;
+	};
+	std::vector<test_t> tests {
+		{0, mtrk_tsa[0], tsa[0].cumtk},
+
+		{1, mtrk_tsa[6], tsa[6].cumtk},  // cumtk==384
+		{383, mtrk_tsa[6], tsa[6].cumtk},
+		{384, mtrk_tsa[6], tsa[6].cumtk},  // cumtk==384
+		{385, mtrk_tsa[10], tsa[10].cumtk},  // cumtk==768
+
+		{2687, mtrk_tsa[27], tsa[27].cumtk},  // cumtk==2688
+		{2688, mtrk_tsa[27], tsa[27].cumtk}  // cumtk==2688
+	};
+
+	for (const auto& ctest : tests) {
+		auto curr = mtrk_tsa.at_cumtk(ctest.cumtk_arg);
+		auto curr_ev = *(curr.it);
+		EXPECT_EQ(curr_ev,ctest.ev_ans);
+		EXPECT_EQ(curr.cumtk,ctest.cumtk_ans);
 	}
 
-
+	auto expect_end = mtrk_tsa.at_cumtk(2689);
+	EXPECT_EQ(expect_end.it,mtrk_tsa.end());
+	EXPECT_EQ(expect_end.cumtk,2688);
 }
+
+
+
+
+
+
