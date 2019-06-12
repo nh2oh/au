@@ -186,7 +186,9 @@ TEST(mtrk_t_tests, InsertEventWithZeroDtIntoTestSetAMethodInsertAtCumtk) {
 		{767,  9,10,11,  384,767-384,767},
 		{768,  9,10,11,  384,768-384,768},
 		// Insertion directly prior to event 12 (cumtk==768,dt==384,tk_onset==1152)
-		{769,  12,13,14,  768,1,769}
+		{769,  12,13,14,  768,1,769},
+
+		{2690,  31,-1,-1,  2688,2,2690}
 	};
 
 	for (const auto& currtest : tests) {
@@ -204,10 +206,14 @@ TEST(mtrk_t_tests, InsertEventWithZeroDtIntoTestSetAMethodInsertAtCumtk) {
 		EXPECT_EQ(seek_tkonset.tk-seek_tkonset.it->delta_time(),currtest.cumtk_inserted);
 
 		EXPECT_EQ(*it_new,new_mtrk_tsa[currtest.idx_inserted]);
-		EXPECT_EQ(mtrk_tsa[currtest.idx_inserted],
-			new_mtrk_tsa[currtest.oldidx_inserted]);
-		EXPECT_EQ(mtrk_tsa[currtest.idx_inserted+1],
-			new_mtrk_tsa[currtest.oldidx_inserted_p1]);
+		if (currtest.oldidx_inserted >= 0) {
+			EXPECT_EQ(mtrk_tsa[currtest.idx_inserted],
+				new_mtrk_tsa[currtest.oldidx_inserted]);
+		}
+		if (currtest.oldidx_inserted_p1 >= 0) {
+			EXPECT_EQ(mtrk_tsa[currtest.idx_inserted+1],
+				new_mtrk_tsa[currtest.oldidx_inserted_p1]);
+		}
 	}
 }
 
