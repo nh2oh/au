@@ -34,7 +34,7 @@ TEST(mtrk_t_tests, DefaultCtorMultiplePushBackTestSetA) {
 // 
 // mtrk_t::insert(mtrk_iterator_t, const mtrk_event_t&)
 //
-TEST(mtrk_t_tests, InsertEventWithZeroDtIntoTestSetA) {
+TEST(mtrk_t_tests, InsertEventWithZeroDtIntoTestSetAMethodInsert) {
 	auto mtrk_tsa = make_tsa();  // "mtrk test set a"
 
 	// On, off events for note num 57 on ch=0; both events have delta-time
@@ -149,6 +149,66 @@ TEST(mtrk_t_tests, AtTkonsetTestSetA) {
 	auto expect_end = mtrk_tsa.at_tkonset(2689);
 	EXPECT_EQ(expect_end.it,mtrk_tsa.end());
 	EXPECT_EQ(expect_end.tk,2688);  // expect_end.cumtk is really a tk_onset
+}
+
+
+
+// 
+// Insert at cumtk
+// mtrk_iterator_t insert(uint64_t, mtrk_event_t);
+//
+TEST(mtrk_t_tests, InsertEventWithZeroDtIntoTestSetAMethodInsertAtCumtk) {
+	auto mtrk_tsa = make_tsa();  // "mtrk test set a"
+	// Note-on event for note num 57 on ch=0, velocity==25, delta-time==0.  
+	mtrk_event_t e_on(0,midi_ch_event_t {0x90u,0,57,25});
+
+	struct test_t {
+		uint64_t insert_at_cumtk {0};
+		int idx_inserted {0};  // idx of the newly inserted event
+		// in the new mtrk, the event that _used_ to have idx==idx_inserted
+		int oldidx_inserted {0};  
+		// in the new mtrk, the event that _used_ to have idx==idx_inserted+1
+		int oldidx_inserted_p1 {0};
+		// in the new mtrk, the cumtk, delta_time, tk_onset of the new event
+		uint64_t cumtk_inserted {0};
+		uint64_t dt_inserted {0};
+		uint64_t tkonset_inserted {0};
+	};
+	std::vector<test_t> tests {
+		{0,  0,1,2,  0,0,0},
+		// Insertion directly prior to event 5 (cumtk==0,dt==384,tk_onset==384)
+		{1,  5,6,7,  0,1,1},
+		{2,  5,6,7,  0,2,2},
+		{383,  5,6,7,  0,383,383},
+		{384,  5,6,7,  0,384,384},
+		// Insertion directly prior to event 9 (cumtk==384,dt==384,tk_onset==768)
+		{385,  9,10,11,  384,1,385},
+		{767,  9,10,11,  384,767-384,767},
+		{768,  9,10,11,  384,768-384,768},
+		// Insertion directly prior to event 12 (cumtk==768,dt==384,tk_onset==1152)
+		{769,  12,13,14,  768,1,769}
+	};
+
+	for (const auto& currtest : tests) {
+		auto new_mtrk_tsa = mtrk_tsa;
+		auto expect_inserted_tkonset = currtest.insert_at_cumtk;
+		auto expect_inserted_ev = e_on;
+		expect_inserted_ev.set_delta_time(currtest.dt_inserted);
+
+		auto it_new = new_mtrk_tsa.insert(currtest.insert_at_cumtk,e_on);
+		EXPECT_EQ(*it_new,expect_inserted_ev);
+		EXPECT_EQ(it_new->delta_time(),currtest.dt_inserted);
+		auto seek_tkonset = new_mtrk_tsa.at_tkonset(expect_inserted_tkonset);
+		EXPECT_EQ(seek_tkonset.tk,currtest.tkonset_inserted);
+		EXPECT_EQ(seek_tkonset.it,it_new);
+		EXPECT_EQ(seek_tkonset.tk-seek_tkonset.it->delta_time(),currtest.cumtk_inserted);
+
+		EXPECT_EQ(*it_new,new_mtrk_tsa[currtest.idx_inserted]);
+		EXPECT_EQ(mtrk_tsa[currtest.idx_inserted],
+			new_mtrk_tsa[currtest.oldidx_inserted]);
+		EXPECT_EQ(mtrk_tsa[currtest.idx_inserted+1],
+			new_mtrk_tsa[currtest.oldidx_inserted_p1]);
+	}
 }
 
 
