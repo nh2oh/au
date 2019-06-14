@@ -218,5 +218,65 @@ TEST(mtrk_t_tests, InsertEventWithZeroDtIntoTestSetAMethodInsertAtCumtk) {
 }
 
 
+// 
+// Insert no tk shift
+// mtrk_iterator_t insert_no_tkshift(mtrk_iterator_t, mtrk_event_t);
+//
+TEST(mtrk_t_tests, InsertEventWithZeroDtIntoTestSetAMethodInsertNoTkShift) {
+	auto mtrk_tsa = make_tsa();  // "mtrk test set a"
+	// Note-on event for note num 57 on ch=0, velocity==25, delta-time==0.  
+	mtrk_event_t e_on(0,midi_ch_event_t {0x90u,0,57,25});
 
+	struct test_t {
+		int insert_at_idx {0};
+		int idx_inserted {0};  // idx of the newly inserted event
+		// in the new mtrk, the cumtk, delta_time, tk_onset of the new event
+		uint64_t cumtk_inserted {0};
+		uint64_t dt_inserted {0};
+		uint64_t tkonset_inserted {0};
+	};
+	std::vector<test_t> tests {
+		{0, 0, 0,0,0},
+		// Insertion directly prior to event 5 (cumtk==0,dt==384,tk_onset==384)
+		{1, 1, 0,0,0},
+		{2, 2, 0,0,0},
+		// Ev 5 is the first w/ nonzero dt.  The new event will go in _before_ 
+		// 5, thus it's cumtk will be 0
+		{5, 5, 0,0,0},
+		{6, 6, 384,0,384},
+		{8, 8, 384,0,384},
+		{9, 9, 384,0,384},
+		{10, 10, 768,0,768},
+	};
+
+	for (const auto& currtest : tests) {
+		auto new_mtrk_tsa = mtrk_tsa;
+		auto it_insert = mtrk_iterator_t(new_mtrk_tsa[currtest.insert_at_idx]);
+		
+		auto it_new = new_mtrk_tsa.insert(it_insert,e_on);
+
+		EXPECT_EQ(new_mtrk_tsa.nticks(),mtrk_tsa.nticks()+e_on.delta_time());
+
+		EXPECT_EQ(*it_new,new_mtrk_tsa[currtest.idx_inserted]);
+		EXPECT_EQ(it_new->delta_time(),currtest.dt_inserted);
+
+		uint64_t cumtk = 0;
+		auto it=new_mtrk_tsa.begin();
+		for (true; it!=new_mtrk_tsa.end(); ++it) {
+			if (it == it_new) {
+				break;
+			}
+			cumtk += it->delta_time();
+		}
+		EXPECT_EQ(cumtk,currtest.cumtk_inserted);
+		EXPECT_EQ(cumtk+it->delta_time(),currtest.tkonset_inserted);
+	}
+
+	auto new_mtrk_tsa = mtrk_tsa;
+	auto it_insert = new_mtrk_tsa.end();
+	auto it_new = new_mtrk_tsa.insert(it_insert,e_on);
+	EXPECT_EQ(new_mtrk_tsa.nticks(),mtrk_tsa.nticks()+e_on.delta_time());
+	EXPECT_EQ(*it_new,e_on);
+	EXPECT_EQ(it_new->delta_time(),0);
+}
 
