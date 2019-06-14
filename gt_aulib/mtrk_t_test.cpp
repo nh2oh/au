@@ -157,7 +157,7 @@ TEST(mtrk_t_tests, AtTkonsetTestSetA) {
 // Insert at cumtk
 // mtrk_iterator_t insert(uint64_t, mtrk_event_t);
 //
-TEST(mtrk_t_tests, InsertEventWithZeroDtIntoTestSetAMethodInsertAtCumtk) {
+TEST(mtrk_t_tests, InsertWithZeroDtIntoTSAMethodInsertAtCumtk) {
 	auto mtrk_tsa = make_tsa();  // "mtrk test set a"
 	// Note-on event for note num 57 on ch=0, velocity==25, delta-time==0.  
 	mtrk_event_t e_on(0,midi_ch_event_t {0x90u,0,57,25});
@@ -219,10 +219,10 @@ TEST(mtrk_t_tests, InsertEventWithZeroDtIntoTestSetAMethodInsertAtCumtk) {
 
 
 // 
-// Insert no tk shift
+// Insert no tk shift:  New event has a delta_time == 0
 // mtrk_iterator_t insert_no_tkshift(mtrk_iterator_t, mtrk_event_t);
 //
-TEST(mtrk_t_tests, InsertEventWithZeroDtIntoTestSetAMethodInsertNoTkShift) {
+TEST(mtrk_t_tests, InsertWithZeroDtIntoTSAMethodInsertNoTkShift) {
 	auto mtrk_tsa = make_tsa();  // "mtrk test set a"
 	// Note-on event for note num 57 on ch=0, velocity==25, delta-time==0.  
 	mtrk_event_t e_on(0,midi_ch_event_t {0x90u,0,57,25});
@@ -253,7 +253,7 @@ TEST(mtrk_t_tests, InsertEventWithZeroDtIntoTestSetAMethodInsertNoTkShift) {
 		auto new_mtrk_tsa = mtrk_tsa;
 		auto it_insert = mtrk_iterator_t(new_mtrk_tsa[currtest.insert_at_idx]);
 		
-		auto it_new = new_mtrk_tsa.insert(it_insert,e_on);
+		auto it_new = new_mtrk_tsa.insert_no_tkshift(it_insert,e_on);
 
 		EXPECT_EQ(new_mtrk_tsa.nticks(),mtrk_tsa.nticks()+e_on.delta_time());
 
@@ -279,4 +279,89 @@ TEST(mtrk_t_tests, InsertEventWithZeroDtIntoTestSetAMethodInsertNoTkShift) {
 	EXPECT_EQ(*it_new,e_on);
 	EXPECT_EQ(it_new->delta_time(),0);
 }
+
+
+// 
+// Insert no tk shift:  New event has a delta_time > 0
+// mtrk_iterator_t insert_no_tkshift(mtrk_iterator_t, mtrk_event_t);
+//
+TEST(mtrk_t_tests, InsertWithNzeroDtIntoTSAMethodInsertNoTkShift) {
+	struct test_t {
+		int ev_dt {0};
+		int insert_idx {0};
+		int inserted_idx {0};
+		uint64_t inserted_cumtk {0};
+		uint64_t inserted_dt {0};
+		uint64_t inserted_tkonset {0};  // Always == ev_dt+cumtk-at-insert_idx
+		uint64_t next_ev_dt {0};
+	};
+	std::vector<test_t> tests {
+		//
+		// Set 1:
+		// dt for the new event < the dt value of event at/near the
+		// insertion point in the sequence.  
+		// The cumtk at idx [0,6) == 0 => Desire a tk_onset for the new event
+		// to be 383.  dt for event 5 == 384, so the new event must go 
+		// directly before, and the dt of the new event 6 (old event 5) must
+		// be set to 1.  
+		{383, 0,  5, 0,383,383,1},
+		{383, 1,  5, 0,383,383,1},
+		{383, 5,  5, 0,383,383,1},  // 5 is the first event w/ dt>0 (==384)
+		// The cumtk at idx [6,10) == 384 => Desire a tk_onset for the new event
+		// to be 383+384==767.  dt for event 5,9==384, tk onset for event 9==768,
+		// so the new event must go directly before event 9, and the dt of the 
+		// new event 10 (old event 9) must be set to 1.  
+		{383, 6,  9, 384,383,767,1},
+
+		//
+		// Set 2:
+		// dt for the new event == the dt value of event at/near the
+		// insertion point in the sequence
+		{384, 0,  5,0,384,384,0},
+		{384, 1,  5,0,384,384,0},
+		{384, 5,  5,0,384,384,0},  // 5 is the first event w/ dt>0 (==384)
+		{384, 6,  9,384,384,768,0},
+
+		//
+		// Set 3:
+		// dt for the new event > the dt value of event at/near the
+		// insertion point in the sequence.  
+		// The cumtk at idx [0,6)==0, [6,10)==384, [10,13)==768 
+		// Insert @ idx <=5 => Desire a tk_onset for the new event of
+		// 385+0==385; the new event must go after event 5 but before event 
+		// 9 (=> directly before event 9), and the dt of the new event 10 
+		// (old event 9) must be set to 1.  
+		// Insertion @ idx 6 (cumtk==384) => tk_onset == 384+385==769
+		// The new event must go directly before event 12 and the dt of the 
+		// new event 13 (old event 12) must be set to 1.
+		{385, 0,  9, 384,1,385,383},
+		{385, 1,  9, 384,1,385,383},
+		{385, 5,  9, 384,1,385,383},  // 5 is the first event w/ dt>0 (==384)
+		{385, 6,  12, 768,1,769,383}
+	};
+	
+	for (const auto ctest : tests) {
+		auto ev = mtrk_event_t(ctest.ev_dt,midi_ch_event_t {0x90u,0,57,25});
+		auto expect_ev_inserted = mtrk_event_t(ctest.inserted_dt,midi_ch_event_t {0x90u,0,57,25});
+		auto mtrk_tsa = make_tsa();
+		auto init_nticks = mtrk_tsa.nticks();
+
+		auto it_insert = mtrk_tsa.begin()+ctest.insert_idx;
+		auto it_new = mtrk_tsa.insert_no_tkshift(it_insert,ev);
+		EXPECT_EQ(mtrk_tsa.nticks(),init_nticks);
+		EXPECT_EQ(*it_new,expect_ev_inserted);
+		EXPECT_EQ(it_new->delta_time(),ctest.inserted_dt);
+		auto it=mtrk_tsa.begin();  uint64_t cumtk = 0;
+		for (true; it!=it_new; ++it) {
+			cumtk += it->delta_time();
+		}
+		EXPECT_EQ(cumtk,ctest.inserted_cumtk);
+		EXPECT_EQ(cumtk+it->delta_time(),ctest.inserted_tkonset);
+		auto new_idx = it-mtrk_tsa.begin();
+		EXPECT_EQ(new_idx,ctest.inserted_idx);
+		EXPECT_EQ(mtrk_tsa[new_idx+1].delta_time(),ctest.next_ev_dt);
+	}
+	
+}
+
 
