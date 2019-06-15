@@ -15,11 +15,6 @@ struct eventdata_with_cumtk_t {
 	std::vector<unsigned char> d {};
 	uint64_t cumtk {};
 };
-struct eventdata_with_cumtk_and_tkonset_t {
-	std::vector<unsigned char> d {};
-	uint64_t cumtk {};
-	uint64_t tkonset {};
-};
 // Test set a
 // Created June 09 2019
 extern std::vector<eventdata_with_cumtk_t> tsa;
@@ -27,8 +22,13 @@ extern mtrk_properties_t tsa_props;
 
 // Test set b
 // Created June 15, 2019
-extern std::vector<eventdata_with_cumtk_and_tkonset_t> tsb;
-
+struct tsb_t {
+	std::vector<unsigned char> d {};
+	uint64_t cumtk {};
+	uint64_t tkonset {};
+};
+extern std::vector<tsb_t> tsb;
+extern std::vector<tsb_t> tsb_note_67_events;
 
 };  // namespace mtrk_tests
 

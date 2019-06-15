@@ -5,6 +5,7 @@
 #include <vector>
 #include <cstdint>
 #include <iterator>
+//#include <iostream>
 
 using namespace mtrk_tests;
 
@@ -30,17 +31,25 @@ TEST(mtrk_t_tests, SplitCopyIfForNoteNum67WithTSB) {
 	};
 
 	auto new_mtrk = mtrk_t();
-	auto bi = std::back_inserter(new_mtrk);
-
 	auto it = split_copy_if(mtrk_b.begin(),mtrk_b.end(),
-		bi,isntnum43);
+		std::back_inserter(new_mtrk),isntnum43);
 
-	for (const auto& e : new_mtrk) {
-		EXPECT_TRUE(is_channel_voice(e));
-		auto md = get_channel_event(e);
+	uint64_t tk_onset = 0;
+	EXPECT_EQ(new_mtrk.size(),tsb_note_67_events.size());
+	for (int i=0; i<new_mtrk.size(); ++i) {//const auto& e : new_mtrk) {
+		tk_onset += new_mtrk[i].delta_time();
+		EXPECT_TRUE(is_channel_voice(new_mtrk[i]));
+		auto md = get_channel_event(new_mtrk[i]);
 		EXPECT_EQ(md.p1,67);
-	}
+		EXPECT_EQ(tk_onset,tsb_note_67_events[i].tkonset);
 
+		// The raw data in tsb_note_67_events have the delta time fields from
+		// mtrk_b
+		auto ev = mtrk_event_t(tsb_note_67_events[i].d.data(),
+			tsb_note_67_events[i].d.size(),0x00u);
+		ev.set_delta_time(new_mtrk[i].delta_time());
+		EXPECT_EQ(new_mtrk[i],ev);
+	}
 }
 
 
