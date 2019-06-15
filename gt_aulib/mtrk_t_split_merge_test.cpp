@@ -30,9 +30,10 @@ TEST(mtrk_t_tests, SplitCopyIfForNoteNum67WithTSB) {
 	};
 
 	auto new_mtrk = mtrk_t();
+	auto bi = std::back_inserter(new_mtrk);
 
 	auto it = split_copy_if(mtrk_b.begin(),mtrk_b.end(),
-		std::back_inserter(new_mtrk),isntnum43);
+		bi,isntnum43);
 
 	for (const auto& e : new_mtrk) {
 		EXPECT_TRUE(is_channel_voice(e));
