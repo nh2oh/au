@@ -177,7 +177,8 @@ TEST(d_t_tests, gcd) {
 	d_t ans {};
 
 	// Set 1
-	vdt = {d::q,d::h,3*(d::e),d::edd,d::sx};
+	// TODO:  My converting ctor is not being called implictly?
+	vdt = {d::q,d::h,3*d_t(d::e),d::edd,d::sx};
 	cgcd = d_t{d::z};
 	for (int i=0; i<vdt.size(); ++i) {
 		cgcd = gcd(cgcd, vdt[i]);
@@ -185,7 +186,9 @@ TEST(d_t_tests, gcd) {
 	EXPECT_TRUE(cgcd == d_t{d::t});
 
 	// Set 2
-	vdt = {d::q,d::h,2*(d::e),8*(d::e)};
+	// TODO:  My converting ctor is not being called implictly?
+	// vdt = {d::q,d::h,2*(d::e),8*(d::e)};
+	vdt = {d::q,d::h,2*d_t(d::e),8*d_t(d::e)};
 	cgcd = d_t{d::z};
 	for (int i=0; i<vdt.size(); ++i) {
 		cgcd = gcd(cgcd, vdt[i]);
@@ -193,7 +196,8 @@ TEST(d_t_tests, gcd) {
 	EXPECT_TRUE(cgcd == d_t{d::q});
 
 	// Set 3
-	vdt = {d::q,d::h,3*(d::e),d::ed,d::qd};
+	// TODO:  My converting ctor is not being called implictly?
+	vdt = {d::q,d::h,3*d_t(d::e),d::ed,d::qd};
 	cgcd = d_t{d::z};
 	for (int i=0; i<vdt.size(); ++i) {
 		cgcd = gcd(cgcd, vdt[i]);

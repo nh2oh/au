@@ -369,6 +369,9 @@ bool operator>=(const d_t& lhs, const d_t& rhs) {
 d_t operator*(const double& lhs, d_t rhs) {
 	return (rhs *= lhs);
 }
+//d_t operator*(const int& lhs, d_t rhs) {
+//	return (rhs *= lhs);
+//}
 d_t operator*(d_t lhs, const double& rhs) {
 	return (lhs *= rhs);
 }

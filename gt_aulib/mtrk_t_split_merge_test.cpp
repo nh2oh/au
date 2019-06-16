@@ -90,7 +90,6 @@ TEST(mtrk_t_tests, SplitCopyIfForMetaEventsWithTSB) {
 // 
 // Split out all channel_voice events for note number 67
 //
-/*
 TEST(mtrk_t_tests, SplitIfForNoteNum67WithTSB) {
 	auto mtrk_b = make_tsb();
 
@@ -125,7 +124,7 @@ TEST(mtrk_t_tests, SplitIfForNoteNum67WithTSB) {
 	for (int i=0; i<mtrk_second.size(); ++i) {
 		tk_onset += mtrk_second[i].delta_time();
 		if (is_channel_voice(mtrk_second[i])) {
-			auto md = get_channel_event(mtrk_first[i]);
+			auto md = get_channel_event(mtrk_second[i]);
 			EXPECT_NE(md.p1,67);
 		}
 		EXPECT_EQ(tk_onset,tsb_non_note_67_events[i].tkonset);
@@ -137,4 +136,4 @@ TEST(mtrk_t_tests, SplitIfForNoteNum67WithTSB) {
 		ev.set_delta_time(mtrk_second[i].delta_time());
 		EXPECT_EQ(mtrk_second[i],ev);
 	}
-}*/
+}

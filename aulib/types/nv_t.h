@@ -163,6 +163,7 @@ bool operator!=(const d_t&, const d_t&);
 d_t operator-(d_t, const d_t&);
 d_t operator+(d_t, const d_t&);
 d_t operator*(const double&, d_t);
+//d_t operator*(const int&, d_t);
 d_t operator*(d_t, const double&);
 d_t operator/(d_t, const double&);
 
