@@ -87,7 +87,7 @@ TEST(mtrk_t_tests, SplitCopyIfForMetaEventsWithTSB) {
 
 
 // 
-// 
+// FwIt split_if(FwIt beg, FwIt end, UPred pred)
 // Split out all channel_voice events for note number 67
 //
 TEST(mtrk_t_tests, SplitIfForNoteNum67WithTSB) {
@@ -136,4 +136,21 @@ TEST(mtrk_t_tests, SplitIfForNoteNum67WithTSB) {
 		ev.set_delta_time(mtrk_second[i].delta_time());
 		EXPECT_EQ(mtrk_second[i],ev);
 	}
+}
+
+// 
+// mtrk_t split_if(mtrk_t& mtrk, UPred pred)
+// Split out all channel_voice events for note number 67
+//
+TEST(mtrk_t_tests, SplitIfMtrkOverloadForNoteNum67WithTSB) {
+	auto mtrk_b = make_tsb();
+
+	auto isntnum43 = [](const mtrk_event_t& ev)->bool {
+		auto md = get_channel_event(ev);
+		return (is_channel_voice(ev) && (md.p1==67));  // 67 == 0x43u
+	};
+
+	auto mtrk_first = split_if(mtrk_b,isntnum43);
+	EXPECT_EQ(mtrk_first.size(),tsb_note_67_events.size());
+	EXPECT_EQ(mtrk_b.size(),tsb_non_note_67_events.size());
 }
