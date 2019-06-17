@@ -31,6 +31,7 @@ extern std::vector<tsb_t> tsb;
 extern std::vector<tsb_t> tsb_note_67_events;
 extern std::vector<tsb_t> tsb_non_note_67_events;
 extern std::vector<tsb_t> tsb_meta_events;
+extern std::vector<tsb_t> tsb_non_meta_events;
 
 };  // namespace mtrk_tests
 
