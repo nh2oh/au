@@ -104,6 +104,7 @@
     <ClCompile Include="midi_raw_test_data.cpp" />
     <ClCompile Include="midi_sb_classification_funcs.cpp" />
     <ClCompile Include="mthd_t_test.cpp" />
+    <ClCompile Include="mtrk_event_t_meta_factory_funcs_tests.cpp" />
     <ClCompile Include="mtrk_event_t_tests.cpp" />
     <ClCompile Include="mtrk_event_get_size_unsafe_test.cpp" />
     <ClCompile Include="mtrk_test_data.cpp" />

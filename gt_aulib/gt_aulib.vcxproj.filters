@@ -111,6 +111,9 @@
     <ClCompile Include="mtrk_t_split_merge_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="mtrk_event_t_meta_factory_funcs_tests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="midi_raw_test_data.h">
