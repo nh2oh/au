@@ -300,8 +300,9 @@ TEST(mtrk_event_t_tests, metaEventsSmallZeroRS) {
 
 //
 // Tests of the mtrk_event_t(uint32_t, const midi_ch_event_t&) ctor
+// with valid data in the midi_ch_event_t struct.  
 //
-TEST(mtrk_event_t_tests, MidiChEventStructCtor) {
+TEST(mtrk_event_t_tests, MidiChEventStructCtorValidInputData) {
 	struct test_t {
 		uint32_t dt_input {0};
 		midi_ch_event_t md_input {};
@@ -320,7 +321,7 @@ TEST(mtrk_event_t_tests, MidiChEventStructCtor) {
 		// should write 0x80u (128) for p2; this value is invalid for a 
 		// data byte.  
 		{785, {prog_change,14,127,0x80u}, 2},
-		{2, {ch_pressure,2,0,0x80u}, 2},
+		{2, {ch_pressure,2,0,0x80u}, 2}
 	};
 	
 	for (const auto& e : tests) {
@@ -344,6 +345,67 @@ TEST(mtrk_event_t_tests, MidiChEventStructCtor) {
 	}
 }
 
+
+
+//
+// Tests of the mtrk_event_t(uint32_t, const midi_ch_event_t&) ctor
+// with _invalid_ data in the midi_ch_event_t struct.  
+//
+TEST(mtrk_event_t_tests, MidiChEventStructCtorInvalidInputData) {
+	struct test_t {
+		uint32_t dt_input {0};
+		midi_ch_event_t md_input {};
+		//uint32_t dt_result {0};
+		midi_ch_event_t md_result {};
+		uint32_t data_size {0};
+	};
+	// midi_ch_event_t {status, ch, p1, p2}
+	std::vector<test_t> tests {
+		{0, {note_on,16,57,32}, {note_on,0,57,32}, 3},  // Invalid channel
+		{1, {note_on,127,57,32}, {note_on,15,57,32}, 3},  // Invalid channel
+		{128, {note_on,14,128,32}, {note_on,14,0,32}, 3},  // Invalid p1
+		{256, {note_on,14,129,32}, {note_on,14,1,32}, 3},  // Invalid p1
+		{512, {note_on,14,7,130}, {note_on,14,7,2}, 3},  // Invalid p2
+		{1024, {note_on,14,57,255}, {note_on,14,57,0x7Fu}, 3},  // Invalid p2
+
+		// Exactly the same as the set above, but w/a 1-data-byte msg type
+		{0, {prog_change,16,57,32}, {prog_change,0,57,0x80u}, 2},  // Invalid channel
+		{1, {prog_change,127,57,32}, {prog_change,15,57,0x80u}, 2},  // Invalid channel
+		{128, {prog_change,14,128,32}, {prog_change,14,0,0x80u}, 2},  // Invalid p1
+		{256, {prog_change,14,129,32}, {prog_change,14,1,0x80u}, 2},  // Invalid p1
+		{512, {prog_change,14,7,130}, {prog_change,14,7,0x80u}, 2},  // Invalid p2
+		{1024, {prog_change,14,57,255}, {prog_change,14,57,0x80u}, 2},  // Invalid p2
+
+		// Exactly the same as the set above, but w/an invalid status-nybble
+		{0, {note_on&0x7Fu,16,57,32}, {note_on,0,57,32}, 3},  // Invalid channel
+		{1, {note_on&0x7Fu,127,57,32}, {note_on,15,57,32}, 3},  // Invalid channel
+		{128, {note_on&0x7Fu,14,128,32}, {note_on,14,0,32}, 3},  // Invalid p1
+		{256, {note_on&0x7Fu,14,129,32}, {note_on,14,1,32}, 3},  // Invalid p1
+		{512, {note_on&0x7Fu,14,7,130}, {note_on,14,7,2}, 3},  // Invalid p2
+		{1024, {note_on&0x7Fu,14,57,255}, {note_on,14,57,0x7Fu}, 3}  // Invalid p2
+	};
+	
+	for (const auto& e : tests) {
+		//unsigned char curr_s_nybb = (e.md_input.status_nybble)|0x80u;
+		unsigned char curr_s = e.md_result.status_nybble + e.md_result.ch;// + (e.md_input.ch)|0x0Fu;
+		mtrk_event_t ev(e.dt_input,e.md_input);
+		EXPECT_EQ(ev.type(),smf_event_type::channel);
+
+		EXPECT_EQ(ev.delta_time(),e.dt_input);
+		EXPECT_TRUE(ev.is_small());
+		EXPECT_FALSE(ev.is_big());
+		EXPECT_EQ(ev.data_size(),e.data_size);
+		EXPECT_TRUE(ev.validate());
+		EXPECT_EQ(ev.status_byte(),curr_s);
+		EXPECT_EQ(ev.running_status(),curr_s);
+
+		auto curr_data = get_channel_event(ev);
+		EXPECT_EQ(curr_data.status_nybble,e.md_result.status_nybble);
+		EXPECT_EQ(curr_data.ch,e.md_result.ch);
+		EXPECT_EQ(curr_data.p1,e.md_result.p1);
+		EXPECT_EQ(curr_data.p2,e.md_result.p2);
+	}
+}
 
 
 //
