@@ -33,8 +33,63 @@ TEST(mtrk_event_t_meta_factories, makeTempo) {
 		EXPECT_TRUE(ev.is_small());
 		EXPECT_FALSE(ev.is_big());
 		EXPECT_EQ(ev.type(),smf_event_type::meta);
+		EXPECT_EQ(classify_meta_event(ev),meta_event_t::tempo);
 		EXPECT_TRUE(is_tempo(ev));
 		EXPECT_EQ(ev.delta_time(),e.dt_ans);
 		EXPECT_EQ(get_tempo(ev),e.tempo_ans);
 	}
 }
+
+
+// 
+// mtrk_event_t make_eot(const uint32_t& dt)
+//
+TEST(mtrk_event_t_meta_factories, makeEOT) {
+	std::vector<uint32_t> tests {0,1,128,125428};
+	for (const auto& e : tests) {
+		auto ev = make_eot(e);
+		EXPECT_TRUE(ev.is_small());
+		EXPECT_FALSE(ev.is_big());
+		EXPECT_EQ(ev.type(),smf_event_type::meta);
+		EXPECT_EQ(classify_meta_event(ev),meta_event_t::eot);
+		EXPECT_TRUE(is_eot(ev));
+		EXPECT_EQ(ev.delta_time(),e);
+	}
+}
+
+
+// 
+// mtrk_event_t make_timesig(const uint32_t& dt, const midi_timesig_t& ts)
+//
+TEST(mtrk_event_t_meta_factories, makeTimesig) {
+	struct test_t {
+		uint32_t dt {0};
+		midi_timesig_t ts {0,0,0,0};
+	};
+
+	std::vector<test_t> tests {
+		{0, {0, 0, 0, 0}},
+		{0, {6, 3, 36, 8}},  // From the midi std p. 10
+		{1, {1, 1, 1, 1}},
+
+		{128, {0, 0, 0, 0}},
+		{128, {6, 3, 36, 8}},  // From the midi std p. 10
+		{128, {1, 1, 1, 1}},
+
+		{125428, {0, 0, 0, 0}},
+		{125428, {6, 3, 36, 8}},  // From the midi std p. 10
+		{125428, {1, 1, 1, 1}},
+	};
+	for (const auto& e : tests) {
+		auto ev = make_timesig(e.dt,e.ts);
+		EXPECT_TRUE(ev.is_small());
+		EXPECT_FALSE(ev.is_big());
+		EXPECT_EQ(ev.type(),smf_event_type::meta);
+		EXPECT_EQ(classify_meta_event(ev),meta_event_t::timesig);
+		EXPECT_TRUE(is_timesig(ev));
+		EXPECT_EQ(ev.delta_time(),e.dt);
+		EXPECT_EQ(get_timesig(ev),e.ts);
+	}
+}
+
+
