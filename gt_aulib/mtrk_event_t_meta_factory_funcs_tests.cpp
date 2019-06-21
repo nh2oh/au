@@ -93,3 +93,39 @@ TEST(mtrk_event_t_meta_factories, makeTimesig) {
 }
 
 
+// 
+// mtrk_event_t make_instname(const uint32_t& dt, const std::string& s)
+//
+TEST(mtrk_event_t_meta_factories, makeInstname) {
+	struct test_t {
+		uint32_t dt {0};
+		std::string s {};
+		bool issmall {false};
+	};
+
+	std::vector<test_t> tests {
+		{0, "Acoustic Grand", true},
+		{0, "", true},
+		{1, " ", true},
+		{9, "     ", true},
+		{0, "This string exceeds the size of the small buffer in mtrk_event_t.  ", false},
+		{125428, "This string exceeds the size of the small buffer in mtrk_event_t.  ", false},
+		{125428, "", true},
+		{125428, "", true},
+		// Maximum allowed dt
+		{0x0FFFFFFFu, "", true},
+		{0x0FFFFFFFu, "Acoustic Grand", true},  // From the midi std p. 10
+		{0x0FFFFFFFu, "This string exceeds the size of the small buffer in mtrk_event_t.  ", false}
+	};
+	for (const auto& e : tests) {
+		auto ev = make_instname(e.dt,e.s);
+		EXPECT_EQ(ev.is_small(),e.issmall);
+		EXPECT_NE(ev.is_big(),e.issmall);
+		EXPECT_EQ(ev.type(),smf_event_type::meta);
+		EXPECT_EQ(classify_meta_event(ev),meta_event_t::instname);
+		EXPECT_TRUE(is_instname(ev));
+		EXPECT_EQ(ev.delta_time(),e.dt);
+		EXPECT_EQ(meta_generic_gettext(ev),e.s);
+	}
+}
+
