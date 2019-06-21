@@ -12,9 +12,6 @@
 //
 // template<typename T> T native2be(T val)
 //
-//
-//
-//
 TEST(midi_raw_tests, native2be) {
 	struct test_t {
 		uint32_t input {0};
