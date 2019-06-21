@@ -8,6 +8,34 @@
 // TODO:  Many (all?) of these are tests of things now in dbklib; tests should
 // move to dbklib.  
 
+
+//
+// template<typename T> T native2be(T val)
+//
+//
+//
+//
+TEST(midi_raw_tests, native2be) {
+	struct test_t {
+		uint32_t input {0};
+		uint32_t ans {};
+	};
+	std::vector<test_t> tests {
+		{0,0},
+		{1,16777216},  // 0x00,00,00,01  =>  0x01,00,00,00
+		{0x01000000u,0x00000001u},
+		{0xFFFFFFFFu,0xFFFFFFFFu},
+		{0x000C0000u, 0x00000C00u},
+		{0x12345678u, 0x78563412u}
+	};
+
+	for (const auto& e : tests) {
+		auto res = native2be(e.input);
+		EXPECT_EQ(res,e.ans) << "Failed for e.ans==" << e.ans << "\n";
+	}
+}
+
+
 // Big-endian encoded multi-byte ints
 TEST(midi_raw_tests, be2native) {
 	struct i32_tests {
