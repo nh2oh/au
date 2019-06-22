@@ -95,7 +95,7 @@ TEST(mtrk_event_t_meta_factories, makeTimesig) {
 
 // 
 // mtrk_event_t make_instname(const uint32_t& dt, const std::string& s)
-//
+// TODO:  verify
 TEST(mtrk_event_t_meta_factories, makeInstname) {
 	struct test_t {
 		uint32_t dt {0};
