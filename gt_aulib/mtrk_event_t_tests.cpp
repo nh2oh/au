@@ -802,3 +802,38 @@ TEST(mtrk_event_t_tests, metaEventsMoveAssignSmallIntoBig) {
 }
 
 
+// 
+// Which meta events have a text field?
+//
+TEST(mtrk_event_t_tests, metaEventTypeHasText) {
+	struct test_t {
+		meta_event_t t {meta_event_t::unknown};
+		bool ans_hastext {false};
+	};
+	std::vector<test_t> tests {
+		{meta_event_t::seqn,false},
+		{meta_event_t::text,true},
+		{meta_event_t::copyright,true},
+		{meta_event_t::trackname,true},
+		{meta_event_t::instname,true},
+		{meta_event_t::lyric,true},
+		{meta_event_t::marker,true},
+		{meta_event_t::cuepoint,true},
+		{meta_event_t::chprefix,false},
+		{meta_event_t::eot,false},
+		{meta_event_t::tempo,false},
+		{meta_event_t::smpteoffset,false},
+		{meta_event_t::timesig,false},
+		{meta_event_t::keysig,false},
+		{meta_event_t::seqspecific,false},
+		{meta_event_t::invalid,false},
+		{meta_event_t::unknown,false}
+	};
+
+	for (const auto& e : tests) {
+		EXPECT_EQ(meta_hastext_impl(static_cast<uint16_t>(e.t)),e.ans_hastext);
+	}
+
+}
+
+
