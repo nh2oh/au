@@ -94,15 +94,31 @@ TEST(mtrk_event_t_meta_factories, makeTimesig) {
 
 
 // 
-// mtrk_event_t make_instname(const uint32_t& dt, const std::string& s)
-// TODO:  verify
-TEST(mtrk_event_t_meta_factories, makeInstname) {
+// mtrk_event_t make_{instname,lyric,marker,cuepoint,text,
+//						copyright}(const uint32_t& dt, const std::string& s)
+// ... All maker-functions for meta events with text payloads
+//
+TEST(mtrk_event_t_meta_factories, makeEventsWithTextPayloads) {
+	struct testset_t {
+		mtrk_event_t (*fp_make)(const uint32_t&, const std::string&);
+		bool (*fp_is)(const mtrk_event_t&);
+		meta_event_t ans_evtype;
+	};
+	std::vector<testset_t> testsets {
+		{make_text,is_text,meta_event_t::text},
+		{make_copyright,is_copyright,meta_event_t::copyright},
+		{make_trackname,is_trackname,meta_event_t::trackname},
+		{make_instname,is_instname,meta_event_t::instname},
+		{make_lyric,is_lyric,meta_event_t::lyric},
+		{make_marker,is_marker,meta_event_t::marker},
+		{make_cuepoint,is_cuepoint,meta_event_t::cuepoint}		
+	};
+
 	struct test_t {
 		uint32_t dt {0};
 		std::string s {};
 		bool issmall {false};
 	};
-
 	std::vector<test_t> tests {
 		{0, "Acoustic Grand", true},
 		{0, "", true},
@@ -117,15 +133,18 @@ TEST(mtrk_event_t_meta_factories, makeInstname) {
 		{0x0FFFFFFFu, "Acoustic Grand", true},  // From the midi std p. 10
 		{0x0FFFFFFFu, "This string exceeds the size of the small buffer in mtrk_event_t.  ", false}
 	};
-	for (const auto& e : tests) {
-		auto ev = make_instname(e.dt,e.s);
-		EXPECT_EQ(ev.is_small(),e.issmall);
-		EXPECT_NE(ev.is_big(),e.issmall);
-		EXPECT_EQ(ev.type(),smf_event_type::meta);
-		EXPECT_EQ(classify_meta_event(ev),meta_event_t::instname);
-		EXPECT_TRUE(is_instname(ev));
-		EXPECT_EQ(ev.delta_time(),e.dt);
-		EXPECT_EQ(meta_generic_gettext(ev),e.s);
+	for (const auto curr_testset : testsets) {
+		for (const auto& e : tests) {
+			auto ev = (*curr_testset.fp_make)(e.dt,e.s);
+			EXPECT_EQ(ev.type(), smf_event_type::meta);
+			EXPECT_EQ(classify_meta_event(ev),curr_testset.ans_evtype);
+			EXPECT_TRUE((*curr_testset.fp_is)(ev));
+			EXPECT_TRUE(meta_has_text(ev));
+			EXPECT_EQ(ev.is_small(),e.issmall);
+			EXPECT_NE(ev.is_big(),e.issmall);
+			EXPECT_EQ(ev.delta_time(),e.dt);
+			EXPECT_EQ(meta_generic_gettext(ev),e.s);
+		}
 	}
 }
 
