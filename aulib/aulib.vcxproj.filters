@@ -99,9 +99,6 @@
     <ClCompile Include="input\midi\midi_raw_test_parts.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="input\midi\mtrk_event_t.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="input\midi\midi_vlq.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -114,25 +111,22 @@
     <ClCompile Include="input\midi\mthd_t.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="input\midi\mtrk_event_iterator_t.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="input\midi\mtrk_iterator_t.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="input\midi\mtrk_integrators.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="input\midi\mtrk_event_t2.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="input\midi\mtrk_event_iterator_t2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="input\midi\mtrk_event_t_internal.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="input\midi\mtrk_event_methods.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="input\midi\mtrk_iterator_t.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="input\midi\mtrk_event_iterator_t.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="input\midi\mtrk_event_t.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -248,9 +242,6 @@
     <ClInclude Include="input\midi\midi_raw_test_parts.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="input\midi\mtrk_event_t.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="input\midi\midi_vlq.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -263,25 +254,22 @@
     <ClInclude Include="input\midi\mthd_t.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="input\midi\mtrk_event_iterator_t.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="input\midi\mtrk_iterator_t.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="input\midi\mtrk_integrators.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="input\midi\mtrk_event_t2.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="input\midi\mtrk_event_iterator_t2.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="input\midi\mtrk_event_t_internal.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="input\midi\mtrk_event_methods.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="input\midi\mtrk_event_iterator_t.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="input\midi\mtrk_event_t.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
