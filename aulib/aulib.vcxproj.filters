@@ -132,6 +132,9 @@
     <ClCompile Include="input\midi\mtrk_event_t_internal.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="input\midi\mtrk_event_methods.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="util\au_util.h">
@@ -276,6 +279,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="input\midi\mtrk_event_t_internal.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="input\midi\mtrk_event_methods.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

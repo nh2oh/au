@@ -18,6 +18,7 @@
     <ClCompile Include="input\midi\mthd_t.cpp" />
     <ClCompile Include="input\midi\mtrk_event_iterator_t.cpp" />
     <ClCompile Include="input\midi\mtrk_event_iterator_t2.cpp" />
+    <ClCompile Include="input\midi\mtrk_event_methods.cpp" />
     <ClCompile Include="input\midi\mtrk_event_t.cpp" />
     <ClCompile Include="input\midi\mtrk_event_t2.cpp" />
     <ClCompile Include="input\midi\mtrk_event_t_internal.cpp" />
@@ -61,6 +62,7 @@
     <ClInclude Include="input\midi\mthd_t.h" />
     <ClInclude Include="input\midi\mtrk_event_iterator_t.h" />
     <ClInclude Include="input\midi\mtrk_event_iterator_t2.h" />
+    <ClInclude Include="input\midi\mtrk_event_methods.h" />
     <ClInclude Include="input\midi\mtrk_event_t.h" />
     <ClInclude Include="input\midi\mtrk_event_t2.h" />
     <ClInclude Include="input\midi\mtrk_event_t_internal.h" />
