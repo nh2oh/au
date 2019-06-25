@@ -2,6 +2,7 @@
 #include "mtrk_test_data.h"
 #include "..\aulib\input\midi\mtrk_t.h"
 #include "..\aulib\input\midi\mtrk_event_t.h"
+#include "..\aulib\input\midi\mtrk_event_methods.h"
 #include <vector>
 #include <cstdint>
 #include <iterator>

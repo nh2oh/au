@@ -1,8 +1,10 @@
 #include "gtest/gtest.h"
 #include "..\aulib\input\midi\mtrk_event_t.h"
+#include "..\aulib\input\midi\mtrk_event_methods.h"
 #include <vector>
 #include <cstdint>
 
+// TODO:  Add calls to the size() method to these tests
 
 // 
 // mtrk_event_t make_tempo(const uint32_t& dt, const uint32_t& uspqn);
@@ -30,8 +32,6 @@ TEST(mtrk_event_t_meta_factories, makeTempo) {
 	};
 	for (const auto& e : tests) {
 		auto ev = make_tempo(e.dt_in,e.tempo_in);
-		EXPECT_TRUE(ev.is_small());
-		EXPECT_FALSE(ev.is_big());
 		EXPECT_EQ(ev.type(),smf_event_type::meta);
 		EXPECT_EQ(classify_meta_event(ev),meta_event_t::tempo);
 		EXPECT_TRUE(is_tempo(ev));
@@ -48,8 +48,6 @@ TEST(mtrk_event_t_meta_factories, makeEOT) {
 	std::vector<uint32_t> tests {0,1,128,125428};
 	for (const auto& e : tests) {
 		auto ev = make_eot(e);
-		EXPECT_TRUE(ev.is_small());
-		EXPECT_FALSE(ev.is_big());
 		EXPECT_EQ(ev.type(),smf_event_type::meta);
 		EXPECT_EQ(classify_meta_event(ev),meta_event_t::eot);
 		EXPECT_TRUE(is_eot(ev));
@@ -82,8 +80,6 @@ TEST(mtrk_event_t_meta_factories, makeTimesig) {
 	};
 	for (const auto& e : tests) {
 		auto ev = make_timesig(e.dt,e.ts);
-		EXPECT_TRUE(ev.is_small());
-		EXPECT_FALSE(ev.is_big());
 		EXPECT_EQ(ev.type(),smf_event_type::meta);
 		EXPECT_EQ(classify_meta_event(ev),meta_event_t::timesig);
 		EXPECT_TRUE(is_timesig(ev));
@@ -140,8 +136,6 @@ TEST(mtrk_event_t_meta_factories, makeEventsWithTextPayloads) {
 			EXPECT_EQ(classify_meta_event(ev),curr_testset.ans_evtype);
 			EXPECT_TRUE((*curr_testset.fp_is)(ev));
 			EXPECT_TRUE(meta_has_text(ev));
-			EXPECT_EQ(ev.is_small(),e.issmall);
-			EXPECT_NE(ev.is_big(),e.issmall);
 			EXPECT_EQ(ev.delta_time(),e.dt);
 			EXPECT_EQ(meta_generic_gettext(ev),e.s);
 		}
