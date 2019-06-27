@@ -4,8 +4,6 @@
 #include <vector>
 #include <cstdint>
 
-// TODO:  Add calls to the size() method to these tests
-
 // 
 // mtrk_event_t make_tempo(const uint32_t& dt, const uint32_t& uspqn);
 //
@@ -32,11 +30,26 @@ TEST(mtrk_event_t_meta_factories, makeTempo) {
 	};
 	for (const auto& e : tests) {
 		auto ev = make_tempo(e.dt_in,e.tempo_in);
+		auto dt_size = midi_vl_field_size(e.dt_ans);
+		auto pyld_size = 3;
+		auto dat_size = 3+pyld_size;
+		auto tot_size = dt_size+dat_size;
 		EXPECT_EQ(ev.type(),smf_event_type::meta);
 		EXPECT_EQ(classify_meta_event(ev),meta_event_t::tempo);
 		EXPECT_TRUE(is_tempo(ev));
 		EXPECT_EQ(ev.delta_time(),e.dt_ans);
+		EXPECT_EQ(ev.size(),tot_size);
+		EXPECT_EQ(ev.data_size(),dat_size);
+		EXPECT_EQ(ev.running_status(),0x00u);
+		EXPECT_EQ(ev.status_byte(),0xFFu);
+
 		EXPECT_EQ(get_tempo(ev),e.tempo_ans);
+
+		EXPECT_EQ(ev.end()-ev.begin(),tot_size);
+		EXPECT_EQ(ev.end()-ev.event_begin(),dat_size);
+		EXPECT_EQ(ev.end()-ev.payload_begin(),pyld_size);
+
+		EXPECT_EQ(*(ev.event_begin()),0xFFu);
 	}
 }
 
@@ -48,10 +61,24 @@ TEST(mtrk_event_t_meta_factories, makeEOT) {
 	std::vector<uint32_t> tests {0,1,128,125428};
 	for (const auto& e : tests) {
 		auto ev = make_eot(e);
+		auto dt_size = midi_vl_field_size(e);
+		auto pyld_size = 0;
+		auto dat_size = 3+pyld_size;
+		auto tot_size = dt_size+dat_size;
 		EXPECT_EQ(ev.type(),smf_event_type::meta);
 		EXPECT_EQ(classify_meta_event(ev),meta_event_t::eot);
 		EXPECT_TRUE(is_eot(ev));
 		EXPECT_EQ(ev.delta_time(),e);
+		EXPECT_EQ(ev.size(),tot_size);
+		EXPECT_EQ(ev.data_size(),dat_size);
+		EXPECT_EQ(ev.running_status(),0x00u);
+		EXPECT_EQ(ev.status_byte(),0xFFu);
+
+		EXPECT_EQ(ev.end()-ev.begin(),tot_size);
+		EXPECT_EQ(ev.end()-ev.event_begin(),dat_size);
+		EXPECT_EQ(ev.end()-ev.payload_begin(),pyld_size);
+
+		EXPECT_EQ(*(ev.event_begin()),0xFFu);
 	}
 }
 
@@ -80,11 +107,26 @@ TEST(mtrk_event_t_meta_factories, makeTimesig) {
 	};
 	for (const auto& e : tests) {
 		auto ev = make_timesig(e.dt,e.ts);
+		auto dt_size = midi_vl_field_size(e.dt);
+		auto pyld_size = 4;
+		auto dat_size = 3+pyld_size;
+		auto tot_size = dt_size+dat_size;
 		EXPECT_EQ(ev.type(),smf_event_type::meta);
 		EXPECT_EQ(classify_meta_event(ev),meta_event_t::timesig);
 		EXPECT_TRUE(is_timesig(ev));
 		EXPECT_EQ(ev.delta_time(),e.dt);
+		EXPECT_EQ(ev.size(),tot_size);
+		EXPECT_EQ(ev.data_size(),dat_size);
+		EXPECT_EQ(ev.running_status(),0x00u);
+		EXPECT_EQ(ev.status_byte(),0xFFu);
+
 		EXPECT_EQ(get_timesig(ev),e.ts);
+
+		EXPECT_EQ(ev.end()-ev.begin(),tot_size);
+		EXPECT_EQ(ev.end()-ev.event_begin(),dat_size);
+		EXPECT_EQ(ev.end()-ev.payload_begin(),pyld_size);
+
+		EXPECT_EQ(*(ev.event_begin()),0xFFu);
 	}
 }
 
