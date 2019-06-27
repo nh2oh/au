@@ -374,19 +374,20 @@ TEST(mtrk_event_t_tests, MidiChEventStructCtorValidInputData) {
 // Tests of the mtrk_event_t(uint32_t, const midi_ch_event_t&) ctor
 // with _invalid_ data in the midi_ch_event_t struct.  
 //
-// TODO:  This is really 2 tests: the ctor and get_channel_event()
+// TODO:  The data in md_result is not used, since for this ctor the
+// 'result' values are UB.  Keep to use this test data for tests of 
+// normalize(midi_ch_event_t).  
 TEST(mtrk_event_t_tests, MidiChEventStructCtorInvalidInputData) {
 	struct test_t {
 		uint32_t dt_input {0};
 		midi_ch_event_t md_input {};
-		//uint32_t dt_result {0};
 		midi_ch_event_t md_result {};
 		uint32_t data_size {0};
 	};
 	// midi_ch_event_t {status, ch, p1, p2}
 	std::vector<test_t> tests {
-		{0, {note_on,16,57,32}, {note_on,0,57,32}, 3},  // Invalid channel
-		{1, {note_on,127,57,32}, {note_on,15,57,32}, 3},  // Invalid channel
+		{0, {note_on,16,57,32}, {note_on,0,57,32}, 3},  // Invalid channel (>15)
+		{1, {note_on,127,57,32}, {note_on,15,57,32}, 3},  // Invalid channel (>15)
 		{128, {note_on,14,128,32}, {note_on,14,0,32}, 3},  // Invalid p1
 		{256, {note_on,14,129,32}, {note_on,14,1,32}, 3},  // Invalid p1
 		{512, {note_on,14,7,130}, {note_on,14,7,2}, 3},  // Invalid p2
@@ -410,25 +411,24 @@ TEST(mtrk_event_t_tests, MidiChEventStructCtorInvalidInputData) {
 	};
 	
 	for (const auto& e : tests) {
-		//unsigned char curr_s_nybb = (e.md_input.status_nybble)|0x80u;
-		unsigned char curr_s = e.md_result.status_nybble + e.md_result.ch;// + (e.md_input.ch)|0x0Fu;
+		unsigned char curr_s = ((e.md_input.status_nybble)|(e.md_input.ch));
+		int curr_dt_size = midi_vl_field_size(e.dt_input);
+		int curr_size = curr_dt_size+e.data_size;
 		mtrk_event_t ev(e.dt_input,e.md_input);
 		mtrk_event_unit_test_helper_t h(ev);
-		EXPECT_EQ(ev.type(),smf_event_type::channel);
 
+		EXPECT_EQ(ev.type(),classify_status_byte(curr_s));
 		EXPECT_EQ(ev.delta_time(),e.dt_input);
 		EXPECT_TRUE(h.is_small());
 		EXPECT_FALSE(h.is_big());
-		EXPECT_EQ(ev.data_size(),e.data_size);
-		//EXPECT_TRUE(ev.validate());
 		EXPECT_EQ(ev.status_byte(),curr_s);
-		EXPECT_EQ(ev.running_status(),curr_s);
 
-		auto curr_data = get_channel_event(ev);
-		EXPECT_EQ(curr_data.status_nybble,e.md_result.status_nybble);
-		EXPECT_EQ(curr_data.ch,e.md_result.ch);
-		EXPECT_EQ(curr_data.p1,e.md_result.p1);
-		EXPECT_EQ(curr_data.p2,e.md_result.p2);
+		auto it_beg = ev.begin();
+		auto it_evbeg = ev.event_begin();
+		auto it_end = ev.end();
+		EXPECT_TRUE(it_evbeg-it_beg,curr_dt_size);
+		EXPECT_TRUE(it_end-it_beg<=ev.capacity());
+		EXPECT_EQ(*it_evbeg,curr_s);
 	}
 }
 
