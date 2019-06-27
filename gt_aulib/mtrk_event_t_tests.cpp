@@ -314,49 +314,57 @@ TEST(mtrk_event_t_tests, metaEventsSmallZeroRS) {
 // Tests of the mtrk_event_t(uint32_t, const midi_ch_event_t&) ctor
 // with valid data in the midi_ch_event_t struct.  
 //
-// TODO:  As for the test set below, this mixes in tests of the behavior of
-// get_channel_event().  
 TEST(mtrk_event_t_tests, MidiChEventStructCtorValidInputData) {
 	struct test_t {
 		uint32_t dt_input {0};
 		midi_ch_event_t md_input {};
-		//uint32_t dt_result {0};
-		//midi_ch_event_t md_result {};
 		uint32_t data_size {0};
 	};
 	// midi_ch_event_t {status, ch, p1, p2}
 	std::vector<test_t> tests {
+		// Events w/ 2 data bytes:
 		{0, {note_on,0,57,32}, 3},
 		{23, {note_off,1,57,32}, 3},
 		{12354, {key_pressure,0,57,32}, 3},
 		{0, {ctrl_change,15,72,100}, 3},
 		{45541, {pitch_bend,0,127,127}, 3},
-		// For 1-data-byte events, methods returning a midi_ch_event_t
-		// should write 0x80u (128) for p2; this value is invalid for a 
-		// data byte.  
-		{785, {prog_change,14,127,0x80u}, 2},
-		{2, {ch_pressure,2,0,0x80u}, 2}
+		// Events w/ 1 data byte:
+		{785, {prog_change,14,127,0x00u}, 2},
+		{2, {ch_pressure,2,0,0x00u}, 2}
 	};
 	
 	for (const auto& e : tests) {
 		unsigned char curr_s = (e.md_input.status_nybble + e.md_input.ch);
+		int curr_dt_size = midi_vl_field_size(e.dt_input);
+		int curr_size = curr_dt_size+e.data_size;
 		mtrk_event_t ev(e.dt_input,e.md_input);
 		mtrk_event_unit_test_helper_t h(ev);
-		EXPECT_EQ(ev.type(),smf_event_type::channel);
 
+		EXPECT_EQ(ev.type(),smf_event_type::channel);
 		EXPECT_EQ(ev.delta_time(),e.dt_input);
 		EXPECT_TRUE(h.is_small());
 		EXPECT_FALSE(h.is_big());
+		EXPECT_EQ(ev.size(),curr_size);
 		EXPECT_EQ(ev.data_size(),e.data_size);
-		//EXPECT_TRUE(ev.validate());
 		EXPECT_EQ(ev.status_byte(),curr_s);
 		EXPECT_EQ(ev.running_status(),curr_s);
 
-		auto curr_data = get_channel_event(ev);
-		EXPECT_EQ(curr_data.status_nybble,e.md_input.status_nybble);
-		EXPECT_EQ(curr_data.ch,e.md_input.ch);
-		EXPECT_EQ(curr_data.p1,e.md_input.p1);
-		EXPECT_EQ(curr_data.p2,e.md_input.p2);
+		auto it_beg = ev.event_begin();
+		auto it_end = ev.end();
+		EXPECT_EQ((it_end-ev.begin()),curr_size);
+		EXPECT_EQ((it_end-it_beg),curr_size-curr_dt_size);
+		EXPECT_EQ(it_beg,ev.payload_begin());
+		EXPECT_EQ(*it_beg++,curr_s);
+		EXPECT_EQ(*it_beg++,e.md_input.p1);
+		if (it_beg < it_end) {
+			EXPECT_TRUE((it_end-it_beg)==1);
+			EXPECT_EQ(*it_beg++,e.md_input.p2);
+		}
+		EXPECT_TRUE(it_beg==it_end);
+		EXPECT_TRUE(it_beg>=it_end);
+		EXPECT_TRUE(it_beg<=it_end);
+		EXPECT_FALSE(it_beg>it_end);
+		EXPECT_FALSE(it_beg<it_end);
 	}
 }
 

@@ -123,10 +123,10 @@
     <ClCompile Include="input\midi\mtrk_iterator_t.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="input\midi\mtrk_event_iterator_t.cpp">
+    <ClCompile Include="input\midi\mtrk_event_t.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="input\midi\mtrk_event_t.cpp">
+    <ClCompile Include="input\midi\mtrk_event_iterator_t.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -266,10 +266,10 @@
     <ClInclude Include="input\midi\mtrk_event_methods.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="input\midi\mtrk_event_iterator_t.h">
+    <ClInclude Include="input\midi\mtrk_event_t.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="input\midi\mtrk_event_t.h">
+    <ClInclude Include="input\midi\mtrk_event_iterator_t.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
