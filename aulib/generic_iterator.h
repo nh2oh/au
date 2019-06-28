@@ -1,9 +1,12 @@
 #pragma once
 #include <iterator>  // std::random_access_iterator_tag;
-#include <type_traits>
+#include <type_traits>  // std::conditional<...>
 
-
-
+//
+// TODO
+// -> a==cb where a=>generic_ra_iterator<C,false> and 
+//    ca=>generic_ra_iterator<C,true> won't compile.  
+//
 template<typename C, bool Is_const=false>
 class generic_ra_iterator {
 public:
@@ -88,46 +91,6 @@ private:
 	pointer p_;
 };
 
+void generic_iterator_tests();
 
 
-
-
-
-
-
-
-
-
-/*
-class mtrk_event_const_iterator_t {
-public:
-	using iterator_category = std::random_access_iterator_tag;
-	using value_type = unsigned char;
-	using difference_type = int;
-	using pointer = const value_type*;
-	using reference = const value_type&;
-
-	mtrk_event_const_iterator_t(mtrk_event_t*);
-	mtrk_event_const_iterator_t(const mtrk_event_t*);
-	mtrk_event_const_iterator_t(const mtrk_event_t&);
-	mtrk_event_const_iterator_t(const mtrk_event_iterator_t&);
-	const unsigned char& operator*() const;
-	const unsigned char *operator->() const;
-	mtrk_event_const_iterator_t& operator++();  // preincrement
-	mtrk_event_const_iterator_t operator++(int);  // postincrement
-	mtrk_event_const_iterator_t& operator--();  // pre
-	mtrk_event_const_iterator_t operator--(int);  // post
-	mtrk_event_const_iterator_t& operator+=(int);
-	mtrk_event_const_iterator_t operator+(int);
-	mtrk_event_const_iterator_t& operator-=(int);
-	difference_type operator-(const mtrk_event_const_iterator_t& rhs) const;
-	bool operator==(const mtrk_event_const_iterator_t&) const;
-	bool operator!=(const mtrk_event_const_iterator_t&) const;
-	bool operator<(const mtrk_event_const_iterator_t&) const;
-	bool operator>(const mtrk_event_const_iterator_t&) const;
-	bool operator<=(const mtrk_event_const_iterator_t&) const;
-	bool operator>=(const mtrk_event_const_iterator_t&) const;
-private:
-	const unsigned char *p_;
-};
-*/
