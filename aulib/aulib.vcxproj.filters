@@ -126,7 +126,7 @@
     <ClCompile Include="input\midi\mtrk_event_t.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="input\midi\mtrk_event_iterator_t.cpp">
+    <ClCompile Include="generic_iterator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -269,7 +269,7 @@
     <ClInclude Include="input\midi\mtrk_event_t.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="input\midi\mtrk_event_iterator_t.h">
+    <ClInclude Include="generic_iterator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

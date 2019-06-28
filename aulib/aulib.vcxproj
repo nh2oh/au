@@ -11,12 +11,12 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="generic_iterator.cpp" />
     <ClCompile Include="input\midi\midi_examples.cpp" />
     <ClCompile Include="input\midi\midi_raw.cpp" />
     <ClCompile Include="input\midi\midi_raw_test_parts.cpp" />
     <ClCompile Include="input\midi\midi_vlq.cpp" />
     <ClCompile Include="input\midi\mthd_t.cpp" />
-    <ClCompile Include="input\midi\mtrk_event_iterator_t.cpp" />
     <ClCompile Include="input\midi\mtrk_event_methods.cpp" />
     <ClCompile Include="input\midi\mtrk_event_t.cpp" />
     <ClCompile Include="input\midi\mtrk_event_t_internal.cpp" />
@@ -52,13 +52,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="aulib_all.h" />
+    <ClInclude Include="generic_iterator.h" />
     <ClInclude Include="input\midi\midi_data.h" />
     <ClInclude Include="input\midi\midi_examples.h" />
     <ClInclude Include="input\midi\midi_raw.h" />
     <ClInclude Include="input\midi\midi_raw_test_parts.h" />
     <ClInclude Include="input\midi\midi_vlq.h" />
     <ClInclude Include="input\midi\mthd_t.h" />
-    <ClInclude Include="input\midi\mtrk_event_iterator_t.h" />
     <ClInclude Include="input\midi\mtrk_event_methods.h" />
     <ClInclude Include="input\midi\mtrk_event_t.h" />
     <ClInclude Include="input\midi\mtrk_event_t_internal.h" />
