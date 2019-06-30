@@ -4,6 +4,15 @@
 
 
 
+struct delta_time_test_data_t {
+	uint64_t dt_input;
+	int ans_n_bytes;  // number of bytes occupied by the vlq-encoded input
+	uint64_t ans_value;  // inputs > 0x0FFFFFFFu are clamped to 0x0FFFFFFFu
+};
+extern std::vector<delta_time_test_data_t> dt_test_set_a;
+
+
+
 //
 // Status bytes,data bytes; valid and invalid
 // "sbs" == "status bytes"
