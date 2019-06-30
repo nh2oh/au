@@ -291,13 +291,15 @@ TEST(mtrk_event_t_tests, metaEventsMoveAssignBigIntoSmall) {
 	mtrk_event_unit_test_helper_t hsinto(small_mvinto);
 	mtrk_event_unit_test_helper_t hbfrom(big_mvfrom);
 	small_mvinto=std::move(big_mvfrom);
-	// big now has the moved-from state of a 0-length text event
+	// 'big' now has the moved-from state of an array of 0x00u's; the first 
+	// 0x00u is interpreted as a delta_time == 0; the event is otherwise
+	// invalid
 	EXPECT_EQ(big_mvfrom.delta_time(),0);
-	EXPECT_EQ(big_mvfrom.type(),smf_event_type::meta);
+	EXPECT_EQ(big_mvfrom.type(),smf_event_type::invalid);
 	EXPECT_FALSE(hbfrom.is_big());
 	EXPECT_TRUE(hbfrom.is_small());
-	EXPECT_EQ(big_mvfrom.size(),4);
-	EXPECT_EQ(big_mvfrom.data_size(),3);
+	EXPECT_EQ(big_mvfrom.size(),1);
+	EXPECT_EQ(big_mvfrom.data_size(),0);
 	// small has the values as if constructed from big_data
 	EXPECT_EQ(small_mvinto.delta_time(),big_data.dtval);
 	EXPECT_EQ(small_mvinto.type(),smf_event_type::meta);
@@ -381,11 +383,11 @@ TEST(mtrk_event_t_tests, metaEventsMoveAssignSmallIntoBig) {
 	big_mvinto=std::move(small_mvfrom);
 	// small_mvfrom now has the moved-from state of a 0-length text event
 	EXPECT_EQ(small_mvfrom.delta_time(),0);
-	EXPECT_EQ(small_mvfrom.type(),smf_event_type::meta);
+	EXPECT_EQ(small_mvfrom.type(),smf_event_type::invalid);
 	EXPECT_FALSE(hsfrom.is_big());
 	EXPECT_TRUE(hsfrom.is_small());
-	EXPECT_EQ(small_mvfrom.size(),4);
-	EXPECT_EQ(small_mvfrom.data_size(),3);
+	EXPECT_EQ(small_mvfrom.size(),1);
+	EXPECT_EQ(small_mvfrom.data_size(),0);
 	// big_mvinto (which is no longer "big") has the values as if 
 	// constructed from small_data
 	EXPECT_EQ(big_mvinto.delta_time(),small_data.dtval);
