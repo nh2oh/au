@@ -9,10 +9,7 @@
 // move to dbklib.  
 
 
-//
-// template<typename T> T native2be(T val)
-//
-TEST(midi_raw_tests, native2be) {
+TEST(midi_raw_tests, toBEByteOrder) {
 	struct test_t {
 		uint32_t input {0};
 		uint32_t ans {};
@@ -27,7 +24,7 @@ TEST(midi_raw_tests, native2be) {
 	};
 
 	for (const auto& e : tests) {
-		auto res = native2be(e.input);
+		auto res = to_be_byte_order(e.input);
 		EXPECT_EQ(res,e.ans) << "Failed for e.ans==" << e.ans << "\n";
 	}
 }
@@ -109,35 +106,30 @@ TEST(midi_raw_tests, MIDIVLFieldEquivValueTests) {
 // midi_interpret_vl_field() has to be able to autodetect the end.  
 TEST(midi_raw_tests, VLFieldSize) {
 
-	std::vector<int32_t> onebyte_i32t {0x00,0x40,0x7F};
-	for (const auto& e : onebyte_i32t) {
+	std::vector<uint32_t> onebyte_ui32t {0x00u,0x40u,0x7Fu};
+	for (const auto& e : onebyte_ui32t) {
 		auto res = midi_vl_field_size(e);
 		EXPECT_EQ(res,1);
 	}
-	std::vector<int8_t> onebyte_i8t {0x00,0x40,0x7F};
-	for (const auto& e : onebyte_i8t) {
+	std::vector<uint8_t> onebyte_ui8t {0x00u,0x40u,0x7Fu};
+	for (const auto& e : onebyte_ui8t) {
 		auto res = midi_vl_field_size(e);
 		EXPECT_EQ(res,1);
 	}
 
-	std::vector<int32_t> twobyte_i32t {0x80,0x2000,0x3FFF};
-	for (const auto& e : twobyte_i32t) {
+	std::vector<uint32_t> twobyte_ui32t {0x80u,0x2000u,0x3FFFu};
+	for (const auto& e : twobyte_ui32t) {
 		auto res = midi_vl_field_size(e);
 		EXPECT_EQ(res,2);
 	}
 
-	std::vector<int32_t> threebyte_i32t {0x4000,0x100000,0x1FFFFF};
-	for (const auto& e : threebyte_i32t) {
+	std::vector<uint32_t> threebyte_ui32t {0x4000u,0x100000u,0x1FFFFFu};
+	for (const auto& e : threebyte_ui32t) {
 		auto res = midi_vl_field_size(e);
 		EXPECT_EQ(res,3);
 	}
 
-	std::vector<int32_t> fourbyte_i32t {0x00200000,0x08000000,0x0FFFFFFF};
-	for (const auto& e : fourbyte_i32t) {
-		auto res = midi_vl_field_size(e);
-		EXPECT_EQ(res,4);
-	}
-	std::vector<uint32_t> fourbyte_ui32t {0x00200000,0x08000000,0x0FFFFFFF};
+	std::vector<uint32_t> fourbyte_ui32t {0x00200000u,0x08000000u,0x0FFFFFFFu};
 	for (const auto& e : fourbyte_ui32t) {
 		auto res = midi_vl_field_size(e);
 		EXPECT_EQ(res,4);
