@@ -272,5 +272,8 @@
     <ClInclude Include="generic_iterator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="clamped_value.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
