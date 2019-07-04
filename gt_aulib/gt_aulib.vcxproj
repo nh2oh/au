@@ -106,6 +106,7 @@
     <ClCompile Include="mthd_t_test.cpp" />
     <ClCompile Include="mtrk_event_class_method_tests.cpp" />
     <ClCompile Include="mtrk_event_ctor_tests.cpp" />
+    <ClCompile Include="mtrk_event_sysex_factory_funcs.cpp" />
     <ClCompile Include="mtrk_event_t_meta_factory_funcs_tests.cpp" />
     <ClCompile Include="mtrk_event_t_tests.cpp" />
     <ClCompile Include="mtrk_event_get_size_unsafe_test.cpp" />
@@ -125,6 +126,7 @@
     <ClCompile Include="scale_spn_tests.cpp" />
     <ClCompile Include="scd_t_test.cpp" />
     <ClCompile Include="smf_chrono_iterator_test.cpp" />
+    <ClCompile Include="sysex_factory_test_data.cpp" />
     <ClCompile Include="tg_t_test.cpp" />
     <ClCompile Include="tmetg_t_test.cpp" />
     <ClCompile Include="ts_t_test.cpp" />
@@ -137,6 +139,7 @@
   <ItemGroup>
     <ClInclude Include="midi_raw_test_data.h" />
     <ClInclude Include="mtrk_test_data.h" />
+    <ClInclude Include="sysex_factory_test_data.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

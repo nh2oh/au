@@ -120,12 +120,21 @@
     <ClCompile Include="mtrk_event_class_method_tests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="mtrk_event_sysex_factory_funcs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sysex_factory_test_data.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="midi_raw_test_data.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="mtrk_test_data.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="sysex_factory_test_data.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
