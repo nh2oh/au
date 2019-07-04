@@ -11,6 +11,6 @@ struct sysex_test_set_a_t {
 	uint32_t ans_pyld_len {0};
 };
 
-extern std::vector<sysex_test_set_a_t> f0_tests_no_terminating_f7_on_pyld;
-
+extern std::vector<sysex_test_set_a_t> f0f7_tests_no_terminating_f7_on_pyld;
+extern std::vector<sysex_test_set_a_t> f0f7_tests_terminating_f7_on_pyld;
 
