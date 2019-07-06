@@ -32,7 +32,7 @@ TEST(mtrk_t_tests, DefaultCtorMultiplePushBackTestSetA) {
 
 
 // 
-// mtrk_t::insert(mtrk_iterator_t, const mtrk_event_t&)
+// mtrk_t::insert(iterator, const mtrk_event_t&)
 //
 TEST(mtrk_t_tests, InsertEventWithZeroDtIntoTestSetAMethodInsert) {
 	auto mtrk_tsa = make_tsa();  // "mtrk test set a"
@@ -155,7 +155,7 @@ TEST(mtrk_t_tests, AtTkonsetTestSetA) {
 
 // 
 // Insert at cumtk
-// mtrk_iterator_t insert(uint64_t, mtrk_event_t);
+// iterator insert(uint64_t, mtrk_event_t);
 //
 TEST(mtrk_t_tests, InsertWithZeroDtIntoTSAMethodInsertAtCumtk) {
 	auto mtrk_tsa = make_tsa();  // "mtrk test set a"
@@ -220,7 +220,7 @@ TEST(mtrk_t_tests, InsertWithZeroDtIntoTSAMethodInsertAtCumtk) {
 
 // 
 // Insert no tk shift:  New event has a delta_time == 0
-// mtrk_iterator_t insert_no_tkshift(mtrk_iterator_t, mtrk_event_t);
+// iterator insert_no_tkshift(iterator, mtrk_event_t);
 //
 TEST(mtrk_t_tests, InsertWithZeroDtIntoTSAMethodInsertNoTkShift) {
 	auto mtrk_tsa = make_tsa();  // "mtrk test set a"
@@ -251,8 +251,8 @@ TEST(mtrk_t_tests, InsertWithZeroDtIntoTSAMethodInsertNoTkShift) {
 
 	for (const auto& currtest : tests) {
 		auto new_mtrk_tsa = mtrk_tsa;
-		auto it_insert = mtrk_iterator_t(new_mtrk_tsa[currtest.insert_at_idx]);
-		
+		auto it_insert = mtrk_t::iterator(&(new_mtrk_tsa[currtest.insert_at_idx]));
+
 		auto it_new = new_mtrk_tsa.insert_no_tkshift(it_insert,e_on);
 
 		EXPECT_EQ(new_mtrk_tsa.nticks(),mtrk_tsa.nticks()+e_on.delta_time());
@@ -283,7 +283,7 @@ TEST(mtrk_t_tests, InsertWithZeroDtIntoTSAMethodInsertNoTkShift) {
 
 // 
 // Insert no tk shift:  New event has a delta_time > 0
-// mtrk_iterator_t insert_no_tkshift(mtrk_iterator_t, mtrk_event_t);
+// iterator insert_no_tkshift(iterator, mtrk_event_t);
 //
 TEST(mtrk_t_tests, InsertWithNzeroDtIntoTSAMethodInsertNoTkShift) {
 	struct test_t {
