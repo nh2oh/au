@@ -11,7 +11,7 @@
 // 1)  All members are unique
 //     => A chord_t represents a chord sounded by a single voice and not an "effective" chord
 //     resulting from many voices sounding together.  
-//     => What of insturments where the same note can be sounded > once simultaniously?  Ex, tune
+//     => What of insturments where the same note can be sounded > once simultaneously?  Ex, tune
 //     two strings of a guitar to the saem frq.  
 // 2)  There is no associated duration
 // 

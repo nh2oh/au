@@ -15,7 +15,7 @@ TEST(smf_chrono_iterator_tests, clementi_no_rs) {
 	std::vector<unsigned char> raw_bytes {
 		0x4D, 0x54, 0x68, 0x64,  // MThd
 		0x00, 0x00, 0x00, 0x06,
-		0x00, 0x01,  // Format 1 => simultanious tracks
+		0x00, 0x01,  // Format 1 => simultaneous tracks
 		0x00, 0x03,  // 3 tracks (0,1,2)
 		0x00, 0xF0,
 	
