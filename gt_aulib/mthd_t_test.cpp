@@ -28,8 +28,8 @@ TEST(mthd_container_tests, defaultCtor) {
 	EXPECT_EQ(cit,cend);
 
 	EXPECT_EQ(mthd.length(),6);
-	time_division_t tdf_ans {0x0078u};
-	EXPECT_EQ(mthd.division().val_,tdf_ans.val_);
+	time_division_t tdf_ans(0x0078u);
+	EXPECT_EQ(mthd.division().raw_value(),tdf_ans.raw_value());
 	EXPECT_EQ(mthd.format(),1);
 	EXPECT_EQ(mthd.ntrks(),0);
 }
@@ -51,8 +51,7 @@ TEST(mthd_container_tests, interpretSMPTEField) {
 	};
 
 	for (const auto& e : tests) {
-		time_division_t curr_tdf;
-		curr_tdf.val_ = e.input;
+		time_division_t curr_tdf(e.input);
 		EXPECT_EQ(type(curr_tdf),time_division_t::type::smpte);
 
 		auto curr_tcf = get_time_code_fmt(curr_tdf);
