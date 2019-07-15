@@ -174,7 +174,7 @@
       <PreprocessorDefinitions>_DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>$(dbk_proj_path)\dbklib</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(dbk_proj_path)\dbklib;D:\cpp\include\fmt\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
