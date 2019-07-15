@@ -1,5 +1,7 @@
 #include "gtest/gtest.h"
 #include "..\aulib\input\midi\midi_raw.h"
+#include "..\aulib\input\midi\generic_chunk_low_level.h"
+#include "..\aulib\input\midi\midi_vlq.h"
 #include <vector>
 #include <array>
 #include <cstdint>

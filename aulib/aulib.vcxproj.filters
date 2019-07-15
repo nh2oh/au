@@ -126,6 +126,9 @@
     <ClCompile Include="generic_iterator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="input\midi\generic_chunk_low_level.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="util\au_util.h">
@@ -267,6 +270,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="clamped_value.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="input\midi\generic_chunk_low_level.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

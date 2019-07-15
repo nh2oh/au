@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 #include "..\aulib\input\midi\mtrk_event_t.h"
 #include "..\aulib\input\midi\mtrk_event_methods.h"
+#include "..\aulib\input\midi\midi_vlq.h"
 #include <vector>
 #include <cstdint>
 

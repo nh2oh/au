@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include "..\aulib\input\midi\midi_raw.h"
+#include "..\aulib\input\midi\midi_vlq.h"
 #include "..\aulib\input\midi\mtrk_event_t.h"
 #include "..\aulib\input\midi\mtrk_event_methods.h"
 #include <vector>
