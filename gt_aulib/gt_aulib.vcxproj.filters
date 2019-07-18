@@ -126,6 +126,9 @@
     <ClCompile Include="sysex_factory_test_data.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="mthd_test_data.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="midi_raw_test_data.h">
@@ -135,6 +138,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="sysex_factory_test_data.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mthd_test_data.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
