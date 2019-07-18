@@ -4,6 +4,7 @@
 #include <array>
 #include <cstdint>
 
+// TODO:  Fix the acrobatics about making the time_division_t objects...
 
 //
 // Tests for:
@@ -30,8 +31,9 @@ TEST(mthd_tests, defaultCtor) {
 	EXPECT_EQ(cit,cend);
 
 	EXPECT_EQ(mthd.length(),6);
-	time_division_t tdf_ans(0x0078u);
-	EXPECT_EQ(mthd.division().raw_value(),tdf_ans.raw_value());
+	time_division_t tdf_ans = make_time_division_from_raw(0x0078u).value;
+	auto tdf_ans_rv = tdf_ans.get_raw_value();
+	EXPECT_EQ(mthd.division().get_raw_value(),tdf_ans.get_raw_value());
 	EXPECT_EQ(mthd.division().get_tpq(),static_cast<uint16_t>(120));
 	EXPECT_EQ(mthd.format(),1);
 	EXPECT_EQ(mthd.ntrks(),0);
@@ -144,12 +146,13 @@ TEST(mthd_tests, interpretSMPTEField) {
 	};
 
 	for (const auto& e : tests) {
-		time_division_t curr_tdf(e.input);
-		EXPECT_EQ(type(curr_tdf),time_division_t::type::smpte);
+		auto curr_maybe = make_time_division_from_raw(e.input);
+		time_division_t curr_tdf = curr_maybe.value;
+		EXPECT_EQ(curr_tdf.get_type(),time_division_t::type::smpte);
 
-		auto curr_tcf = get_time_code_fmt(curr_tdf);
+		auto curr_tcf = curr_tdf.get_smpte().time_code; //get_time_code_fmt(curr_tdf);
 		EXPECT_EQ(curr_tcf,e.ans_tcf);
-		auto curr_upf = get_units_per_frame(curr_tdf);
+		auto curr_upf = curr_tdf.get_smpte().subframes; //get_units_per_frame(curr_tdf);
 		EXPECT_EQ(curr_upf,e.ans_upf);
 	}
 }
