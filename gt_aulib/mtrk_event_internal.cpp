@@ -418,6 +418,38 @@ TEST(mtrk_event_t_internal, multipleResizeValueStability) {
 }
 
 
+// push_back() can start from a size()==0 'small' object and make a
+// 'big' object w/ size()==that of the input
+TEST(mtrk_event_t_internal, repeatedPushBackBigDataSrc) {
+	sbo_t x = sbo_t();
+	auto data = f100;
+	EXPECT_TRUE(data.size()>sbo_t::capacity_small);
+	// The whole point of this test is to be able to make 
+	// 'big' objects
+
+	for (int i=0; i<data.size(); ++i) {
+		EXPECT_EQ(x.size(),i);
+		x.push_back(data[i]);
+		EXPECT_EQ(x.size(),i+1);
+		EXPECT_TRUE(x.capacity()>=x.size());
+		EXPECT_EQ(*(x.end()-1),data[i]);
+		if (x.size() <= sbo_t::capacity_small) {
+			// For an object that starts out as small, repeated push_back()'s
+			// will not cause a small->big transition until the last possible
+			// moment
+			EXPECT_FALSE(x.debug_is_big());
+			EXPECT_EQ(x.capacity(),sbo_t::capacity_small);
+		} else {
+			EXPECT_TRUE(x.debug_is_big());
+			EXPECT_TRUE(x.capacity()>sbo_t::capacity_small);
+		}
+	}
+
+	for (int i=0; i<data.size(); ++i) {
+		EXPECT_EQ(*(x.begin()+i),data[i]);
+	}
+
+}
 
 
 
