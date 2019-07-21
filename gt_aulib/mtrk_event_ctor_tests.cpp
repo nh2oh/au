@@ -354,7 +354,8 @@ TEST(mtrk_event_ctor_tests, metaEventsSmallZeroRS) {
 		
 		EXPECT_TRUE(h.is_small());
 		EXPECT_FALSE(h.is_big());
-		EXPECT_EQ(c2.size(),e.ans.size);
+		EXPECT_EQ(c2.size(),e.bytes.size());
+		EXPECT_EQ(c2.event_size(),e.ans.size);
 		EXPECT_EQ(c2.data_size(),e.ans.data_size);
 		//EXPECT_TRUE(c2.validate());
 		for (int i=0; i<e.ans.size; ++i) {

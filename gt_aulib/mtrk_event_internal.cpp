@@ -6,10 +6,10 @@
 using namespace mtrk_event_t_internal;
 
 std::vector<unsigned char> small_sizes {
-	0,1,2,7,17,20,22,sbo_t::capacity_small
+	0,1,2,7,17,20,22,small_bytevec_t::capacity_small
 };
 std::vector<unsigned char> big_sizes {
-	sbo_t::capacity_small+1,sbo_t::capacity_small+2,25,30,36
+	small_bytevec_t::capacity_small+1,small_bytevec_t::capacity_small+2,25,30,36
 };
 // size() == 6
 std::vector<unsigned char> a {
@@ -42,7 +42,7 @@ std::vector<unsigned char> f100 {
 	218,219,210,211,212
 };
 
-void fill_sbo_to_sbo_size(sbo_t& sbo, std::vector<unsigned char>&v) {
+void fill_small_bytevec_to_sbo_size(small_bytevec_t& sbo, std::vector<unsigned char>&v) {
 	if (sbo.size() > v.size()) {
 		std::abort();
 	}
@@ -62,10 +62,10 @@ void fill_sbo_to_sbo_size(sbo_t& sbo, std::vector<unsigned char>&v) {
 // moveAssignSelfBig/Small?!
 //
 TEST(mtrk_event_t_internal, defaultCtor) {
-	sbo_t x = sbo_t();
+	small_bytevec_t x = small_bytevec_t();
 	EXPECT_FALSE(x.debug_is_big());
 	EXPECT_EQ(x.size(),0);
-	EXPECT_EQ(x.capacity(),sbo_t::capacity_small);
+	EXPECT_EQ(x.capacity(),small_bytevec_t::capacity_small);
 	EXPECT_EQ(x.begin(),x.end());
 	EXPECT_EQ(x.end()-x.begin(),0);
 	for (auto it=x.raw_begin()+1; it<x.raw_end(); ++it) {
@@ -74,12 +74,12 @@ TEST(mtrk_event_t_internal, defaultCtor) {
 }
 
 TEST(mtrk_event_t_internal, copyCtorSmall) {
-	sbo_t src = sbo_t();
+	small_bytevec_t src = small_bytevec_t();
 	src.resize(a.size());
-	fill_sbo_to_sbo_size(src,a);
+	fill_small_bytevec_to_sbo_size(src,a);
 	EXPECT_FALSE(src.debug_is_big());
 
-	sbo_t dest = src;
+	small_bytevec_t dest = src;
 	EXPECT_FALSE(dest.debug_is_big());
 	EXPECT_EQ(src.size(),dest.size());
 	EXPECT_EQ(src.capacity(),dest.capacity());
@@ -89,12 +89,12 @@ TEST(mtrk_event_t_internal, copyCtorSmall) {
 }
 
 TEST(mtrk_event_t_internal, copyCtorBig) {
-	sbo_t src = sbo_t();
+	small_bytevec_t src = small_bytevec_t();
 	src.resize(f100.size());
-	fill_sbo_to_sbo_size(src,f100);
+	fill_small_bytevec_to_sbo_size(src,f100);
 	EXPECT_TRUE(src.debug_is_big());
 
-	sbo_t dest = src;
+	small_bytevec_t dest = src;
 	EXPECT_TRUE(dest.debug_is_big());
 	EXPECT_EQ(src.size(),dest.size());
 	EXPECT_EQ(src.capacity(),dest.capacity());
@@ -105,14 +105,14 @@ TEST(mtrk_event_t_internal, copyCtorBig) {
 
 // Copy assign 'big' src to 'small' dest
 TEST(mtrk_event_t_internal, copyAssignBigToSmall) {
-	sbo_t src = sbo_t();
+	small_bytevec_t src = small_bytevec_t();
 	src.resize(f100.size());
-	fill_sbo_to_sbo_size(src,f100);
+	fill_small_bytevec_to_sbo_size(src,f100);
 	EXPECT_TRUE(src.debug_is_big());  // src is big
 
-	sbo_t dest = sbo_t();
+	small_bytevec_t dest = small_bytevec_t();
 	dest.resize(b.size());
-	fill_sbo_to_sbo_size(dest,b);
+	fill_small_bytevec_to_sbo_size(dest,b);
 	EXPECT_FALSE(dest.debug_is_big());  // dest is small
 
 	dest = src;
@@ -131,14 +131,14 @@ TEST(mtrk_event_t_internal, copyAssignBigToSmall) {
 // Assigning a 'small' object to a 'big' object causes a big->small
 // transition in the destination object.  
 TEST(mtrk_event_t_internal, copyAssignSmallToBig) {
-	sbo_t src = sbo_t();
+	small_bytevec_t src = small_bytevec_t();
 	src.resize(b.size());
-	fill_sbo_to_sbo_size(src,f100);
+	fill_small_bytevec_to_sbo_size(src,f100);
 	EXPECT_FALSE(src.debug_is_big());  // src is small
 
-	sbo_t dest = sbo_t();
+	small_bytevec_t dest = small_bytevec_t();
 	dest.resize(f100.size());
-	fill_sbo_to_sbo_size(dest,f100);
+	fill_small_bytevec_to_sbo_size(dest,f100);
 	EXPECT_TRUE(dest.debug_is_big());  // dest is big
 
 	dest = src;
@@ -151,15 +151,15 @@ TEST(mtrk_event_t_internal, copyAssignSmallToBig) {
 }
 
 TEST(mtrk_event_t_internal, moveCtorSmall) {
-	sbo_t src = sbo_t();
+	small_bytevec_t src = small_bytevec_t();
 	auto data = a;
 	src.resize(data.size());
-	fill_sbo_to_sbo_size(src,data);
+	fill_small_bytevec_to_sbo_size(src,data);
 	EXPECT_FALSE(src.debug_is_big());
 	auto src_size = src.size();
 	auto src_cap = src.capacity();
 
-	sbo_t dest = std::move(src);
+	small_bytevec_t dest = std::move(src);
 	EXPECT_FALSE(dest.debug_is_big());
 	EXPECT_EQ(src_size,dest.size());
 	EXPECT_EQ(src_cap,dest.capacity());
@@ -169,15 +169,15 @@ TEST(mtrk_event_t_internal, moveCtorSmall) {
 }
 
 TEST(mtrk_event_t_internal, moveCtorBig) {
-	sbo_t src = sbo_t();
+	small_bytevec_t src = small_bytevec_t();
 	auto data = f100;
 	src.resize(data.size());
-	fill_sbo_to_sbo_size(src,data);
+	fill_small_bytevec_to_sbo_size(src,data);
 	EXPECT_TRUE(src.debug_is_big());
 	auto src_size = src.size();
 	auto src_cap = src.capacity();
 
-	sbo_t dest = std::move(src);
+	small_bytevec_t dest = std::move(src);
 	EXPECT_TRUE(dest.debug_is_big());
 	EXPECT_EQ(src_size,dest.size());
 	EXPECT_EQ(src_cap,dest.capacity());
@@ -187,11 +187,11 @@ TEST(mtrk_event_t_internal, moveCtorBig) {
 }
 
 TEST(mtrk_event_t_internal, defaultCtorReserveToSmallMax) {
-	sbo_t x = sbo_t();
-	x.reserve(sbo_t::capacity_small);
+	small_bytevec_t x = small_bytevec_t();
+	x.reserve(small_bytevec_t::capacity_small);
 	EXPECT_FALSE(x.debug_is_big());
 	EXPECT_EQ(x.size(),0);
-	EXPECT_EQ(x.capacity(),sbo_t::capacity_small);
+	EXPECT_EQ(x.capacity(),small_bytevec_t::capacity_small);
 	for (auto it=x.raw_begin()+1; it<x.raw_end(); ++it) {
 		EXPECT_EQ(*it,0x00u);
 	}
@@ -200,16 +200,16 @@ TEST(mtrk_event_t_internal, defaultCtorReserveToSmallMax) {
 }
 
 TEST(mtrk_event_t_internal, defaultCtorResizeToSmallMax) {
-	sbo_t x = sbo_t();
-	x.resize(sbo_t::capacity_small);
+	small_bytevec_t x = small_bytevec_t();
+	x.resize(small_bytevec_t::capacity_small);
 	EXPECT_FALSE(x.debug_is_big());
-	EXPECT_EQ(x.size(),sbo_t::capacity_small);
-	EXPECT_EQ(x.capacity(),sbo_t::capacity_small);
+	EXPECT_EQ(x.size(),small_bytevec_t::capacity_small);
+	EXPECT_EQ(x.capacity(),small_bytevec_t::capacity_small);
 	for (auto it=x.begin(); it<x.end(); ++it) {
 		EXPECT_EQ(*it,0x00u);
 	}
 	EXPECT_NE(x.begin(),x.end());
-	EXPECT_EQ(x.end()-x.begin(),sbo_t::capacity_small);
+	EXPECT_EQ(x.end()-x.begin(),small_bytevec_t::capacity_small);
 	for (auto it=x.raw_begin()+1; it<x.raw_end(); ++it) {
 		EXPECT_EQ(*it,0x00u);
 	}
@@ -218,12 +218,12 @@ TEST(mtrk_event_t_internal, defaultCtorResizeToSmallMax) {
 // Resize leaves values initially present @ indices < new_size
 // unchanged.  
 TEST(mtrk_event_t_internal, smallObjectMultipleResize) {
-	sbo_t x = sbo_t();
+	small_bytevec_t x = small_bytevec_t();
 	x.resize(b.size());
 	EXPECT_FALSE(x.debug_is_big());
 	EXPECT_EQ(x.size(),b.size());
 
-	fill_sbo_to_sbo_size(x,b);
+	fill_small_bytevec_to_sbo_size(x,b);
 	auto it = x.begin();
 	for (int i=0; i<x.size(); ++i) {
 		EXPECT_EQ(*it++,b[i]);
@@ -231,13 +231,13 @@ TEST(mtrk_event_t_internal, smallObjectMultipleResize) {
 
 	std::vector<int> resize_to {
 		x.size(),
-		0,1,2,17,7,20,22,sbo_t::capacity_small
+		0,1,2,17,7,20,22,small_bytevec_t::capacity_small
 	};
 	for (const auto& new_sz : resize_to) {
 		x.resize(new_sz);
 		EXPECT_FALSE(x.debug_is_big());
 		EXPECT_EQ(x.size(),new_sz);
-		EXPECT_EQ(x.capacity(),sbo_t::capacity_small);
+		EXPECT_EQ(x.capacity(),small_bytevec_t::capacity_small);
 		EXPECT_EQ(x.end()-x.begin(),new_sz);
 		auto it = x.begin();
 		for (int i=0; i<x.size(); ++i) {
@@ -245,17 +245,17 @@ TEST(mtrk_event_t_internal, smallObjectMultipleResize) {
 		}
 		// Reset & refill x
 		x.resize(b.size());
-		fill_sbo_to_sbo_size(x,b);
+		fill_small_bytevec_to_sbo_size(x,b);
 	}
 }
 
 // Resize can change a small object -> a big object, and alters
 // both the size and capacity
 TEST(mtrk_event_t_internal, createBigObjByResize) {
-	sbo_t x = sbo_t();
+	small_bytevec_t x = small_bytevec_t();
 	EXPECT_FALSE(x.debug_is_big());  // Initially small
 	int resize_to = d24.size();
-	if (resize_to<=sbo_t::capacity_small) {
+	if (resize_to<=small_bytevec_t::capacity_small) {
 		// The whole point of this test is to make a 'big' object
 		std::abort();
 	}
@@ -271,10 +271,10 @@ TEST(mtrk_event_t_internal, createBigObjByResize) {
 // Reserve can change a small object -> a big object, and alters
 // the capacity but not the size
 TEST(mtrk_event_t_internal, createBigObjByReserve) {
-	sbo_t x = sbo_t();
+	small_bytevec_t x = small_bytevec_t();
 	EXPECT_FALSE(x.debug_is_big());  // Initially small
 	int reserve_to = e25.size();
-	if (reserve_to<=sbo_t::capacity_small) {
+	if (reserve_to<=small_bytevec_t::capacity_small) {
 		// The whole point of this test is to make a 'big' object
 		std::abort();
 	}
@@ -291,21 +291,21 @@ TEST(mtrk_event_t_internal, createBigObjByReserve) {
 // than size().  All values initially present are stable.  
 // Capacity is increased but never decreased.  
 TEST(mtrk_event_t_internal, multipleReserveValueStability) {
-	sbo_t x = sbo_t();
+	small_bytevec_t x = small_bytevec_t();
 	auto data = e25;
-	if (data.size()<=sbo_t::capacity_small) {
+	if (data.size()<=small_bytevec_t::capacity_small) {
 		// The whole point of this test is to be able to make 
 		// 'big' objects
 		std::abort();
 	}
 	x.resize(data.size());
-	fill_sbo_to_sbo_size(x,data);
+	fill_small_bytevec_to_sbo_size(x,data);
 	int init_size = data.size();
 	int init_cap = data.capacity();
 
 	std::vector<int> reserve_to_set {
 		x.size(),
-		24,78,6,100,2,0,17,init_size,7,54,20,84,67,22,sbo_t::capacity_small
+		24,78,6,100,2,0,17,init_size,7,54,20,84,67,22,small_bytevec_t::capacity_small
 	};
 	for (const auto& reserve_to : reserve_to_set) {
 		auto prior_sz = x.size();
@@ -328,19 +328,19 @@ TEST(mtrk_event_t_internal, multipleReserveValueStability) {
 
 // Resize can interconvert between small and big objects
 TEST(mtrk_event_t_internal, interconvertSmallAndBigByResize) {
-	sbo_t x = sbo_t();
+	small_bytevec_t x = small_bytevec_t();
 	EXPECT_FALSE(x.debug_is_big());  // Initially small
 
 	std::vector<unsigned char> assorted_sizes {
-		sbo_t::capacity_small+1,0,
-		7,17,20,22,sbo_t::capacity_small,
-		sbo_t::capacity_small+2,25,30,36,
+		small_bytevec_t::capacity_small+1,0,
+		7,17,20,22,small_bytevec_t::capacity_small,
+		small_bytevec_t::capacity_small+2,25,30,36,
 		112,2,113,24,114,115,116,117,23,118,119
 	};
 
 	for (const auto& resize_to : assorted_sizes) {
 		x.resize(resize_to);
-		if (resize_to>sbo_t::capacity_small) {
+		if (resize_to>small_bytevec_t::capacity_small) {
 			EXPECT_TRUE(x.debug_is_big());
 		} else {
 			EXPECT_FALSE(x.debug_is_big());
@@ -358,9 +358,9 @@ TEST(mtrk_event_t_internal, interconvertSmallAndBigByResize) {
 
 
 TEST(mtrk_event_t_internal, bigObjBasicConstFuntions) {
-	sbo_t x = sbo_t();
+	small_bytevec_t x = small_bytevec_t();
 	int resize_to = e25.size();
-	if (resize_to<=sbo_t::capacity_small) {
+	if (resize_to<=small_bytevec_t::capacity_small) {
 		// The whole point of this test is to make a 'big' object
 		std::abort();
 	}
@@ -372,7 +372,7 @@ TEST(mtrk_event_t_internal, bigObjBasicConstFuntions) {
 	EXPECT_NE(x.begin(),x.end());
 	EXPECT_EQ(x.end()-x.begin(),x.size());
 	
-	fill_sbo_to_sbo_size(x,e25);
+	fill_small_bytevec_to_sbo_size(x,e25);
 	int i=0;
 	for (auto it=x.begin(); it<x.end(); ++it) {
 		EXPECT_EQ(*it,e25[i++]);
@@ -383,23 +383,23 @@ TEST(mtrk_event_t_internal, bigObjBasicConstFuntions) {
 // Resize leaves values initially present @ indices < new_size
 // unchanged.  
 TEST(mtrk_event_t_internal, multipleResizeValueStability) {
-	sbo_t x = sbo_t();
+	small_bytevec_t x = small_bytevec_t();
 	auto data = f100;
-	if (data.size()<=sbo_t::capacity_small) {
+	if (data.size()<=small_bytevec_t::capacity_small) {
 		// The whole point of this test is to be able to make 
 		// 'big' objects
 		std::abort();
 	}
 	x.resize(data.size());
-	fill_sbo_to_sbo_size(x,f100);
+	fill_small_bytevec_to_sbo_size(x,f100);
 
 	std::vector<int> resize_to {
 		x.size(),
-		24,78,6,100,2,0,17,7,54,20,84,67,22,sbo_t::capacity_small
+		24,78,6,100,2,0,17,7,54,20,84,67,22,small_bytevec_t::capacity_small
 	};
 	for (const auto& new_sz : resize_to) {
 		x.resize(new_sz);
-		if (new_sz>sbo_t::capacity_small) {
+		if (new_sz>small_bytevec_t::capacity_small) {
 			EXPECT_TRUE(x.debug_is_big());
 		} else {
 			EXPECT_FALSE(x.debug_is_big());
@@ -413,7 +413,7 @@ TEST(mtrk_event_t_internal, multipleResizeValueStability) {
 		}
 		// Reset & refill x
 		x.resize(f100.size());
-		fill_sbo_to_sbo_size(x,f100);
+		fill_small_bytevec_to_sbo_size(x,f100);
 	}
 }
 
@@ -421,9 +421,9 @@ TEST(mtrk_event_t_internal, multipleResizeValueStability) {
 // push_back() can start from a size()==0 'small' object and make a
 // 'big' object w/ size()==that of the input
 TEST(mtrk_event_t_internal, repeatedPushBackBigDataSrc) {
-	sbo_t x = sbo_t();
+	small_bytevec_t x = small_bytevec_t();
 	auto data = f100;
-	EXPECT_TRUE(data.size()>sbo_t::capacity_small);
+	EXPECT_TRUE(data.size()>small_bytevec_t::capacity_small);
 	// The whole point of this test is to be able to make 
 	// 'big' objects
 
@@ -433,15 +433,15 @@ TEST(mtrk_event_t_internal, repeatedPushBackBigDataSrc) {
 		EXPECT_EQ(x.size(),i+1);
 		EXPECT_TRUE(x.capacity()>=x.size());
 		EXPECT_EQ(*(x.end()-1),data[i]);
-		if (x.size() <= sbo_t::capacity_small) {
+		if (x.size() <= small_bytevec_t::capacity_small) {
 			// For an object that starts out as small, repeated push_back()'s
 			// will not cause a small->big transition until the last possible
 			// moment
 			EXPECT_FALSE(x.debug_is_big());
-			EXPECT_EQ(x.capacity(),sbo_t::capacity_small);
+			EXPECT_EQ(x.capacity(),small_bytevec_t::capacity_small);
 		} else {
 			EXPECT_TRUE(x.debug_is_big());
-			EXPECT_TRUE(x.capacity()>sbo_t::capacity_small);
+			EXPECT_TRUE(x.capacity()>small_bytevec_t::capacity_small);
 		}
 	}
 

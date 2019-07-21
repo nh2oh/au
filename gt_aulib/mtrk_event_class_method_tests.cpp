@@ -24,6 +24,7 @@ TEST(mtrk_event_class_method_tests, setDeltaTimeOnDefaultCtordEvent) {
 		EXPECT_TRUE(h.is_small());
 		EXPECT_FALSE(h.is_big());
 		EXPECT_EQ(curr_ev.size(),curr_dt_sz);
+		EXPECT_EQ(curr_ev.event_size(),curr_dt_sz);
 		EXPECT_EQ(curr_ev.data_size(),0);
 		EXPECT_EQ(curr_ev.capacity(),23);
 		EXPECT_EQ(curr_ev.status_byte(),0x00u);
