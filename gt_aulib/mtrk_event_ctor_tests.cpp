@@ -5,38 +5,38 @@
 #include "..\aulib\input\midi\mtrk_event_methods.h"
 #include <vector>
 #include <cstdint>
+#include <array>
 
+std::array<unsigned char,4> default_ctord_data {0x00u,0x90u,0x3Cu,0x3Fu};
 
 // 
-// Test of the default-constructed value, a 1-sized small-capacity event
-// w/a 0 delta-time.  Although the event array is all 0x00u's, size()==1
-// (not zero), b/c the initial 0x00u is interpreted as a 1-byte delta-time.  
+// Test of the default-constructed value, a middle C (note-num==60)
+// Note-on event on channel "1" w/ velocity 60 and delta-time == 0.  
 //
-//// TODO:  Solve mtrk_event_t_internal::small_capacity() linker problem
-//
-TEST(mtrk_event_ctor_tests, defaultConstructedValue) {
-	auto default_event = mtrk_event_t();
-	mtrk_event_unit_test_helper_t h(default_event);
+TEST(mtrk_event_ctor_tests, defaultCtor) {
+	const auto d = mtrk_event_t();
 
-	EXPECT_EQ(default_event.delta_time(),0);
-	EXPECT_EQ(default_event.type(),smf_event_type::invalid);
-	EXPECT_TRUE(h.is_small());
-	EXPECT_FALSE(h.is_big());
-	EXPECT_EQ(default_event.size(),1);  
-	EXPECT_EQ(default_event.data_size(),0);
-	EXPECT_EQ(default_event.capacity(),23);
-	EXPECT_EQ(default_event.status_byte(),0x00u);
-	EXPECT_EQ(default_event.running_status(),0x00u);
-	EXPECT_FALSE(default_event.verify());
+	EXPECT_EQ(d.size(),4);
+	EXPECT_TRUE(d.size()<=d.capacity());
+	EXPECT_EQ(d.dt_end()-d.dt_begin(),1);
+	EXPECT_EQ(d.end()-d.begin(),d.size());
+
+	EXPECT_EQ(d.type(),smf_event_type::channel);
+	EXPECT_EQ(d.delta_time(),0);
+	EXPECT_EQ(d.status_byte(),0x90u);
+	EXPECT_EQ(d.running_status(),0x90u);
+	EXPECT_EQ(d.data_size(),3);
+	
+	for (int i=0; i<d.size(); ++i) {
+		EXPECT_EQ(d[i],default_ctord_data[i]);
+	}
 }
 
 // 
-// Test of the mtrk_event_t(uint32_t dt) ctor, which constructs a dt-sized 
-// small-capacity event.  Although the event array beyond the delta-time is
-// all 0x00u's.  If the delta-time value provided to the ctor exceeds the max
-// value for a 4-byte vlq (0x0FFFFFFFu), delta_time is set to this maximum.  
-//
-// TODO:  Solve mtrk_event_t_internal::small_capacity() linker problem
+// Test of the mtrk_event_t(uint32_t dt) ctor, which constructs a middle C
+// (note-num==60) note-on event on channel "1" w/ velocity 60 and as
+// specified.  For values of delta_time>max allowed, the value written is the
+// max allowed.  
 //
 TEST(mtrk_event_ctor_tests, dtOnlyCtor) {
 	std::vector<uint32_t> tests {
@@ -49,34 +49,65 @@ TEST(mtrk_event_ctor_tests, dtOnlyCtor) {
 		0x1FFFFFFFu,0x2FFFFFFFu,0x7FFFFFFFu,0x8FFFFFFFu,
 		0x9FFFFFFFu,0xBFFFFFFFu,0xEFFFFFFFu,0xFFFFFFFFu
 	};
-	for (const auto& e : tests) {
-		auto curr_dt_ans = (0x0FFFFFFFu&e);
-		auto curr_dt_sz = 1;
-		if ((e>=0x00u) && (e < 0x80u)) {
-			curr_dt_sz = 1;
-		} else if ((e>= 0x80u) && (e<0x4000u)) {
-			curr_dt_sz = 2;
-		} else if ((e>= 0x4000u) && (e<0x00200000u)) {
-			curr_dt_sz = 3;
+
+	std::array<unsigned char,6> ans_dt_encoded;
+
+	for (const auto& tc : tests) {
+		auto ans_dt = (0x0FFFFFFFu&tc);
+		ans_dt_encoded.fill(0x00u);
+		write_delta_time(ans_dt,ans_dt_encoded.begin());
+		auto ans_dt_sz = 1;
+		if ((tc>=0x00u) && (tc<0x80u)) {
+			ans_dt_sz = 1;
+		} else if ((tc>= 0x80u) && (tc<0x4000u)) {
+			ans_dt_sz = 2;
+		} else if ((tc>= 0x4000u) && (tc<0x00200000u)) {
+			ans_dt_sz = 3;
 		} else {
-			curr_dt_sz = 4;
+			ans_dt_sz = 4;
 		}
+		auto ans_data_size = 3;
+		auto ans_size = ans_data_size + ans_dt_sz;
+		
+		const mtrk_event_t ev(tc);
 
-		mtrk_event_t curr_ev(e);
-		mtrk_event_unit_test_helper_t h(curr_ev);
+		EXPECT_EQ(ev.size(),ans_size);
+		EXPECT_TRUE(ev.size()<=ev.capacity());
+		EXPECT_EQ(ev.dt_end()-ev.dt_begin(),ans_dt_sz);
+		EXPECT_EQ(ev.end()-ev.begin(),ev.size());
 
-		EXPECT_EQ(curr_ev.delta_time(),curr_dt_ans);
-		EXPECT_EQ(curr_ev.type(),smf_event_type::invalid);
-		EXPECT_TRUE(h.is_small());
-		EXPECT_FALSE(h.is_big());
-		EXPECT_EQ(curr_ev.size(),curr_dt_sz);
-		EXPECT_EQ(curr_ev.data_size(),0);
-		EXPECT_EQ(curr_ev.capacity(),23);
-		EXPECT_EQ(curr_ev.status_byte(),0x00u);
-		EXPECT_EQ(curr_ev.running_status(),0x00u);
-		EXPECT_FALSE(curr_ev.verify());
+		EXPECT_EQ(ev.type(),smf_event_type::channel);
+		EXPECT_EQ(ev.delta_time(),ans_dt);
+		EXPECT_EQ(ev.status_byte(),0x90u);
+		EXPECT_EQ(ev.running_status(),0x90u);
+		auto ds=ev.data_size();
+		EXPECT_EQ(ev.data_size(),ans_data_size);
+	
+		for (int i=0; i<ans_dt_sz; ++i) {
+			EXPECT_EQ(ev[i],ans_dt_encoded[i]);
+		}
+		for (int i=ans_dt_sz; i<ev.size(); ++i) {
+			EXPECT_EQ(ev[i],default_ctord_data[i-(ans_dt_sz-1)]);
+		}
 	}
 }
+
+
+
+
+//
+// {
+//   {{input arry data},rs} {{ans arry data},size, cap}
+// }
+// I am testing the ctors, not the delta_time(), data_start(), etc 
+// methods that _interpret_ the data...
+//
+// _also_, i don't even like these ctors...
+//
+//
+
+
+
 
 
 //
@@ -90,7 +121,6 @@ TEST(mtrk_event_ctor_tests, assortedSMFEventsSmallZeroRS) {
 	struct test_ans_t {
 		bool is_small {true};
 		uint32_t delta_time {0};
-		//smf_event_type type {smf_event_type::meta};
 		uint32_t size {0};
 		uint32_t data_size {0};
 	};
@@ -123,19 +153,14 @@ TEST(mtrk_event_ctor_tests, assortedSMFEventsSmallZeroRS) {
 		{true,200,5,3}},
 	};
 
-	for (const auto& e : tests) {
-		mtrk_event_t c2(e.bytes.data(),e.bytes.size(),0);
-		//EXPECT_EQ(c.type(),e.ans.type);  // TODO:  Add test when vs fixes its enum class issues
-		EXPECT_EQ(c2.delta_time(),e.ans.delta_time);
+	for (const auto& tc : tests) {
+		const mtrk_event_t c2(tc.bytes.data(),tc.bytes.size(),0);
+		EXPECT_EQ(c2.delta_time(),tc.ans.delta_time);
 
-		mtrk_event_unit_test_helper_t h(c2);
-		EXPECT_TRUE(h.is_small());
-		EXPECT_FALSE(h.is_big());
-		EXPECT_EQ(c2.size(),e.ans.size);
-		EXPECT_EQ(c2.data_size(),e.ans.data_size);
-		for (int i=0; i<e.ans.size; ++i) {
-			EXPECT_EQ(c2[i],e.bytes[i]);
-			EXPECT_EQ(*(c2.data()+i),e.bytes[i]);
+		EXPECT_EQ(c2.size(),tc.ans.size);
+		EXPECT_EQ(c2.data_size(),tc.ans.data_size);
+		for (int i=0; i<c2.size(); ++i) {
+			EXPECT_EQ(c2[i],tc.bytes[i]);
 		}
 	}
 }
@@ -270,27 +295,21 @@ TEST(mtrk_event_ctor_tests, randomSMFEvntsSmallRandomRS) {
 		{{0xC0,0x80,0x80,0x00,0x90,0x03,0x0A},0xD1,0x90,2,3,134217728,4},
 	};
 
-	for (auto& e : tests) {
-		mtrk_event_t c2(e.data.data(),e.data.size(),e.midisb_prev_event);
-		//EXPECT_EQ(c.type(),e.ans.type);  // TODO:  Add test when vs fixes its enum class issues
-		EXPECT_EQ(c2.delta_time(),e.dt_value);
-		mtrk_event_unit_test_helper_t h(c2);
+	for (auto& tc : tests) {
+		const mtrk_event_t c2(tc.data.data(),tc.data.size(),tc.midisb_prev_event);
+		EXPECT_EQ(c2.delta_time(),tc.dt_value);
 
-		auto data_size_with_status_byte = e.n_data_bytes + 1;
-		bool input_is_in_rs = e.data_length < data_size_with_status_byte;
-		auto size_with_status_byte = e.dt_field_size + data_size_with_status_byte;
+		auto data_size_with_status_byte = tc.n_data_bytes + 1;
+		bool input_is_in_rs = tc.data_length < data_size_with_status_byte;
+		auto size_with_status_byte = tc.dt_field_size + data_size_with_status_byte;
 
-		EXPECT_TRUE(h.is_small());
-		EXPECT_FALSE(h.is_big());
-		EXPECT_EQ(c2.size(),size_with_status_byte);  //EXPECT_EQ(c2.size(),e.data.size());
-		EXPECT_EQ(c2.data_size(),data_size_with_status_byte);  //EXPECT_EQ(c2.data_size(),e.data_length);
-		//EXPECT_TRUE(c2.validate());
+		EXPECT_EQ(c2.size(),size_with_status_byte);
+		EXPECT_EQ(c2.data_size(),data_size_with_status_byte);
 		if (input_is_in_rs) {
-			e.data.insert(e.data.begin()+e.dt_field_size,e.applic_midi_status);
+			tc.data.insert(tc.data.begin()+tc.dt_field_size,tc.applic_midi_status);
 		}
-		for (int i=0; i<c2.size(); ++i) {  //for (int i=0; i<e.data.size(); ++i) {
-			EXPECT_EQ(c2[i],e.data[i]);
-			EXPECT_EQ(*(c2.data()+i),e.data[i]);
+		for (int i=0; i<c2.size(); ++i) {
+			EXPECT_EQ(c2[i],tc.data[i]);
 		}
 	}
 }
@@ -308,7 +327,6 @@ TEST(mtrk_event_ctor_tests, metaEventsSmallZeroRS) {
 	struct test_ans_t {
 		bool is_small {true};
 		uint32_t delta_time {0};
-		//smf_event_type type {smf_event_type::meta};
 		uint32_t size {0};
 		uint32_t data_size {0};
 	};
@@ -318,9 +336,7 @@ TEST(mtrk_event_ctor_tests, metaEventsSmallZeroRS) {
 	};
 
 	std::vector<p142tests_t> tests {
-		//
 		// From p.142 of the midi std
-		//
 		{{0x00,0xFF,0x58,0x04,0x04,0x02,0x18,0x08},  // Time sig
 		{true,0x00,8,7}},
 
@@ -330,9 +346,7 @@ TEST(mtrk_event_ctor_tests, metaEventsSmallZeroRS) {
 		{{0x00,0xFF,0x2F,0x00},  // End of track
 		{true,0x00,4,3}},
 
-		//
 		// Not from the midi std:
-		//
 		{{0x00,0xFF,0x51,0x03,0x07,0xA1,0x20},  // Tempo (CLEMENTI.MID)
 		{true,0x00,7,6}},
 
@@ -345,25 +359,19 @@ TEST(mtrk_event_ctor_tests, metaEventsSmallZeroRS) {
 		{true,0x00,20,19}}
 	};
 	
-	for (const auto& e : tests) {
-		mtrk_event_t c2(e.bytes.data(),e.bytes.size(),0);
-		mtrk_event_unit_test_helper_t h(c2);
-		//EXPECT_EQ(c.type(),e.ans.type);
-		EXPECT_EQ(c2.type(),smf_event_type::meta);
-		EXPECT_EQ(c2.delta_time(),e.ans.delta_time);
-		
-		EXPECT_TRUE(h.is_small());
-		EXPECT_FALSE(h.is_big());
-		EXPECT_EQ(c2.size(),e.bytes.size());
-		EXPECT_EQ(c2.event_size(),e.ans.size);
-		EXPECT_EQ(c2.data_size(),e.ans.data_size);
-		//EXPECT_TRUE(c2.validate());
-		for (int i=0; i<e.ans.size; ++i) {
-			EXPECT_EQ(c2[i],e.bytes[i]);
-			EXPECT_EQ(*(c2.data()+i),e.bytes[i]);
+	for (const auto& tc : tests) {
+		const mtrk_event_t c2(tc.bytes.data(),tc.bytes.size(),0);
+
+		EXPECT_EQ(c2.delta_time(),tc.ans.delta_time);
+		EXPECT_EQ(c2.size(),tc.ans.size);
+		EXPECT_EQ(c2.data_size(),tc.ans.data_size);
+
+		for (int i=0; i<tc.ans.size; ++i) {
+			EXPECT_EQ(c2[i],tc.bytes[i]);
 		}
 	}
 }
+
 
 //
 // Tests of the mtrk_event_t(uint32_t, const midi_ch_event_t&) ctor
@@ -388,19 +396,16 @@ TEST(mtrk_event_ctor_tests, MidiChEventStructCtorValidInputData) {
 		{2, {ch_pressure,2,0,0x00u}, 2}
 	};
 	
-	for (const auto& e : tests) {
-		unsigned char curr_s = (e.md_input.status_nybble + e.md_input.ch);
-		int curr_dt_size = midi_vl_field_size(e.dt_input);
-		int curr_size = curr_dt_size+e.data_size;
-		mtrk_event_t ev(e.dt_input,e.md_input);
-		mtrk_event_unit_test_helper_t h(ev);
+	for (const auto& tc : tests) {
+		unsigned char curr_s = (tc.md_input.status_nybble + tc.md_input.ch);
+		int curr_dt_size = midi_vl_field_size(tc.dt_input);
+		int curr_size = curr_dt_size+tc.data_size;
+		const mtrk_event_t ev(tc.dt_input,tc.md_input);
 
 		EXPECT_EQ(ev.type(),smf_event_type::channel);
-		EXPECT_EQ(ev.delta_time(),e.dt_input);
-		EXPECT_TRUE(h.is_small());
-		EXPECT_FALSE(h.is_big());
+		EXPECT_EQ(ev.delta_time(),tc.dt_input);
 		EXPECT_EQ(ev.size(),curr_size);
-		EXPECT_EQ(ev.data_size(),e.data_size);
+		EXPECT_EQ(ev.data_size(),tc.data_size);
 		EXPECT_EQ(ev.status_byte(),curr_s);
 		EXPECT_EQ(ev.running_status(),curr_s);
 
@@ -410,10 +415,10 @@ TEST(mtrk_event_ctor_tests, MidiChEventStructCtorValidInputData) {
 		EXPECT_EQ((it_end-it_beg),curr_size-curr_dt_size);
 		EXPECT_EQ(it_beg,ev.payload_begin());
 		EXPECT_EQ(*it_beg++,curr_s);
-		EXPECT_EQ(*it_beg++,e.md_input.p1);
+		EXPECT_EQ(*it_beg++,tc.md_input.p1);
 		if (it_beg < it_end) {
 			EXPECT_TRUE((it_end-it_beg)==1);
-			EXPECT_EQ(*it_beg++,e.md_input.p2);
+			EXPECT_EQ(*it_beg++,tc.md_input.p2);
 		}
 		EXPECT_TRUE(it_beg==it_end);
 		EXPECT_TRUE(it_beg>=it_end);
@@ -422,7 +427,6 @@ TEST(mtrk_event_ctor_tests, MidiChEventStructCtorValidInputData) {
 		EXPECT_FALSE(it_beg<it_end);
 	}
 }
-
 
 
 //
@@ -465,17 +469,14 @@ TEST(mtrk_event_ctor_tests, MidiChEventStructCtorInvalidInputData) {
 		{1024, {note_on&0x7Fu,14,57,255}, {note_on,14,57,0x7Fu}, 3}  // Invalid p2
 	};
 	
-	for (const auto& e : tests) {
-		unsigned char curr_s = ((e.md_input.status_nybble)|(e.md_input.ch));
-		int curr_dt_size = midi_vl_field_size(e.dt_input);
-		int curr_size = curr_dt_size+e.data_size;
-		mtrk_event_t ev(e.dt_input,e.md_input);
-		mtrk_event_unit_test_helper_t h(ev);
+	for (const auto& tc : tests) {
+		unsigned char curr_s = ((tc.md_input.status_nybble)|(tc.md_input.ch));
+		int curr_dt_size = midi_vl_field_size(tc.dt_input);
+		int curr_size = curr_dt_size+tc.data_size;
+		const mtrk_event_t ev(tc.dt_input,tc.md_input);
 
 		EXPECT_EQ(ev.type(),classify_status_byte(curr_s));
-		EXPECT_EQ(ev.delta_time(),e.dt_input);
-		EXPECT_TRUE(h.is_small());
-		EXPECT_FALSE(h.is_big());
+		EXPECT_EQ(ev.delta_time(),tc.dt_input);
 		EXPECT_EQ(ev.status_byte(),curr_s);
 
 		auto it_beg = ev.begin();

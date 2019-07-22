@@ -23,16 +23,8 @@ TEST(mtrk_event_sysex_factories, makeSysexF0PayloadsLackTerminalF7) {
 		bool ans_is_small = (ans_tot_size<=23);
 		auto ans_payload = e.payload_in;  ans_payload.push_back(0xF7u);
 
-		auto ev = make_sysex_f0(e.dt_in,e.payload_in);
-		mtrk_event_unit_test_helper_t h (ev);
+		const auto ev = make_sysex_f0(e.dt_in,e.payload_in);
 
-		if (ans_is_small) {
-			EXPECT_TRUE(h.is_small());
-			EXPECT_FALSE(h.is_big());
-		} else {
-			EXPECT_TRUE(h.is_big());
-			EXPECT_FALSE(h.is_small());
-		}
 		EXPECT_EQ(ev.type(),smf_event_type::sysex_f0);
 		EXPECT_TRUE(is_sysex(ev));
 		EXPECT_TRUE(is_sysex_f0(ev));
@@ -78,16 +70,8 @@ TEST(mtrk_event_sysex_factories, makeSysexF0PayloadsWithTerminalF7) {
 		bool ans_is_small = (ans_tot_size<=23);
 		auto ans_payload = e.payload_in;
 
-		auto ev = make_sysex_f0(e.dt_in,e.payload_in);
-		mtrk_event_unit_test_helper_t h (ev);
+		const auto ev = make_sysex_f0(e.dt_in,e.payload_in);
 
-		if (ans_is_small) {
-			EXPECT_TRUE(h.is_small());
-			EXPECT_FALSE(h.is_big());
-		} else {
-			EXPECT_TRUE(h.is_big());
-			EXPECT_FALSE(h.is_small());
-		}
 		EXPECT_EQ(ev.type(),smf_event_type::sysex_f0);
 		EXPECT_TRUE(is_sysex(ev));
 		EXPECT_TRUE(is_sysex_f0(ev));
@@ -133,16 +117,8 @@ TEST(mtrk_event_sysex_factories, makeSysexF7PayloadsLackTerminalF7) {
 		bool ans_is_small = (ans_tot_size<=23);
 		auto ans_payload = e.payload_in;  ans_payload.push_back(0xF7u);
 
-		auto ev = make_sysex_f7(e.dt_in,e.payload_in);
-		mtrk_event_unit_test_helper_t h (ev);
+		const auto ev = make_sysex_f7(e.dt_in,e.payload_in);
 
-		if (ans_is_small) {
-			EXPECT_TRUE(h.is_small());
-			EXPECT_FALSE(h.is_big());
-		} else {
-			EXPECT_TRUE(h.is_big());
-			EXPECT_FALSE(h.is_small());
-		}
 		EXPECT_EQ(ev.type(),smf_event_type::sysex_f7);
 		EXPECT_TRUE(is_sysex(ev));
 		EXPECT_FALSE(is_sysex_f0(ev));
@@ -188,16 +164,8 @@ TEST(mtrk_event_sysex_factories, makeSysexF7PayloadsWithTerminalF7) {
 		bool ans_is_small = (ans_tot_size<=23);
 		auto ans_payload = e.payload_in;
 
-		auto ev = make_sysex_f7(e.dt_in,e.payload_in);
-		mtrk_event_unit_test_helper_t h (ev);
+		const auto ev = make_sysex_f7(e.dt_in,e.payload_in);
 
-		if (ans_is_small) {
-			EXPECT_TRUE(h.is_small());
-			EXPECT_FALSE(h.is_big());
-		} else {
-			EXPECT_TRUE(h.is_big());
-			EXPECT_FALSE(h.is_small());
-		}
 		EXPECT_EQ(ev.type(),smf_event_type::sysex_f7);
 		EXPECT_TRUE(is_sysex(ev));
 		EXPECT_FALSE(is_sysex_f0(ev));

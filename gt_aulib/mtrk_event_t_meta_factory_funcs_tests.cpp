@@ -30,7 +30,7 @@ TEST(mtrk_event_t_meta_factories, makeTempo) {
 		
 	};
 	for (const auto& e : tests) {
-		auto ev = make_tempo(e.dt_in,e.tempo_in);
+		const auto ev = make_tempo(e.dt_in,e.tempo_in);
 		auto dt_size = midi_vl_field_size(e.dt_ans);
 		auto pyld_size = 3;
 		auto dat_size = 3+pyld_size;
@@ -61,7 +61,7 @@ TEST(mtrk_event_t_meta_factories, makeTempo) {
 TEST(mtrk_event_t_meta_factories, makeEOT) {
 	std::vector<uint32_t> tests {0,1,128,125428};
 	for (const auto& e : tests) {
-		auto ev = make_eot(e);
+		const auto ev = make_eot(e);
 		auto dt_size = midi_vl_field_size(e);
 		auto pyld_size = 0;
 		auto dat_size = 3+pyld_size;
@@ -107,7 +107,7 @@ TEST(mtrk_event_t_meta_factories, makeTimesig) {
 		{125428, {1, 1, 1, 1}},
 	};
 	for (const auto& e : tests) {
-		auto ev = make_timesig(e.dt,e.ts);
+		const auto ev = make_timesig(e.dt,e.ts);
 		auto dt_size = midi_vl_field_size(e.dt);
 		auto pyld_size = 4;
 		auto dat_size = 3+pyld_size;
