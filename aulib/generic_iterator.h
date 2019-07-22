@@ -62,7 +62,7 @@ public:
 		return temp -= n;
 	};
 	difference_type operator-(const generic_ra_iterator rhs) const {
-		return (this->p_ - rhs.p_);
+		return static_cast<difference_type>(this->p_ - rhs.p_);
 	};
 	bool operator==(const generic_ra_iterator& rhs) const {
 		return this->p_ == rhs.p_;
@@ -153,7 +153,7 @@ public:
 		return temp -= n;
 	};
 	difference_type operator-(const generic_ra_const_iterator rhs) const {
-		return (this->p_ - rhs.p_);
+		return static_cast<difference_type>(this->p_ - rhs.p_);
 	};
 	bool operator==(const generic_ra_const_iterator& rhs) const {
 		return this->p_ == rhs.p_;
