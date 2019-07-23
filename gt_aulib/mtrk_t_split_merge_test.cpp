@@ -15,7 +15,6 @@ mtrk_t make_mtrk_tsb(const std::vector<tsb_t>& v) {
 	for (const auto& e : v) {
 		auto curr_ev = make_mtrk_event(e.d.data(),e.d.data()+e.d.size(),
 			0,nullptr).event;
-		//auto curr_ev = mtrk_event_t(e.d.data(),e.d.size());
 		mtrk_tsb.push_back(curr_ev);
 	}
 	return mtrk_tsb;
@@ -52,8 +51,6 @@ TEST(mtrk_t_tests, SplitCopyIfForNoteNum67WithTSB) {
 		auto ev = make_mtrk_event(tsb_note_67_events[i].d.data(),
 			tsb_note_67_events[i].d.data()+tsb_note_67_events[i].d.size(),
 			0x00u,nullptr).event;
-		//auto ev = mtrk_event_t(tsb_note_67_events[i].d.data(),
-		//	tsb_note_67_events[i].d.size(),0x00u);
 		ev.set_delta_time(new_mtrk[i].delta_time());
 		EXPECT_EQ(new_mtrk[i],ev);
 	}
@@ -87,8 +84,6 @@ TEST(mtrk_t_tests, SplitCopyIfForMetaEventsWithTSB) {
 		auto ev = make_mtrk_event(tsb_meta_events[i].d.data(),
 			tsb_meta_events[i].d.data()+tsb_meta_events[i].d.size(),
 			0x00u,nullptr).event;
-		//auto ev = mtrk_event_t(tsb_meta_events[i].d.data(),
-		//	tsb_meta_events[i].d.size(),0x00u);
 		ev.set_delta_time(new_mtrk[i].delta_time());
 		EXPECT_EQ(new_mtrk[i],ev);
 	}
@@ -125,8 +120,6 @@ TEST(mtrk_t_tests, SplitIfForNoteNum67WithTSB) {
 		auto ev = make_mtrk_event(tsb_note_67_events[i].d.data(),
 			tsb_note_67_events[i].d.data()+tsb_note_67_events[i].d.size(),
 			0x00u,nullptr).event;
-		//auto ev = mtrk_event_t(tsb_note_67_events[i].d.data(),
-		//	tsb_note_67_events[i].d.size(),0x00u);
 		ev.set_delta_time(mtrk_first[i].delta_time());
 		EXPECT_EQ(mtrk_first[i],ev);
 	}
@@ -146,8 +139,6 @@ TEST(mtrk_t_tests, SplitIfForNoteNum67WithTSB) {
 		auto ev = make_mtrk_event(tsb_non_note_67_events[i].d.data(),
 			tsb_non_note_67_events[i].d.data()+tsb_non_note_67_events[i].d.size(),
 			0x00u,nullptr).event;
-		//auto ev = mtrk_event_t(tsb_non_note_67_events[i].d.data(),
-		//	tsb_non_note_67_events[i].d.size(),0x00u);
 		ev.set_delta_time(mtrk_second[i].delta_time());
 		EXPECT_EQ(mtrk_second[i],ev);
 	}
