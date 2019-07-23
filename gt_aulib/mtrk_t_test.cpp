@@ -10,7 +10,9 @@ using namespace mtrk_tests;
 mtrk_t make_tsa() {
 	auto mtrk_tsa = mtrk_t();  // auto to avoid MVP
 	for (const auto& e : tsa) {
-		auto curr_ev = mtrk_event_t(e.d.data(),e.d.size());
+		auto curr_ev = make_mtrk_event(e.d.data(),e.d.data()+e.d.size(),
+			0,nullptr).event;
+		//auto curr_ev = mtrk_event_t(e.d.data(),e.d.size());
 		mtrk_tsa.push_back(curr_ev);
 	}
 	return mtrk_tsa;
@@ -25,7 +27,9 @@ TEST(mtrk_t_tests, DefaultCtorMultiplePushBackTestSetA) {
 	EXPECT_EQ(mtrk_tsa.size(),tsa.size());
 	EXPECT_EQ(mtrk_tsa.nticks(),tsa_props.duration_tks);
 	for (int i=0; i<tsa.size(); ++i) {
-		auto curr_ev = mtrk_event_t(tsa[i].d.data(),tsa[i].d.size());
+		auto curr_ev = make_mtrk_event(tsa[i].d.data(),
+			tsa[i].d.data()+tsa[i].d.size(),0,nullptr).event;
+		//auto curr_ev = mtrk_event_t(tsa[i].d.data(),tsa[i].d.size());
 		EXPECT_EQ(mtrk_tsa[i],curr_ev);
 	}
 }

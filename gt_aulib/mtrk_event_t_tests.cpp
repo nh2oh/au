@@ -51,7 +51,8 @@ TEST(mtrk_event_t_tests, metaEventsSmallCopyCtorAndCopyAssign) {
 
 		//---------------------------------------------------------------------------
 		// copy assign:
-		mtrk_event_t c3(tests[0].data(),tests[0].size(),0);
+		maybe_ev = make_mtrk_event(tests[0].data(),tests[0].data()+tests[0].size(),0,nullptr);
+		auto c3 = maybe_ev.event;
 		c3 = c1;
 
 		EXPECT_EQ(c3.type(),c1.type());
@@ -127,7 +128,8 @@ TEST(mtrk_event_t_tests, metaEventsBigCopyCtorAndCopyAssign) {
 		if (!first_iter) {
 			j=0;
 		}
-		mtrk_event_t c3(tests[j].data(),tests[j].size(),0);
+		maybe_ev = make_mtrk_event(tests[j].data(),tests[j].data()+tests[j].size(),0,nullptr);
+		auto c3 = maybe_ev.event;
 		c3 = c1;
 		EXPECT_EQ(c3.type(),c1.type());
 		EXPECT_EQ(c3.delta_time(),c1.delta_time());
