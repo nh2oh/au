@@ -132,6 +132,9 @@
     <ClCompile Include="mtrk_event_internal.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="make_mtrk_event_tests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="midi_raw_test_data.h">

@@ -97,6 +97,7 @@
     <ClCompile Include="frq_t_test.cpp" />
     <ClCompile Include="ks_key_test.cpp" />
     <ClCompile Include="line_t_test.cpp" />
+    <ClCompile Include="make_mtrk_event_tests.cpp" />
     <ClCompile Include="melody_a_testcpp.cpp" />
     <ClCompile Include="melody_temperley_test.cpp" />
     <ClCompile Include="midi_get_sb_and_rsb.cpp" />
