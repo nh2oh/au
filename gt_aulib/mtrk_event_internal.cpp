@@ -68,9 +68,6 @@ TEST(mtrk_event_t_internal, defaultCtor) {
 	EXPECT_EQ(x.capacity(),small_bytevec_t::capacity_small);
 	EXPECT_EQ(x.begin(),x.end());
 	EXPECT_EQ(x.end()-x.begin(),0);
-	for (auto it=x.raw_begin()+1; it<x.raw_end(); ++it) {
-		EXPECT_EQ(*it,0x00u);
-	}
 }
 
 TEST(mtrk_event_t_internal, copyCtorSmall) {
@@ -163,7 +160,7 @@ TEST(mtrk_event_t_internal, moveCtorSmall) {
 	EXPECT_FALSE(dest.debug_is_big());
 	EXPECT_EQ(src_size,dest.size());
 	EXPECT_EQ(src_cap,dest.capacity());
-	for (int i=0; i<src.size(); ++i) {
+	for (int i=0; i<src_size; ++i) {
 		EXPECT_EQ(*(data.begin()+i),*(dest.begin()+i));
 	}
 }
@@ -181,7 +178,7 @@ TEST(mtrk_event_t_internal, moveCtorBig) {
 	EXPECT_TRUE(dest.debug_is_big());
 	EXPECT_EQ(src_size,dest.size());
 	EXPECT_EQ(src_cap,dest.capacity());
-	for (int i=0; i<src.size(); ++i) {
+	for (int i=0; i<src_size; ++i) {
 		EXPECT_EQ(*(data.begin()+i),*(dest.begin()+i));
 	}
 }
@@ -192,9 +189,6 @@ TEST(mtrk_event_t_internal, defaultCtorReserveToSmallMax) {
 	EXPECT_FALSE(x.debug_is_big());
 	EXPECT_EQ(x.size(),0);
 	EXPECT_EQ(x.capacity(),small_bytevec_t::capacity_small);
-	for (auto it=x.raw_begin()+1; it<x.raw_end(); ++it) {
-		EXPECT_EQ(*it,0x00u);
-	}
 	EXPECT_EQ(x.begin(),x.end());
 	EXPECT_EQ(x.end()-x.begin(),0);
 }
@@ -205,14 +199,8 @@ TEST(mtrk_event_t_internal, defaultCtorResizeToSmallMax) {
 	EXPECT_FALSE(x.debug_is_big());
 	EXPECT_EQ(x.size(),small_bytevec_t::capacity_small);
 	EXPECT_EQ(x.capacity(),small_bytevec_t::capacity_small);
-	for (auto it=x.begin(); it<x.end(); ++it) {
-		EXPECT_EQ(*it,0x00u);
-	}
 	EXPECT_NE(x.begin(),x.end());
 	EXPECT_EQ(x.end()-x.begin(),small_bytevec_t::capacity_small);
-	for (auto it=x.raw_begin()+1; it<x.raw_end(); ++it) {
-		EXPECT_EQ(*it,0x00u);
-	}
 }
 
 // Resize leaves values initially present @ indices < new_size
