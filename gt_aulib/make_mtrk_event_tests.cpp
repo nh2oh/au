@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include "..\aulib\input\midi\mtrk_event_t.h"
+#include "midi_raw_test_data.h"
 #include <vector>
 #include <cstdint>
 
@@ -403,4 +404,80 @@ TEST(make_mtrk_event_tests, metaEventsBigNoRS) {
 
 
 
+//
+// maybe_mtrk_event_t make_mtrk_event(const unsigned char*,
+//			const unsigned char*, unsigned char, mtrk_event_error_t*);
+// maybe_mtrk_event_t make_mtrk_event(int32_t, const unsigned char*,
+//			const unsigned char*, unsigned char,mtrk_event_error_t*);
+//
+// A set of "small" (fit in the mtrk_event_t object) midi_channel events.  
+// All test cases are valid midi events.  Some are in running-status (do 
+// not have an event-local status byte), others not.  The delta-times are
+// more or less random.  
+// The value in tests_t.midisb_prev_event is meant to represent the status 
+// byte of the prior event in a ficticious stream of events, and represents
+// the running status.  
+// For those events with no event-local status-byte, the running-status 
+// supplied w/ the test case (tests_t.midisb_prev_event) is valid as a 
+// running-status value and accurately describes the number of data bytes 
+// in the event.
+// For those events that _do_ have a valid event-local status byte, the 
+// value in tests_t.midisb_prev_event is sometimes not valid as a 
+// running-status (ex, it's == 0xFFu or something).  
+//
+TEST(make_mtrk_event_tests, assortedChEvntsSmallRandomRSTestSetC) {
+	// Fields applic_midi_status, n_data_bytes are not (yet) tested here
+	for (auto& tc : set_c_midi_events_valid) {
+		auto data_size_with_status_byte = tc.n_data_bytes + 1;
+		bool input_is_in_rs = tc.data_length < data_size_with_status_byte;
+		auto size_with_status_byte = tc.dt_field_size 
+			+ data_size_with_status_byte;
+		auto data_no_rs = tc.data;
+		if (input_is_in_rs) {
+			data_no_rs.insert(data_no_rs.begin()+tc.dt_field_size,
+				tc.applic_midi_status);
+		}
 
+		auto maybe_ev = make_mtrk_event(tc.data.data(),
+			tc.data.data()+tc.data.size(),tc.midisb_prev_event,nullptr);
+		EXPECT_TRUE(maybe_ev);
+		EXPECT_EQ(maybe_ev.event.delta_time(),tc.dt_value);
+
+		EXPECT_EQ(maybe_ev.event.size(),size_with_status_byte);
+		EXPECT_EQ(maybe_ev.event.data_size(),data_size_with_status_byte);
+		for (int i=0; i<maybe_ev.event.size(); ++i) {
+			EXPECT_EQ(maybe_ev.event[i],data_no_rs[i]);
+		}
+
+		auto dt_end = tc.data.data() + tc.dt_field_size;
+		maybe_ev = make_mtrk_event(tc.dt_value,dt_end,
+			tc.data.data()+tc.data.size(),tc.midisb_prev_event,nullptr);
+		EXPECT_TRUE(maybe_ev);
+		EXPECT_EQ(maybe_ev.event.delta_time(),tc.dt_value);
+
+		EXPECT_EQ(maybe_ev.event.size(),size_with_status_byte);
+		EXPECT_EQ(maybe_ev.event.data_size(),data_size_with_status_byte);
+		for (int i=0; i<maybe_ev.event.size(); ++i) {
+			EXPECT_EQ(maybe_ev.event[i],data_no_rs[i]);
+		}
+	}
+}
+
+
+//
+// maybe_mtrk_event_t make_mtrk_event(const unsigned char*,
+//			const unsigned char*, unsigned char, mtrk_event_error_t*);
+// maybe_mtrk_event_t make_mtrk_event(int32_t, const unsigned char*,
+//			const unsigned char*, unsigned char,mtrk_event_error_t*);
+//
+// A set of channel event data, "invalid" for lack of a valid event-local
+// & running-status byte.  
+//
+TEST(make_mtrk_event_tests, assortedChEvntsSmallInvalidTestSetD) {
+	for (auto& tc : set_d_midi_events_nostatus_invalid) {
+		mtrk_event_error_t err;
+		auto maybe_ev = make_mtrk_event(tc.data.data(),
+			tc.data.data()+tc.data.size(),tc.midisb_prev_event,&err);
+		EXPECT_FALSE(maybe_ev);
+	}
+}

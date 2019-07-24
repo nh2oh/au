@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 #include "..\aulib\input\midi\midi_raw.h"
-#include "midi_raw_test_data.h"
+#include "midi_testdata_status_bytes.h"
+
 
 
 TEST(status_and_data_byte_classification, IsStatusByte) {
