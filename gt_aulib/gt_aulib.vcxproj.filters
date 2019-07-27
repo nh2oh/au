@@ -135,6 +135,9 @@
     <ClCompile Include="midi_testdata_status_bytes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="delta_time_test_data.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="midi_raw_test_data.h">
@@ -150,6 +153,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="midi_testdata_status_bytes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="delta_time_test_data.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

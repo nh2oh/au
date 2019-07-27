@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
-#include "..\aulib\input\midi\midi_raw.h"
+#include "delta_time_test_data.h"
+#include "..\aulib\input\midi\midi_raw.h"  // Declares smf_event_ty[e
 #include "..\aulib\input\midi\midi_vlq.h"
 #include "..\aulib\input\midi\mtrk_event_t.h"
 #include "..\aulib\input\midi\mtrk_event_methods.h"
@@ -39,55 +40,32 @@ TEST(mtrk_event_ctor_tests, defaultCtor) {
 // max allowed.  
 //
 TEST(mtrk_event_ctor_tests, dtOnlyCtor) {
-	std::vector<uint32_t> tests {
-		0x00u,0x40u,0x7Fu,  // field size == 1
-		0x80u,0x2000u,0x3FFFu,  // field size == 2
-		0x4000u,0x100000u,0x1FFFFFu,  // field size == 3
-		0x00200000u,0x08000000u,0x0FFFFFFFu,  // field size == 4
-		// Attempt to write values exceeding the allowed max; field size
-		// should be 4, and all values written should be == 0x0FFFFFFFu
-		0x1FFFFFFFu,0x2FFFFFFFu,0x7FFFFFFFu,0x8FFFFFFFu,
-		0x9FFFFFFFu,0xBFFFFFFFu,0xEFFFFFFFu,0xFFFFFFFFu
-	};
-
 	std::array<unsigned char,6> ans_dt_encoded;
-
-	for (const auto& tc : tests) {
-		auto ans_dt = (0x0FFFFFFFu&tc);
+	auto ans_data_size = 3;  // For a default-ctor'd mtrk_event
+	for (const auto& tc : dt_test_set_a) {
 		ans_dt_encoded.fill(0x00u);
-		write_delta_time(ans_dt,ans_dt_encoded.begin());
-		auto ans_dt_sz = 1;
-		if ((tc>=0x00u) && (tc<0x80u)) {
-			ans_dt_sz = 1;
-		} else if ((tc>= 0x80u) && (tc<0x4000u)) {
-			ans_dt_sz = 2;
-		} else if ((tc>= 0x4000u) && (tc<0x00200000u)) {
-			ans_dt_sz = 3;
-		} else {
-			ans_dt_sz = 4;
-		}
-		auto ans_data_size = 3;
-		auto ans_size = ans_data_size + ans_dt_sz;
-		
-		const mtrk_event_t ev(tc);
+		write_delta_time(tc.ans_value,ans_dt_encoded.begin());
+		auto ans_size = ans_data_size + tc.ans_n_bytes;
+
+		const mtrk_event_t ev(tc.dt_input);
 
 		EXPECT_EQ(ev.size(),ans_size);
 		EXPECT_TRUE(ev.size()<=ev.capacity());
-		EXPECT_EQ(ev.dt_end()-ev.dt_begin(),ans_dt_sz);
+		EXPECT_EQ(ev.dt_end()-ev.dt_begin(),tc.ans_n_bytes);
 		EXPECT_EQ(ev.end()-ev.begin(),ev.size());
 
 		EXPECT_EQ(ev.type(),smf_event_type::channel);
-		EXPECT_EQ(ev.delta_time(),ans_dt);
+		EXPECT_EQ(ev.delta_time(),tc.ans_value);
 		EXPECT_EQ(ev.status_byte(),0x90u);
 		EXPECT_EQ(ev.running_status(),0x90u);
 		auto ds=ev.data_size();
 		EXPECT_EQ(ev.data_size(),ans_data_size);
 	
-		for (int i=0; i<ans_dt_sz; ++i) {
+		for (int i=0; i<tc.ans_n_bytes; ++i) {
 			EXPECT_EQ(ev[i],ans_dt_encoded[i]);
 		}
-		for (int i=ans_dt_sz; i<ev.size(); ++i) {
-			EXPECT_EQ(ev[i],default_ctord_data[i-(ans_dt_sz-1)]);
+		for (int i=tc.ans_n_bytes; i<ev.size(); ++i) {
+			EXPECT_EQ(ev[i],default_ctord_data[i-(tc.ans_n_bytes-1)]);
 		}
 	}
 }

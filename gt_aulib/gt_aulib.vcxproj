@@ -94,6 +94,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="cent_t_test.cpp" />
+    <ClCompile Include="delta_time_test_data.cpp" />
     <ClCompile Include="frq_t_test.cpp" />
     <ClCompile Include="ks_key_test.cpp" />
     <ClCompile Include="line_t_test.cpp" />
@@ -140,6 +141,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="delta_time_test_data.h" />
     <ClInclude Include="midi_raw_test_data.h" />
     <ClInclude Include="midi_testdata_status_bytes.h" />
     <ClInclude Include="mthd_test_data.h" />

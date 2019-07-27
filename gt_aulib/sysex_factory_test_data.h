@@ -4,10 +4,10 @@
 
 
 struct sysex_test_set_a_t {
-	uint32_t dt_in {0};
+	int32_t dt_in {0};
 	std::vector<unsigned char> payload_in {};
 
-	uint32_t ans_dt {0};
+	int32_t ans_dt {0};
 	uint32_t ans_pyld_len {0};
 };
 
