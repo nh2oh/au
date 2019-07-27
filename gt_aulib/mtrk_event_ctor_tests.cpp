@@ -2,6 +2,7 @@
 #include "delta_time_test_data.h"
 #include "..\aulib\input\midi\midi_raw.h"  // Declares smf_event_ty[e
 #include "..\aulib\input\midi\midi_vlq.h"
+#include "..\aulib\input\midi\midi_delta_time.h"
 #include "..\aulib\input\midi\mtrk_event_t.h"
 #include "..\aulib\input\midi\mtrk_event_methods.h"
 #include <vector>

@@ -2,6 +2,7 @@
 #include "..\aulib\input\midi\midi_raw.h"
 #include "..\aulib\input\midi\generic_chunk_low_level.h"
 #include "..\aulib\input\midi\midi_vlq.h"
+#include "..\aulib\input\midi\midi_delta_time.h"
 #include <vector>
 #include <array>
 #include <cstdint>
@@ -11,6 +12,8 @@
 
 
 TEST(midi_raw_tests, toBEByteOrder) {
+	auto x = to_nearest_valid_delta_time(1575);
+
 	struct test_t {
 		uint32_t input {0};
 		uint32_t ans {};
@@ -294,21 +297,24 @@ TEST(midi_raw_tests, WriteDeltaTimeBackInsertIteratorStdP131Exs) {
 		// Attempt to write values exceeding the allowed max
 		{{0xFF,0xFF,0xFF,0x7F},0x1FFFFFFFu},
 		{{0xFF,0xFF,0xFF,0x7F},0x2FFFFFFFu},
-		{{0xFF,0xFF,0xFF,0x7F},0x7FFFFFFFu},
-		{{0xFF,0xFF,0xFF,0x7F},0x8FFFFFFFu},
+		{{0xFF,0xFF,0xFF,0x7F},0x7FFFFFFFu}
+		/*{{0xFF,0xFF,0xFF,0x7F},0x8FFFFFFFu},
 		{{0xFF,0xFF,0xFF,0x7F},0x9FFFFFFFu},
 		{{0xFF,0xFF,0xFF,0x7F},0xBFFFFFFFu},
 		{{0xFF,0xFF,0xFF,0x7F},0xEFFFFFFFu},
-		{{0xFF,0xFF,0xFF,0x7F},0xFFFFFFFFu}
+		{{0xFF,0xFF,0xFF,0x7F},0xFFFFFFFFu}*/
 	};
 	for (const auto& e : all_tests) {
 		const unsigned char *p_ans_field = &(e.ans[0]);
-		auto ans_field_interp = midi_interpret_vl_field(p_ans_field);
+		auto ans_field_interp = read_delta_time(p_ans_field,
+			p_ans_field+e.ans.size());
 
 		std::vector<unsigned char> curr_result {};
 		auto res_it = write_delta_time(e.num,std::back_inserter(curr_result));
 		const unsigned char *p_res_field = &(curr_result[0]);
-		auto curr_field_interp = midi_interpret_vl_field(p_res_field);
+		//auto curr_field_interp = midi_interpret_vl_field(p_res_field);
+		auto curr_field_interp = read_delta_time(p_res_field,
+			p_res_field+curr_result.size());
 
 		EXPECT_EQ(curr_field_interp.N,ans_field_interp.N);
 		EXPECT_EQ(curr_field_interp.val,ans_field_interp.val);
