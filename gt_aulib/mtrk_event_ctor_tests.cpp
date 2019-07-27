@@ -153,58 +153,62 @@ TEST(mtrk_event_ctor_tests, MidiChEventStructCtorValidInputData) {
 // Tests of the mtrk_event_t(uint32_t, const midi_ch_event_t&) ctor
 // with _invalid_ data in the midi_ch_event_t struct.  
 //
-// TODO:  The data in md_result is not used, since for this ctor the
-// 'result' values are UB.  Keep to use this test data for tests of 
-// normalize(midi_ch_event_t).  
+// TODO:  This is better used as a test for normalize(midi_ch_event_t)...
 TEST(mtrk_event_ctor_tests, MidiChEventStructCtorInvalidInputData) {
 	struct test_t {
-		uint32_t dt_input {0};
-		midi_ch_event_t md_input {};
-		midi_ch_event_t md_result {};
-		uint32_t data_size {0};
+		uint32_t dt_input;
+		midi_ch_event_t md_input;
 	};
 	// midi_ch_event_t {status, ch, p1, p2}
 	std::vector<test_t> tests {
-		{0, {note_on,16,57,32}, {note_on,0,57,32}, 3},  // Invalid channel (>15)
-		{1, {note_on,127,57,32}, {note_on,15,57,32}, 3},  // Invalid channel (>15)
-		{128, {note_on,14,128,32}, {note_on,14,0,32}, 3},  // Invalid p1
-		{256, {note_on,14,129,32}, {note_on,14,1,32}, 3},  // Invalid p1
-		{512, {note_on,14,7,130}, {note_on,14,7,2}, 3},  // Invalid p2
-		{1024, {note_on,14,57,255}, {note_on,14,57,0x7Fu}, 3},  // Invalid p2
+		{0, {note_on,16,57,32}},  // Invalid channel (>15)
+		{1, {note_on,127,57,32}},  // Invalid channel (>15)
+		{128, {note_on,14,128,32}},  // Invalid p1
+		{256, {note_on,14,129,32}},  // Invalid p1
+		{512, {note_on,14,7,130}},  // Invalid p2
+		{1024, {note_on,14,57,255}},  // Invalid p2
 
 		// Exactly the same as the set above, but w/a 1-data-byte msg type
-		{0, {prog_change,16,57,32}, {prog_change,0,57,0x80u}, 2},  // Invalid channel
-		{1, {prog_change,127,57,32}, {prog_change,15,57,0x80u}, 2},  // Invalid channel
-		{128, {prog_change,14,128,32}, {prog_change,14,0,0x80u}, 2},  // Invalid p1
-		{256, {prog_change,14,129,32}, {prog_change,14,1,0x80u}, 2},  // Invalid p1
-		{512, {prog_change,14,7,130}, {prog_change,14,7,0x80u}, 2},  // Invalid p2
-		{1024, {prog_change,14,57,255}, {prog_change,14,57,0x80u}, 2},  // Invalid p2
+		{0, {prog_change,16,57,32}},  // Invalid channel
+		{1, {prog_change,127,57,32}},  // Invalid channel
+		{128, {prog_change,14,128,32}},  // Invalid p1
+		{256, {prog_change,14,129,32}},  // Invalid p1
+		{512, {prog_change,14,7,130}},  // Invalid p2
+		{1024, {prog_change,14,57,255}},  // Invalid p2
 
 		// Exactly the same as the set above, but w/an invalid status-nybble
-		{0, {note_on&0x7Fu,16,57,32}, {note_on,0,57,32}, 3},  // Invalid channel
-		{1, {note_on&0x7Fu,127,57,32}, {note_on,15,57,32}, 3},  // Invalid channel
-		{128, {note_on&0x7Fu,14,128,32}, {note_on,14,0,32}, 3},  // Invalid p1
-		{256, {note_on&0x7Fu,14,129,32}, {note_on,14,1,32}, 3},  // Invalid p1
-		{512, {note_on&0x7Fu,14,7,130}, {note_on,14,7,2}, 3},  // Invalid p2
-		{1024, {note_on&0x7Fu,14,57,255}, {note_on,14,57,0x7Fu}, 3}  // Invalid p2
+		{0, {note_on&0x7Fu,16,57,32}},  // Invalid channel
+		{1, {note_on&0x7Fu,127,57,32}},  // Invalid channel
+		{128, {note_on&0x7Fu,14,128,32}},  // Invalid p1
+		{256, {note_on&0x7Fu,14,129,32}},  // Invalid p1
+		{512, {note_on&0x7Fu,14,7,130}},  // Invalid p2
+		{1024, {note_on&0x7Fu,14,57,255}}  // Invalid p2
 	};
 	
 	for (const auto& tc : tests) {
-		unsigned char curr_s = ((tc.md_input.status_nybble)|(tc.md_input.ch));
+		auto expect_ans = normalize(tc.md_input);
+		auto expect_s = expect_ans.status_nybble|expect_ans.ch;
+		auto expect_n_data = channel_status_byte_n_data_bytes(expect_s);
 		int curr_dt_size = midi_vl_field_size(tc.dt_input);
-		int curr_size = curr_dt_size+tc.data_size;
+		int expect_size = curr_dt_size + 1 
+			+ expect_n_data;
 		const mtrk_event_t ev(tc.dt_input,tc.md_input);
 
-		EXPECT_EQ(ev.type(),classify_status_byte(curr_s));
+		EXPECT_EQ(ev.type(),classify_status_byte(expect_s));
 		EXPECT_EQ(ev.delta_time(),tc.dt_input);
-		EXPECT_EQ(ev.status_byte(),curr_s);
+		EXPECT_EQ(ev.status_byte(),expect_s);
+		EXPECT_EQ(ev.size(),expect_size);
+		EXPECT_EQ(ev.end()-ev.begin(), ev.size());
 
+		auto it = ev.event_begin();
+		EXPECT_EQ(*it++,expect_s);
+		EXPECT_EQ(*it++,expect_ans.p1);
+		if (expect_n_data==2) {
+			EXPECT_EQ(*it++,expect_ans.p2);
+		}
 		auto it_beg = ev.begin();
 		auto it_evbeg = ev.event_begin();
 		auto it_end = ev.end();
-		EXPECT_TRUE(it_evbeg-it_beg,curr_dt_size);
-		EXPECT_TRUE(it_end-it_beg<=ev.capacity());
-		EXPECT_EQ(*it_evbeg,curr_s);
 	}
 }
 
