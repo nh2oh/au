@@ -89,19 +89,19 @@ TEST(midi_raw_tests, be2native) {
 TEST(midi_raw_tests, MIDIVLFieldEquivValueTests) {
 	uint32_t a {137};
 	uint32_t a_ans = 33033;
-	EXPECT_EQ(a_ans,midi_vl_field_equiv_value(a));
+	EXPECT_EQ(a_ans,vlq_field_literal_value(a));
 
 	uint32_t b {106903};
 	uint32_t b_ans = 8831767;
-	EXPECT_EQ(b_ans,midi_vl_field_equiv_value(b));
+	EXPECT_EQ(b_ans,vlq_field_literal_value(b));
 
 	uint32_t c {268435455};  // 0x0F'FF'FF'FF 
 	uint32_t c_ans = 4294967167;  // 0xFF'FF'FF'7F 
-	EXPECT_EQ(c_ans,midi_vl_field_equiv_value(c));
+	EXPECT_EQ(c_ans,vlq_field_literal_value(c));
 
 	uint32_t d = 255;
 	uint32_t d_ans = 0x817F; 
-	EXPECT_EQ(d_ans,midi_vl_field_equiv_value(d));
+	EXPECT_EQ(d_ans,vlq_field_literal_value(d));
 }
 
 
@@ -112,30 +112,30 @@ TEST(midi_raw_tests, VLFieldSize) {
 
 	std::vector<uint32_t> onebyte_ui32t {0x00u,0x40u,0x7Fu};
 	for (const auto& e : onebyte_ui32t) {
-		auto res = midi_vl_field_size(e);
+		auto res = vlq_field_size(e);
 		EXPECT_EQ(res,1);
 	}
 	std::vector<uint8_t> onebyte_ui8t {0x00u,0x40u,0x7Fu};
 	for (const auto& e : onebyte_ui8t) {
-		auto res = midi_vl_field_size(e);
+		auto res = vlq_field_size(e);
 		EXPECT_EQ(res,1);
 	}
 
 	std::vector<uint32_t> twobyte_ui32t {0x80u,0x2000u,0x3FFFu};
 	for (const auto& e : twobyte_ui32t) {
-		auto res = midi_vl_field_size(e);
+		auto res = vlq_field_size(e);
 		EXPECT_EQ(res,2);
 	}
 
 	std::vector<uint32_t> threebyte_ui32t {0x4000u,0x100000u,0x1FFFFFu};
 	for (const auto& e : threebyte_ui32t) {
-		auto res = midi_vl_field_size(e);
+		auto res = vlq_field_size(e);
 		EXPECT_EQ(res,3);
 	}
 
 	std::vector<uint32_t> fourbyte_ui32t {0x00200000u,0x08000000u,0x0FFFFFFFu};
 	for (const auto& e : fourbyte_ui32t) {
-		auto res = midi_vl_field_size(e);
+		auto res = vlq_field_size(e);
 		EXPECT_EQ(res,4);
 	}
 }
@@ -146,7 +146,7 @@ TEST(midi_raw_tests, VLFieldSize) {
 TEST(midi_raw_tests, midiInterpretVLFieldTests) {
 	struct tests_t {
 		std::array<unsigned char,6> field {0x00,0x00,0x00,0x00,0x00,0x00};
-		midi_vl_field_interpreted ans {};
+		vlq_field_interpreted ans {};
 	};
 
 	std::vector<tests_t> p131_tests {
@@ -181,7 +181,7 @@ TEST(midi_raw_tests, midiInterpretVLFieldTests) {
 
 	};
 	for (const auto& e : p131_tests) {
-		auto res = midi_interpret_vl_field(&(e.field[0]));
+		auto res = read_vlq(e.field.begin(),e.field.end());
 		EXPECT_EQ(res.val,e.ans.val); //<< "Failed for e.ans==" << e.ans << "\n";
 		EXPECT_EQ(res.N,e.ans.N); //<< "Failed for e.ans==" << e.ans << "\n";
 		EXPECT_EQ(res.is_valid,e.ans.is_valid);// << "Failed for e.ans==" << e.ans << "\n";
@@ -214,13 +214,11 @@ TEST(midi_raw_tests, WriteVLFieldStdP131Exs) {
 	};
 	for (const auto& e : all_tests) {
 		std::array<unsigned char,4> curr_result {0x00u,0x00u,0x00u,0x00u};
-		const unsigned char *p_res_field = &(curr_result[0]);
-		const unsigned char *p_ans_field = &(e.ans[0]);
 
-		auto res = midi_write_vl_field(curr_result.begin(),curr_result.end(),e.num);
+		auto res = write_vlq(e.num,curr_result.begin());
 
 		auto nbytes_written = res-curr_result.begin();
-		EXPECT_EQ(nbytes_written,midi_interpret_vl_field(p_ans_field).N);
+		EXPECT_EQ(nbytes_written,read_vlq(e.ans.begin(),e.ans.end()).N);
 
 		for (int i=0; i<e.ans.size(); ++i) {  // always 4 iterations
 			EXPECT_EQ(curr_result[i],e.ans[i]);
@@ -255,74 +253,19 @@ TEST(midi_raw_tests, WriteVLFieldBackInsertIteratorStdP131Exs) {
 		{{0xFF,0xFF,0xFF,0x7F},0x0FFFFFFF}
 	};
 	for (const auto& e : all_tests) {
-		const unsigned char *p_ans_field = &(e.ans[0]);
-		auto ans_n_bytes = midi_interpret_vl_field(p_ans_field).N;
+		auto ans_n_bytes = read_vlq(e.ans.begin(),e.ans.end()).N;
 
 		std::vector<unsigned char> curr_result {};
-		auto res_it = midi_write_vl_field(std::back_inserter(curr_result),e.num);
-		const unsigned char *p_res_field = &(curr_result[0]);
+		auto res_it = write_vlq(e.num,std::back_inserter(curr_result));
 
-		EXPECT_EQ(midi_interpret_vl_field(p_res_field).N,ans_n_bytes);
-		EXPECT_EQ(midi_interpret_vl_field(p_res_field).val,e.num);
+		EXPECT_EQ(read_vlq(curr_result.begin(),curr_result.end()).N,ans_n_bytes);
+		EXPECT_EQ(read_vlq(curr_result.begin(),curr_result.end()).val,e.num);
 		for (int i=0; i<ans_n_bytes; ++i) {
 			EXPECT_EQ(curr_result[i],e.ans[i]);
 		}
 	}
 }
 
-// OIt write_delta_time(T val, OIt it) and all the examples from p.131 of 
-// the MIDI std.  
-TEST(midi_raw_tests, WriteDeltaTimeBackInsertIteratorStdP131Exs) {
-	struct tests {
-		std::array<unsigned char,4> ans {0x00,0x00,0x00,0x00};
-		uint32_t num {};
-	};
-	std::vector<tests> all_tests {
-		{{0x00,0x00,0x00,0x00},0x00},
-		{{0x40,0x00,0x00,0x00},0x40},
-		{{0x7F,0x00,0x00,0x00},0x7F},
-
-		{{0x81,0x00,0x00,0x00},0x80},
-		{{0xC0,0x00,0x00,0x00},0x2000},
-		{{0xFF,0x7F,0x00,0x00},0x3FFF},
-
-		{{0x81,0x80,0x00,0x00},0x4000},
-		{{0xC0,0x80,0x00,0x00},0x100000},
-		{{0xFF,0xFF,0x7F,0x00},0x1FFFFF},
-
-		{{0x81,0x80,0x80,0x00},0x00200000},
-		{{0xC0,0x80,0x80,0x00},0x08000000},
-		{{0xFF,0xFF,0xFF,0x7F},0x0FFFFFFF},
-
-		// Attempt to write values exceeding the allowed max
-		{{0xFF,0xFF,0xFF,0x7F},0x1FFFFFFFu},
-		{{0xFF,0xFF,0xFF,0x7F},0x2FFFFFFFu},
-		{{0xFF,0xFF,0xFF,0x7F},0x7FFFFFFFu}
-		/*{{0xFF,0xFF,0xFF,0x7F},0x8FFFFFFFu},
-		{{0xFF,0xFF,0xFF,0x7F},0x9FFFFFFFu},
-		{{0xFF,0xFF,0xFF,0x7F},0xBFFFFFFFu},
-		{{0xFF,0xFF,0xFF,0x7F},0xEFFFFFFFu},
-		{{0xFF,0xFF,0xFF,0x7F},0xFFFFFFFFu}*/
-	};
-	for (const auto& e : all_tests) {
-		const unsigned char *p_ans_field = &(e.ans[0]);
-		auto ans_field_interp = read_delta_time(p_ans_field,
-			p_ans_field+e.ans.size());
-
-		std::vector<unsigned char> curr_result {};
-		auto res_it = write_delta_time(e.num,std::back_inserter(curr_result));
-		const unsigned char *p_res_field = &(curr_result[0]);
-		//auto curr_field_interp = midi_interpret_vl_field(p_res_field);
-		auto curr_field_interp = read_delta_time(p_res_field,
-			p_res_field+curr_result.size());
-
-		EXPECT_EQ(curr_field_interp.N,ans_field_interp.N);
-		EXPECT_EQ(curr_field_interp.val,ans_field_interp.val);
-		for (int i=0; i<ans_field_interp.N; ++i) {
-			EXPECT_EQ(curr_result[i],e.ans[i]);
-		}
-	}
-}
 
 //
 // Tests for:

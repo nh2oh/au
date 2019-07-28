@@ -18,7 +18,7 @@
 TEST(mtrk_event_sysex_factories, makeSysexF0PayloadsLackTerminalF7) {
 	for (const auto& e : f0f7_tests_no_terminating_f7_on_pyld) {
 		auto curr_dtN = delta_time_field_size(e.ans_dt);
-		auto ans_event_size = 1 + midi_vl_field_size(e.ans_pyld_len) 
+		auto ans_event_size = 1 + vlq_field_size(e.ans_pyld_len) 
 			+ e.ans_pyld_len;
 		auto ans_tot_size = curr_dtN + ans_event_size;
 		bool ans_is_small = (ans_tot_size<=23);
@@ -65,7 +65,7 @@ TEST(mtrk_event_sysex_factories, makeSysexF0PayloadsLackTerminalF7) {
 TEST(mtrk_event_sysex_factories, makeSysexF0PayloadsWithTerminalF7) {
 	for (const auto& e : f0f7_tests_terminating_f7_on_pyld) {
 		auto curr_dtN = delta_time_field_size(e.ans_dt);
-		auto ans_event_size = 1 + midi_vl_field_size(e.ans_pyld_len) 
+		auto ans_event_size = 1 + vlq_field_size(e.ans_pyld_len) 
 			+ e.ans_pyld_len;
 		auto ans_tot_size = curr_dtN + ans_event_size;
 		bool ans_is_small = (ans_tot_size<=23);
@@ -112,7 +112,7 @@ TEST(mtrk_event_sysex_factories, makeSysexF0PayloadsWithTerminalF7) {
 TEST(mtrk_event_sysex_factories, makeSysexF7PayloadsLackTerminalF7) {
 	for (const auto& e : f0f7_tests_no_terminating_f7_on_pyld) {
 		auto curr_dtN = delta_time_field_size(e.ans_dt);
-		auto ans_event_size = 1 + midi_vl_field_size(e.ans_pyld_len) 
+		auto ans_event_size = 1 + vlq_field_size(e.ans_pyld_len) 
 			+ e.ans_pyld_len;
 		auto ans_tot_size = curr_dtN + ans_event_size;
 		bool ans_is_small = (ans_tot_size<=23);
@@ -159,7 +159,7 @@ TEST(mtrk_event_sysex_factories, makeSysexF7PayloadsLackTerminalF7) {
 TEST(mtrk_event_sysex_factories, makeSysexF7PayloadsWithTerminalF7) {
 	for (const auto& e : f0f7_tests_terminating_f7_on_pyld) {
 		auto curr_dtN = delta_time_field_size(e.ans_dt);
-		auto ans_event_size = 1 + midi_vl_field_size(e.ans_pyld_len) 
+		auto ans_event_size = 1 + vlq_field_size(e.ans_pyld_len) 
 			+ e.ans_pyld_len;
 		auto ans_tot_size = curr_dtN + ans_event_size;
 		bool ans_is_small = (ans_tot_size<=23);
