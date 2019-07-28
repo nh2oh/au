@@ -17,9 +17,9 @@ TEST(mtrk_event_class_method_tests, setDtPositiveValues) {
 		ev.set_delta_time(tc.dt_input);
 		EXPECT_EQ(ev.delta_time(),tc.ans_value);
 
-		auto it_evbeg = ev.cevent_begin();
+		auto it_evbeg = ev.event_begin();
 		auto it_end = ev.cend();
-		auto it_def_evbeg = default_ev.cevent_begin();
+		auto it_def_evbeg = default_ev.event_begin();
 		auto it_def_end = default_ev.cend();
 		ASSERT_EQ((it_def_end-it_def_evbeg),(it_end-it_evbeg));
 		while (it_evbeg!=it_end) {
@@ -39,9 +39,9 @@ TEST(mtrk_event_class_method_tests, setDtNegativeValues) {
 		ev.set_delta_time(tc.dt_input);
 		EXPECT_EQ(ev.delta_time(),tc.ans_value);
 
-		auto it_evbeg = ev.cevent_begin();
+		auto it_evbeg = ev.event_begin();
 		auto it_end = ev.cend();
-		auto it_def_evbeg = default_ev.cevent_begin();
+		auto it_def_evbeg = default_ev.event_begin();
 		auto it_def_end = default_ev.cend();
 		ASSERT_EQ((it_def_end-it_def_evbeg),(it_end-it_evbeg));
 		while (it_evbeg!=it_end) {
@@ -61,9 +61,9 @@ TEST(mtrk_event_class_method_tests, CallSetDtRepeatedly) {
 		ev.set_delta_time(tc.dt_input);
 		EXPECT_EQ(ev.delta_time(),tc.ans_value);
 
-		auto it_evbeg = ev.cevent_begin();
+		auto it_evbeg = ev.event_begin();
 		auto it_end = ev.cend();
-		auto it_def_evbeg = default_ev.cevent_begin();
+		auto it_def_evbeg = default_ev.event_begin();
 		auto it_def_end = default_ev.cend();
 		ASSERT_EQ((it_def_end-it_def_evbeg),(it_end-it_evbeg));
 		while (it_evbeg!=it_end) {
@@ -93,9 +93,9 @@ TEST(mtrk_event_class_method_tests, CallSetDtRepeatedlyRandomValues) {
 		EXPECT_EQ(ev.delta_time(),dt) 
 			<< "Previous dt==" << prev_dt << ";  dt==" << dt;
 
-		auto it_evbeg = ev.cevent_begin();
+		auto it_evbeg = ev.event_begin();
 		auto it_end = ev.cend();
-		auto it_def_evbeg = default_ev.cevent_begin();
+		auto it_def_evbeg = default_ev.event_begin();
 		auto it_def_end = default_ev.cend();
 		ASSERT_EQ((it_def_end-it_def_evbeg),(it_end-it_evbeg));
 		while (it_evbeg!=it_end) {
