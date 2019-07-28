@@ -101,6 +101,7 @@
     <ClCompile Include="make_mtrk_event_tests.cpp" />
     <ClCompile Include="melody_a_testcpp.cpp" />
     <ClCompile Include="melody_temperley_test.cpp" />
+    <ClCompile Include="midi_dt_tests.cpp" />
     <ClCompile Include="midi_raw_test.cpp" />
     <ClCompile Include="midi_raw_test_data.cpp" />
     <ClCompile Include="midi_sb_classification_funcs.cpp" />

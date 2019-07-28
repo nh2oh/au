@@ -138,6 +138,9 @@
     <ClCompile Include="delta_time_test_data.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="midi_dt_tests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="midi_raw_test_data.h">
