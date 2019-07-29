@@ -91,7 +91,7 @@ TEST(mthd_tests, MakeMthdInvalidInput) {
 	for (const auto& tcase : mthd_test::invalid_set_a) {
 		auto beg = tcase.data.data();
 		auto end = beg + tcase.offset_to_data_end;
-		auto mthd = make_mthd(beg,end);
+		auto mthd = make_mthd(beg,end,nullptr);
 		
 		EXPECT_FALSE(mthd);
 	}
@@ -108,7 +108,7 @@ TEST(mthd_tests, MakeMthdValidInput) {
 	for (const auto& tcase : mthd_test::valid_set_a) {
 		auto beg = tcase.data.data();
 		auto end = beg + tcase.offset_to_data_end;
-		auto mthd = make_mthd(beg,end);
+		auto mthd = make_mthd(beg,end,nullptr);
 		EXPECT_TRUE(mthd);
 	}
 }
@@ -124,7 +124,7 @@ TEST(mthd_tests, MakeMthdValidUnusualInput) {
 	for (const auto& tcase : mthd_test::valid_unusual_a) {
 		auto beg = tcase.data.data();
 		auto end = tcase.data.data() + tcase.data.size();
-		auto mthd = make_mthd(beg,end);
+		auto mthd = make_mthd(beg,end,nullptr);
 		EXPECT_TRUE(mthd);
 		EXPECT_EQ(mthd.mthd.length(),tcase.ans_length);
 		EXPECT_EQ(mthd.mthd.format(),tcase.ans_format);
