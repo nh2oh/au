@@ -59,6 +59,8 @@ TEST(make_mtrk_event_tests, assortedMidiEventsNoRS) {
 		EXPECT_EQ(maybe_ev.event.size(),tc.size);
 		EXPECT_EQ(maybe_ev.event.data_size(),tc.data_size);
 		for (int i=0; i<maybe_ev.event.size(); ++i) {
+			auto a = maybe_ev.event[i];
+			auto b = tc.bytes[i];
 			EXPECT_EQ(maybe_ev.event[i],tc.bytes[i]);
 		}
 
@@ -68,9 +70,12 @@ TEST(make_mtrk_event_tests, assortedMidiEventsNoRS) {
 		EXPECT_TRUE(maybe_ev);
 		EXPECT_EQ(maybe_ev.event.delta_time(),tc.delta_time);
 
+		auto sz = maybe_ev.event.size();
 		EXPECT_EQ(maybe_ev.event.size(),tc.size);
 		EXPECT_EQ(maybe_ev.event.data_size(),tc.data_size);
 		for (int i=0; i<maybe_ev.event.size(); ++i) {
+			auto a = maybe_ev.event[i];
+			auto b = tc.bytes[i];
 			EXPECT_EQ(maybe_ev.event[i],tc.bytes[i]);
 		}
 	}
