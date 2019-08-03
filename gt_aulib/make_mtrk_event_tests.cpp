@@ -65,8 +65,8 @@ TEST(make_mtrk_event_tests, assortedMidiEventsNoRS) {
 		}
 
 		auto dt_end = tc.bytes.data() + (tc.size-tc.data_size);
-		maybe_ev = make_mtrk_event(tc.delta_time,dt_end,
-			tc.bytes.data()+tc.bytes.size(),0,nullptr);
+		maybe_ev = make_mtrk_event(dt_end,
+			tc.bytes.data()+tc.bytes.size(),tc.delta_time,0,nullptr);
 		EXPECT_TRUE(maybe_ev);
 		EXPECT_EQ(maybe_ev.event.delta_time(),tc.delta_time);
 
@@ -240,8 +240,8 @@ TEST(make_mtrk_event_tests, randomChEvntsSmallRandomRS) {
 		}
 
 		auto dt_end = tc.data.data() + tc.dt_field_size;
-		maybe_ev = make_mtrk_event(tc.dt_value,dt_end,
-			tc.data.data()+tc.data.size(),tc.midisb_prev_event,nullptr);
+		maybe_ev = make_mtrk_event(dt_end,
+			tc.data.data()+tc.data.size(),tc.dt_value,tc.midisb_prev_event,nullptr);
 		EXPECT_TRUE(maybe_ev);
 		EXPECT_EQ(maybe_ev.event.delta_time(),tc.dt_value);
 
@@ -310,8 +310,8 @@ TEST(make_mtrk_event_tests, metaEventsSmallNoRS) {
 		}
 
 		auto dt_end = tc.bytes.data() + (tc.size-tc.data_size);
-		maybe_ev = make_mtrk_event(tc.delta_time,dt_end,
-			tc.bytes.data()+tc.bytes.size(),0,nullptr);
+		maybe_ev = make_mtrk_event(dt_end,
+			tc.bytes.data()+tc.bytes.size(),tc.delta_time,0,nullptr);
 		EXPECT_TRUE(maybe_ev);
 		EXPECT_EQ(maybe_ev.event.delta_time(),tc.delta_time);
 
@@ -394,8 +394,8 @@ TEST(make_mtrk_event_tests, metaEventsBigNoRS) {
 		}
 
 		auto dt_end = tc.bytes.data() + (tc.size-tc.data_size);
-		maybe_ev = make_mtrk_event(tc.delta_time,dt_end,
-			tc.bytes.data()+tc.bytes.size(),0,nullptr);
+		maybe_ev = make_mtrk_event(dt_end,
+			tc.bytes.data()+tc.bytes.size(),tc.delta_time,0,nullptr);
 		EXPECT_TRUE(maybe_ev);
 		EXPECT_EQ(maybe_ev.event.delta_time(),tc.delta_time);
 
@@ -455,8 +455,8 @@ TEST(make_mtrk_event_tests, assortedChEvntsSmallRandomRSTestSetC) {
 		}
 
 		auto dt_end = tc.data.data() + tc.dt_field_size;
-		maybe_ev = make_mtrk_event(tc.dt_value,dt_end,
-			tc.data.data()+tc.data.size(),tc.midisb_prev_event,nullptr);
+		maybe_ev = make_mtrk_event(dt_end,
+			tc.data.data()+tc.data.size(),tc.dt_value,tc.midisb_prev_event,nullptr);
 		EXPECT_TRUE(maybe_ev);
 		EXPECT_EQ(maybe_ev.event.delta_time(),tc.dt_value);
 
