@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 #include "..\aulib\input\midi\mtrk_event_t.h"
 #include "..\aulib\input\midi\mtrk_event_methods.h"
-#include "..\aulib\input\midi\midi_vlq.h"
+#include "..\aulib\input\midi\midi_delta_time.h"
 #include <vector>
 #include <cstdint>
 
@@ -10,9 +10,9 @@
 //
 TEST(mtrk_event_t_meta_factories, makeTempo) {
 	struct test_t {
-		uint32_t dt_in {0};
+		int32_t dt_in {0};
 		uint32_t tempo_in {0};
-		uint32_t dt_ans {0};
+		int32_t dt_ans {0};
 		uint32_t tempo_ans {0};
 	};
 
@@ -26,12 +26,12 @@ TEST(mtrk_event_t_meta_factories, makeTempo) {
 		// In the next two, the value for tempo_in exceeds the max value, so
 		// will be truncated to the max value of 16777215.  
 		{1,16777216,1,16777215}, 
-		{1,0xFFFFFFFFu,1,16777215},
+		{1,0xFFFFFFFF,1,16777215},
 		
 	};
 	for (const auto& e : tests) {
 		const auto ev = make_tempo(e.dt_in,e.tempo_in);
-		auto dt_size = vlq_field_size(e.dt_ans);
+		auto dt_size = delta_time_field_size(e.dt_ans);
 		auto pyld_size = 3;
 		auto dat_size = 3+pyld_size;
 		auto tot_size = dt_size+dat_size;
@@ -59,10 +59,10 @@ TEST(mtrk_event_t_meta_factories, makeTempo) {
 // mtrk_event_t make_eot(const uint32_t& dt)
 //
 TEST(mtrk_event_t_meta_factories, makeEOT) {
-	std::vector<uint32_t> tests {0,1,128,125428};
+	std::vector<int32_t> tests {0,1,128,125428};
 	for (const auto& e : tests) {
 		const auto ev = make_eot(e);
-		auto dt_size = vlq_field_size(e);
+		auto dt_size = delta_time_field_size(e);
 		auto pyld_size = 0;
 		auto dat_size = 3+pyld_size;
 		auto tot_size = dt_size+dat_size;
@@ -89,7 +89,7 @@ TEST(mtrk_event_t_meta_factories, makeEOT) {
 //
 TEST(mtrk_event_t_meta_factories, makeTimesig) {
 	struct test_t {
-		uint32_t dt {0};
+		int32_t dt {0};
 		midi_timesig_t ts {0,0,0,0};
 	};
 
@@ -108,7 +108,7 @@ TEST(mtrk_event_t_meta_factories, makeTimesig) {
 	};
 	for (const auto& e : tests) {
 		const auto ev = make_timesig(e.dt,e.ts);
-		auto dt_size = vlq_field_size(e.dt);
+		auto dt_size = delta_time_field_size(e.dt);
 		auto pyld_size = 4;
 		auto dat_size = 3+pyld_size;
 		auto tot_size = dt_size+dat_size;
@@ -139,7 +139,7 @@ TEST(mtrk_event_t_meta_factories, makeTimesig) {
 //
 TEST(mtrk_event_t_meta_factories, makeEventsWithTextPayloads) {
 	struct testset_t {
-		mtrk_event_t (*fp_make)(const uint32_t&, const std::string&);
+		mtrk_event_t (*fp_make)(const int32_t&, const std::string&);
 		bool (*fp_is)(const mtrk_event_t&);
 		meta_event_t ans_evtype;
 	};
@@ -154,7 +154,7 @@ TEST(mtrk_event_t_meta_factories, makeEventsWithTextPayloads) {
 	};
 
 	struct test_t {
-		uint32_t dt {0};
+		int32_t dt {0};
 		std::string s {};
 		bool issmall {false};
 	};
@@ -168,9 +168,9 @@ TEST(mtrk_event_t_meta_factories, makeEventsWithTextPayloads) {
 		{125428, "", true},
 		{125428, "", true},
 		// Maximum allowed dt
-		{0x0FFFFFFFu, "", true},
-		{0x0FFFFFFFu, "Acoustic Grand", true},  // From the midi std p. 10
-		{0x0FFFFFFFu, "This string exceeds the size of the small buffer in mtrk_event_t.  ", false}
+		{0x0FFFFFFF, "", true},
+		{0x0FFFFFFF, "Acoustic Grand", true},  // From the midi std p. 10
+		{0x0FFFFFFF, "This string exceeds the size of the small buffer in mtrk_event_t.  ", false}
 	};
 	for (const auto curr_testset : testsets) {
 		for (const auto& e : tests) {
