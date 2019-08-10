@@ -4,6 +4,7 @@
 #include "..\aulib\input\midi\midi_delta_time.h"
 #include <vector>
 #include <cstdint>
+#include <string>
 
 // 
 // mtrk_event_t make_tempo(const uint32_t& dt, const uint32_t& uspqn);
@@ -180,6 +181,9 @@ TEST(mtrk_event_t_meta_factories, makeEventsWithTextPayloads) {
 			EXPECT_TRUE((*curr_testset.fp_is)(ev));
 			EXPECT_TRUE(meta_has_text(ev));
 			EXPECT_EQ(ev.delta_time(),e.dt);
+
+			auto txt = meta_generic_gettext(ev);
+
 			EXPECT_EQ(meta_generic_gettext(ev),e.s);
 		}
 	}
