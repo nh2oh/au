@@ -20,6 +20,7 @@ struct test_setc_t {
 	uint32_t data_length {};  // n_data_bytes (+ 1 if not in running status)
 	uint32_t dt_value {};
 	uint8_t dt_field_size {};
+	bool is_ch_mode {};
 };
 extern std::vector<test_setc_t> set_c_midi_events_valid;
 extern std::vector<test_setc_t> set_d_midi_events_nostatus_invalid;
