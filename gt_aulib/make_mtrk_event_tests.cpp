@@ -486,3 +486,74 @@ TEST(make_mtrk_event_tests, assortedChEvntsSmallInvalidTestSetD) {
 		EXPECT_FALSE(maybe_ev);
 	}
 }
+
+
+//
+// Sets of meta events, sysex_f0/f7 events, and midi events, paired with 
+// "random" but valid running-status bytes.  Events also have dt fields of
+// varying size.  
+//
+TEST(make_mtrk_event_tests, RandomEventsAllRSBytesValid) {
+	for (const auto& tc : set_a_valid_rs) {
+		mtrk_event_error_t err;
+		auto maybe_ev = make_mtrk_event(tc.data.data(),
+			tc.data.data()+tc.data.size(),tc.rs_pre,&err);
+		EXPECT_TRUE(maybe_ev);
+		EXPECT_EQ(maybe_ev.event.running_status(),tc.rs_post);
+		
+		auto sz_dt = maybe_ev.event.event_begin()-maybe_ev.event.begin();
+		EXPECT_EQ(sz_dt,tc.dtsize);
+	}
+}
+
+
+//
+// Sets of meta events, sysex_f0/f7 events, and midi events, paired with 
+// "random" but *invalid* running-status bytes.  Events also have dt fields of
+// varying size.  
+// 
+TEST(make_mtrk_event_tests, RandomMtrkEventsAllRSBytesInvalid) {
+	for (const auto& tc : set_b_invalid_rs) {
+		mtrk_event_error_t err;
+		auto maybe_ev = make_mtrk_event(tc.data.data(),
+			tc.data.data()+tc.data.size(),tc.rs_pre,&err);
+
+		// In this set, events w/o an event-local status byte are
+		// uninterpretible, since all rs bytes are invalid.  
+		const unsigned char *p = &(tc.data[0]);
+		auto maybe_loc_sb = *(p+tc.dtsize);
+		if ((maybe_loc_sb&0x80u) != 0x80) { 
+			EXPECT_FALSE(maybe_ev);
+			continue;
+		}
+
+		EXPECT_TRUE(maybe_ev);
+		EXPECT_EQ(maybe_ev.event.running_status(),tc.rs_post);
+		
+		auto sz_dt = maybe_ev.event.event_begin()-maybe_ev.event.begin();
+		EXPECT_EQ(sz_dt,tc.dtsize);
+	}
+}
+
+
+//
+// Part 3:  midi events only; running-status may or may not be valid, but all 
+// composite events (data+rs byte) are valid and interpretible.  
+//
+// Set of midi events, paired with "random" but valid and invalid running-
+// status bytes.  Those events paired w/ invalid rs bytes have a valid
+// event-local status byte.  Events w/ valid rs bytes may or may not contain
+// an event-local status byte; if not, the rs byte correctly describes the
+// event.  Events also have dt fields of varying size.  
+//
+TEST(make_mtrk_event_tests, RandomMIDIEventsRSandNonRS) {
+	for (const auto& tc : set_c_midi_events_valid) {
+
+		mtrk_event_error_t err;
+		auto maybe_ev = make_mtrk_event(tc.data.data(),
+			tc.data.data()+tc.data.size(),tc.midisb_prev_event,&err);
+		EXPECT_TRUE(maybe_ev);
+		EXPECT_EQ(maybe_ev.event.running_status(),tc.applic_midi_status);
+	}
+}
+
