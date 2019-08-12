@@ -78,9 +78,9 @@ TEST(mtrk_t_tests, AtCumtkTestSetA) {
 	
 	// at_cumtk() returns the first event w/a cumtk >= the cumtk provided
 	struct test_t {
-		uint64_t cumtk_arg;
+		int32_t cumtk_arg;
 		mtrk_event_t ev_ans;
-		uint64_t cumtk_ans;
+		int32_t cumtk_ans;
 	};
 	std::vector<test_t> tests {
 		{0, mtrk_tsa[0], tsa[0].cumtk},
@@ -118,11 +118,11 @@ TEST(mtrk_t_tests, AtTkonsetTestSetA) {
 	
 	// at_tkonset() returns the first event w/n onset tk >= the tk provided.  
 	struct test_t {
-		uint64_t tkonset_arg;
+		int32_t tkonset_arg;
 
 		mtrk_event_t ev_ans;
-		uint64_t cumtk_ans;
-		uint64_t tkonset_ans;
+		int32_t cumtk_ans;
+		int32_t tkonset_ans;
 	};
 	std::vector<test_t> tests {
 		{0, mtrk_tsa[0], tsa[0].cumtk, tsa[0].cumtk+mtrk_tsa[0].delta_time()},
@@ -165,16 +165,16 @@ TEST(mtrk_t_tests, InsertWithZeroDtIntoTSAMethodInsertAtCumtk) {
 	mtrk_event_t e_on(0,midi_ch_event_t {0x90u,0,57,25});
 
 	struct test_t {
-		uint64_t insert_at_cumtk {0};
+		int32_t insert_at_cumtk {0};
 		int idx_inserted {0};  // idx of the newly inserted event
 		// in the new mtrk, the event that _used_ to have idx==idx_inserted
 		int oldidx_inserted {0};  
 		// in the new mtrk, the event that _used_ to have idx==idx_inserted+1
 		int oldidx_inserted_p1 {0};
 		// in the new mtrk, the cumtk, delta_time, tk_onset of the new event
-		uint64_t cumtk_inserted {0};
-		uint64_t dt_inserted {0};
-		uint64_t tkonset_inserted {0};
+		int cumtk_inserted {0};
+		int dt_inserted {0};
+		int tkonset_inserted {0};
 	};
 	std::vector<test_t> tests {
 		{0,  0,1,2,  0,0,0},
@@ -233,9 +233,9 @@ TEST(mtrk_t_tests, InsertWithZeroDtIntoTSAMethodInsertNoTkShift) {
 		int insert_at_idx {0};
 		int idx_inserted {0};  // idx of the newly inserted event
 		// in the new mtrk, the cumtk, delta_time, tk_onset of the new event
-		uint64_t cumtk_inserted {0};
-		uint64_t dt_inserted {0};
-		uint64_t tkonset_inserted {0};
+		int32_t cumtk_inserted {0};
+		int32_t dt_inserted {0};
+		int32_t tkonset_inserted {0};
 	};
 	std::vector<test_t> tests {
 		{0, 0, 0,0,0},
@@ -262,7 +262,7 @@ TEST(mtrk_t_tests, InsertWithZeroDtIntoTSAMethodInsertNoTkShift) {
 		EXPECT_EQ(*it_new,new_mtrk_tsa[currtest.idx_inserted]);
 		EXPECT_EQ(it_new->delta_time(),currtest.dt_inserted);
 
-		uint64_t cumtk = 0;
+		int32_t cumtk = 0;
 		auto it=new_mtrk_tsa.begin();
 		for (true; it!=new_mtrk_tsa.end(); ++it) {
 			if (it == it_new) {
@@ -292,10 +292,10 @@ TEST(mtrk_t_tests, InsertWithNzeroDtIntoTSAMethodInsertNoTkShift) {
 		int ev_dt {0};
 		int insert_idx {0};
 		int inserted_idx {0};
-		uint64_t inserted_cumtk {0};
-		uint64_t inserted_dt {0};
-		uint64_t inserted_tkonset {0};  // Always == ev_dt+cumtk-at-insert_idx
-		uint64_t next_ev_dt {0};
+		int inserted_cumtk {0};
+		int inserted_dt {0};
+		int inserted_tkonset {0};  // Always == ev_dt+cumtk-at-insert_idx
+		int next_ev_dt {0};
 	};
 	std::vector<test_t> tests {
 		//

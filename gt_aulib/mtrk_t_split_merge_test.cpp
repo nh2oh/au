@@ -37,7 +37,7 @@ TEST(mtrk_t_tests, SplitCopyIfForNoteNum67WithTSB) {
 	auto it = split_copy_if(mtrk_b.begin(),mtrk_b.end(),
 		std::back_inserter(new_mtrk),isntnum43);
 
-	uint64_t tk_onset = 0;
+	int32_t tk_onset = 0;
 	EXPECT_EQ(new_mtrk.size(),tsb_note_67_events.size());
 	for (int i=0; i<new_mtrk.size(); ++i) {
 		tk_onset += new_mtrk[i].delta_time();
@@ -72,7 +72,7 @@ TEST(mtrk_t_tests, SplitCopyIfForMetaEventsWithTSB) {
 	auto it = split_copy_if(mtrk_b.begin(),mtrk_b.end(),
 		std::back_inserter(new_mtrk),ismeta);
 
-	uint64_t tk_onset = 0;
+	int32_t tk_onset = 0;
 	EXPECT_EQ(new_mtrk.size(),tsb_meta_events.size());
 	for (int i=0; i<new_mtrk.size(); ++i) { 
 		tk_onset += new_mtrk[i].delta_time();
@@ -106,7 +106,7 @@ TEST(mtrk_t_tests, SplitIfForNoteNum67WithTSB) {
 	auto mtrk_first = mtrk_t(mtrk_b.begin(),it);
 	auto mtrk_second = mtrk_t(it,mtrk_b.end());
 	
-	uint64_t tk_onset = 0;
+	int32_t tk_onset = 0;
 	EXPECT_EQ(mtrk_first.size(),tsb_note_67_events.size());
 	for (int i=0; i<mtrk_first.size(); ++i) {
 		tk_onset += mtrk_first[i].delta_time();
@@ -172,7 +172,7 @@ TEST(mtrk_t_tests, SplitIfMtrkOverloadForNoteNum67WithTSB) {
 TEST(mtrk_t_tests, MergeMtrkTSBNote67SplitProducts) {
 	auto mtrk_b = make_mtrk_tsb(tsb);
 	auto mtrk_non67 = make_mtrk_tsb(tsb_non_note_67_events);
-	uint64_t tkonset = 0; uint64_t cumtk = 0;
+	int32_t tkonset = 0; int32_t cumtk = 0;
 	for (int i=0; i<mtrk_non67.size(); ++i) {
 		mtrk_non67[i].set_delta_time(tsb_non_note_67_events[i].tkonset - cumtk);
 		cumtk += mtrk_non67[i].delta_time();
@@ -201,7 +201,7 @@ TEST(mtrk_t_tests, MergeMtrkTSBNote67SplitProducts) {
 TEST(mtrk_t_tests, MergeMtrkTSBMetaEventsSplitProducts) {
 	auto mtrk_b = make_mtrk_tsb(tsb);
 	auto mtrk_nonmeta = make_mtrk_tsb(tsb_non_meta_events);
-	uint64_t tkonset = 0; uint64_t cumtk = 0;
+	int32_t tkonset = 0; int32_t cumtk = 0;
 	for (int i=0; i<mtrk_nonmeta.size(); ++i) {
 		mtrk_nonmeta[i].set_delta_time(tsb_non_meta_events[i].tkonset - cumtk);
 		cumtk += mtrk_nonmeta[i].delta_time();

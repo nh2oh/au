@@ -7,13 +7,13 @@
 namespace mtrk_tests {
 
 struct mtrk_properties_t {
-	uint32_t size {0};  // nevents
-	uint64_t duration_tks {0};
+	int32_t size {0};  // nevents
+	int32_t duration_tks {0};
 };
 
 struct eventdata_with_cumtk_t {
 	std::vector<unsigned char> d {};
-	uint64_t cumtk {};
+	int32_t cumtk {};
 };
 // Test set a
 // Created June 09 2019
@@ -24,8 +24,8 @@ extern mtrk_properties_t tsa_props;
 // Created June 15, 2019
 struct tsb_t {
 	std::vector<unsigned char> d {};
-	uint64_t cumtk {};
-	uint64_t tkonset {};
+	int32_t cumtk {};
+	int32_t tkonset {};
 };
 extern std::vector<tsb_t> tsb;
 extern std::vector<tsb_t> tsb_note_67_events;
