@@ -73,16 +73,16 @@ TEST(mtrk_event_ctor_tests, dtOnlyCtor) {
 
 
 //
-// Tests of the mtrk_event_t(uint32_t, const midi_ch_event_t&) ctor
-// with valid data in the midi_ch_event_t struct.  
+// Tests of the mtrk_event_t(uint32_t, const ch_event_data_t&) ctor
+// with valid data in the ch_event_data_t struct.  
 //
 TEST(mtrk_event_ctor_tests, MidiChEventStructCtorValidInputData) {
 	struct test_t {
 		uint32_t dt_input {0};
-		midi_ch_event_t md_input {};
+		ch_event_data_t md_input {};
 		uint32_t data_size {0};
 	};
-	// midi_ch_event_t {status, ch, p1, p2}
+	// ch_event_data_t {status, ch, p1, p2}
 	std::vector<test_t> tests {
 		// Events w/ 2 data bytes:
 		{0, {note_on,0,57,32}, 3},
@@ -129,16 +129,16 @@ TEST(mtrk_event_ctor_tests, MidiChEventStructCtorValidInputData) {
 
 
 //
-// Tests of the mtrk_event_t(uint32_t, const midi_ch_event_t&) ctor
-// with _invalid_ data in the midi_ch_event_t struct.  
+// Tests of the mtrk_event_t(uint32_t, const ch_event_data_t&) ctor
+// with _invalid_ data in the ch_event_data_t struct.  
 //
-// TODO:  This is better used as a test for normalize(midi_ch_event_t)...
+// TODO:  This is better used as a test for normalize(ch_event_data_t)...
 TEST(mtrk_event_ctor_tests, MidiChEventStructCtorInvalidInputData) {
 	struct test_t {
 		uint32_t dt_input;
-		midi_ch_event_t md_input;
+		ch_event_data_t md_input;
 	};
-	// midi_ch_event_t {status, ch, p1, p2}
+	// ch_event_data_t {status, ch, p1, p2}
 	std::vector<test_t> tests {
 		{0, {note_on,16,57,32}},  // Invalid channel (>15)
 		{1, {note_on,127,57,32}},  // Invalid channel (>15)

@@ -31,7 +31,7 @@ TEST(mtrk_event_channel_interrogators, isChannelVoiceModeTestSetCEvents) {
 TEST(mtrk_event_channel_interrogators, isChannelVoiceModeAssortedEvents) {
 	struct test_t {
 		int32_t dt_input {0};
-		midi_ch_event_t md_input {};  // midi_ch_event_t {status, ch, p1, p2}
+		ch_event_data_t md_input {};  // ch_event_data_t {status, ch, p1, p2}
 		int32_t data_size {0};
 	};	
 	std::vector<test_t> tests {
