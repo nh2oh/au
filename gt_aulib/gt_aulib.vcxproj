@@ -108,6 +108,7 @@
     <ClCompile Include="midi_testdata_status_bytes.cpp" />
     <ClCompile Include="mthd_test_data.cpp" />
     <ClCompile Include="mthd_t_test.cpp" />
+    <ClCompile Include="mtrk_duration_tests.cpp" />
     <ClCompile Include="mtrk_event_class_method_tests.cpp" />
     <ClCompile Include="mtrk_event_ctor_tests.cpp" />
     <ClCompile Include="mtrk_event_internal.cpp" />
