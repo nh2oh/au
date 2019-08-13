@@ -72,6 +72,7 @@ TEST(mthd_tests, fieldValueCtorWithInvalidValues) {
 		EXPECT_EQ(mthd.size(), 14);
 		EXPECT_EQ(mthd.nbytes(), 14);
 		EXPECT_EQ(mthd.length(), 6);
+		auto f = mthd.format();
 		EXPECT_EQ(mthd.format(), tcase.ans_format);
 		EXPECT_EQ(mthd.ntrks(), tcase.ans_ntrks);
 		auto d = mthd.division();
