@@ -3,7 +3,34 @@
 #include <cstdint>
 #include <cmath>
 #include <vector>
+#include <array>
 #include <limits>
+
+
+
+TEST(midi_tempo_and_timediv_tests, interpretSMPTEField) {
+	struct test_t {
+		uint16_t input {0};
+		int8_t ans_tcf {0};
+		uint8_t ans_upf {0};
+	};
+	std::array<test_t,3> tests {
+		test_t {0xE250u,-30,80},  // p.133 of the midi std
+		test_t {0xE728u,-25,40},   // 25fr/sec * 40tk/fr => 1000tk/sec => ms resolution
+		test_t {0xE350u,-29,80}
+	};
+
+	for (const auto& e : tests) {
+		auto curr_maybe = make_time_division_from_raw(e.input);
+		time_division_t curr_tdf = curr_maybe.value;
+		EXPECT_EQ(curr_tdf.get_type(),time_division_t::type::smpte);
+
+		auto curr_tcf = curr_tdf.get_smpte().time_code; //get_time_code_fmt(curr_tdf);
+		EXPECT_EQ(curr_tcf,e.ans_tcf);
+		auto curr_upf = curr_tdf.get_smpte().subframes; //get_units_per_frame(curr_tdf);
+		EXPECT_EQ(curr_upf,e.ans_upf);
+	}
+}
 
 
 // 

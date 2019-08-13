@@ -4,7 +4,7 @@
 #include <array>
 #include <cstdint>
 
-// TODO:  Fix the acrobatics about making the time_division_t objects...
+
 
 //
 // Tests for:
@@ -18,26 +18,96 @@ TEST(mthd_tests, defaultCtor) {
 		0x4Du,0x54u,0x68u,0x64u, 0x00u,0x00u,0x00u,0x06u,
 		0x00u,0x01u, 0x00u,0x00u, 0x00u,0x78u
 	};
+	auto tdiv_ans = time_division_t(120);
+
 	auto mthd = mthd_t();
 	EXPECT_EQ(mthd.size(), ans.size());
 	EXPECT_EQ(mthd.nbytes(), ans.size());
 	
-	auto cit=mthd.cbegin();
-	auto cend=mthd.cend();
-	for (int i=0; i<mthd.size(); ++i) {
-		EXPECT_NE(cit,cend);
-		EXPECT_EQ(*cit++,ans[i]);
+	int i=0;
+	for (const auto& b : mthd) {
+		EXPECT_EQ(b,ans[i++]);
 	}
-	EXPECT_EQ(cit,cend);
 
 	EXPECT_EQ(mthd.length(),6);
-	time_division_t tdf_ans = make_time_division_from_raw(0x0078u).value;
-	auto tdf_ans_rv = tdf_ans.get_raw_value();
-	EXPECT_EQ(mthd.division().get_raw_value(),tdf_ans.get_raw_value());
-	EXPECT_EQ(mthd.division().get_tpq(),static_cast<uint16_t>(120));
+	
 	EXPECT_EQ(mthd.format(),1);
 	EXPECT_EQ(mthd.ntrks(),0);
+	EXPECT_EQ(mthd.division(),tdiv_ans);
+	EXPECT_EQ(mthd.division().get_tpq(),tdiv_ans.get_tpq());
+	EXPECT_EQ(mthd.division().get_raw_value(),tdiv_ans.get_raw_value());	
 }
+
+
+//
+// mthd_t::set_length()
+// The smallest value allowed is 6.  Call the method on the default ctor'd
+// object.  
+TEST(mthd_tests, setLength) {
+	struct test_t {
+		int new_length;
+		int length_ans;
+	};
+	std::array<test_t,11> tests {{
+		{-1,6},{0,6},{1,6},{2,6},{3,6},{5,6},  // Invalid
+		{6,6},{7,7},{16,16},{24,24},{1000,1000}  // Valid
+	}};
+	auto tdiv_ans = time_division_t(120);
+	int ntrks_ans = 0;
+	int format_ans = 1;
+	
+	for (const auto& tc : tests) {
+		auto mthd = mthd_t();
+		auto result_length = mthd.set_length(tc.new_length);
+		EXPECT_EQ(result_length,tc.length_ans);
+		EXPECT_EQ(tc.length_ans,mthd.length());
+		EXPECT_EQ(mthd.size(), tc.length_ans+8);
+		EXPECT_EQ(mthd.nbytes(), tc.length_ans+8);
+
+		EXPECT_EQ(mthd.end()-mthd.begin(),mthd.size());
+
+		// The other fields are not disturbed
+		EXPECT_EQ(mthd.format(),format_ans);
+		EXPECT_EQ(mthd.ntrks(),ntrks_ans);
+		EXPECT_EQ(mthd.division(),tdiv_ans);
+	}
+}
+
+
+//
+// mthd_t::set_length()
+// The smallest value allowed is 6.  Repeatedly change the length, forcing
+// allocation, deallocation etc.  
+TEST(mthd_tests, repeatedlyChangeLength) {
+	struct test_t {
+		int new_length;
+		int length_ans;
+	};
+	std::array<test_t,14> tests {{
+		{-1,6},{1000,1000},{0,6},{16,16},{1,6},{2,6},{5,6},{3,6},
+		{6,6},{71,71},{16,16},{24,24},{241,241},{-1,6}
+	}};
+	auto tdiv_ans = time_division_t(150);
+	int ntrks_ans = 73;
+	int format_ans = 2;
+	
+	auto mthd = mthd_t(format_ans,ntrks_ans,tdiv_ans);
+	for (const auto& tc : tests) {
+		auto result_length = mthd.set_length(tc.new_length);
+		EXPECT_EQ(result_length,tc.length_ans);
+		EXPECT_EQ(tc.length_ans,mthd.length());
+		EXPECT_EQ(mthd.size(), tc.length_ans+8);
+		EXPECT_EQ(mthd.nbytes(), tc.length_ans+8);
+
+		EXPECT_EQ(mthd.end()-mthd.begin(),mthd.size());
+
+		// The other fields are not disturbed
+		EXPECT_EQ(mthd.format(),format_ans);
+		EXPECT_EQ(mthd.ntrks(),ntrks_ans);
+		EXPECT_EQ(mthd.division(),tdiv_ans);
+	}
+}
+
 
 //
 // Tests for:
@@ -131,30 +201,6 @@ TEST(mthd_tests, MakeMthdValidUnusualInput) {
 		EXPECT_EQ(mthd.mthd.format(),tcase.ans_format);
 		EXPECT_EQ(mthd.mthd.ntrks(),tcase.ans_ntrks);
 		EXPECT_EQ(mthd.mthd.division().get_tpq(),tcase.ans_division);
-	}
-}
-
-TEST(mthd_tests, interpretSMPTEField) {
-	struct test_t {
-		uint16_t input {0};
-		int8_t ans_tcf {0};
-		uint8_t ans_upf {0};
-	};
-	std::array<test_t,3> tests {
-		test_t {0xE250u,-30,80},  // p.133 of the midi std
-		test_t {0xE728u,-25,40},   // 25fr/sec * 40tk/fr => 1000tk/sec => ms resolution
-		test_t {0xE350u,-29,80}
-	};
-
-	for (const auto& e : tests) {
-		auto curr_maybe = make_time_division_from_raw(e.input);
-		time_division_t curr_tdf = curr_maybe.value;
-		EXPECT_EQ(curr_tdf.get_type(),time_division_t::type::smpte);
-
-		auto curr_tcf = curr_tdf.get_smpte().time_code; //get_time_code_fmt(curr_tdf);
-		EXPECT_EQ(curr_tcf,e.ans_tcf);
-		auto curr_upf = curr_tdf.get_smpte().subframes; //get_units_per_frame(curr_tdf);
-		EXPECT_EQ(curr_upf,e.ans_upf);
 	}
 }
 
