@@ -105,6 +105,7 @@
     <ClCompile Include="midi_raw_test.cpp" />
     <ClCompile Include="midi_raw_test_data.cpp" />
     <ClCompile Include="midi_sb_classification_funcs.cpp" />
+    <ClCompile Include="midi_tempo_and_timediv_tests.cpp" />
     <ClCompile Include="midi_testdata_status_bytes.cpp" />
     <ClCompile Include="mthd_test_data.cpp" />
     <ClCompile Include="mthd_t_test.cpp" />

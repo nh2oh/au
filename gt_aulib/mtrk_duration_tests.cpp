@@ -39,10 +39,10 @@ TEST(mtrk_duration_tests, cchromSingleTempoEvent) {
 		// Max permitted time-div value
 		test_t {time_division_t(0x7FFF), 1, "tdiv0x7FFF_tempo1.midi"},
 		test_t {time_division_t(0x7FFF), 500000, "tdiv0x7FFF_tempo500k.midi"},
-		test_t 	{time_division_t(0x7FFF), 0x00FFFFFF, "tdiv0x7FFF_tempo0x00FFFFFF.midi"}
+		test_t {time_division_t(0x7FFF), 0x00FFFFFF, "tdiv0x7FFF_tempo0x00FFFFFF.midi"}
 	};
 	
-	double permissible_err_s = 1.0/1000000.0;  // 1 us
+	double permissible_err_s = 1.0/1000000000.0;  // 1 ns
 	
 	int num_files_tested = 0;
 	for (const auto& tc : tests) {
