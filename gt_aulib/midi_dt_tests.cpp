@@ -123,6 +123,7 @@ TEST(delta_time_tests, ReadWriteDtAllValuesValid) {
 		EXPECT_EQ(it-field.begin(),tc.n_bytes);
 		ASSERT_EQ(tc.field.size(),field.size());
 		for (int i=0; i<field.size(); ++i) {
+			bool b = tc.field[i]==field[i];
 			EXPECT_EQ(tc.field[i],field[i]);
 		}
 	}
