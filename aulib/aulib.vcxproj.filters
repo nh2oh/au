@@ -290,5 +290,8 @@
     <ClInclude Include="input\midi\make_mtrk_event.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="input\midi\midi_vlq_deprecated.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

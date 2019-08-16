@@ -64,6 +64,7 @@
     <ClInclude Include="input\midi\midi_raw.h" />
     <ClInclude Include="input\midi\midi_raw_test_parts.h" />
     <ClInclude Include="input\midi\midi_vlq.h" />
+    <ClInclude Include="input\midi\midi_vlq_deprecated.h" />
     <ClInclude Include="input\midi\mthd_t.h" />
     <ClInclude Include="input\midi\mtrk_event_methods.h" />
     <ClInclude Include="input\midi\mtrk_event_t.h" />
