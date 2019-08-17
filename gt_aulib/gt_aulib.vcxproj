@@ -118,6 +118,7 @@
     <ClCompile Include="mtrk_event_sysex_factory_funcs.cpp" />
     <ClCompile Include="mtrk_event_t_meta_factory_funcs_tests.cpp" />
     <ClCompile Include="mtrk_event_t_tests.cpp" />
+    <ClCompile Include="mtrk_special_member_function_tests.cpp" />
     <ClCompile Include="mtrk_test_data.cpp" />
     <ClCompile Include="mtrk_t_split_merge_test.cpp" />
     <ClCompile Include="mtrk_t_test.cpp" />

@@ -150,6 +150,9 @@
     <ClCompile Include="midi_chunk_low_level_tests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="mtrk_special_member_function_tests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="midi_raw_test_data.h">
