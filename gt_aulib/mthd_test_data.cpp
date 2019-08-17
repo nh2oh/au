@@ -119,8 +119,8 @@ std::vector<byfieldvalue_valid_t> byfieldvalue_valid {
 //};
 extern std::vector<byfieldvalue_invalid_t> byfieldvalue_invalid {
 	// format==0 but ntrks > 1
-	{0,2,240,  0,1,240},
-	{0,3,240,  0,1,240}
+	{0,2,240,  1,2,240},
+	{0,3,240,  1,3,240}
 };
 
 
