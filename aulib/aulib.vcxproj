@@ -57,7 +57,6 @@
     <ClInclude Include="clamped_value.h" />
     <ClInclude Include="generic_iterator.h" />
     <ClInclude Include="input\midi\generic_chunk_low_level.h" />
-    <ClInclude Include="input\midi\make_mtrk_event.h" />
     <ClInclude Include="input\midi\midi_data.h" />
     <ClInclude Include="input\midi\midi_delta_time.h" />
     <ClInclude Include="input\midi\midi_examples.h" />
@@ -159,6 +158,8 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <AdditionalIncludeDirectories>$(dbk_proj_path)\dbklib</AdditionalIncludeDirectories>
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
+      <ExceptionHandling>Sync</ExceptionHandling>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
