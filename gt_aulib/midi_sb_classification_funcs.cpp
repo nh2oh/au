@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include "..\aulib\input\midi\midi_raw.h"
+#include "..\aulib\input\midi\midi_status_byte.h"
 #include "midi_testdata_status_bytes.h"
 
 

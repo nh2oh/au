@@ -17,6 +17,7 @@
     <ClCompile Include="input\midi\midi_examples.cpp" />
     <ClCompile Include="input\midi\midi_raw.cpp" />
     <ClCompile Include="input\midi\midi_raw_test_parts.cpp" />
+    <ClCompile Include="input\midi\midi_status_byte.cpp" />
     <ClCompile Include="input\midi\midi_vlq.cpp" />
     <ClCompile Include="input\midi\mthd_t.cpp" />
     <ClCompile Include="input\midi\mtrk_event_methods.cpp" />
@@ -62,6 +63,7 @@
     <ClInclude Include="input\midi\midi_examples.h" />
     <ClInclude Include="input\midi\midi_raw.h" />
     <ClInclude Include="input\midi\midi_raw_test_parts.h" />
+    <ClInclude Include="input\midi\midi_status_byte.h" />
     <ClInclude Include="input\midi\midi_vlq.h" />
     <ClInclude Include="input\midi\midi_vlq_deprecated.h" />
     <ClInclude Include="input\midi\mthd_t.h" />
