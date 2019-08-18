@@ -26,7 +26,6 @@ TEST(mtrk_event_sysex_factories, makeSysexF0PayloadsLackTerminalF7) {
 
 		const auto ev = make_sysex_f0(e.dt_in,e.payload_in);
 
-		EXPECT_EQ(ev.type(),smf_event_type::sysex_f0);
 		EXPECT_TRUE(is_sysex(ev));
 		EXPECT_TRUE(is_sysex_f0(ev));
 		EXPECT_FALSE(is_sysex_f7(ev));
@@ -73,7 +72,6 @@ TEST(mtrk_event_sysex_factories, makeSysexF0PayloadsWithTerminalF7) {
 
 		const auto ev = make_sysex_f0(e.dt_in,e.payload_in);
 
-		EXPECT_EQ(ev.type(),smf_event_type::sysex_f0);
 		EXPECT_TRUE(is_sysex(ev));
 		EXPECT_TRUE(is_sysex_f0(ev));
 		EXPECT_FALSE(is_sysex_f7(ev));
@@ -120,7 +118,6 @@ TEST(mtrk_event_sysex_factories, makeSysexF7PayloadsLackTerminalF7) {
 
 		const auto ev = make_sysex_f7(e.dt_in,e.payload_in);
 
-		EXPECT_EQ(ev.type(),smf_event_type::sysex_f7);
 		EXPECT_TRUE(is_sysex(ev));
 		EXPECT_FALSE(is_sysex_f0(ev));
 		EXPECT_TRUE(is_sysex_f7(ev));
@@ -167,7 +164,6 @@ TEST(mtrk_event_sysex_factories, makeSysexF7PayloadsWithTerminalF7) {
 
 		const auto ev = make_sysex_f7(e.dt_in,e.payload_in);
 
-		EXPECT_EQ(ev.type(),smf_event_type::sysex_f7);
 		EXPECT_TRUE(is_sysex(ev));
 		EXPECT_FALSE(is_sysex_f0(ev));
 		EXPECT_TRUE(is_sysex_f7(ev));

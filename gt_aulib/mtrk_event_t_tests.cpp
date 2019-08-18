@@ -40,7 +40,7 @@ TEST(mtrk_event_t_tests, metaEventsSmallCopyCtorAndCopyAssign) {
 		// copy ctor:
 		const auto c2 = c1;
 
-		EXPECT_EQ(c2.type(),c1.type());
+		EXPECT_EQ(c2.status_byte(),c1.status_byte());
 		EXPECT_EQ(c2.delta_time(),c1.delta_time());
 		EXPECT_EQ(c2.size(),c1.size());
 		EXPECT_EQ(c2.data_size(),c1.data_size());
@@ -55,7 +55,7 @@ TEST(mtrk_event_t_tests, metaEventsSmallCopyCtorAndCopyAssign) {
 		auto c3 = maybe_ev.event;
 		c3 = c1;
 
-		EXPECT_EQ(c3.type(),c1.type());
+		EXPECT_EQ(c3.status_byte(),c1.status_byte());
 		EXPECT_EQ(c3.delta_time(),c1.delta_time());
 
 		EXPECT_EQ(c3.size(),c1.size());
@@ -111,7 +111,7 @@ TEST(mtrk_event_t_tests, metaEventsBigCopyCtorAndCopyAssign) {
 		//---------------------------------------------------------------------------
 		// copy ctor:
 		auto c2 = c1;
-		EXPECT_EQ(c2.type(),c1.type());
+		EXPECT_EQ(c2.status_byte(),c1.status_byte());
 		EXPECT_EQ(c2.delta_time(),c1.delta_time());
 
 		EXPECT_EQ(c2.size(),c1.size());
@@ -131,7 +131,7 @@ TEST(mtrk_event_t_tests, metaEventsBigCopyCtorAndCopyAssign) {
 		maybe_ev = make_mtrk_event(tests[j].data(),tests[j].data()+tests[j].size(),0,nullptr);
 		auto c3 = maybe_ev.event;
 		c3 = c1;
-		EXPECT_EQ(c3.type(),c1.type());
+		EXPECT_EQ(c3.status_byte(),c1.status_byte());
 		EXPECT_EQ(c3.delta_time(),c1.delta_time());
 
 		EXPECT_EQ(c3.size(),c1.size());
@@ -183,7 +183,7 @@ TEST(mtrk_event_t_tests, metaEventsMoveAssignBigIntoSmall) {
 	EXPECT_TRUE(maybe_small);
 	auto small = maybe_small.event;
 	EXPECT_EQ(small.delta_time(),small_data.dtval);
-	EXPECT_EQ(small.type(),smf_event_type::meta);
+	EXPECT_TRUE(is_meta(small));
 	EXPECT_EQ(small.size(),small_data.bytes.size());
 	EXPECT_EQ(small.data_size(),small_data.data_size);
 
@@ -192,7 +192,7 @@ TEST(mtrk_event_t_tests, metaEventsMoveAssignBigIntoSmall) {
 	EXPECT_TRUE(maybe_big);
 	auto big = maybe_big.event;
 	EXPECT_EQ(big.delta_time(),big_data.dtval);
-	EXPECT_EQ(big.type(),smf_event_type::meta);
+	EXPECT_TRUE(is_meta(big));
 	EXPECT_EQ(big.size(),big_data.bytes.size());
 	EXPECT_EQ(big.data_size(),big_data.data_size);
 	
@@ -205,12 +205,12 @@ TEST(mtrk_event_t_tests, metaEventsMoveAssignBigIntoSmall) {
 	// 0x00u is interpreted as a delta_time == 0; the event is otherwise
 	// invalid
 	EXPECT_EQ(big_mvfrom.delta_time(),0);
-	EXPECT_EQ(big_mvfrom.type(),smf_event_type::channel);
+	EXPECT_TRUE(is_channel(big_mvfrom));
 	EXPECT_EQ(big_mvfrom.size(),4);
 	EXPECT_EQ(big_mvfrom.data_size(),3);
 	// small has the values as if constructed from big_data
 	EXPECT_EQ(small_mvinto.delta_time(),big_data.dtval);
-	EXPECT_EQ(small_mvinto.type(),smf_event_type::meta);
+	EXPECT_TRUE(is_meta(small_mvinto));
 	EXPECT_EQ(small_mvinto.size(),big_data.bytes.size());
 	EXPECT_EQ(small_mvinto.data_size(),big_data.data_size);
 
@@ -221,7 +221,7 @@ TEST(mtrk_event_t_tests, metaEventsMoveAssignBigIntoSmall) {
 		big_data.bytes.data()+big_data.bytes.size(),0,nullptr).event;
 	// small has the values as if constructed from big_data
 	EXPECT_EQ(small_mvinto.delta_time(),big_data.dtval);
-	EXPECT_EQ(small_mvinto.type(),smf_event_type::meta);
+	EXPECT_TRUE(is_meta(small_mvinto));
 	EXPECT_EQ(small_mvinto.size(),big_data.bytes.size());
 	EXPECT_EQ(small_mvinto.data_size(),big_data.data_size);
 }
@@ -266,7 +266,7 @@ TEST(mtrk_event_t_tests, metaEventsMoveAssignSmallIntoBig) {
 	auto small = maybe_small.event;
 
 	EXPECT_EQ(small.delta_time(),small_data.dtval);
-	EXPECT_EQ(small.type(),smf_event_type::meta);
+	EXPECT_TRUE(is_meta(small));
 	EXPECT_EQ(small.size(),small_data.bytes.size());
 	EXPECT_EQ(small.data_size(),small_data.data_size);
 
@@ -275,7 +275,7 @@ TEST(mtrk_event_t_tests, metaEventsMoveAssignSmallIntoBig) {
 	EXPECT_TRUE(maybe_big);
 	auto big = maybe_big.event;
 	EXPECT_EQ(big.delta_time(),big_data.dtval);
-	EXPECT_EQ(big.type(),smf_event_type::meta);
+	EXPECT_TRUE(is_meta(big));
 	EXPECT_EQ(big.size(),big_data.bytes.size());
 	EXPECT_EQ(big.data_size(),big_data.data_size);
 	
@@ -286,13 +286,14 @@ TEST(mtrk_event_t_tests, metaEventsMoveAssignSmallIntoBig) {
 	big_mvinto=std::move(small_mvfrom);
 	// small_mvfrom now has the moved-from state
 	EXPECT_EQ(small_mvfrom.delta_time(),0);
-	EXPECT_EQ(small_mvfrom.type(),smf_event_type::channel);
+
+	EXPECT_TRUE(is_channel(small_mvfrom));
 	EXPECT_EQ(small_mvfrom.size(),4);
 	EXPECT_EQ(small_mvfrom.data_size(),3);
 	// big_mvinto (which is no longer "big") has the values as if 
 	// constructed from small_data
 	EXPECT_EQ(big_mvinto.delta_time(),small_data.dtval);
-	EXPECT_EQ(big_mvinto.type(),smf_event_type::meta);
+	EXPECT_TRUE(is_meta(big_mvinto));
 	EXPECT_EQ(big_mvinto.size(),small_data.bytes.size());
 	EXPECT_EQ(big_mvinto.data_size(),small_data.data_size);
 
@@ -304,7 +305,7 @@ TEST(mtrk_event_t_tests, metaEventsMoveAssignSmallIntoBig) {
 	// big_mvinto (which is no longer "big") has the values as if 
 	// constructed from small_data
 	EXPECT_EQ(big_mvinto.delta_time(),small_data.dtval);
-	EXPECT_EQ(big_mvinto.type(),smf_event_type::meta);
+	EXPECT_TRUE(is_meta(big_mvinto));
 	EXPECT_EQ(big_mvinto.size(),small_data.bytes.size());
 	EXPECT_EQ(big_mvinto.data_size(),small_data.data_size);
 }

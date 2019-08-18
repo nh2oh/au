@@ -121,20 +121,20 @@ TEST(status_and_data_byte_classification, IsDataByte) {
 
 TEST(status_and_data_byte_classification, ClassifyStatusByteSingleArg) {
 	for (const auto& e : sbs_invalid) {
-		EXPECT_EQ(classify_status_byte(e),smf_event_type::invalid);
+		EXPECT_EQ(classify_status_byte(e),status_byte_type::invalid);
 	}
 	for (const auto& e : sbs_unrecognized) {
-		EXPECT_EQ(classify_status_byte(e),smf_event_type::unrecognized);
+		EXPECT_EQ(classify_status_byte(e),status_byte_type::unrecognized);
 	}
 	for (const auto& e : sbs_ch_mode_voice) {
-		EXPECT_EQ(classify_status_byte(e),smf_event_type::channel);
+		EXPECT_EQ(classify_status_byte(e),status_byte_type::channel);
 	}
-	EXPECT_EQ(classify_status_byte(0xFFu),smf_event_type::meta);
-	EXPECT_EQ(classify_status_byte(0xF7u),smf_event_type::sysex_f7);
-	EXPECT_EQ(classify_status_byte(0xF0u),smf_event_type::sysex_f0);
+	EXPECT_EQ(classify_status_byte(0xFFu),status_byte_type::meta);
+	EXPECT_EQ(classify_status_byte(0xF7u),status_byte_type::sysex_f7);
+	EXPECT_EQ(classify_status_byte(0xF0u),status_byte_type::sysex_f0);
 
 	for (const auto& e : dbs_valid) {
-		EXPECT_EQ(classify_status_byte(e),smf_event_type::invalid);
+		EXPECT_EQ(classify_status_byte(e),status_byte_type::invalid);
 	}
 }
 
@@ -147,22 +147,22 @@ TEST(status_and_data_byte_classification, ClassifyStatusByteTwoArgInvalidSBASLoc
 	for (const auto& loc : sbs_invalid) {
 		// Valid rs
 		for (const auto& rs : sbs_ch_mode_voice) {
-			EXPECT_EQ(classify_status_byte(loc,rs),smf_event_type::channel);
+			EXPECT_EQ(classify_status_byte(loc,rs),status_byte_type::channel);
 		}
 		// meta and sysex sbs are invalid as running-status bytes and never
 		// take precedence over the local byte, even when the local byte
 		// is invalid as a status byte.  Same deal w/ sbs_unrecognized.  
 		for (const auto& rs : sbs_meta_sysex) {
-			EXPECT_EQ(classify_status_byte(loc,rs),smf_event_type::invalid);
+			EXPECT_EQ(classify_status_byte(loc,rs),status_byte_type::invalid);
 		}
 		for (const auto& rs : sbs_unrecognized) {
-			EXPECT_EQ(classify_status_byte(loc,rs),smf_event_type::invalid);
+			EXPECT_EQ(classify_status_byte(loc,rs),status_byte_type::invalid);
 		}
 		for (const auto& rs : dbs_valid) {
-			EXPECT_EQ(classify_status_byte(loc,rs),smf_event_type::invalid);
+			EXPECT_EQ(classify_status_byte(loc,rs),status_byte_type::invalid);
 		}
 		for (const auto& rs : sbs_invalid) {
-			EXPECT_EQ(classify_status_byte(loc,rs),smf_event_type::invalid);
+			EXPECT_EQ(classify_status_byte(loc,rs),status_byte_type::invalid);
 		}
 	}
 }
@@ -172,16 +172,16 @@ TEST(status_and_data_byte_classification, ClassifyStatusByteTwoArgValidChSBAsLoc
 	// the local sb always wins; rs is irrelevant
 	for (const auto& loc : sbs_ch_mode_voice) {
 		for (const auto& rs : sbs_meta_sysex) {
-			EXPECT_EQ(classify_status_byte(loc,rs),smf_event_type::channel);
+			EXPECT_EQ(classify_status_byte(loc,rs),status_byte_type::channel);
 		}
 		for (const auto& rs : sbs_unrecognized) {
-			EXPECT_EQ(classify_status_byte(loc,rs),smf_event_type::channel);
+			EXPECT_EQ(classify_status_byte(loc,rs),status_byte_type::channel);
 		}
 		for (const auto& rs : dbs_valid) {
-			EXPECT_EQ(classify_status_byte(loc,rs),smf_event_type::channel);
+			EXPECT_EQ(classify_status_byte(loc,rs),status_byte_type::channel);
 		}
 		for (const auto& rs : sbs_invalid) {
-			EXPECT_EQ(classify_status_byte(loc,rs),smf_event_type::channel);
+			EXPECT_EQ(classify_status_byte(loc,rs),status_byte_type::channel);
 		}
 	}
 }

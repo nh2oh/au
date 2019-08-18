@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "delta_time_test_data.h"
-#include "..\aulib\input\midi\midi_raw.h"  // Declares smf_event_ty[e
+#include "..\aulib\input\midi\midi_raw.h"
 #include "..\aulib\input\midi\midi_vlq.h"
 #include "..\aulib\input\midi\midi_delta_time.h"
 #include "..\aulib\input\midi\mtrk_event_t.h"
@@ -23,7 +23,7 @@ TEST(mtrk_event_ctor_tests, defaultCtor) {
 	EXPECT_EQ(d.dt_end()-d.dt_begin(),1);
 	EXPECT_EQ(d.end()-d.begin(),d.size());
 
-	EXPECT_EQ(d.type(),smf_event_type::channel);
+	EXPECT_TRUE(is_channel(d));
 	EXPECT_EQ(d.delta_time(),0);
 	EXPECT_EQ(d.status_byte(),0x90u);
 	EXPECT_EQ(d.running_status(),0x90u);
@@ -55,7 +55,7 @@ TEST(mtrk_event_ctor_tests, dtOnlyCtor) {
 		EXPECT_EQ(ev.dt_end()-ev.dt_begin(),tc.ans_n_bytes);
 		EXPECT_EQ(ev.end()-ev.begin(),ev.size());
 
-		EXPECT_EQ(ev.type(),smf_event_type::channel);
+		EXPECT_TRUE(is_channel(ev));
 		EXPECT_EQ(ev.delta_time(),tc.ans_value);
 		EXPECT_EQ(ev.status_byte(),0x90u);
 		EXPECT_EQ(ev.running_status(),0x90u);
@@ -101,7 +101,7 @@ TEST(mtrk_event_ctor_tests, MidiChEventStructCtorValidInputData) {
 		int curr_size = curr_dt_size+tc.data_size;
 		const mtrk_event_t ev(tc.dt_input,tc.md_input);
 
-		EXPECT_EQ(ev.type(),smf_event_type::channel);
+		EXPECT_TRUE(is_channel(ev));
 		EXPECT_EQ(ev.delta_time(),tc.dt_input);
 		EXPECT_EQ(ev.size(),curr_size);
 		EXPECT_EQ(ev.data_size(),tc.data_size);
@@ -173,7 +173,6 @@ TEST(mtrk_event_ctor_tests, MidiChEventStructCtorInvalidInputData) {
 			+ expect_n_data;
 		const mtrk_event_t ev(tc.dt_input,tc.md_input);
 
-		EXPECT_EQ(ev.type(),classify_status_byte(expect_s));
 		EXPECT_EQ(ev.delta_time(),tc.dt_input);
 		EXPECT_EQ(ev.status_byte(),expect_s);
 		EXPECT_EQ(ev.size(),expect_size);

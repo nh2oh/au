@@ -36,7 +36,6 @@ TEST(mtrk_event_t_meta_factories, makeTempo) {
 		auto pyld_size = 3;
 		auto dat_size = 3+pyld_size;
 		auto tot_size = dt_size+dat_size;
-		EXPECT_EQ(ev.type(),smf_event_type::meta);
 		EXPECT_EQ(classify_meta_event(ev),meta_event_t::tempo);
 		EXPECT_TRUE(is_tempo(ev));
 		EXPECT_EQ(ev.delta_time(),e.dt_ans);
@@ -67,7 +66,6 @@ TEST(mtrk_event_t_meta_factories, makeEOT) {
 		auto pyld_size = 0;
 		auto dat_size = 3+pyld_size;
 		auto tot_size = dt_size+dat_size;
-		EXPECT_EQ(ev.type(),smf_event_type::meta);
 		EXPECT_EQ(classify_meta_event(ev),meta_event_t::eot);
 		EXPECT_TRUE(is_eot(ev));
 		EXPECT_EQ(ev.delta_time(),e);
@@ -113,7 +111,6 @@ TEST(mtrk_event_t_meta_factories, makeTimesig) {
 		auto pyld_size = 4;
 		auto dat_size = 3+pyld_size;
 		auto tot_size = dt_size+dat_size;
-		EXPECT_EQ(ev.type(),smf_event_type::meta);
 		EXPECT_EQ(classify_meta_event(ev),meta_event_t::timesig);
 		EXPECT_TRUE(is_timesig(ev));
 		EXPECT_EQ(ev.delta_time(),e.dt);
@@ -176,7 +173,6 @@ TEST(mtrk_event_t_meta_factories, makeEventsWithTextPayloads) {
 	for (const auto curr_testset : testsets) {
 		for (const auto& e : tests) {
 			auto ev = (*curr_testset.fp_make)(e.dt,e.s);
-			EXPECT_EQ(ev.type(), smf_event_type::meta);
 			EXPECT_EQ(classify_meta_event(ev),curr_testset.ans_evtype);
 			EXPECT_TRUE((*curr_testset.fp_is)(ev));
 			EXPECT_TRUE(meta_has_text(ev));
